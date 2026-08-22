@@ -44,9 +44,11 @@
     --radius: 0.5rem;
     --field-radius: 0.75rem;
 
-    /* Font Family */
+    /* Font Families */
     --font-varela-round: "Varela Round", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-fraunces: "Fraunces", Georgia, Cambria, "Times New Roman", Times, serif;
     --font-sans: var(--font-varela-round);
+    --font-serif: var(--font-fraunces);
     font-family: var(--font-sans);
   }
 }

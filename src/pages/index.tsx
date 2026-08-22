@@ -1,22 +1,17 @@
-import { title, subtitle } from "@/components/primitives";
 import DefaultLayout from "@/layouts/default";
 
 export default function IndexPage() {
   return (
     <DefaultLayout>
-      <section className="flex flex-col items-center justify-center gap-6 py-16 text-center">
-        <div className="inline-block max-w-2xl">
-          <h1 className={title({ size: "lg" })}>
+      <section className="flex flex-col items-center justify-center text-center">
+        <div className="max-w-4xl space-y-6">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-medium">
             Build your ideal{" "}
-            <span className={title({ color: "violet" })}>
+            <span className="text-accent font-serif italic font-normal">
               focus environment
             </span>
             .
           </h1>
-          <p className={subtitle({ class: "mt-4 text-muted" })}>
-            Curate ambient soundscapes, customize your focus timer, and create
-            your cozy workspace.
-          </p>
         </div>
       </section>
     </DefaultLayout>
