@@ -11,6 +11,9 @@ import {
   ThemeBackground,
   ThemeConfig,
   DEFAULT_THEME_CONFIG,
+  DEFAULT_HUE,
+  DEFAULT_CHROMA,
+  DEFAULT_LIGHTNESS,
   PRESET_BACKGROUNDS,
 } from "@/config/themes";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
@@ -24,6 +27,9 @@ export interface ThemeContextValue {
   positionX: number;
   positionY: number;
   zoom: number;
+  hue: number;
+  chroma: number;
+  lightness: number;
   isThemeModalOpen: boolean;
   setIsThemeModalOpen: (open: boolean) => void;
   selectBackground: (bg: ThemeBackground | null) => void;
@@ -35,6 +41,7 @@ export interface ThemeContextValue {
   setPositionX: (x: number) => void;
   setPositionY: (y: number) => void;
   setZoom: (zoom: number) => void;
+  setAppThemeColor: (hue: number, chroma?: number, lightness?: number) => void;
   resetTheme: () => void;
 }
 
@@ -53,6 +60,67 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
   });
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+
+  // Apply OKLCH palette changes across the entire app
+  useEffect(() => {
+    const root = document.documentElement;
+    const h = config.hue ?? DEFAULT_HUE;
+    const c = config.chroma ?? DEFAULT_CHROMA;
+    const l = config.lightness ?? DEFAULT_LIGHTNESS;
+
+    if (h === DEFAULT_HUE && c === DEFAULT_CHROMA && l === DEFAULT_LIGHTNESS) {
+      root.style.removeProperty("--accent");
+      root.style.removeProperty("--focus");
+      root.style.removeProperty("--background");
+      root.style.removeProperty("--surface");
+      root.style.removeProperty("--surface-secondary");
+      root.style.removeProperty("--surface-tertiary");
+      root.style.removeProperty("--field-background");
+      root.style.removeProperty("--muted");
+      root.style.removeProperty("--separator");
+      root.style.removeProperty("--border");
+      root.style.removeProperty("--default");
+    } else {
+      root.style.setProperty("--accent", `oklch(${l}% ${c} ${h})`);
+      root.style.setProperty("--focus", `oklch(${l}% ${c} ${h})`);
+      root.style.setProperty(
+        "--background",
+        `oklch(12% ${Math.min(0.03, c * 0.2)} ${h})`,
+      );
+      root.style.setProperty(
+        "--surface",
+        `oklch(21.03% ${Math.min(0.05, c * 0.4)} ${h})`,
+      );
+      root.style.setProperty(
+        "--surface-secondary",
+        `oklch(25.7% ${Math.min(0.05, c * 0.3)} ${h})`,
+      );
+      root.style.setProperty(
+        "--surface-tertiary",
+        `oklch(27.21% ${Math.min(0.05, c * 0.3)} ${h})`,
+      );
+      root.style.setProperty(
+        "--field-background",
+        `oklch(21.03% ${Math.min(0.04, c * 0.3)} ${h})`,
+      );
+      root.style.setProperty(
+        "--muted",
+        `oklch(70.5% ${Math.min(0.05, c * 0.4)} ${h})`,
+      );
+      root.style.setProperty(
+        "--separator",
+        `oklch(25% ${Math.min(0.03, c * 0.2)} ${h})`,
+      );
+      root.style.setProperty(
+        "--border",
+        `oklch(28% ${Math.min(0.03, c * 0.2)} ${h})`,
+      );
+      root.style.setProperty(
+        "--default",
+        `oklch(27.4% ${Math.min(0.03, c * 0.2)} ${h})`,
+      );
+    }
+  }, [config.hue, config.chroma, config.lightness]);
 
   // Sync with storage on config changes
   useEffect(() => {
@@ -106,7 +174,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       setConfig((prev) => ({
         ...prev,
         customBackgrounds: [newBg, ...prev.customBackgrounds],
-        activeBackgroundId: newBg.id, // auto-apply
+        activeBackgroundId: newBg.id,
       }));
 
       toast("Wallpaper Added! 🎨", {
@@ -193,6 +261,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
+  const setAppThemeColor = useCallback(
+    (hue: number, chroma = DEFAULT_CHROMA, lightness = DEFAULT_LIGHTNESS) => {
+      setConfig((prev) => ({
+        ...prev,
+        hue: Math.max(0, Math.min(360, Math.round(hue))),
+        chroma: Math.max(0.01, Math.min(0.2, Number(chroma.toFixed(3)))),
+        lightness: Math.max(40, Math.min(90, Math.round(lightness))),
+      }));
+    },
+    [],
+  );
+
   const resetTheme = useCallback(() => {
     setConfig(DEFAULT_THEME_CONFIG);
   }, []);
@@ -206,6 +286,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     positionX: config.positionX ?? 50,
     positionY: config.positionY ?? 50,
     zoom: config.zoom ?? 100,
+    hue: config.hue ?? DEFAULT_HUE,
+    chroma: config.chroma ?? DEFAULT_CHROMA,
+    lightness: config.lightness ?? DEFAULT_LIGHTNESS,
     isThemeModalOpen,
     setIsThemeModalOpen,
     selectBackground,
@@ -217,6 +300,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setPositionX,
     setPositionY,
     setZoom,
+    setAppThemeColor,
     resetTheme,
   };
 
