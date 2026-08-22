@@ -13,9 +13,7 @@ export default function IndexPage() {
 
   return (
     <DefaultLayout>
-      <Sidebar visible={activeMode !== "home"}>
-        <Sidebar.Clock />
-      </Sidebar>
+      <Sidebar activeMode={activeMode} />
 
       <Tabs
         className="flex flex-col flex-1 items-center justify-center w-full"

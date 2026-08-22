@@ -11,7 +11,7 @@ export function Navbar() {
           Cozify
         </span>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-3">
           <Link
             aria-label="Source Code"
             className="p-2.5 rounded-full text-muted hover:text-foreground hover:bg-surface transition-all"
@@ -19,7 +19,7 @@ export function Navbar() {
             rel="noopener noreferrer"
             target="_blank"
           >
-            <Code2 className="size-6" />
+            <Code2 className="size-5" />
           </Link>
         </div>
       </div>
