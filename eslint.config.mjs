@@ -25,6 +25,7 @@ const compat = new FlatCompat({
 export default defineConfig([
   globalIgnores([
     ".now/*",
+    ".heroui-docs/**",
     "**/*.css",
     "**/.changeset",
     "**/dist",

@@ -1,0 +1,52 @@
+@layer base {
+  /* ==========================================================================
+     Cozify Dark Theme (Default)
+     ========================================================================== */
+  :root,
+  .dark,
+  [data-theme="dark"] {
+    color-scheme: dark;
+
+    /* Theme Colors */
+    --accent: oklch(71% 0.1 291);
+    --accent-foreground: oklch(15% 0.02 291);
+    --background: oklch(12% 0.02 291);
+    --border: oklch(28% 0.02 291);
+    --danger: oklch(59.4% 0.2046 29.09);
+    --danger-foreground: oklch(99.11% 0 0);
+    --default: oklch(27.4% 0.02 291);
+    --default-foreground: oklch(99.11% 0 0);
+    --field-background: oklch(21.03% 0.04 291);
+    --field-border: transparent;
+    --field-foreground: oklch(99.11% 0.02 291);
+    --field-placeholder: oklch(70.5% 0.04 291);
+    --focus: oklch(71% 0.1 291);
+    --foreground: oklch(99.11% 0.02 291);
+    --muted: oklch(70.5% 0.04 291);
+    --overlay: oklch(21.03% 0.04 291);
+    --overlay-foreground: oklch(99.11% 0.02 291);
+    --scrollbar: oklch(70.5% 0.02 291);
+    --segment: oklch(39.64% 0.02 291);
+    --segment-foreground: oklch(99.11% 0.02 291);
+    --separator: oklch(25% 0.02 291);
+    --success: oklch(73.29% 0.2012 155.27);
+    --success-foreground: oklch(21.03% 0.0059 155.27);
+    --surface: oklch(21.03% 0.04 291);
+    --surface-foreground: oklch(99.11% 0.02 291);
+    --surface-secondary: oklch(25.7% 0.03 291);
+    --surface-secondary-foreground: oklch(99.11% 0.02 291);
+    --surface-tertiary: oklch(27.21% 0.03 291);
+    --surface-tertiary-foreground: oklch(99.11% 0.02 291);
+    --warning: oklch(82.03% 0.1444 80.8);
+    --warning-foreground: oklch(21.03% 0.0059 80.8);
+
+    /* Border Radius */
+    --radius: 0.5rem;
+    --field-radius: 0.75rem;
+
+    /* Font Family */
+    --font-varela-round: "Varela Round", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-sans: var(--font-varela-round);
+    font-family: var(--font-sans);
+  }
+}
