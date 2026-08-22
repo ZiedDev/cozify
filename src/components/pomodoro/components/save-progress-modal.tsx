@@ -161,7 +161,7 @@ export function SaveProgressModal({
                 <Label>Overtime Logged</Label>
                 <InputGroup fullWidth>
                   <InputGroup.Prefix>
-                    <Flame className="size-4 text-muted" />
+                    <Flame className="size-4" />
                   </InputGroup.Prefix>
                   <InputGroup.Input className="w-12" min={0} type="number" />
                   <InputGroup.Suffix>mins</InputGroup.Suffix>

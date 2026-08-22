@@ -3,18 +3,11 @@ import {
   Timer as TimerIcon,
   ListTodo,
   Music,
-  Palette,
   BarChart2,
   LucideIcon,
 } from "lucide-react";
 
-export type AppMode =
-  | "home"
-  | "pomodoro"
-  | "todo"
-  | "music"
-  | "themes"
-  | "stats";
+export type AppMode = "home" | "pomodoro" | "todo" | "music" | "stats";
 
 export interface DockItem {
   id: AppMode;
@@ -27,6 +20,5 @@ export const DOCK_ITEMS: readonly DockItem[] = [
   { id: "pomodoro", label: "Pomodoro", icon: TimerIcon },
   { id: "todo", label: "To-Do", icon: ListTodo },
   { id: "music", label: "Music", icon: Music },
-  { id: "themes", label: "Themes", icon: Palette },
   { id: "stats", label: "Stats", icon: BarChart2 },
 ] as const;

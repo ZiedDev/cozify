@@ -14,6 +14,7 @@ import {
   DEFAULT_TARGET_CYCLES,
   MIN_TARGET_CYCLES,
   MAX_TARGET_CYCLES,
+  MAX_DURATION_SECONDS,
 } from "@/config/timer";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
 
@@ -48,6 +49,7 @@ export interface TimerContextValue {
   switchMode: (newMode: TimerMode, autoStart?: boolean) => void;
   addMinutes: (minutes: number) => void;
   finishCycleAndTakeBreak: (breakMode?: "shortBreak" | "longBreak") => void;
+  skipBreak: () => void;
   startNextCycle: () => void;
   startNewSession: () => void;
   discardSession: () => void;
@@ -82,7 +84,6 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const targetEndTimeRef = useRef<number | null>(null);
   const remainingOnPauseRef = useRef<number>(DEFAULT_TIMER_DURATIONS.focus);
   const hasTriggeredToastRef = useRef<boolean>(false);
-  const isAwaitingSessionStopRef = useRef<boolean>(false);
   const lastTickTimeRef = useRef<number>(Date.now());
 
   // 1. Initial hydration from storage mediator
@@ -154,7 +155,6 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const switchMode = useCallback(
     (newMode: TimerMode, autoStart = false) => {
       toast.clear();
-      isAwaitingSessionStopRef.current = false;
       setMode(newMode);
       hasTriggeredToastRef.current = false;
       const newTime = durations[newMode];
@@ -177,7 +177,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const finishCycleAndTakeBreak = useCallback(
     (preferredBreak?: "shortBreak" | "longBreak") => {
       toast.clear();
-      isAwaitingSessionStopRef.current = false;
+
       const nextBreakMode =
         preferredBreak ||
         (currentCycle % targetCycles === 0 ? "longBreak" : "shortBreak");
@@ -187,16 +187,42 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     [currentCycle, targetCycles, switchMode],
   );
 
+  // Skip Break: Advances cycle (expanding 4/4 to 5/5) and sets Focus ready to start (NO auto-start)
+  const skipBreak = useCallback(() => {
+    toast.clear();
+
+    if (currentCycle >= targetCycles) {
+      const newTotal = Math.min(MAX_TARGET_CYCLES, targetCycles + 1);
+
+      setTargetCyclesState(newTotal);
+      setCurrentCycleState(newTotal);
+    } else {
+      if (mode !== "focus" || timeLeft <= 0) {
+        setCurrentCycleState((prev) => Math.min(targetCycles, prev + 1));
+      }
+    }
+
+    switchMode("focus", false);
+  }, [currentCycle, targetCycles, mode, timeLeft, switchMode]);
+
+  // Start Next Cycle: Advances cycle (expanding 4/4 to 5/5) and sets Focus ready to start
   const startNextCycle = useCallback(() => {
     toast.clear();
-    isAwaitingSessionStopRef.current = false;
-    setCurrentCycleState((prev) => (prev >= targetCycles ? 1 : prev + 1));
-    switchMode("focus", true);
-  }, [targetCycles, switchMode]);
+
+    if (currentCycle >= targetCycles) {
+      const newTotal = Math.min(MAX_TARGET_CYCLES, targetCycles + 1);
+
+      setTargetCyclesState(newTotal);
+      setCurrentCycleState(newTotal);
+    } else {
+      setCurrentCycleState((prev) => Math.min(targetCycles, prev + 1));
+    }
+
+    switchMode("focus", false);
+  }, [currentCycle, targetCycles, switchMode]);
 
   const startNewSession = useCallback(() => {
     toast.clear();
-    isAwaitingSessionStopRef.current = false;
     setCurrentCycleState(1);
     setAccumulatedFocusSeconds(0);
     setAccumulatedOvertimeSeconds(0);
@@ -211,11 +237,10 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
   const stopAndCelebrate = useCallback(() => {
     toast.clear();
-    isAwaitingSessionStopRef.current = false;
     setIsRunning(false);
     targetEndTimeRef.current = null;
 
-    // Open Save Progress Modal to log stats
+    // Open Save Progress Modal manually when requested
     setIsSaveModalOpen(true);
   }, []);
 
@@ -255,8 +280,6 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
           const isSessionComplete = currentCycle >= targetCycles;
 
           if (isSessionComplete) {
-            // Final cycle complete: Tell the user to STOP the timer
-            isAwaitingSessionStopRef.current = true;
             toast("Session Goal Reached! 🏁", {
               description: `All ${targetCycles} cycles complete. Stop the timer to record and save your progress.`,
               variant: "accent",
@@ -267,7 +290,8 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
               },
             });
           } else {
-            // Regular cycle complete: Prompt for break
+            setCurrentCycleState((prev) => Math.min(targetCycles, prev + 1));
+
             toast("Cycle Finished!", {
               description: `Cycle ${currentCycle} of ${targetCycles} is done. Ready for a break?`,
               variant: "accent",
@@ -280,7 +304,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           toast("Break Finished!", {
-            description: `Break is over. Ready for cycle ${currentCycle + 1} of ${targetCycles}?`,
+            description: `Break is over. Ready for cycle ${currentCycle} of ${targetCycles}?`,
             variant: "accent",
             timeout: 0,
             actionProps: {
@@ -303,13 +327,8 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     stopAndCelebrate,
   ]);
 
+  // Clean Toggle: ALWAYS simply pauses or resumes without hijacking
   const toggle = useCallback(() => {
-    if (isRunning && isAwaitingSessionStopRef.current) {
-      stopAndCelebrate();
-
-      return;
-    }
-
     toast.clear();
     if (isRunning) {
       setIsRunning(false);
@@ -328,11 +347,10 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       targetEndTimeRef.current =
         Date.now() + remainingOnPauseRef.current * 1000;
     }
-  }, [isRunning, stopAndCelebrate]);
+  }, [isRunning]);
 
   const reset = useCallback(() => {
     toast.clear();
-    isAwaitingSessionStopRef.current = false;
     setIsRunning(false);
     hasTriggeredToastRef.current = false;
     const initialTime = durations[mode];
@@ -346,11 +364,23 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     toast.clear();
     const additionalSeconds = minutes * 60;
 
-    setTimeLeft((prev) => prev + additionalSeconds);
-    remainingOnPauseRef.current += additionalSeconds;
+    setTimeLeft((prev) =>
+      Math.min(MAX_DURATION_SECONDS, prev + additionalSeconds),
+    );
+    remainingOnPauseRef.current = Math.min(
+      MAX_DURATION_SECONDS,
+      remainingOnPauseRef.current + additionalSeconds,
+    );
 
     if (targetEndTimeRef.current !== null) {
-      targetEndTimeRef.current += additionalSeconds * 1000;
+      const now = Date.now();
+      const currentRemaining = Math.max(0, targetEndTimeRef.current - now);
+      const newRemaining = Math.min(
+        MAX_DURATION_SECONDS * 1000,
+        currentRemaining + additionalSeconds * 1000,
+      );
+
+      targetEndTimeRef.current = now + newRemaining;
     }
   }, []);
 
@@ -425,6 +455,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     switchMode,
     addMinutes,
     finishCycleAndTakeBreak,
+    skipBreak,
     startNextCycle,
     startNewSession,
     discardSession,

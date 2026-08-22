@@ -21,6 +21,7 @@ export const storageAdapter = {
 export const STORAGE_KEYS = {
   TIMER_STATE: "cozify:timer:state",
   SESSIONS_HISTORY: "cozify:sessions:history",
+  THEME_CONFIG: "cozify:theme:config",
 } as const;
 
 export interface SessionRecord {

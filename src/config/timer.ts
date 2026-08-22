@@ -12,6 +12,9 @@ export const DEFAULT_TIMER_DURATIONS: TimerDurations = {
   longBreak: 15 * 60,
 };
 
+export const MAX_DURATION_MINUTES = 180;
+export const MAX_DURATION_SECONDS = MAX_DURATION_MINUTES * 60;
+
 export const DEFAULT_TARGET_CYCLES = 4;
 export const MIN_TARGET_CYCLES = 1;
 export const MAX_TARGET_CYCLES = 16;

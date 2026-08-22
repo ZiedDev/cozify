@@ -1,5 +1,5 @@
-import { Plus, Minus } from "lucide-react";
-import { Button, Tooltip } from "@heroui/react";
+import { useRef } from "react";
+import { NumberField, Tooltip } from "@heroui/react";
 
 import { useTimer } from "@/hooks/use-timer";
 import { MIN_TARGET_CYCLES, MAX_TARGET_CYCLES } from "@/config/timer";
@@ -7,6 +7,20 @@ import { MIN_TARGET_CYCLES, MAX_TARGET_CYCLES } from "@/config/timer";
 export function CycleTracker() {
   const { currentCycle, targetCycles, setCurrentCycle, setTargetCycles } =
     useTimer();
+  const lastChangeTimeRef = useRef<number>(0);
+
+  const handleCyclesChange = (val: number | undefined) => {
+    if (typeof val !== "number" || isNaN(val)) return;
+
+    const now = Date.now();
+
+    // Guard against React Aria step timer + click event double-triggering
+    if (now - lastChangeTimeRef.current < 150) {
+      return;
+    }
+    lastChangeTimeRef.current = now;
+    setTargetCycles(val);
+  };
 
   return (
     <div className="flex flex-col items-center gap-3 select-none">
@@ -32,9 +46,7 @@ export function CycleTracker() {
                   onClick={() => setCurrentCycle(cycleNumber)}
                 />
               </Tooltip.Trigger>
-              <Tooltip.Content className="text-xs px-2.5 py-1 rounded-xl bg-surface border border-separator/80 shadow-lg text-foreground font-medium">
-                Jump to cycle {cycleNumber}
-              </Tooltip.Content>
+              <Tooltip.Content>Jump to cycle {cycleNumber}</Tooltip.Content>
             </Tooltip>
           );
         })}
@@ -46,35 +58,21 @@ export function CycleTracker() {
           Cycle <strong className="text-foreground">{currentCycle}</strong> of
         </span>
 
-        <div className="flex items-center gap-1 bg-surface-secondary px-1.5 py-0.5 rounded-full border border-separator/60">
-          <Button
-            isIconOnly
-            aria-label="Decrease Target Cycles"
-            className="size-5 min-w-0 p-0 rounded-full"
-            isDisabled={targetCycles <= MIN_TARGET_CYCLES}
-            size="sm"
-            variant="secondary"
-            onPress={() => setTargetCycles(targetCycles - 1)}
-          >
-            <Minus className="size-3 text-muted" />
-          </Button>
-
-          <span className="w-5 text-center font-mono font-bold text-foreground text-xs">
-            {targetCycles}
-          </span>
-
-          <Button
-            isIconOnly
-            aria-label="Increase Target Cycles"
-            className="size-5 min-w-0 p-0 rounded-full"
-            isDisabled={targetCycles >= MAX_TARGET_CYCLES}
-            size="sm"
-            variant="secondary"
-            onPress={() => setTargetCycles(targetCycles + 1)}
-          >
-            <Plus className="size-3 text-muted" />
-          </Button>
-        </div>
+        <NumberField
+          aria-label="Target Cycles"
+          className="w-24 h-8"
+          maxValue={MAX_TARGET_CYCLES}
+          minValue={MIN_TARGET_CYCLES}
+          step={1}
+          value={targetCycles}
+          onChange={handleCyclesChange}
+        >
+          <NumberField.Group className="flex h-full items-center rounded-full bg-surface-secondary border border-separator/80 overflow-hidden shadow-sm">
+            <NumberField.DecrementButton className="size-6 h-full text-muted hover:text-foreground" />
+            <NumberField.Input className="flex-1 text-center text-xs font-bold text-foreground bg-transparent p-0 tabular-nums outline-none" />
+            <NumberField.IncrementButton className="size-6 h-full text-muted hover:text-foreground" />
+          </NumberField.Group>
+        </NumberField>
       </div>
     </div>
   );

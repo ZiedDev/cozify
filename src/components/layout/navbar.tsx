@@ -1,9 +1,13 @@
-import { Link } from "@heroui/react";
-import { Code2 } from "lucide-react";
+import { useState } from "react";
+import { Button } from "@heroui/react";
+import { Settings as SettingsIcon } from "lucide-react";
 
-import { siteConfig } from "@/config/site";
+import { SettingsModal } from "@/components/settings/settings-modal";
+import { ThemePopover } from "@/components/theme/theme-popover";
 
 export function Navbar() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-40">
       <div className="mx-auto flex h-20 md:h-24 items-center justify-between px-8 md:px-12">
@@ -12,17 +16,24 @@ export function Navbar() {
         </span>
 
         <div className="flex items-center gap-2 md:gap-3">
-          <Link
-            aria-label="Source Code"
-            className="p-2.5 rounded-full text-muted hover:text-foreground hover:bg-surface transition-all"
-            href={siteConfig.links.github}
-            rel="noopener noreferrer"
-            target="_blank"
+          {/* Wallpapers & Theming Popover */}
+          <ThemePopover />
+
+          {/* Settings Button */}
+          <Button
+            isIconOnly
+            aria-label="Settings"
+            className="rounded-full text-muted hover:text-foreground"
+            size="sm"
+            variant="ghost"
+            onPress={() => setIsSettingsOpen(true)}
           >
-            <Code2 className="size-5" />
-          </Link>
+            <SettingsIcon className="size-5" />
+          </Button>
         </div>
       </div>
+
+      <SettingsModal isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </header>
   );
 }

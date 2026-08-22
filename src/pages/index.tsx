@@ -22,7 +22,7 @@ export default function IndexPage() {
       >
         <Dock />
 
-        <section className="flex flex-col items-center justify-center flex-1 w-full py-10 md:py-16">
+        <section className="flex flex-col items-center justify-center flex-1 w-full py-10 md:py-8">
           <Tabs.Panel id="home">
             <Clock />
           </Tabs.Panel>
@@ -31,7 +31,7 @@ export default function IndexPage() {
             <Timer />
           </Tabs.Panel>
 
-          {(["todo", "music", "themes", "stats"] as const).map((m) => (
+          {(["todo", "music", "stats"] as const).map((m) => (
             <Tabs.Panel
               key={m}
               className="text-center text-muted font-light text-xl capitalize"

@@ -1,0 +1,542 @@
+import React, { useState } from "react";
+import {
+  Popover,
+  Button,
+  TextField,
+  InputGroup,
+  Label,
+  Tooltip,
+  Slider,
+  Tabs,
+  ScrollShadow,
+} from "@heroui/react";
+import {
+  Palette,
+  Link as LinkIcon,
+  Trash2,
+  Image as ImageIcon,
+  Layers,
+  Sparkles,
+  Tag,
+  Pencil,
+  Check,
+  Sliders,
+  Move,
+} from "lucide-react";
+
+import { useTheme } from "@/hooks/use-theme";
+import { PRESET_BACKGROUNDS } from "@/config/themes";
+
+export function ThemePopover() {
+  const {
+    activeBackground,
+    customBackgrounds,
+    selectBackground,
+    addCustomBackground,
+    renameCustomBackground,
+    removeCustomBackground,
+    overlayOpacity,
+    setOverlayOpacity,
+    blur,
+    setBlur,
+    positionX,
+    positionY,
+    setPositionX,
+    setPositionY,
+    zoom,
+    setZoom,
+  } = useTheme();
+
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageName, setImageName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [activeTab, setActiveTab] = useState<string>("gallery");
+
+  const handleAddCustom = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!imageUrl.trim()) return;
+
+    const success = addCustomBackground(imageName, imageUrl);
+
+    if (success) {
+      setImageUrl("");
+      setImageName("");
+    }
+  };
+
+  const handleSaveRename = (id: string) => {
+    if (editingName.trim()) {
+      renameCustomBackground(id, editingName.trim());
+    }
+    setEditingId(null);
+  };
+
+  const handleRecenter = () => {
+    setPositionX(50);
+    setPositionY(50);
+    setZoom(100);
+  };
+
+  return (
+    <Popover>
+      <Popover.Trigger>
+        <Button
+          isIconOnly
+          aria-label="Wallpapers & Themes"
+          className="rounded-full text-muted hover:text-foreground"
+          size="sm"
+          variant="ghost"
+        >
+          <Palette className="size-5" />
+        </Button>
+      </Popover.Trigger>
+
+      <Popover.Content
+        className="w-[360px] sm:w-[420px] p-4 rounded-3xl bg-surface/95 backdrop-blur-2xl border border-separator/80 shadow-2xl z-[90]"
+        placement="bottom start"
+      >
+        <Popover.Dialog className="space-y-3.5 outline-none">
+          {/* Header & Tabs */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-xl bg-surface-secondary text-foreground">
+                <Palette className="size-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-foreground">
+                  Atmosphere
+                </h3>
+                <p className="text-[11px] text-muted">
+                  {activeBackground ? activeBackground.name : "Clean Slate"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Tabs
+            className="w-full"
+            selectedKey={activeTab}
+            onSelectionChange={(key) => setActiveTab(key as string)}
+          >
+            <Tabs.List className="w-full grid grid-cols-2 p-1 bg-surface-secondary rounded-xl">
+              <Tabs.Tab id="gallery">
+                <ImageIcon className="size-3.5 mr-1.5 inline-block" />
+                Wallpapers
+              </Tabs.Tab>
+              <Tabs.Tab id="adjust">
+                <Sliders className="size-3.5 mr-1.5 inline-block" />
+                Fine Tuning
+              </Tabs.Tab>
+            </Tabs.List>
+
+            {/* Tab 1: Wallpapers Gallery & Custom Add */}
+            <Tabs.Panel className="space-y-3 pt-2" id="gallery">
+              {/* Add Custom Wallpaper via Link & Name */}
+              <form
+                className="p-2.5 bg-surface-secondary/70 rounded-2xl border border-separator/60 space-y-2"
+                onSubmit={handleAddCustom}
+              >
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                  <Sparkles className="size-3.5 text-accent" />
+                  <span>Add Image Link</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <TextField
+                    fullWidth
+                    name="imageName"
+                    value={imageName}
+                    onChange={setImageName}
+                  >
+                    <InputGroup fullWidth>
+                      <InputGroup.Prefix>
+                        <Tag className="size-3.5 text-muted" />
+                      </InputGroup.Prefix>
+                      <InputGroup.Input
+                        className="text-xs"
+                        placeholder="Name (optional)"
+                      />
+                    </InputGroup>
+                  </TextField>
+
+                  <div className="flex gap-1.5">
+                    <TextField
+                      fullWidth
+                      name="imageUrl"
+                      value={imageUrl}
+                      onChange={setImageUrl}
+                    >
+                      <InputGroup fullWidth>
+                        <InputGroup.Prefix>
+                          <LinkIcon className="size-3.5 text-muted" />
+                        </InputGroup.Prefix>
+                        <InputGroup.Input
+                          className="text-xs"
+                          placeholder="Paste image URL (https://...)"
+                          type="url"
+                        />
+                      </InputGroup>
+                    </TextField>
+
+                    <Button
+                      className="shrink-0 font-medium px-3 text-xs"
+                      isDisabled={!imageUrl.trim()}
+                      size="sm"
+                      type="submit"
+                      variant="primary"
+                    >
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </form>
+
+              {/* Gallery Grid */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px] font-semibold text-muted px-0.5">
+                  <span>Presets & Custom</span>
+                  <span className="text-[10px]">
+                    {PRESET_BACKGROUNDS.length + customBackgrounds.length} total
+                  </span>
+                </div>
+
+                <ScrollShadow className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto py-2 pr-2">
+                  {/* Clean Slate Minimal Option */}
+                  <button
+                    className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-all border cursor-pointer overflow-hidden ${
+                      activeBackground === null
+                        ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 bg-surface"
+                        : "border-separator/80 hover:border-muted bg-surface-secondary/70"
+                    }`}
+                    type="button"
+                    onClick={() => selectBackground(null)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <Layers className="size-3.5 text-muted group-hover:text-foreground transition-colors" />
+                    </div>
+                    <span className="text-[10px] font-medium text-foreground truncate">
+                      Clean Slate
+                    </span>
+                  </button>
+
+                  {/* Preset Wallpapers */}
+                  {PRESET_BACKGROUNDS.map((bg) => {
+                    const isSelected = activeBackground?.id === bg.id;
+
+                    return (
+                      <button
+                        key={bg.id}
+                        className={`group relative rounded-xl aspect-[16/11] p-2 text-left flex flex-col justify-between transition-all border cursor-pointer overflow-hidden bg-cover bg-center ${
+                          isSelected
+                            ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
+                            : "border-separator/80 hover:border-muted hover:scale-[1.02]"
+                        }`}
+                        style={{ backgroundImage: `url(${bg.url})` }}
+                        type="button"
+                        onClick={() => selectBackground(bg)}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
+                        <div className="relative z-10 flex items-center justify-between w-full">
+                          <ImageIcon className="size-3 text-white/80" />
+                        </div>
+                        <span className="relative z-10 text-[10px] font-medium text-white truncate drop-shadow-sm">
+                          {bg.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+
+                  {/* Custom Wallpapers */}
+                  {customBackgrounds.map((bg) => {
+                    const isSelected = activeBackground?.id === bg.id;
+                    const isEditing = editingId === bg.id;
+
+                    return (
+                      <div
+                        key={bg.id}
+                        className={`group relative rounded-xl aspect-[16/11] p-2 text-left flex flex-col justify-between transition-all border overflow-hidden bg-cover bg-center cursor-pointer ${
+                          isSelected
+                            ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
+                            : "border-separator/80 hover:border-muted hover:scale-[1.02]"
+                        }`}
+                        role="button"
+                        style={{ backgroundImage: `url(${bg.url})` }}
+                        tabIndex={0}
+                        onClick={() => {
+                          if (!isEditing) selectBackground(bg);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            if (!isEditing) selectBackground(bg);
+                          }
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
+
+                        <div className="relative z-10 flex items-center justify-between w-full">
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-black/60 text-white/90">
+                            Custom
+                          </span>
+
+                          <div
+                            className="flex items-center gap-1"
+                            role="presentation"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            {/* Rename toggle button */}
+                            <Tooltip delay={150}>
+                              <Tooltip.Trigger>
+                                <Button
+                                  isIconOnly
+                                  aria-label={
+                                    isEditing
+                                      ? `Save ${bg.name}`
+                                      : `Rename ${bg.name}`
+                                  }
+                                  className={`size-4 min-w-0 p-0 rounded-full text-white opacity-80 group-hover:opacity-100 transition-opacity ${
+                                    isEditing
+                                      ? "bg-accent hover:bg-accent/80 text-accent-foreground"
+                                      : "bg-black/60 hover:bg-surface"
+                                  }`}
+                                  size="sm"
+                                  onPress={() => {
+                                    if (isEditing) {
+                                      handleSaveRename(bg.id);
+                                    } else {
+                                      setEditingId(bg.id);
+                                      setEditingName(bg.name);
+                                    }
+                                  }}
+                                >
+                                  {isEditing ? (
+                                    <Check className="size-2.5" />
+                                  ) : (
+                                    <Pencil className="size-2.5" />
+                                  )}
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
+                                {isEditing ? "Save Name" : "Rename"}
+                              </Tooltip.Content>
+                            </Tooltip>
+
+                            {/* Delete button */}
+                            <Tooltip delay={150}>
+                              <Tooltip.Trigger>
+                                <Button
+                                  isIconOnly
+                                  aria-label={`Delete ${bg.name}`}
+                                  className="size-4 min-w-0 p-0 rounded-full bg-black/60 hover:bg-danger text-white opacity-80 group-hover:opacity-100 transition-opacity"
+                                  size="sm"
+                                  onPress={() => removeCustomBackground(bg.id)}
+                                >
+                                  <Trash2 className="size-2.5" />
+                                </Button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
+                                Delete
+                              </Tooltip.Content>
+                            </Tooltip>
+                          </div>
+                        </div>
+
+                        {isEditing ? (
+                          <div
+                            className="relative z-20"
+                            role="presentation"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              className="text-[10px] font-medium text-foreground bg-surface px-1 py-0.5 rounded border border-accent w-full outline-none"
+                              value={editingName}
+                              onBlur={() => handleSaveRename(bg.id)}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveRename(bg.id);
+                                if (e.key === "Escape") setEditingId(null);
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <span className="relative z-10 text-[10px] font-medium text-white truncate drop-shadow-sm w-full block">
+                            {bg.name}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </ScrollShadow>
+              </div>
+            </Tabs.Panel>
+
+            {/* Tab 2: Fine Tuning Adjustments */}
+            <Tabs.Panel className="space-y-3 pt-2" id="adjust">
+              {activeBackground ? (
+                <div className="p-3 bg-surface-secondary/50 rounded-2xl border border-separator/60 space-y-3.5">
+                  <div className="flex items-center justify-between pb-1 border-b border-separator/40">
+                    <span className="text-[11px] font-bold text-muted/80 tracking-wider uppercase">
+                      Position & Scale
+                    </span>
+
+                    {/* Restored Re-center button */}
+                    <Button
+                      className="text-[11px] text-accent hover:text-accent/80 font-medium h-auto p-0 flex items-center gap-1"
+                      size="sm"
+                      variant="ghost"
+                      onPress={handleRecenter}
+                    >
+                      <Move className="size-3" />
+                      Re-center
+                    </Button>
+                  </div>
+
+                  {/* Wallpaper Zoom Slider */}
+                  <Slider
+                    className="w-full"
+                    maxValue={200}
+                    minValue={100}
+                    value={zoom}
+                    onChange={(val) =>
+                      setZoom(typeof val === "number" ? val : val[0])
+                    }
+                  >
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <Label className="text-muted font-medium">
+                        Zoom / Scale
+                      </Label>
+                      <Slider.Output className="font-semibold text-foreground text-[10px]">
+                        {({ state }) => `${state.values[0]}%`}
+                      </Slider.Output>
+                    </div>
+                    <Slider.Track>
+                      <Slider.Fill />
+                      <Slider.Thumb />
+                    </Slider.Track>
+                  </Slider>
+
+                  {/* Horizontal Shift Slider (X) */}
+                  <Slider
+                    className="w-full"
+                    maxValue={100}
+                    minValue={0}
+                    value={positionX}
+                    onChange={(val) =>
+                      setPositionX(typeof val === "number" ? val : val[0])
+                    }
+                  >
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <Label className="text-muted font-medium">
+                        Horizontal Shift (X)
+                      </Label>
+                      <Slider.Output className="font-semibold text-foreground text-[10px]">
+                        {({ state }) => `${state.values[0]}%`}
+                      </Slider.Output>
+                    </div>
+                    <Slider.Track>
+                      <Slider.Fill />
+                      <Slider.Thumb />
+                    </Slider.Track>
+                  </Slider>
+
+                  {/* Vertical Shift Slider (Y) */}
+                  <Slider
+                    className="w-full"
+                    maxValue={100}
+                    minValue={0}
+                    value={positionY}
+                    onChange={(val) =>
+                      setPositionY(typeof val === "number" ? val : val[0])
+                    }
+                  >
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <Label className="text-muted font-medium">
+                        Vertical Shift (Y)
+                      </Label>
+                      <Slider.Output className="font-semibold text-foreground text-[10px]">
+                        {({ state }) => `${state.values[0]}%`}
+                      </Slider.Output>
+                    </div>
+                    <Slider.Track>
+                      <Slider.Fill />
+                      <Slider.Thumb />
+                    </Slider.Track>
+                  </Slider>
+
+                  <div className="pt-2 border-t border-separator/40 space-y-3">
+                    <span className="text-[11px] font-bold text-muted/80 tracking-wider uppercase block">
+                      Dimming & Blur
+                    </span>
+
+                    {/* Dimming Slider */}
+                    <Slider
+                      className="w-full"
+                      maxValue={85}
+                      minValue={10}
+                      value={overlayOpacity}
+                      onChange={(val) =>
+                        setOverlayOpacity(
+                          typeof val === "number" ? val : val[0],
+                        )
+                      }
+                    >
+                      <div className="flex items-center justify-between text-[11px] mb-1">
+                        <Label className="text-muted font-medium">
+                          Wallpaper Dimming
+                        </Label>
+                        <Slider.Output className="font-semibold text-foreground text-[10px]">
+                          {({ state }) => `${state.values[0]}%`}
+                        </Slider.Output>
+                      </div>
+                      <Slider.Track>
+                        <Slider.Fill />
+                        <Slider.Thumb />
+                      </Slider.Track>
+                    </Slider>
+
+                    {/* Soft Blur Slider */}
+                    <Slider
+                      className="w-full"
+                      maxValue={15}
+                      minValue={0}
+                      value={blur}
+                      onChange={(val) =>
+                        setBlur(typeof val === "number" ? val : val[0])
+                      }
+                    >
+                      <div className="flex items-center justify-between text-[11px] mb-1">
+                        <Label className="text-muted font-medium">
+                          Soft Blur
+                        </Label>
+                        <Slider.Output className="font-semibold text-foreground text-[10px]">
+                          {({ state }) => `${state.values[0]}px`}
+                        </Slider.Output>
+                      </div>
+                      <Slider.Track>
+                        <Slider.Fill />
+                        <Slider.Thumb />
+                      </Slider.Track>
+                    </Slider>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 rounded-2xl bg-surface-secondary/40 border border-separator/60 text-center space-y-1">
+                  <Layers className="size-6 text-muted mx-auto mb-2 opacity-60" />
+                  <p className="text-xs font-semibold text-foreground">
+                    Clean Slate Active
+                  </p>
+                  <p className="text-[11px] text-muted">
+                    Select a wallpaper from the gallery to customize zoom, shift
+                    position, dimming, and blur.
+                  </p>
+                </div>
+              )}
+            </Tabs.Panel>
+          </Tabs>
+        </Popover.Dialog>
+      </Popover.Content>
+    </Popover>
+  );
+}
