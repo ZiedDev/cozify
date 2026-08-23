@@ -15,8 +15,6 @@ export interface ThemeConfig {
   positionY: number; // 0 to 100 (% vertical shift)
   zoom: number; // 100 to 200 (% scale)
   hue: number; // 0 to 360 (default 291)
-  chroma: number; // 0.01 to 0.2 (default 0.1)
-  lightness: number; // 40 to 90 (default 71)
 }
 
 export const DEFAULT_HUE = 291;
@@ -32,17 +30,15 @@ export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   positionY: 50,
   zoom: 100,
   hue: DEFAULT_HUE,
-  chroma: DEFAULT_CHROMA,
-  lightness: DEFAULT_LIGHTNESS,
 };
 
 export const PRESET_THEME_COLORS = [
-  { name: "Cozify Purple", hue: 291, chroma: 0.1, lightness: 71 },
-  { name: "Sunset Rose", hue: 15, chroma: 0.15, lightness: 70 },
-  { name: "Warm Amber", hue: 75, chroma: 0.14, lightness: 75 },
-  { name: "Emerald Sage", hue: 155, chroma: 0.14, lightness: 72 },
-  { name: "Ocean Sky", hue: 230, chroma: 0.12, lightness: 72 },
-  { name: "Neon Violet", hue: 310, chroma: 0.16, lightness: 68 },
+  { name: "Cozify Purple", hue: 291 },
+  { name: "Sunset Rose", hue: 15 },
+  { name: "Warm Amber", hue: 75 },
+  { name: "Emerald Sage", hue: 155 },
+  { name: "Ocean Sky", hue: 230 },
+  { name: "Neon Violet", hue: 310 },
 ];
 
 /**

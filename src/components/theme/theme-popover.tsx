@@ -56,8 +56,6 @@ export function ThemePopover() {
     zoom,
     setZoom,
     hue,
-    chroma,
-    lightness,
     setAppThemeColor,
   } = useTheme();
 
@@ -78,7 +76,7 @@ export function ThemePopover() {
   const handleColorChange = (newColor: Color) => {
     const newHue = Math.round(newColor.getChannelValue("hue"));
 
-    setAppThemeColor(newHue, DEFAULT_CHROMA, DEFAULT_LIGHTNESS);
+    setAppThemeColor(newHue);
   };
 
   const handleAddCustom = (e?: React.FormEvent) => {
@@ -130,7 +128,9 @@ export function ThemePopover() {
             <div className="flex items-center gap-2">
               <span
                 className="p-1.5 rounded-xl bg-surface-secondary transition-colors"
-                style={{ color: `oklch(${lightness}% ${chroma} ${hue})` }}
+                style={{
+                  color: `oklch(${DEFAULT_LIGHTNESS}% ${DEFAULT_CHROMA} ${hue})`,
+                }}
               >
                 <Palette className="size-4" />
               </span>
@@ -156,17 +156,13 @@ export function ThemePopover() {
                 aria-label="Appearance Navigation"
                 className="rounded-4xl bg-surface-secondary"
               >
-                <Tabs.Tab
-                  id="gallery"
-                >
+                <Tabs.Tab className="flex gap-1.5" id="gallery">
                   <ImageIcon className="size-3.5" />
                   <span>Wallpapers</span>
                   <Tabs.Indicator className="bg-surface text-foreground" />
                 </Tabs.Tab>
 
-                <Tabs.Tab
-                  id="adjust"
-                >
+                <Tabs.Tab className="flex gap-1.5" id="adjust">
                   <Sliders className="size-3.5" />
                   <span>Fine Tuning</span>
                   <Tabs.Indicator className="bg-surface text-foreground" />
@@ -247,7 +243,7 @@ export function ThemePopover() {
                   </span>
                 </div>
 
-                <ScrollShadow className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto py-2 pr-2">
+                <ScrollShadow className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto p-2">
                   {/* Clean Slate Minimal Option */}
                   <button
                     className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-all border cursor-pointer overflow-hidden ${
@@ -428,7 +424,7 @@ export function ThemePopover() {
                       <span
                         className="size-3 rounded-full shadow-xs border border-white/20"
                         style={{
-                          backgroundColor: `oklch(${lightness}% ${chroma} ${hue})`,
+                          backgroundColor: `oklch(${DEFAULT_LIGHTNESS}% ${DEFAULT_CHROMA} ${hue})`,
                         }}
                       />
                       <span className="text-[11px] font-bold text-muted/80 tracking-wider uppercase">
@@ -439,13 +435,7 @@ export function ThemePopover() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onPress={() =>
-                        setAppThemeColor(
-                          DEFAULT_HUE,
-                          DEFAULT_CHROMA,
-                          DEFAULT_LIGHTNESS,
-                        )
-                      }
+                      onPress={() => setAppThemeColor(DEFAULT_HUE)}
                     >
                       <RotateCcw className="size-3" />
                       Default
@@ -463,7 +453,7 @@ export function ThemePopover() {
                       <Label className="text-muted font-medium">Hue</Label>
                       <ColorSlider.Output />
                     </div>
-                    <ColorSlider.Track >
+                    <ColorSlider.Track>
                       <ColorSlider.Thumb />
                     </ColorSlider.Track>
                   </ColorSlider>
@@ -482,18 +472,12 @@ export function ThemePopover() {
                               : "bg-surface-secondary/70 text-muted border-separator/60 hover:text-foreground hover:border-muted hover:scale-102"
                           }`}
                           type="button"
-                          onClick={() =>
-                            setAppThemeColor(
-                              preset.hue,
-                              preset.chroma,
-                              preset.lightness,
-                            )
-                          }
+                          onClick={() => setAppThemeColor(preset.hue)}
                         >
                           <span
                             className="size-2 rounded-full shadow-2xs"
                             style={{
-                              backgroundColor: `oklch(${preset.lightness}% ${preset.chroma} ${preset.hue})`,
+                              backgroundColor: `oklch(${DEFAULT_LIGHTNESS}% ${DEFAULT_CHROMA} ${preset.hue})`,
                             }}
                           />
                           <span>{preset.name.split(" ")[0]}</span>

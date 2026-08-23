@@ -89,18 +89,25 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   // 1. Initial hydration from storage mediator
   useEffect(() => {
     async function hydrate() {
-      const saved = await storageAdapter.getItem<PersistedState | null>(
-        STORAGE_KEYS.TIMER_STATE,
-        null,
-      );
+      const saved =
+        await storageAdapter.getItem<Partial<PersistedState> | null>(
+          STORAGE_KEYS.TIMER_STATE,
+          null,
+        );
 
       if (saved) {
-        setMode(saved.mode);
-        setDurations(saved.durations || DEFAULT_TIMER_DURATIONS);
-        setCurrentCycleState(saved.currentCycle || 1);
-        setTargetCyclesState(saved.targetCycles || DEFAULT_TARGET_CYCLES);
-        setAccumulatedFocusSeconds(saved.accumulatedFocusSeconds || 0);
-        setAccumulatedOvertimeSeconds(saved.accumulatedOvertimeSeconds || 0);
+        if (saved.mode) setMode(saved.mode);
+        if (saved.durations) setDurations(saved.durations);
+        if (saved.currentCycle) setCurrentCycleState(saved.currentCycle);
+        if (saved.targetCycles) setTargetCyclesState(saved.targetCycles);
+        if (saved.accumulatedFocusSeconds)
+          setAccumulatedFocusSeconds(saved.accumulatedFocusSeconds);
+        if (saved.accumulatedOvertimeSeconds)
+          setAccumulatedOvertimeSeconds(saved.accumulatedOvertimeSeconds);
+
+        const currentDurations = saved.durations || DEFAULT_TIMER_DURATIONS;
+        const activeMode = saved.mode || "focus";
+        const baseTime = currentDurations[activeMode];
 
         if (saved.isRunning && saved.targetEndTime) {
           const remaining = Math.ceil(
@@ -111,11 +118,14 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
           remainingOnPauseRef.current = remaining;
           targetEndTimeRef.current = saved.targetEndTime;
           setIsRunning(true);
-        } else {
+        } else if (typeof saved.timeLeft === "number") {
           setTimeLeft(saved.timeLeft);
           remainingOnPauseRef.current = saved.timeLeft;
           targetEndTimeRef.current = null;
           setIsRunning(false);
+        } else {
+          setTimeLeft(baseTime);
+          remainingOnPauseRef.current = baseTime;
         }
       }
       setIsHydrated(true);
@@ -123,21 +133,47 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     hydrate();
   }, []);
 
-  // 2. Persist state changes via mediator service
+  // 2. Persist state changes minimally (remove storage when default/idle)
   useEffect(() => {
     if (!isHydrated) return;
 
-    const stateToSave: PersistedState = {
-      mode,
-      timeLeft,
-      isRunning,
-      targetEndTime: targetEndTimeRef.current,
-      currentCycle,
-      targetCycles,
-      durations,
-      accumulatedFocusSeconds,
-      accumulatedOvertimeSeconds,
-    };
+    const areDurationsCustom =
+      durations.focus !== DEFAULT_TIMER_DURATIONS.focus ||
+      durations.shortBreak !== DEFAULT_TIMER_DURATIONS.shortBreak ||
+      durations.longBreak !== DEFAULT_TIMER_DURATIONS.longBreak;
+
+    const isTargetCustom = targetCycles !== DEFAULT_TARGET_CYCLES;
+
+    const isActive =
+      isRunning ||
+      timeLeft !== durations[mode] ||
+      accumulatedFocusSeconds > 0 ||
+      accumulatedOvertimeSeconds > 0 ||
+      currentCycle > 1 ||
+      mode !== "focus";
+
+    if (!isActive && !areDurationsCustom && !isTargetCustom) {
+      storageAdapter.removeItem(STORAGE_KEYS.TIMER_STATE);
+
+      return;
+    }
+
+    const stateToSave: Partial<PersistedState> = {};
+
+    if (areDurationsCustom) stateToSave.durations = durations;
+    if (isTargetCustom) stateToSave.targetCycles = targetCycles;
+
+    if (isActive) {
+      stateToSave.mode = mode;
+      stateToSave.timeLeft = timeLeft;
+      stateToSave.isRunning = isRunning;
+      stateToSave.targetEndTime = targetEndTimeRef.current;
+      stateToSave.currentCycle = currentCycle;
+      if (accumulatedFocusSeconds > 0)
+        stateToSave.accumulatedFocusSeconds = accumulatedFocusSeconds;
+      if (accumulatedOvertimeSeconds > 0)
+        stateToSave.accumulatedOvertimeSeconds = accumulatedOvertimeSeconds;
+    }
 
     storageAdapter.setItem(STORAGE_KEYS.TIMER_STATE, stateToSave);
   }, [
