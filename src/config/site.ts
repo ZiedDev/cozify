@@ -1,5 +1,4 @@
 export const siteConfig = {
-  name: "Cozify",
   version: "beta",
   description: "Build your ideal focus environment.",
   links: {

@@ -54,6 +54,6 @@ export interface SessionRecord {
   sprintsCompleted: number;
   targetSprints: number;
   focusMinutes: number;
-  overtimeMinutes: number;
+  overtimeMinutes?: number;
   notes?: string;
 }

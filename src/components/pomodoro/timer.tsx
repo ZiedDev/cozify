@@ -20,6 +20,7 @@ export function Timer() {
     isRunning,
     isOvertime,
     currentCycle,
+    completedCycles,
     targetCycles,
     isSaveModalOpen,
     setIsSaveModalOpen,
@@ -72,7 +73,8 @@ export function Timer() {
   const isPaused = !isRunning && (timeLeft !== durations[mode] || isOvertime);
   const hasStarted = isRunning || isPaused;
   const isReadyToFinish =
-    currentCycle >= targetCycles && (timeLeft <= 0 || !isFocus);
+    (completedCycles >= targetCycles && (!isFocus || timeLeft <= 0)) ||
+    (currentCycle >= targetCycles && isFocus && timeLeft <= 0);
 
   return (
     <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xl mx-auto">
@@ -87,8 +89,13 @@ export function Timer() {
         }}
       />
 
-      {/* Main Large Timer Display */}
-      <TimerDisplay formattedTime={formattedTime} isOvertime={isOvertime} />
+      {/* Main Large Timer Display with hover +/- buttons */}
+      <TimerDisplay
+        formattedTime={formattedTime}
+        isOvertime={isOvertime}
+        timeLeft={timeLeft}
+        onAddMinutes={addMinutes}
+      />
 
       {/* Main Timer Controls Row */}
       <TimerControls
@@ -100,8 +107,6 @@ export function Timer() {
         isReadyToFinish={isReadyToFinish}
         isRunning={isRunning}
         setCustomDurations={setCustomDurations}
-        timeLeft={timeLeft}
-        onAddMinutes={addMinutes}
         onDurationPopoverOpenChange={setIsDurationPopoverOpen}
         onOpenBreakModal={() => {
           setIsDurationPopoverOpen(false);
@@ -126,6 +131,7 @@ export function Timer() {
       {/* Break Selection Modal */}
       <BreakModal
         durations={durations}
+        isCycleCompleted={!isFocus || timeLeft <= 0}
         isOpen={isBreakModalOpen}
         onOpenChange={setIsBreakModalOpen}
         onSelectBreak={(breakMode) => finishCycleAndTakeBreak(breakMode)}

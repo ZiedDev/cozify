@@ -24,6 +24,7 @@ interface PersistedState {
   isRunning: boolean;
   targetEndTime: number | null;
   currentCycle: number;
+  completedCycles: number;
   targetCycles: number;
   durations: TimerDurations;
   accumulatedFocusSeconds: number;
@@ -35,6 +36,7 @@ export interface TimerContextValue {
   timeLeft: number;
   isRunning: boolean;
   currentCycle: number;
+  completedCycles: number;
   targetCycles: number;
   durations: TimerDurations;
   isOvertime: boolean;
@@ -71,6 +73,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   );
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [currentCycle, setCurrentCycleState] = useState<number>(1);
+  const [completedCycles, setCompletedCyclesState] = useState<number>(0);
   const [targetCycles, setTargetCyclesState] = useState<number>(
     DEFAULT_TARGET_CYCLES,
   );
@@ -99,6 +102,8 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
         if (saved.mode) setMode(saved.mode);
         if (saved.durations) setDurations(saved.durations);
         if (saved.currentCycle) setCurrentCycleState(saved.currentCycle);
+        if (typeof saved.completedCycles === "number")
+          setCompletedCyclesState(saved.completedCycles);
         if (saved.targetCycles) setTargetCyclesState(saved.targetCycles);
         if (saved.accumulatedFocusSeconds)
           setAccumulatedFocusSeconds(saved.accumulatedFocusSeconds);
@@ -150,6 +155,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       accumulatedFocusSeconds > 0 ||
       accumulatedOvertimeSeconds > 0 ||
       currentCycle > 1 ||
+      completedCycles > 0 ||
       mode !== "focus";
 
     if (!isActive && !areDurationsCustom && !isTargetCustom) {
@@ -169,6 +175,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       stateToSave.isRunning = isRunning;
       stateToSave.targetEndTime = targetEndTimeRef.current;
       stateToSave.currentCycle = currentCycle;
+      stateToSave.completedCycles = completedCycles;
       if (accumulatedFocusSeconds > 0)
         stateToSave.accumulatedFocusSeconds = accumulatedFocusSeconds;
       if (accumulatedOvertimeSeconds > 0)
@@ -182,6 +189,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     timeLeft,
     isRunning,
     currentCycle,
+    completedCycles,
     targetCycles,
     durations,
     accumulatedFocusSeconds,
@@ -191,6 +199,26 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const switchMode = useCallback(
     (newMode: TimerMode, autoStart = false) => {
       toast.clear();
+
+      // When switching from an active focus session to a break, mark cycle completed and advance to next
+      if (mode === "focus" && newMode !== "focus") {
+        const hasFocusProgress =
+          isRunning ||
+          (timeLeft < durations.focus && timeLeft > 0) ||
+          timeLeft <= 0;
+
+        if (hasFocusProgress) {
+          const nextCompleted = Math.max(completedCycles + 1, currentCycle);
+
+          setCompletedCyclesState(nextCompleted);
+
+          const next = Math.min(MAX_TARGET_CYCLES, currentCycle + 1);
+
+          setCurrentCycleState(next);
+          if (currentCycle >= targetCycles) setTargetCyclesState(next);
+        }
+      }
+
       setMode(newMode);
       hasTriggeredToastRef.current = false;
       const newTime = durations[newMode];
@@ -207,7 +235,15 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
         targetEndTimeRef.current = null;
       }
     },
-    [durations],
+    [
+      durations,
+      mode,
+      isRunning,
+      timeLeft,
+      completedCycles,
+      currentCycle,
+      targetCycles,
+    ],
   );
 
   const finishCycleAndTakeBreak = useCallback(
@@ -223,43 +259,41 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     [currentCycle, targetCycles, switchMode],
   );
 
-  // Skip Break: Advances cycle (expanding 4/4 to 5/5) and sets Focus ready to start (NO auto-start)
+  // Skip Break: Advances cycle if coming from a completed focus cycle, and sets Focus ready to start
   const skipBreak = useCallback(() => {
     toast.clear();
 
-    if (currentCycle >= targetCycles) {
-      const newTotal = Math.min(MAX_TARGET_CYCLES, targetCycles + 1);
+    if (mode === "focus") {
+      const nextCompleted = Math.max(completedCycles + 1, currentCycle);
 
-      setTargetCyclesState(newTotal);
-      setCurrentCycleState(newTotal);
-    } else {
-      if (mode !== "focus" || timeLeft <= 0) {
-        setCurrentCycleState((prev) => Math.min(targetCycles, prev + 1));
-      }
+      setCompletedCyclesState(nextCompleted);
+
+      const next = Math.min(MAX_TARGET_CYCLES, currentCycle + 1);
+
+      setCurrentCycleState(next);
+      if (currentCycle >= targetCycles) setTargetCyclesState(next);
     }
 
-    switchMode("focus", false);
-  }, [currentCycle, targetCycles, mode, timeLeft, switchMode]);
+    setMode("focus");
+    hasTriggeredToastRef.current = false;
+    const newTime = durations.focus;
 
-  // Start Next Cycle: Advances cycle (expanding 4/4 to 5/5) and sets Focus ready to start
+    setTimeLeft(newTime);
+    remainingOnPauseRef.current = newTime;
+    setIsRunning(false);
+    targetEndTimeRef.current = null;
+  }, [mode, completedCycles, currentCycle, targetCycles, durations.focus]);
+
+  // Start Next Cycle: Sets Focus ready and starts timer
   const startNextCycle = useCallback(() => {
     toast.clear();
-
-    if (currentCycle >= targetCycles) {
-      const newTotal = Math.min(MAX_TARGET_CYCLES, targetCycles + 1);
-
-      setTargetCyclesState(newTotal);
-      setCurrentCycleState(newTotal);
-    } else {
-      setCurrentCycleState((prev) => Math.min(targetCycles, prev + 1));
-    }
-
-    switchMode("focus", false);
-  }, [currentCycle, targetCycles, switchMode]);
+    switchMode("focus", true);
+  }, [switchMode]);
 
   const startNewSession = useCallback(() => {
     toast.clear();
     setCurrentCycleState(1);
+    setCompletedCyclesState(0);
     setAccumulatedFocusSeconds(0);
     setAccumulatedOvertimeSeconds(0);
     switchMode("focus", false);
@@ -326,8 +360,6 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
               },
             });
           } else {
-            setCurrentCycleState((prev) => Math.min(targetCycles, prev + 1));
-
             toast("Cycle Finished!", {
               description: `Cycle ${currentCycle} of ${targetCycles} is done. Ready for a break?`,
               variant: "accent",
@@ -401,19 +433,25 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     const additionalSeconds = minutes * 60;
 
     setTimeLeft((prev) =>
-      Math.min(MAX_DURATION_SECONDS, prev + additionalSeconds),
+      Math.max(60, Math.min(MAX_DURATION_SECONDS, prev + additionalSeconds)),
     );
-    remainingOnPauseRef.current = Math.min(
-      MAX_DURATION_SECONDS,
-      remainingOnPauseRef.current + additionalSeconds,
+    remainingOnPauseRef.current = Math.max(
+      60,
+      Math.min(
+        MAX_DURATION_SECONDS,
+        remainingOnPauseRef.current + additionalSeconds,
+      ),
     );
 
     if (targetEndTimeRef.current !== null) {
       const now = Date.now();
       const currentRemaining = Math.max(0, targetEndTimeRef.current - now);
-      const newRemaining = Math.min(
-        MAX_DURATION_SECONDS * 1000,
-        currentRemaining + additionalSeconds * 1000,
+      const newRemaining = Math.max(
+        60 * 1000,
+        Math.min(
+          MAX_DURATION_SECONDS * 1000,
+          currentRemaining + additionalSeconds * 1000,
+        ),
       );
 
       targetEndTimeRef.current = now + newRemaining;
@@ -428,17 +466,35 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     );
 
     setTargetCyclesState(clamped);
-    setCurrentCycleState((prev) => Math.min(prev, clamped));
+    setCurrentCycleState((prevCycle) => {
+      const nextCycle = Math.min(prevCycle, clamped);
+
+      setCompletedCyclesState((prevCompleted) =>
+        Math.min(prevCompleted, Math.max(0, nextCycle - 1)),
+      );
+
+      return nextCycle;
+    });
   }, []);
 
+  // Jump to specific cycle cleanly: resets focus timer to 25:00 at 0% progress
   const setCurrentCycle = useCallback(
     (cycle: number) => {
       toast.clear();
       const clamped = Math.max(1, Math.min(targetCycles, cycle));
 
       setCurrentCycleState(clamped);
+      setCompletedCyclesState(clamped - 1);
+      setMode("focus");
+      setIsRunning(false);
+      targetEndTimeRef.current = null;
+      hasTriggeredToastRef.current = false;
+      const initialTime = durations.focus;
+
+      setTimeLeft(initialTime);
+      remainingOnPauseRef.current = initialTime;
     },
-    [targetCycles],
+    [targetCycles, durations.focus],
   );
 
   const setCustomDurations = useCallback(
@@ -477,6 +533,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     timeLeft,
     isRunning,
     currentCycle,
+    completedCycles,
     targetCycles,
     durations,
     isOvertime,

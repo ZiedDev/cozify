@@ -1,9 +1,9 @@
 import { Button } from "@heroui/react";
-import { Play, Pause, Plus, Coffee, SquareCheck } from "lucide-react";
+import { Play, Pause, Coffee, Flag } from "lucide-react";
 
 import { DurationsPopover } from "./durations-popover";
 
-import { MAX_DURATION_SECONDS, TimerDurations } from "@/config/timer";
+import { TimerDurations } from "@/config/timer";
 
 interface TimerControlsProps {
   isRunning: boolean;
@@ -11,11 +11,9 @@ interface TimerControlsProps {
   isFocus: boolean;
   hasStarted: boolean;
   isReadyToFinish: boolean;
-  timeLeft: number;
   durations: TimerDurations;
   isDurationPopoverOpen: boolean;
   onToggle: () => void;
-  onAddMinutes: (minutes: number) => void;
   onOpenBreakModal: () => void;
   onOpenSaveModal: () => void;
   onDurationPopoverOpenChange: (open: boolean) => void;
@@ -28,11 +26,9 @@ export function TimerControls({
   isFocus,
   hasStarted,
   isReadyToFinish,
-  timeLeft,
   durations,
   isDurationPopoverOpen,
   onToggle,
-  onAddMinutes,
   onOpenBreakModal,
   onOpenSaveModal,
   onDurationPopoverOpenChange,
@@ -65,18 +61,6 @@ export function TimerControls({
         )}
       </Button>
 
-      {/* Quick +5m (Disabled when at or above 180m max) */}
-      <Button
-        className="px-3.5 sm:px-4 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1"
-        isDisabled={timeLeft >= MAX_DURATION_SECONDS}
-        size="lg"
-        variant="secondary"
-        onPress={() => onAddMinutes(5)}
-      >
-        <Plus className="size-4" />
-        <span>5m</span>
-      </Button>
-
       {/* Take Break Button */}
       {isFocus && hasStarted && (
         <Button
@@ -90,7 +74,7 @@ export function TimerControls({
         </Button>
       )}
 
-      {/* Finish Session Button -> Placed before Durations */}
+      {/* Finish Session Button */}
       <Button
         aria-label="Finish Session"
         className="px-3.5 sm:px-4 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
@@ -98,7 +82,7 @@ export function TimerControls({
         variant={isReadyToFinish ? "primary" : "secondary"}
         onPress={onOpenSaveModal}
       >
-        <SquareCheck className="size-4 sm:size-5" />
+        <Flag className="size-4 sm:size-5" />
         <span>Finish</span>
       </Button>
 

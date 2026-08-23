@@ -65,7 +65,7 @@ export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
                 </Tabs.ListContainer>
 
                 <div className="hidden sm:block px-3 py-2 text-[11px] text-muted/70 capitalize">
-                  {siteConfig.name} {siteConfig.version}
+                  {siteConfig.version}
                 </div>
               </div>
 

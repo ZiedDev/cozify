@@ -1,6 +1,6 @@
 import { AlertDialog, Button } from "@heroui/react";
 
-import { TIMER_MODE_LABELS, TimerMode } from "@/config/timer";
+import { TimerMode } from "@/config/timer";
 
 interface InterruptAlertProps {
   mode: TimerMode;
@@ -15,33 +15,37 @@ export function InterruptAlert({
   onCancel,
   onConfirm,
 }: InterruptAlertProps) {
+  const isFocus = mode === "focus";
+
   return (
     <AlertDialog.Backdrop
       isOpen={pendingAction !== null}
       onOpenChange={(open) => !open && onCancel()}
     >
       <AlertDialog.Container>
-        <AlertDialog.Dialog className="sm:max-w-[400px]">
+        <AlertDialog.Dialog className="sm:max-w-md">
           <AlertDialog.CloseTrigger />
           <AlertDialog.Header>
-            <AlertDialog.Icon status="warning" />
-            <AlertDialog.Heading>Switch active session?</AlertDialog.Heading>
+            <AlertDialog.Icon status={isFocus ? "warning" : "default"} />
+            <AlertDialog.Heading>
+              {isFocus ? "End current focus cycle?" : "End break early?"}
+            </AlertDialog.Heading>
           </AlertDialog.Header>
 
           <AlertDialog.Body>
             <p className="text-muted text-sm leading-relaxed">
-              You currently have an active{" "}
-              {TIMER_MODE_LABELS[mode].toLowerCase()} countdown running.
-              Switching or resetting now will end your current progress.
+              {isFocus
+                ? "Your active focus session will be counted as completed, and you will advance to the next cycle."
+                : "Your break timer will end now and get you ready for the next focus cycle."}
             </p>
           </AlertDialog.Body>
 
           <AlertDialog.Footer>
             <Button slot="close" variant="tertiary" onPress={onCancel}>
-              Keep Going
+              Cancel
             </Button>
             <Button variant="primary" onPress={onConfirm}>
-              Confirm Switch
+              {isFocus ? "Complete & Switch" : "Start Focus"}
             </Button>
           </AlertDialog.Footer>
         </AlertDialog.Dialog>

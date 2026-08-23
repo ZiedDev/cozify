@@ -1,3 +1,5 @@
+import type { TimeValue } from "@heroui/react";
+
 import { useState, useEffect } from "react";
 import {
   Modal,
@@ -5,9 +7,11 @@ import {
   TextField,
   InputGroup,
   Label,
+  TimeField,
   toast,
 } from "@heroui/react";
-import { Bookmark, Clock, Flame, CheckCircle2, FileText } from "lucide-react";
+import { Time } from "@internationalized/date";
+import { Bookmark, Clock, CheckCircle2, FileText } from "lucide-react";
 
 import { useTimer } from "@/hooks/use-timer";
 import {
@@ -26,61 +30,74 @@ export function SaveProgressModal({
   onOpenChange,
 }: SaveProgressModalProps) {
   const {
+    mode,
+    timeLeft,
+    isRunning,
     currentCycle,
+    completedCycles,
     targetCycles,
     durations,
     accumulatedFocusSeconds,
-    accumulatedOvertimeSeconds,
     startNewSession,
     discardSession,
   } = useTimer();
 
-  const initialFocusMins = Math.max(
+  // In focus mode, only count currentCycle if the user actually started/ran this cycle.
+  // Otherwise (if sitting at focus menu without starting, or on break), use completedCycles.
+  const hasStartedCurrentFocus =
+    mode === "focus" && (timeLeft < durations.focus || isRunning);
+
+  const sprintsDone = Math.max(
     1,
-    Math.round(
-      accumulatedFocusSeconds > 0
-        ? accumulatedFocusSeconds / 60
-        : (durations.focus * currentCycle) / 60,
-    ),
+    hasStartedCurrentFocus
+      ? Math.max(completedCycles, currentCycle)
+      : completedCycles,
   );
-  const initialOvertimeMins = Math.round(accumulatedOvertimeSeconds / 60);
+
+  const initialTotalSeconds =
+    accumulatedFocusSeconds > 0
+      ? accumulatedFocusSeconds
+      : durations.focus * sprintsDone;
 
   const [title, setTitle] = useState("Deep Focus Session");
-  const [focusMins, setFocusMins] = useState(initialFocusMins);
-  const [overtimeMins, setOvertimeMins] = useState(initialOvertimeMins);
+  const [timeValue, setTimeValue] = useState<TimeValue | null>(() => {
+    const h = Math.floor(initialTotalSeconds / 3600);
+    const m = Math.floor((initialTotalSeconds % 3600) / 60);
+    const s = initialTotalSeconds % 60;
+
+    return new Time(h, m, s);
+  });
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
     if (isOpen) {
-      setFocusMins(
-        Math.max(
-          1,
-          Math.round(
-            accumulatedFocusSeconds > 0
-              ? accumulatedFocusSeconds / 60
-              : (durations.focus * currentCycle) / 60,
-          ),
-        ),
-      );
-      setOvertimeMins(Math.round(accumulatedOvertimeSeconds / 60));
+      const totalSec =
+        accumulatedFocusSeconds > 0
+          ? accumulatedFocusSeconds
+          : durations.focus * sprintsDone;
+
+      const h = Math.floor(totalSec / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+
+      setTimeValue(new Time(h, m, s));
     }
-  }, [
-    isOpen,
-    accumulatedFocusSeconds,
-    accumulatedOvertimeSeconds,
-    durations.focus,
-    currentCycle,
-  ]);
+  }, [isOpen, accumulatedFocusSeconds, durations.focus, sprintsDone]);
 
   const handleSave = async () => {
+    const totalSecs = timeValue
+      ? timeValue.hour * 3600 + timeValue.minute * 60 + timeValue.second
+      : Math.max(60, initialTotalSeconds);
+
+    const focusMinutes = Math.max(1, Math.round(totalSecs / 60));
+
     const record: SessionRecord = {
       id: `session_${Date.now()}`,
       createdAt: Date.now(),
       title: title.trim() || "Focus Session",
-      sprintsCompleted: currentCycle,
+      sprintsCompleted: sprintsDone,
       targetSprints: targetCycles,
-      focusMinutes: Number(focusMins) || 1,
-      overtimeMinutes: Number(overtimeMins) || 0,
+      focusMinutes,
       notes: notes.trim() || undefined,
     };
 
@@ -116,62 +133,46 @@ export function SaveProgressModal({
             <div>
               <Modal.Heading>Save Session Progress</Modal.Heading>
               <p className="text-xs text-muted font-normal mt-0.5">
-                Completed {currentCycle} of {targetCycles} cycles
+                Completed {sprintsDone} of {targetCycles} cycles
               </p>
             </div>
           </Modal.Header>
 
           <Modal.Body className="space-y-3.5">
-            {/* Session Goal / Title with official HeroUI InputGroup */}
+            {/* Session Goal / Title */}
             <TextField fullWidth name="title" value={title} onChange={setTitle}>
               <Label>Session Goal / Title</Label>
               <InputGroup fullWidth>
                 <InputGroup.Prefix>
                   <Bookmark className="size-4 text-muted" />
                 </InputGroup.Prefix>
-                <InputGroup.Input placeholder="e.g. Study session" />
+                <InputGroup.Input placeholder="e.g. Deep Work, Math Study" />
               </InputGroup>
             </TextField>
 
-            {/* Focus & Overtime inputs with InputGroup Prefix & Suffix */}
-            <div className="flex w-full gap-2">
-              <TextField
-                fullWidth
-                name="focus"
-                value={String(focusMins)}
-                onChange={(val) => setFocusMins(Number(val))}
-              >
-                <Label>Focus Time</Label>
-                <InputGroup fullWidth>
-                  <InputGroup.Prefix>
-                    <Clock className="size-4 text-muted" />
-                  </InputGroup.Prefix>
-                  <InputGroup.Input className="w-12" min={1} type="number" />
-                  <InputGroup.Suffix>mins</InputGroup.Suffix>
-                </InputGroup>
-              </TextField>
+            {/* Total Focus Time using HeroUI TimeField with hh:mm:ss editing */}
+            <TimeField
+              fullWidth
+              granularity="second"
+              hourCycle={24}
+              name="focusTime"
+              value={timeValue}
+              onChange={setTimeValue}
+            >
+              <Label>Total Focus Time</Label>
+              <TimeField.Group>
+                <TimeField.Prefix>
+                  <Clock className="size-4 text-muted" />
+                </TimeField.Prefix>
+                <TimeField.Input>
+                  {(segment) => <TimeField.Segment segment={segment} />}
+                </TimeField.Input>
+              </TimeField.Group>
+            </TimeField>
 
-              <TextField
-                fullWidth
-                className="flex"
-                name="overtime"
-                value={String(overtimeMins)}
-                onChange={(val) => setOvertimeMins(Number(val))}
-              >
-                <Label>Overtime Logged</Label>
-                <InputGroup fullWidth>
-                  <InputGroup.Prefix>
-                    <Flame className="size-4" />
-                  </InputGroup.Prefix>
-                  <InputGroup.Input className="w-12" min={0} type="number" />
-                  <InputGroup.Suffix>mins</InputGroup.Suffix>
-                </InputGroup>
-              </TextField>
-            </div>
-
-            {/* Session Notes with official HeroUI InputGroup.TextArea */}
+            {/* Session Notes with InputGroup.TextArea */}
             <TextField fullWidth name="notes" value={notes} onChange={setNotes}>
-              <Label>Session Notes (optional)</Label>
+              <Label>Session Notes (Optional)</Label>
               <InputGroup fullWidth>
                 <InputGroup.Prefix>
                   <FileText className="size-4 text-muted" />
@@ -187,10 +188,12 @@ export function SaveProgressModal({
 
           <Modal.Footer className="flex items-center justify-between pt-2">
             <Button
-              className="text-muted hover:text-danger text-xs px-2"
               slot="close"
-              variant="tertiary"
-              onPress={discardSession}
+              variant="danger-soft"
+              onPress={() => {
+                onOpenChange(false);
+                discardSession();
+              }}
             >
               Discard Session
             </Button>
