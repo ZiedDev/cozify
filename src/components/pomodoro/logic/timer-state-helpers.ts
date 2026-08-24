@@ -75,3 +75,73 @@ export function hasCustomSettings(
 
   return areDurationsCustom || isTargetCustom;
 }
+
+/**
+ * Calculates total exact accumulated focus seconds across all cycles in epoch time
+ */
+export function calculateTotalFocusSeconds(
+  cycleStates: Record<
+    number,
+    { timeLeft: number; isCompleted: boolean; initialDuration?: number }
+  >,
+  currentCycle: number,
+  mode: TimerMode,
+  currentRemainingTime: number,
+  defaultFocusDuration: number,
+): number {
+  let total = 0;
+
+  // 1. Sum up all recorded cycles other than the active focus cycle
+  for (const [cycleNumStr, state] of Object.entries(cycleStates)) {
+    const cycleNum = Number(cycleNumStr);
+    if (cycleNum === currentCycle && mode === "focus") {
+      continue;
+    }
+    const initial = state.initialDuration || defaultFocusDuration;
+    if (state.isCompleted) {
+      total += Math.max(initial, initial - state.timeLeft);
+    } else {
+      total += Math.max(0, initial - state.timeLeft);
+    }
+  }
+
+  // 2. Add current active focus cycle
+  if (mode === "focus") {
+    const currentState = cycleStates[currentCycle];
+    const initial = currentState?.initialDuration || defaultFocusDuration;
+    total += Math.max(0, initial - currentRemainingTime);
+  }
+
+  return Math.max(0, Math.round(total));
+}
+
+/**
+ * Calculates total overtime seconds across all cycles in epoch time
+ */
+export function calculateTotalOvertimeSeconds(
+  cycleStates: Record<
+    number,
+    { timeLeft: number; isCompleted: boolean; initialDuration?: number }
+  >,
+  currentCycle: number,
+  mode: TimerMode,
+  currentRemainingTime: number,
+): number {
+  let overtime = 0;
+
+  for (const [cycleNumStr, state] of Object.entries(cycleStates)) {
+    const cycleNum = Number(cycleNumStr);
+    if (cycleNum === currentCycle && mode === "focus") {
+      continue;
+    }
+    if (state.timeLeft < 0) {
+      overtime += Math.abs(state.timeLeft);
+    }
+  }
+
+  if (mode === "focus" && currentRemainingTime < 0) {
+    overtime += Math.abs(currentRemainingTime);
+  }
+
+  return Math.max(0, Math.round(overtime));
+}

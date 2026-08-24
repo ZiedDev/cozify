@@ -23,18 +23,22 @@ export default function IndexPage() {
         <Dock />
 
         <section className="flex flex-col items-center justify-center flex-1 w-full py-10 md:py-8">
-          <Tabs.Panel id="home">
+          <Tabs.Panel className="animate-fade-in-up w-full flex flex-col items-center justify-center" id="home">
             <Clock />
           </Tabs.Panel>
 
-          <Tabs.Panel id="pomodoro">
+          <Tabs.Panel className="animate-fade-in-up w-full flex flex-col items-center justify-center" id="pomodoro">
             <Timer />
+          </Tabs.Panel>
+
+          <Tabs.Panel className="animate-fade-in-up w-full flex-1" id="cozy">
+            <div className="w-full flex-1 pointer-events-none" />
           </Tabs.Panel>
 
           {(["todo", "music", "stats"] as const).map((m) => (
             <Tabs.Panel
               key={m}
-              className="text-center text-muted font-light text-xl capitalize"
+              className="animate-fade-in-up text-center text-muted font-light text-xl capitalize"
               id={m}
             >
               {m} mode coming up next...

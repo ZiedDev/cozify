@@ -461,7 +461,7 @@ export function ThemePopover() {
                   {/* Preset Quick Vibe Pills */}
                   <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                     {PRESET_THEME_COLORS.map((preset) => {
-                      const isSelected = Math.abs(hue - preset.hue) <= 10;
+                      const isSelected = hue === preset.hue;
 
                       return (
                         <button

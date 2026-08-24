@@ -26,7 +26,7 @@ export function TimerDisplay({
         <Button
           isIconOnly
           aria-label="Subtract 5 minutes"
-          className="size-10 sm:size-11 rounded-2xl opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted hover:text-foreground hover:bg-surface/80"
+          className="shrink-0 size-10 sm:size-11 rounded-2xl opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted hover:text-foreground hover:bg-surface/80"
           isDisabled={isMinusDisabled}
           size="md"
           variant="ghost"
@@ -57,7 +57,7 @@ export function TimerDisplay({
         <Button
           isIconOnly
           aria-label="Add 5 minutes"
-          className="size-10 sm:size-11 rounded-2xl opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted hover:text-foreground hover:bg-surface/80"
+          className="shrink-0 size-10 sm:size-11 rounded-2xl opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted hover:text-foreground hover:bg-surface/80"
           isDisabled={isPlusDisabled}
           size="md"
           variant="ghost"
