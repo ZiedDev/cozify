@@ -1,6 +1,8 @@
 import { Modal, Button, Chip } from "@heroui/react";
 import { Coffee, SkipForward } from "lucide-react";
 
+import { formatDurationLabel } from "../logic/time-utils";
+
 import { TimerDurations } from "@/config/timer";
 
 interface BreakModalProps {
@@ -20,15 +22,6 @@ export function BreakModal({
   onSelectBreak,
   onSkipBreak,
 }: BreakModalProps) {
-  const formatMinSec = (totalSeconds: number) => {
-    const m = Math.floor(totalSeconds / 60);
-    const s = totalSeconds % 60;
-
-    if (s === 0) return `${m} min`;
-
-    return `${m}m ${s}s`;
-  };
-
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
@@ -76,7 +69,7 @@ export function BreakModal({
                   </span>
                 </div>
                 <span className="text-xs font-bold text-muted group-hover:text-accent shrink-0 pl-2">
-                  {formatMinSec(durations.shortBreak)}
+                  {formatDurationLabel(durations.shortBreak)}
                 </span>
               </button>
 
@@ -108,7 +101,7 @@ export function BreakModal({
                   </span>
                 </div>
                 <span className="text-xs font-bold text-muted group-hover:text-accent shrink-0 pl-2">
-                  {formatMinSec(durations.longBreak)}
+                  {formatDurationLabel(durations.longBreak)}
                 </span>
               </button>
 

@@ -1,5 +1,5 @@
 import { Button } from "@heroui/react";
-import { Play, Pause, Coffee, Flag } from "lucide-react";
+import { Play, Pause, Coffee, Flag, RotateCcw, Brain } from "lucide-react";
 
 import { DurationsPopover } from "./durations-popover";
 
@@ -14,7 +14,9 @@ interface TimerControlsProps {
   durations: TimerDurations;
   isDurationPopoverOpen: boolean;
   onToggle: () => void;
+  onReset: () => void;
   onOpenBreakModal: () => void;
+  onSwitchToFocus: () => void;
   onOpenSaveModal: () => void;
   onDurationPopoverOpenChange: (open: boolean) => void;
   setCustomDurations: (newDurations: Partial<TimerDurations>) => void;
@@ -29,7 +31,9 @@ export function TimerControls({
   durations,
   isDurationPopoverOpen,
   onToggle,
+  onReset,
   onOpenBreakModal,
+  onSwitchToFocus,
   onOpenSaveModal,
   onDurationPopoverOpenChange,
   setCustomDurations,
@@ -61,9 +65,24 @@ export function TimerControls({
         )}
       </Button>
 
-      {/* Take Break Button */}
+      {/* Reset Current Cycle Button */}
+      {hasStarted && (
+        <Button
+          aria-label="Reset Current Cycle"
+          className="px-3.5 sm:px-4 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
+          size="lg"
+          variant="secondary"
+          onPress={onReset}
+        >
+          <RotateCcw className="size-4" />
+          <span>Reset</span>
+        </Button>
+      )}
+
+      {/* Take Break Button (when in focus mode) */}
       {isFocus && hasStarted && (
         <Button
+          aria-label="Take Break"
           className="px-3.5 sm:px-4 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
           size="lg"
           variant="secondary"
@@ -71,6 +90,20 @@ export function TimerControls({
         >
           <Coffee className="size-4" />
           <span>Break</span>
+        </Button>
+      )}
+
+      {/* Switch to Focus Button (when in break mode and break has started) */}
+      {!isFocus && hasStarted && (
+        <Button
+          aria-label="Switch to Focus"
+          className="px-3.5 sm:px-4 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
+          size="lg"
+          variant="secondary"
+          onPress={onSwitchToFocus}
+        >
+          <Brain className="size-4" />
+          <span>Focus</span>
         </Button>
       )}
 

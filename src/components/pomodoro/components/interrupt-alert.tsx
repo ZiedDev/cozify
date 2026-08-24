@@ -1,42 +1,50 @@
 import { AlertDialog, Button } from "@heroui/react";
 
-import { TimerMode } from "@/config/timer";
-
-interface InterruptAlertProps {
-  mode: TimerMode;
-  pendingAction: (() => void) | null;
-  onCancel: () => void;
+export interface ConfirmationState {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  confirmVariant?: "primary" | "secondary" | "danger" | "danger-soft";
+  status?: "default" | "warning" | "danger" | "success" | "accent";
   onConfirm: () => void;
 }
 
+interface InterruptAlertProps {
+  confirmation: ConfirmationState | null;
+  onCancel: () => void;
+}
+
 export function InterruptAlert({
-  mode,
-  pendingAction,
+  confirmation,
   onCancel,
-  onConfirm,
 }: InterruptAlertProps) {
-  const isFocus = mode === "focus";
+  const isOpen = confirmation !== null;
 
   return (
     <AlertDialog.Backdrop
-      isOpen={pendingAction !== null}
+      isOpen={isOpen}
       onOpenChange={(open) => !open && onCancel()}
     >
       <AlertDialog.Container>
         <AlertDialog.Dialog className="sm:max-w-md">
           <AlertDialog.CloseTrigger />
           <AlertDialog.Header>
-            <AlertDialog.Icon status={isFocus ? "warning" : "default"} />
+            <AlertDialog.Icon
+              status={
+                confirmation?.status ||
+                (confirmation?.confirmVariant === "danger"
+                  ? "danger"
+                  : "warning")
+              }
+            />
             <AlertDialog.Heading>
-              {isFocus ? "End current focus cycle?" : "End break early?"}
+              {confirmation?.title || "Are you sure?"}
             </AlertDialog.Heading>
           </AlertDialog.Header>
 
           <AlertDialog.Body>
             <p className="text-muted text-sm leading-relaxed">
-              {isFocus
-                ? "Your active focus session will be counted as completed, and you will advance to the next cycle."
-                : "Your break timer will end now and get you ready for the next focus cycle."}
+              {confirmation?.description}
             </p>
           </AlertDialog.Body>
 
@@ -44,8 +52,14 @@ export function InterruptAlert({
             <Button slot="close" variant="tertiary" onPress={onCancel}>
               Cancel
             </Button>
-            <Button variant="primary" onPress={onConfirm}>
-              {isFocus ? "Complete & Switch" : "Start Focus"}
+            <Button
+              variant={confirmation?.confirmVariant || "primary"}
+              onPress={() => {
+                confirmation?.onConfirm();
+                onCancel();
+              }}
+            >
+              {confirmation?.confirmLabel || "Confirm"}
             </Button>
           </AlertDialog.Footer>
         </AlertDialog.Dialog>

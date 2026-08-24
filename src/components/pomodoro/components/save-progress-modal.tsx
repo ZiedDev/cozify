@@ -13,6 +13,9 @@ import {
 import { Time } from "@internationalized/date";
 import { Bookmark, Clock, CheckCircle2, FileText } from "lucide-react";
 
+import { secondsToHms } from "../logic/time-utils";
+import { calculateSprintsDone } from "../logic/cycle-rules";
+
 import { useTimer } from "@/hooks/use-timer";
 import {
   storageAdapter,
@@ -31,8 +34,7 @@ export function SaveProgressModal({
 }: SaveProgressModalProps) {
   const {
     mode,
-    timeLeft,
-    isRunning,
+    isCycleActive,
     currentCycle,
     completedCycles,
     targetCycles,
@@ -42,16 +44,11 @@ export function SaveProgressModal({
     discardSession,
   } = useTimer();
 
-  // In focus mode, only count currentCycle if the user actually started/ran this cycle.
-  // Otherwise (if sitting at focus menu without starting, or on break), use completedCycles.
-  const hasStartedCurrentFocus =
-    mode === "focus" && (timeLeft < durations.focus || isRunning);
-
-  const sprintsDone = Math.max(
-    1,
-    hasStartedCurrentFocus
-      ? Math.max(completedCycles, currentCycle)
-      : completedCycles,
+  const sprintsDone = calculateSprintsDone(
+    mode,
+    isCycleActive,
+    currentCycle,
+    completedCycles,
   );
 
   const initialTotalSeconds =
@@ -61,11 +58,9 @@ export function SaveProgressModal({
 
   const [title, setTitle] = useState("Deep Focus Session");
   const [timeValue, setTimeValue] = useState<TimeValue | null>(() => {
-    const h = Math.floor(initialTotalSeconds / 3600);
-    const m = Math.floor((initialTotalSeconds % 3600) / 60);
-    const s = initialTotalSeconds % 60;
+    const { hours, minutes, seconds } = secondsToHms(initialTotalSeconds);
 
-    return new Time(h, m, s);
+    return new Time(hours, minutes, seconds);
   });
   const [notes, setNotes] = useState("");
 
@@ -76,11 +71,9 @@ export function SaveProgressModal({
           ? accumulatedFocusSeconds
           : durations.focus * sprintsDone;
 
-      const h = Math.floor(totalSec / 3600);
-      const m = Math.floor((totalSec % 3600) / 60);
-      const s = totalSec % 60;
+      const { hours, minutes, seconds } = secondsToHms(totalSec);
 
-      setTimeValue(new Time(h, m, s));
+      setTimeValue(new Time(hours, minutes, seconds));
     }
   }, [isOpen, accumulatedFocusSeconds, durations.focus, sprintsDone]);
 
