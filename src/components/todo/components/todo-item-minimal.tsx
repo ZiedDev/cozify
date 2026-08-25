@@ -6,9 +6,9 @@ import { TodoItem, PRIORITY_CONFIG } from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
 
-interface TodoItemMinimalProps {
+export interface TodoItemMinimalProps {
   todo: TodoItem;
-  index: number;
+  index?: number;
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;

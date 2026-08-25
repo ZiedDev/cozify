@@ -1,16 +1,7 @@
 export const storageAdapter = {
   getItem<T>(key: string, fallback: T): T {
     try {
-      const raw =
-        localStorage.getItem(key) ??
-        localStorage.getItem(`cozify:${key}`) ??
-        (key === "history"
-          ? localStorage.getItem("cozify:sessions:history")
-          : null) ??
-        (key === "theme"
-          ? localStorage.getItem("cozify:theme:config")
-          : null) ??
-        (key === "timer" ? localStorage.getItem("cozify:timer:state") : null);
+      const raw = localStorage.getItem(key);
 
       return raw ? (JSON.parse(raw) as T) : fallback;
     } catch {
@@ -21,22 +12,16 @@ export const storageAdapter = {
   setItem<T>(key: string, value: T): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
-      // Clean up legacy prefixed key if present
-      localStorage.removeItem(`cozify:${key}`);
     } catch {
-      // Storage unavailable or quota exceeded
+      // Storage quota exceeded or disabled
     }
   },
 
   removeItem(key: string): void {
     try {
       localStorage.removeItem(key);
-      localStorage.removeItem(`cozify:${key}`);
-      if (key === "history") localStorage.removeItem("cozify:sessions:history");
-      if (key === "theme") localStorage.removeItem("cozify:theme:config");
-      if (key === "timer") localStorage.removeItem("cozify:timer:state");
     } catch {
-      // Storage unavailable
+      // Storage disabled
     }
   },
 };
@@ -46,8 +31,15 @@ export const STORAGE_KEYS = {
   SESSIONS_HISTORY: "history",
   THEME_CONFIG: "theme",
   TODOS: "todos",
-  TODO_VIEW_MODE: "todo_view_mode",
+  SETTINGS: "settings",
 } as const;
+
+export interface AppSettings {
+  todo?: {
+    mode?: "minimal" | "detailed";
+  };
+  [key: string]: unknown;
+}
 
 export interface SessionRecord {
   id: string;
@@ -57,26 +49,5 @@ export interface SessionRecord {
   targetSprints: number;
   focusMinutes: number;
   overtimeMinutes?: number;
-  notes?: string;
-}
-
-export type TodoPriority = "none" | "low" | "medium" | "high";
-
-export interface TagOption {
-  id: string;
-  label: string;
-  color: string;
-}
-
-export interface TodoItem {
-  id: string;
-  title: string;
-  completed: boolean;
-  createdAt: number;
-  completedAt?: number;
-  priority?: TodoPriority;
-  dueDate?: string; // YYYY-MM-DD
-  dueTime?: string; // HH:MM
-  tag?: string;
   notes?: string;
 }

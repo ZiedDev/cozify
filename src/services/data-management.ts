@@ -6,6 +6,7 @@ export interface CozifyBackupData {
   timer?: any;
   history?: SessionRecord[];
   theme?: Partial<ThemeConfig>;
+  todos?: any[];
   [key: string]: any;
 }
 
@@ -58,13 +59,13 @@ export function getStorageOverview(): StorageOverview {
 
   // Calculate total size of app keys in localStorage
   let totalBytes = 0;
-  const appKeys = new Set(["history", "theme", "timer"]);
+  const appKeys = new Set(Object.values(STORAGE_KEYS));
 
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
 
-      if (key && (appKeys.has(key) || key.startsWith("cozify"))) {
+      if (key && appKeys.has(key as any)) {
         const value = localStorage.getItem(key) || "";
 
         totalBytes += (key.length + value.length) * 2; // UTF-16 characters
@@ -107,6 +108,10 @@ export function createBackup(): CozifyBackup {
     null,
   );
   const todos = storageAdapter.getItem<any[] | null>(STORAGE_KEYS.TODOS, null);
+  const settings = storageAdapter.getItem<any | null>(
+    STORAGE_KEYS.SETTINGS,
+    null,
+  );
 
   const overview = getStorageOverview();
 
@@ -123,6 +128,9 @@ export function createBackup(): CozifyBackup {
   }
   if (Array.isArray(todos) && todos.length > 0) {
     data.todos = todos;
+  }
+  if (settings && Object.keys(settings).length > 0) {
+    data.settings = settings;
   }
 
   const backup: CozifyBackup = {
@@ -196,7 +204,6 @@ export function importBackupFromJson(jsonString: string): ImportResult {
 
     let payload: CozifyBackupData = {};
 
-    // Check if nested data format or flat key-value dump format
     if (parsed.data && typeof parsed.data === "object") {
       payload = parsed.data;
     } else {
@@ -208,44 +215,34 @@ export function importBackupFromJson(jsonString: string): ImportResult {
     let hasTimer = false;
     let importedTodosCount = 0;
 
-    // 1. Sessions History (supports clean key 'history' as well as legacy keys)
-    const sessions =
-      payload.history ||
-      payload[STORAGE_KEYS.SESSIONS_HISTORY] ||
-      payload.sessionsHistory ||
-      payload.sessions ||
-      payload["cozify:sessions:history"];
+    // 1. Sessions History
+    const sessions = payload.history || payload[STORAGE_KEYS.SESSIONS_HISTORY];
 
     if (Array.isArray(sessions)) {
       storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, sessions);
       importedSessionsCount = sessions.length;
     }
 
-    // 2. Theme Config (supports clean key 'theme' as well as legacy keys)
-    const rawTheme =
-      payload.theme ||
-      payload[STORAGE_KEYS.THEME_CONFIG] ||
-      payload.themeConfig ||
-      payload["cozify:theme:config"];
+    // 2. Theme Config
+    const rawTheme = payload.theme || payload[STORAGE_KEYS.THEME_CONFIG];
 
     if (rawTheme && typeof rawTheme === "object") {
-      const cleanedTheme = { ...rawTheme };
+      const cleanedTheme: Record<string, unknown> = { ...rawTheme };
 
       delete cleanedTheme.chroma;
       delete cleanedTheme.lightness;
 
       if (Object.keys(cleanedTheme).length > 0) {
-        storageAdapter.setItem(STORAGE_KEYS.THEME_CONFIG, cleanedTheme);
+        storageAdapter.setItem(
+          STORAGE_KEYS.THEME_CONFIG,
+          cleanedTheme as Partial<ThemeConfig>,
+        );
         hasTheme = true;
       }
     }
 
-    // 3. Timer State (supports clean key 'timer' as well as legacy keys)
-    const timer =
-      payload.timer ||
-      payload[STORAGE_KEYS.TIMER_STATE] ||
-      payload.timerState ||
-      payload["cozify:timer:state"];
+    // 3. Timer State
+    const timer = payload.timer || payload[STORAGE_KEYS.TIMER_STATE];
 
     if (timer && typeof timer === "object") {
       storageAdapter.setItem(STORAGE_KEYS.TIMER_STATE, timer);
@@ -260,12 +257,20 @@ export function importBackupFromJson(jsonString: string): ImportResult {
       importedTodosCount = todos.length;
     }
 
+    // 5. Settings
+    const settings = payload.settings || payload[STORAGE_KEYS.SETTINGS];
+
+    if (settings && typeof settings === "object") {
+      storageAdapter.setItem(STORAGE_KEYS.SETTINGS, settings);
+    }
+
     // Check if anything was actually imported
     if (
       importedSessionsCount === 0 &&
       !hasTheme &&
       !hasTimer &&
-      importedTodosCount === 0
+      importedTodosCount === 0 &&
+      !settings
     ) {
       return {
         success: false,
@@ -298,27 +303,11 @@ export function importBackupFromJson(jsonString: string): ImportResult {
  */
 export function resetAllCozifyData(): void {
   try {
-    const appKeys = new Set(["history", "theme", "timer", "heroui-theme"]);
-    const keysToRemove: string[] = [];
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-
-      if (key && (appKeys.has(key) || key.startsWith("cozify"))) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach((k) => localStorage.removeItem(k));
+    Object.values(STORAGE_KEYS).forEach((key) => {
+      localStorage.removeItem(key);
+    });
+    localStorage.removeItem("heroui-theme");
   } catch {
-    // Fallback manual key clear
-    localStorage.removeItem(STORAGE_KEYS.SESSIONS_HISTORY);
-    localStorage.removeItem(STORAGE_KEYS.THEME_CONFIG);
-    localStorage.removeItem(STORAGE_KEYS.TIMER_STATE);
-    localStorage.removeItem("history");
-    localStorage.removeItem("theme");
-    localStorage.removeItem("timer");
-    localStorage.removeItem("cozify:sessions:history");
-    localStorage.removeItem("cozify:theme:config");
-    localStorage.removeItem("cozify:timer:state");
+    // Storage access issue fallback
   }
 }

@@ -52,15 +52,10 @@ export function TimerControls({
             <Pause className="size-4 sm:size-5 md:size-6 fill-current" />
             <span>Pause</span>
           </>
-        ) : isPaused ? (
-          <>
-            <Play className="size-4 sm:size-5 md:size-6 fill-current" />
-            <span>Resume</span>
-          </>
         ) : (
           <>
             <Play className="size-4 sm:size-5 md:size-6 fill-current" />
-            <span>Start</span>
+            <span>{isPaused ? "Resume" : "Start"}</span>
           </>
         )}
       </Button>

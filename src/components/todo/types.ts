@@ -12,7 +12,6 @@ export interface TodoItem {
   completedAt?: number;
   priority?: TodoPriority;
   dueDate?: string; // YYYY-MM-DD
-  dueTime?: string; // HH:MM
   tag?: string;
   notes?: string;
 }

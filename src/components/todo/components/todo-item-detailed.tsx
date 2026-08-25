@@ -14,9 +14,9 @@ import { TodoItem, PRIORITY_CONFIG, PRESET_TAGS } from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
 
-interface TodoItemDetailedProps {
+export interface TodoItemDetailedProps {
   todo: TodoItem;
-  index: number;
+  index?: number;
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
@@ -88,7 +88,7 @@ export function TodoItemDetailed({
             type="button"
             onClick={() => toggleTodo(todo.id)}
           >
-            {todo.completed && <Check className="size-3 stroke-[3]" />}
+            {todo.completed && <Check className="size-3 stroke-3" />}
           </button>
         </div>
 
@@ -106,7 +106,7 @@ export function TodoItemDetailed({
         >
           <div className="flex items-center gap-2 flex-wrap">
             <span
-              className={`text-sm md:text-base leading-snug break-words transition-all ${
+              className={`text-sm md:text-base leading-snug wrap-break-word transition-all ${
                 todo.completed
                   ? "line-through text-muted"
                   : "text-foreground font-medium"

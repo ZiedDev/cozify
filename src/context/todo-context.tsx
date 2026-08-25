@@ -13,7 +13,7 @@ import {
   TodoFilter,
   TodoViewMode,
 } from "@/components/todo/types";
-import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
+import { storageAdapter, STORAGE_KEYS, AppSettings } from "@/services/storage";
 
 interface TodoContextType {
   todos: TodoItem[];
@@ -39,8 +39,6 @@ interface TodoContextType {
   updateTodo: (id: string, updates: Partial<TodoItem>) => void;
   deleteTodo: (id: string) => void;
   clearCompleted: () => void;
-  moveTodo: (id: string, direction: "up" | "down") => void;
-  reorderTodos: (startIndex: number, endIndex: number) => void;
   moveTodoToPosition: (
     sourceId: string,
     targetId: string,
@@ -80,12 +78,14 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, DEFAULT_TODOS),
   );
 
-  const [viewMode, setViewModeState] = useState<TodoViewMode>(() =>
-    storageAdapter.getItem<TodoViewMode>(
-      STORAGE_KEYS.TODO_VIEW_MODE,
-      "detailed",
-    ),
-  );
+  const [viewMode, setViewModeState] = useState<TodoViewMode>(() => {
+    const settings = storageAdapter.getItem<AppSettings>(
+      STORAGE_KEYS.SETTINGS,
+      {},
+    );
+
+    return (settings.todo?.mode as TodoViewMode) || "detailed";
+  });
 
   const [filter, setFilter] = useState<TodoFilter>("all");
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -96,10 +96,21 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     storageAdapter.setItem(STORAGE_KEYS.TODOS, todos);
   }, [todos]);
 
-  // Sync viewMode to localStorage
+  // Sync viewMode to settings in localStorage
   const setViewMode = useCallback((mode: TodoViewMode) => {
     setViewModeState(mode);
-    storageAdapter.setItem(STORAGE_KEYS.TODO_VIEW_MODE, mode);
+    const settings = storageAdapter.getItem<AppSettings>(
+      STORAGE_KEYS.SETTINGS,
+      {},
+    );
+
+    storageAdapter.setItem(STORAGE_KEYS.SETTINGS, {
+      ...settings,
+      todo: {
+        ...settings.todo,
+        mode,
+      },
+    });
   }, []);
 
   const addTodo = useCallback(
@@ -155,44 +166,6 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
 
   const clearCompleted = useCallback(() => {
     setTodos((prev) => prev.filter((t) => !t.completed));
-  }, []);
-
-  const moveTodo = useCallback((id: string, direction: "up" | "down") => {
-    setTodos((prev) => {
-      const index = prev.findIndex((t) => t.id === id);
-
-      if (index === -1) return prev;
-
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-
-      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
-
-      const newTodos = [...prev];
-      const [moved] = newTodos.splice(index, 1);
-
-      newTodos.splice(targetIndex, 0, moved);
-
-      return newTodos;
-    });
-  }, []);
-
-  const reorderTodos = useCallback((startIndex: number, endIndex: number) => {
-    setTodos((prev) => {
-      if (
-        startIndex < 0 ||
-        startIndex >= prev.length ||
-        endIndex < 0 ||
-        endIndex >= prev.length
-      ) {
-        return prev;
-      }
-      const newTodos = [...prev];
-      const [moved] = newTodos.splice(startIndex, 1);
-
-      newTodos.splice(endIndex, 0, moved);
-
-      return newTodos;
-    });
   }, []);
 
   const moveTodoToPosition = useCallback(
@@ -277,8 +250,6 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       updateTodo,
       deleteTodo,
       clearCompleted,
-      moveTodo,
-      reorderTodos,
       moveTodoToPosition,
       setViewMode,
       setFilter,
@@ -298,8 +269,6 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       updateTodo,
       deleteTodo,
       clearCompleted,
-      moveTodo,
-      reorderTodos,
       moveTodoToPosition,
       setViewMode,
     ],
