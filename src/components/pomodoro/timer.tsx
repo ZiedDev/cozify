@@ -180,14 +180,14 @@ export function Timer() {
     (currentCycle >= targetCycles && isFocus && timeLeft <= 0);
 
   return (
-    <div className="flex flex-col items-center gap-6 md:gap-8 w-full max-w-xl mx-auto">
-      {/* Interactive Cycle Tracker with collision warnings */}
+    <div className="flex flex-col items-center justify-center gap-3 sm:gap-5 md:gap-7 w-full max-w-lg md:max-w-xl mx-auto px-2 sm:px-4 py-1 select-none">
+      {/* Interactive Cycle Tracker */}
       <CycleTracker
         onRequestJumpCycle={handleRequestJumpCycle}
         onRequestTargetChange={handleRequestTargetChange}
       />
 
-      {/* Mode Switching Tabs with active cycle warnings */}
+      {/* Mode Switching Tabs */}
       <TimerTabs mode={mode} onSwitchMode={handleSwitchMode} />
 
       {/* Main Large Timer Display with +/- buttons */}
@@ -223,7 +223,7 @@ export function Timer() {
       />
 
       {/* Spacebar Shortcut Hint */}
-      <p className="text-xs text-muted/60 tracking-wider uppercase">
+      <p className="text-[10px] sm:text-xs text-muted/60 tracking-wider uppercase">
         Press{" "}
         <kbd className="px-1.5 py-0.5 rounded bg-surface border border-separator/40 text-muted">
           Space

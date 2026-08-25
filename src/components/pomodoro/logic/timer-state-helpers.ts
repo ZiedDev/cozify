@@ -94,10 +94,12 @@ export function calculateTotalFocusSeconds(
   // 1. Sum up all recorded cycles other than the active focus cycle
   for (const [cycleNumStr, state] of Object.entries(cycleStates)) {
     const cycleNum = Number(cycleNumStr);
+
     if (cycleNum === currentCycle && mode === "focus") {
       continue;
     }
     const initial = state.initialDuration || defaultFocusDuration;
+
     if (state.isCompleted) {
       total += Math.max(initial, initial - state.timeLeft);
     } else {
@@ -109,6 +111,7 @@ export function calculateTotalFocusSeconds(
   if (mode === "focus") {
     const currentState = cycleStates[currentCycle];
     const initial = currentState?.initialDuration || defaultFocusDuration;
+
     total += Math.max(0, initial - currentRemainingTime);
   }
 
@@ -131,6 +134,7 @@ export function calculateTotalOvertimeSeconds(
 
   for (const [cycleNumStr, state] of Object.entries(cycleStates)) {
     const cycleNum = Number(cycleNumStr);
+
     if (cycleNum === currentCycle && mode === "focus") {
       continue;
     }

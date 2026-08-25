@@ -152,6 +152,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
     if (!status.hasActiveSession && !isCustom && !hasAnyCycleProgress) {
       storageAdapter.removeItem(STORAGE_KEYS.TIMER_STATE);
+
       return;
     }
 
@@ -219,7 +220,8 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
             timeLeft: currentRemaining,
             isCompleted:
               currentRemaining <= 0 || !!prev[currentCycle]?.isCompleted,
-            initialDuration: prev[currentCycle]?.initialDuration || durations.focus,
+            initialDuration:
+              prev[currentCycle]?.initialDuration || durations.focus,
           },
         }));
       }
@@ -292,8 +294,10 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
       // Determine initial time: for break modes use durations[newMode], for focus mode check cycleStates[activeCycle]
       let newTime = durations[newMode];
+
       if (newMode === "focus") {
         const savedCycle = activeCycleStates[activeCycle];
+
         newTime = savedCycle ? savedCycle.timeLeft : durations.focus;
       }
 
@@ -331,12 +335,14 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
         [currentCycle]: {
           timeLeft: 0,
           isCompleted: true,
-          initialDuration: prev[currentCycle]?.initialDuration || durations.focus,
+          initialDuration:
+            prev[currentCycle]?.initialDuration || durations.focus,
         },
       }));
 
       // 2. Advance to next cycle
       const next = calculateNextCycle(currentCycle);
+
       setCurrentCycleState(next);
       if (currentCycle >= targetCycles) {
         setTargetCyclesState(next);
@@ -366,6 +372,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       targetCycles,
       cycleStates,
     );
+
     if (nextCycle !== currentCycle) {
       setCurrentCycleState(nextCycle);
     }
@@ -443,12 +450,14 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       if (targetEndTimeRef.current === null) return;
       const now = Date.now();
       const remaining = Math.ceil((targetEndTimeRef.current - now) / 1000);
+
       setTimeLeft(remaining);
 
       // Periodically update active cycle state
       if (mode === "focus") {
         setCycleStates((prev) => {
           if (prev[currentCycle]?.timeLeft === remaining) return prev;
+
           return {
             ...prev,
             [currentCycle]: {
@@ -561,8 +570,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
           ...cyclePrev,
           [currentCycle]: {
             timeLeft: updated,
-            isCompleted:
-              updated <= 0 || !!cyclePrev[currentCycle]?.isCompleted,
+            isCompleted: updated <= 0 || !!cyclePrev[currentCycle]?.isCompleted,
             initialDuration: Math.max(
               updated,
               cyclePrev[currentCycle]?.initialDuration || durations.focus,
@@ -592,13 +600,18 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       setCurrentCycleState((prevCycle) => {
         if (prevCycle > clamped) {
           const targetState = cycleStates[clamped];
-          const targetTime = targetState ? targetState.timeLeft : durations.focus;
+          const targetTime = targetState
+            ? targetState.timeLeft
+            : durations.focus;
+
           setTimeLeft(targetTime);
           remainingOnPauseRef.current = targetTime;
           setIsRunning(false);
           targetEndTimeRef.current = null;
+
           return clamped;
         }
+
         return prevCycle;
       });
     },
@@ -613,6 +626,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
       // 1. Freeze and preserve current cycle state if in focus mode
       let latestCycleStates = cycleStates;
+
       if (mode === "focus") {
         const currentRemaining =
           targetEndTimeRef.current !== null
@@ -624,8 +638,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
           [currentCycle]: {
             timeLeft: currentRemaining,
             isCompleted:
-              currentRemaining <= 0 ||
-              !!cycleStates[currentCycle]?.isCompleted,
+              currentRemaining <= 0 || !!cycleStates[currentCycle]?.isCompleted,
             initialDuration:
               cycleStates[currentCycle]?.initialDuration || durations.focus,
           },
@@ -666,13 +679,16 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
           if (!isRunning) {
             if (mode === "focus" && isCurrentFocusUntouched) {
               remainingOnPauseRef.current = updated.focus;
+
               return updated.focus;
             }
             if (mode !== "focus" && currentTime === prev[mode]) {
               remainingOnPauseRef.current = updated[mode];
+
               return updated[mode];
             }
           }
+
           return currentTime;
         });
 
@@ -725,6 +741,3 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     <TimerContext.Provider value={value}>{children}</TimerContext.Provider>
   );
 }
-
-
-

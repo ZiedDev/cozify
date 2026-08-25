@@ -106,6 +106,7 @@ export function createBackup(): CozifyBackup {
     STORAGE_KEYS.TIMER_STATE,
     null,
   );
+  const todos = storageAdapter.getItem<any[] | null>(STORAGE_KEYS.TODOS, null);
 
   const overview = getStorageOverview();
 
@@ -119,6 +120,9 @@ export function createBackup(): CozifyBackup {
   }
   if (timerState && Object.keys(timerState).length > 0) {
     data.timer = timerState;
+  }
+  if (Array.isArray(todos) && todos.length > 0) {
+    data.todos = todos;
   }
 
   const backup: CozifyBackup = {
@@ -202,6 +206,7 @@ export function importBackupFromJson(jsonString: string): ImportResult {
     let importedSessionsCount = 0;
     let hasTheme = false;
     let hasTimer = false;
+    let importedTodosCount = 0;
 
     // 1. Sessions History (supports clean key 'history' as well as legacy keys)
     const sessions =
@@ -247,8 +252,21 @@ export function importBackupFromJson(jsonString: string): ImportResult {
       hasTimer = true;
     }
 
+    // 4. Todos
+    const todos = payload.todos || payload[STORAGE_KEYS.TODOS];
+
+    if (Array.isArray(todos)) {
+      storageAdapter.setItem(STORAGE_KEYS.TODOS, todos);
+      importedTodosCount = todos.length;
+    }
+
     // Check if anything was actually imported
-    if (importedSessionsCount === 0 && !hasTheme && !hasTimer) {
+    if (
+      importedSessionsCount === 0 &&
+      !hasTheme &&
+      !hasTimer &&
+      importedTodosCount === 0
+    ) {
       return {
         success: false,
         message: "No recognizable Cozify data found in this file.",

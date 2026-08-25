@@ -9,11 +9,11 @@ export default function DefaultLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative flex flex-col min-h-screen">
+    <div className="relative flex flex-col h-screen h-dvh overflow-hidden">
       <BackgroundView />
       <Toast.Provider className="z-[9999]" placement="bottom end" />
       <Navbar />
-      <main className="relative z-10 max-w-8xl mx-auto px-8 md:px-12 grow w-full flex flex-col items-center justify-center pb-24">
+      <main className="relative z-10 max-w-8xl mx-auto px-4 sm:px-8 md:px-12 flex-1 w-full flex flex-col items-center justify-between pb-18 sm:pb-20 overflow-hidden min-h-0 h-full">
         {children}
       </main>
     </div>

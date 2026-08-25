@@ -1,96 +1,65 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Tabs } from "@heroui/react";
-import gsap from "gsap";
 
 import DefaultLayout from "@/layouts/default";
 import { Sidebar } from "@/components/layout/sidebar";
+import { SidebarLeft } from "@/components/layout/sidebar-left";
 import { Dock } from "@/components/layout/dock";
 import { Clock } from "@/components/home/clock";
 import { Timer } from "@/components/pomodoro/timer";
+import { TodoPage } from "@/components/todo/todo-page";
+import { CozyView } from "@/components/cozy/cozy-view";
 import { AppMode } from "@/config/modes";
 
 export default function IndexPage() {
   const [activeMode, setActiveMode] = useState<AppMode>("home");
-  const [displayedMode, setDisplayedMode] = useState<AppMode>("home");
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  const handleSelectionChange = (newKey: string | number) => {
-    const nextMode = newKey as AppMode;
-    if (nextMode === activeMode) return;
-
-    setActiveMode(nextMode);
-
-    const el = sectionRef.current;
-    if (!el) {
-      setDisplayedMode(nextMode);
-      return;
-    }
-
-    // 1. Smooth exit transition on outgoing page content
-    gsap.to(el, {
-      opacity: 0,
-      y: -6,
-      scale: 0.985,
-      duration: 0.14,
-      ease: "power2.in",
-      overwrite: "auto",
-      onComplete: () => {
-        setDisplayedMode(nextMode);
-        // 2. Smooth entrance transition on incoming page content
-        gsap.fromTo(
-          el,
-          { opacity: 0, y: 6, scale: 0.985 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.24,
-            ease: "power2.out",
-            overwrite: "auto",
-          },
-        );
-      },
-    });
-  };
 
   return (
     <DefaultLayout>
+      <SidebarLeft activeMode={activeMode} />
       <Sidebar activeMode={activeMode} />
 
       <Tabs
-        className="flex flex-col flex-1 items-center justify-center w-full"
-        selectedKey={displayedMode}
-        onSelectionChange={handleSelectionChange}
+        className="flex flex-col flex-1 items-center justify-between w-full h-full min-h-0 overflow-hidden"
+        selectedKey={activeMode}
+        onSelectionChange={(k) => setActiveMode(k as AppMode)}
       >
         <Dock />
 
-        <section className="flex flex-col items-center justify-center flex-1 w-full py-10 md:py-8">
-          <div
-            ref={sectionRef}
-            className="w-full flex flex-col items-center justify-center flex-1"
-          >
+        <section className="flex flex-col items-center justify-center flex-1 w-full h-full py-1 min-h-0 overflow-hidden">
+          <div className="w-full h-full flex flex-col items-center justify-center flex-1 min-h-0 overflow-hidden">
             <Tabs.Panel
-              className="w-full flex flex-col items-center justify-center"
+              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 animate-in fade-in duration-150"
               id="home"
             >
               <Clock />
             </Tabs.Panel>
 
             <Tabs.Panel
-              className="w-full flex flex-col items-center justify-center"
+              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 animate-in fade-in duration-150"
               id="pomodoro"
             >
               <Timer />
             </Tabs.Panel>
 
-            <Tabs.Panel className="w-full flex-1" id="cozy">
-              <div className="w-full flex-1 pointer-events-none" />
+            <Tabs.Panel
+              className="w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden animate-in fade-in duration-150"
+              id="todo"
+            >
+              <TodoPage />
             </Tabs.Panel>
 
-            {(["todo", "music", "stats"] as const).map((m) => (
+            <Tabs.Panel
+              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden animate-in fade-in duration-150"
+              id="cozy"
+            >
+              <CozyView />
+            </Tabs.Panel>
+
+            {(["music", "stats"] as const).map((m) => (
               <Tabs.Panel
                 key={m}
-                className="text-center text-muted font-light text-xl capitalize"
+                className="text-center text-muted font-light text-xl capitalize animate-in fade-in duration-150"
                 id={m}
               >
                 {m} mode coming up next...

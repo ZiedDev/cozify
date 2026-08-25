@@ -45,6 +45,8 @@ export const STORAGE_KEYS = {
   TIMER_STATE: "timer",
   SESSIONS_HISTORY: "history",
   THEME_CONFIG: "theme",
+  TODOS: "todos",
+  TODO_VIEW_MODE: "todo_view_mode",
 } as const;
 
 export interface SessionRecord {
@@ -55,5 +57,26 @@ export interface SessionRecord {
   targetSprints: number;
   focusMinutes: number;
   overtimeMinutes?: number;
+  notes?: string;
+}
+
+export type TodoPriority = "none" | "low" | "medium" | "high";
+
+export interface TagOption {
+  id: string;
+  label: string;
+  color: string;
+}
+
+export interface TodoItem {
+  id: string;
+  title: string;
+  completed: boolean;
+  createdAt: number;
+  completedAt?: number;
+  priority?: TodoPriority;
+  dueDate?: string; // YYYY-MM-DD
+  dueTime?: string; // HH:MM
+  tag?: string;
   notes?: string;
 }
