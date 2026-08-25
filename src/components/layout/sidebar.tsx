@@ -1,4 +1,7 @@
+import { useRef } from "react";
 import { ProgressBar, Tooltip } from "@heroui/react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 
 import { useClock } from "@/hooks/use-clock";
 import { useTimer } from "@/hooks/use-timer";
@@ -105,6 +108,109 @@ function SidebarTimer() {
   );
 }
 
+interface SidebarWidgetProps {
+  show: boolean;
+  children: React.ReactNode;
+}
+
+function SidebarWidget({ show, children }: SidebarWidgetProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isFirstRender = useRef(true);
+
+  useGSAP(
+    () => {
+      const container = containerRef.current;
+      const content = contentRef.current;
+      if (!container || !content) return;
+
+      if (isFirstRender.current) {
+        isFirstRender.current = false;
+        if (show) {
+          gsap.set(container, { height: "auto", display: "block" });
+          gsap.set(content, { opacity: 1, x: 0, y: 0, scale: 1 });
+        } else {
+          gsap.set(container, { height: 0, display: "none" });
+          gsap.set(content, { opacity: 0, x: 24, y: -4, scale: 0.94 });
+        }
+        return;
+      }
+
+      if (show) {
+        gsap.killTweensOf([container, content]);
+        gsap.set(container, { display: "block" });
+        const targetHeight = content.offsetHeight;
+
+        gsap.fromTo(
+          container,
+          { height: container.offsetHeight },
+          {
+            height: targetHeight,
+            duration: 0.32,
+            ease: "power2.out",
+            onComplete: () => {
+              gsap.set(container, { height: "auto" });
+            },
+          },
+        );
+
+        gsap.fromTo(
+          content,
+          { opacity: 0, x: 24, y: 4, scale: 0.94 },
+          {
+            opacity: 1,
+            x: 0,
+            y: 0,
+            scale: 1,
+            duration: 0.3,
+            ease: "power2.out",
+          },
+        );
+      } else {
+        gsap.killTweensOf([container, content]);
+        const currentHeight = container.offsetHeight;
+
+        gsap.fromTo(
+          container,
+          { height: currentHeight },
+          {
+            height: 0,
+            duration: 0.25,
+            ease: "power2.inOut",
+            onComplete: () => {
+              gsap.set(container, { display: "none" });
+            },
+          },
+        );
+
+        gsap.to(content, {
+          opacity: 0,
+          x: 24,
+          y: -4,
+          scale: 0.94,
+          duration: 0.2,
+          ease: "power2.in",
+        });
+      }
+    },
+    { dependencies: [show], scope: containerRef },
+  );
+
+  return (
+    <div
+      ref={containerRef}
+      className="overflow-hidden w-full flex flex-col items-end pointer-events-none"
+    >
+      <div
+        ref={contentRef}
+        className="pb-6 w-full flex flex-col items-end transform-gpu"
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 interface SidebarProps {
   activeMode: AppMode;
 }
@@ -117,19 +223,15 @@ export function Sidebar({ activeMode }: SidebarProps) {
   return (
     <aside
       aria-label="Workspace Sidebar"
-      className="fixed top-24 md:top-28 right-8 md:right-12 z-30 select-none pointer-events-none flex flex-col items-end gap-6 text-right"
+      className="fixed top-24 md:top-28 right-8 md:right-12 z-30 select-none pointer-events-none flex flex-col items-end text-right"
     >
-      {showClock && (
-        <div className="animate-fade-in-up">
-          <SidebarClock />
-        </div>
-      )}
+      <SidebarWidget show={showClock}>
+        <SidebarClock />
+      </SidebarWidget>
 
-      {showTimer && (
-        <div className="animate-fade-in-up">
-          <SidebarTimer />
-        </div>
-      )}
+      <SidebarWidget show={showTimer}>
+        <SidebarTimer />
+      </SidebarWidget>
     </aside>
   );
 }
