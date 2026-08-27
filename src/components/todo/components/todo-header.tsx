@@ -1,4 +1,4 @@
-import { SearchField, Tabs, ScrollShadow } from "@heroui/react";
+import { SearchField, Tabs, ScrollShadow, Typography } from "@heroui/react";
 import { LayoutList, CheckSquare } from "lucide-react";
 
 import { TodoFilter, TodoViewMode, PRESET_TAGS } from "../types";
@@ -24,12 +24,20 @@ export function TodoHeader() {
       <div className="flex items-center justify-between gap-2 md:gap-3 w-full flex-nowrap">
         {/* Left Title & Counter */}
         <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-          <h1 className="text-xl md:text-2xl lg:text-3xl font-serif font-medium tracking-tight text-foreground select-none">
+          <Typography
+            type="h1"
+            className="text-xl md:text-2xl lg:text-3xl font-serif font-medium tracking-tight text-foreground select-none"
+          >
             To-Do
-          </h1>
-          <span className="flex items-center px-2 md:px-2.5 py-0.5 rounded-full text-[11px] md:text-xs font-medium bg-surface text-muted border border-separator/40 shadow-2xs">
+          </Typography>
+          <Typography
+            color="muted"
+            type="body-xs"
+            weight="medium"
+            className="flex items-center px-2 md:px-2.5 py-0.5 rounded-full text-[11px] md:text-xs bg-surface border border-separator/40 shadow-2xs tabular-nums"
+          >
             {stats.completed}/{stats.total}
-          </span>
+          </Typography>
         </div>
 
         {/* Right Controls: Search + View Switcher */}
@@ -68,15 +76,17 @@ export function TodoHeader() {
                   {({ isSelected }) => (
                     <>
                       <CheckSquare className="size-3.5 shrink-0" />
-                      <span
+                      <Typography
+                        type="body-xs"
+                        weight="medium"
                         className={
                           isSelected
-                            ? "hidden min-[426px]:inline"
-                            : "hidden lg:inline"
+                            ? "hidden min-[426px]:inline text-xs"
+                            : "hidden lg:inline text-xs"
                         }
                       >
                         Minimal
-                      </span>
+                      </Typography>
                       <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
                     </>
                   )}
@@ -88,15 +98,17 @@ export function TodoHeader() {
                   {({ isSelected }) => (
                     <>
                       <LayoutList className="size-3.5 shrink-0" />
-                      <span
+                      <Typography
+                        type="body-xs"
+                        weight="medium"
                         className={
                           isSelected
-                            ? "hidden min-[426px]:inline"
-                            : "hidden lg:inline"
+                            ? "hidden min-[426px]:inline text-xs"
+                            : "hidden lg:inline text-xs"
                         }
                       >
                         Detailed
-                      </span>
+                      </Typography>
                       <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
                     </>
                   )}

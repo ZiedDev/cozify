@@ -10,6 +10,7 @@ import {
   Tabs,
   ScrollShadow,
   ColorSlider,
+  Typography,
   parseColor,
   Color,
 } from "@heroui/react";
@@ -135,12 +136,12 @@ export function ThemePopover() {
                 <Palette className="size-4" />
               </span>
               <div>
-                <h3 className="text-sm font-bold text-foreground">
+                <Typography type="h3" weight="bold" className="text-sm text-foreground">
                   Appearance
-                </h3>
-                <p className="text-[11px] text-muted">
+                </Typography>
+                <Typography color="muted" type="body-xs" className="text-[11px]">
                   {activeBackground ? activeBackground.name : "Clean Slate"}
-                </p>
+                </Typography>
               </div>
             </div>
           </div>

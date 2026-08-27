@@ -9,6 +9,7 @@ import {
   DatePicker,
   DateField,
   Calendar,
+  Typography,
 } from "@heroui/react";
 import { parseDate } from "@internationalized/date";
 import { Edit3, Flag, Calendar as CalendarIcon, Tag } from "lucide-react";
@@ -73,9 +74,9 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
             </Modal.Icon>
             <div>
               <Modal.Heading>Edit Task</Modal.Heading>
-              <p className="text-xs text-muted font-normal mt-0.5">
+              <Typography color="muted" type="body-xs" className="font-normal mt-0.5">
                 Customize details, notes, priority, and due dates.
-              </p>
+              </Typography>
             </div>
           </Modal.Header>
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Tooltip } from "@heroui/react";
+import { Button, Tooltip, Typography } from "@heroui/react";
 import { Trash2, Edit3, Check, GripVertical } from "lucide-react";
 
 import { TodoItem, PRIORITY_CONFIG } from "../types";
@@ -35,10 +35,10 @@ export function TodoItemMinimal({
       draggable
       className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 md:py-2.5 rounded-xl border transition-all duration-150 select-none ${
         isDragging
-          ? "bg-surface/50 border-accent/40 shadow-xs"
+          ? "opacity-25 bg-transparent border-dashed border-accent/70 scale-[0.98] shadow-none"
           : todo.completed
-            ? "bg-surface/30 border-separator/20 opacity-60"
-            : "bg-surface/70 hover:bg-surface border-separator/40 hover:border-separator/70 shadow-2xs"
+            ? "bg-surface-secondary/80 border-separator/30 opacity-70"
+            : "bg-surface hover:border-separator/70 border-separator/40 shadow-2xs"
       }`}
       onDragEnd={onDragEnd}
       onDragOver={(e) => onDragOver(e, todo.id)}
@@ -64,7 +64,7 @@ export function TodoItemMinimal({
         className={`size-4.5 md:size-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
           todo.completed
             ? "bg-accent border-accent text-accent-foreground shadow-xs scale-95"
-            : "border-muted/50 hover:border-accent hover:scale-110 bg-surface/50"
+            : "border-muted/50 hover:border-accent hover:scale-110 bg-surface"
         }`}
         type="button"
         onClick={() => toggleTodo(todo.id)}
@@ -81,8 +81,11 @@ export function TodoItemMinimal({
       )}
 
       {/* Task Title (Clicking toggles complete) */}
-      <span
-        className={`text-xs md:text-sm truncate transition-all text-left flex-1 min-w-0 cursor-pointer ${
+      <Typography
+        truncate
+        type="body-sm"
+        weight="medium"
+        className={`text-xs md:text-sm transition-all text-left flex-1 min-w-0 cursor-pointer ${
           todo.completed
             ? "line-through text-muted"
             : "text-foreground font-medium"
@@ -97,7 +100,7 @@ export function TodoItemMinimal({
         }}
       >
         {todo.title}
-      </span>
+      </Typography>
 
       {/* Right Action Buttons */}
       <div className="flex items-center gap-0.5 shrink-0 opacity-80 md:opacity-0 group-hover:opacity-100 transition-opacity">

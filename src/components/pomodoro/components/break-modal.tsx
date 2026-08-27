@@ -1,4 +1,4 @@
-import { Modal, Button, Chip } from "@heroui/react";
+import { Modal, Button, Chip, Typography } from "@heroui/react";
 import { Coffee, SkipForward } from "lucide-react";
 
 import { formatDurationLabel } from "../logic/time-utils";
@@ -33,9 +33,9 @@ export function BreakModal({
             </Modal.Icon>
             <div>
               <Modal.Heading>Time to Recharge</Modal.Heading>
-              <p className="text-xs text-muted font-normal mt-0.5">
+              <Typography color="muted" type="body-xs" className="font-normal mt-0.5">
                 Starting a break will count the current cycle as completed
-              </p>
+              </Typography>
             </div>
           </Modal.Header>
 
@@ -52,9 +52,13 @@ export function BreakModal({
               >
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
+                    <Typography
+                      type="body-sm"
+                      weight="semibold"
+                      className="text-foreground group-hover:text-accent transition-colors"
+                    >
                       Short Break
-                    </span>
+                    </Typography>
                     <Chip
                       className="text-[10px] h-4.5 px-1.5 font-medium"
                       color="accent"
@@ -64,13 +68,18 @@ export function BreakModal({
                       Completes current cycle
                     </Chip>
                   </div>
-                  <span className="text-xs text-muted block">
+                  <Typography color="muted" type="body-xs" className="block">
                     Quick stretch, water, or eye rest
-                  </span>
+                  </Typography>
                 </div>
-                <span className="text-xs font-bold text-muted group-hover:text-accent shrink-0 pl-2">
+                <Typography
+                  color="muted"
+                  type="body-xs"
+                  weight="bold"
+                  className="group-hover:text-accent shrink-0 pl-2"
+                >
                   {formatDurationLabel(durations.shortBreak)}
-                </span>
+                </Typography>
               </button>
 
               {/* Long Break */}
@@ -84,9 +93,13 @@ export function BreakModal({
               >
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground group-hover:text-accent transition-colors">
+                    <Typography
+                      type="body-sm"
+                      weight="semibold"
+                      className="text-foreground group-hover:text-accent transition-colors"
+                    >
                       Long Break
-                    </span>
+                    </Typography>
                     <Chip
                       className="text-[10px] h-4.5 px-1.5 font-medium"
                       color="accent"
@@ -96,13 +109,18 @@ export function BreakModal({
                       Completes current cycle
                     </Chip>
                   </div>
-                  <span className="text-xs text-muted block">
+                  <Typography color="muted" type="body-xs" className="block">
                     Walk around, snack, or mental reset
-                  </span>
+                  </Typography>
                 </div>
-                <span className="text-xs font-bold text-muted group-hover:text-accent shrink-0 pl-2">
+                <Typography
+                  color="muted"
+                  type="body-xs"
+                  weight="bold"
+                  className="group-hover:text-accent shrink-0 pl-2"
+                >
                   {formatDurationLabel(durations.longBreak)}
-                </span>
+                </Typography>
               </button>
 
               {/* Skip Break Option - only active when current cycle is completed */}
@@ -122,21 +140,23 @@ export function BreakModal({
               >
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span
-                      className={`text-sm font-semibold transition-colors ${
+                    <Typography
+                      type="body-sm"
+                      weight="semibold"
+                      className={`transition-colors ${
                         isCycleCompleted
                           ? "text-foreground group-hover:text-accent"
                           : "text-muted"
                       }`}
                     >
                       Skip Break
-                    </span>
+                    </Typography>
                   </div>
-                  <span className="text-xs text-muted block">
+                  <Typography color="muted" type="body-xs" className="block">
                     {isCycleCompleted
                       ? "Jump straight into the next focus cycle"
                       : "Complete the current focus cycle first"}
-                  </span>
+                  </Typography>
                 </div>
                 <SkipForward
                   className={`size-4 shrink-0 transition-colors ${

@@ -42,19 +42,19 @@ export function TimerControls({
     <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 flex-wrap justify-center max-w-full">
       {/* Start / Pause / Resume Action Button */}
       <Button
-        className="px-5 xs:px-6 sm:px-8 md:px-9 py-3.5 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl text-xs xs:text-sm sm:text-base md:text-lg font-medium shadow-md transition-transform active:scale-95 flex items-center gap-1.5 sm:gap-2"
-        size="md"
+        className="px-6 sm:px-7 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
+        size="lg"
         variant="primary"
         onPress={onToggle}
       >
         {isRunning ? (
           <>
-            <Pause className="size-4 sm:size-5 md:size-6 fill-current" />
+            <Pause className="size-5   fill-current" />
             <span>Pause</span>
           </>
         ) : (
           <>
-            <Play className="size-4 sm:size-5 md:size-6 fill-current" />
+            <Play className="size-5 fill-current" />
             <span>{isPaused ? "Resume" : "Start"}</span>
           </>
         )}
@@ -63,14 +63,14 @@ export function TimerControls({
       {/* Reset Current Cycle Button */}
       {hasStarted && (
         <Button
+          isIconOnly
           aria-label="Reset Current Cycle"
-          className="px-2.5 xs:px-3 sm:px-4 py-3.5 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl text-xs xs:text-sm sm:text-base font-medium flex items-center gap-1 sm:gap-1.5"
-          size="md"
+          className="size-12 sm:size-14 rounded-2xl flex items-center justify-center p-0"
+          size="lg"
           variant="secondary"
           onPress={onReset}
         >
-          <RotateCcw className="size-3.5 sm:size-4" />
-          <span>Reset</span>
+          <RotateCcw className="size-5" />
         </Button>
       )}
 
@@ -78,12 +78,12 @@ export function TimerControls({
       {isFocus && hasStarted && (
         <Button
           aria-label="Take Break"
-          className="px-2.5 xs:px-3 sm:px-4 py-3.5 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl text-xs xs:text-sm sm:text-base font-medium flex items-center gap-1 sm:gap-1.5"
-          size="md"
+          className="px-6 sm:px-7 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
+          size="lg"
           variant="secondary"
           onPress={onOpenBreakModal}
         >
-          <Coffee className="size-3.5 sm:size-4" />
+          <Coffee className="size-5" />
           <span>Break</span>
         </Button>
       )}
@@ -92,12 +92,12 @@ export function TimerControls({
       {!isFocus && hasStarted && (
         <Button
           aria-label="Switch to Focus"
-          className="px-2.5 xs:px-3 sm:px-4 py-3.5 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl text-xs xs:text-sm sm:text-base font-medium flex items-center gap-1 sm:gap-1.5"
-          size="md"
+          className="px-6 sm:px-7 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
+          size="lg"
           variant="secondary"
           onPress={onSwitchToFocus}
         >
-          <Brain className="size-3.5 sm:size-4" />
+          <Brain className="size-5" />
           <span>Focus</span>
         </Button>
       )}
@@ -105,12 +105,12 @@ export function TimerControls({
       {/* Finish Session Button */}
       <Button
         aria-label="Finish Session"
-        className="px-2.5 xs:px-3 sm:px-4 py-3.5 sm:py-5 md:py-6 rounded-xl sm:rounded-2xl text-xs xs:text-sm sm:text-base font-medium flex items-center gap-1 sm:gap-1.5"
-        size="md"
+        className="px-6 sm:px-7 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
+        size="lg"
         variant={isReadyToFinish ? "primary" : "secondary"}
         onPress={onOpenSaveModal}
       >
-        <Flag className="size-3.5 sm:size-4" />
+        <Flag className="size-5" />
         <span>Finish</span>
       </Button>
 

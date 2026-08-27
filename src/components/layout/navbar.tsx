@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Drawer } from "@heroui/react";
+import { Button, Drawer, Typography } from "@heroui/react";
 import { Settings as SettingsIcon, LayoutGrid } from "lucide-react";
 
 import { SidebarTodoWidget } from "./sidebar-left";
@@ -22,9 +22,12 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40">
       <div className="mx-auto flex h-20 md:h-24 items-center justify-between px-6 sm:px-8 md:px-12">
-        <span className="font-serif font-black text-3xl md:text-4xl tracking-tight text-foreground select-none">
+        <Typography
+          type="h1"
+          className="font-serif font-black text-3xl md:text-4xl tracking-tight text-foreground select-none"
+        >
           Cozify
-        </span>
+        </Typography>
 
         <div className="flex items-center gap-2 md:gap-3">
           {/* Creative Mobile Quick Glance Trigger (Triggers at <= 950px) */}
@@ -37,9 +40,9 @@ export function Navbar() {
               onPress={() => setIsDrawerOpen(true)}
             >
               <LayoutGrid className="size-3.5 text-accent" />
-              <span className="hidden xs:inline text-[11px] text-muted">
+              <Typography color="muted" type="body-xs" className="hidden xs:inline text-[11px]">
                 Widgets
-              </span>
+              </Typography>
               {activeTodoCount > 0 && (
                 <span className="size-4 rounded-full bg-accent text-accent-foreground text-[10px] font-bold flex items-center justify-center">
                   {activeTodoCount}
@@ -91,9 +94,14 @@ export function Navbar() {
 
                 {/* Clock & Day Progress Card */}
                 <div className="flex flex-col items-start gap-1 p-3 rounded-2xl bg-surface-secondary/40 border border-separator/30">
-                  <span className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">
+                  <Typography
+                    color="muted"
+                    type="body-xs"
+                    weight="bold"
+                    className="text-[10px] uppercase tracking-wider mb-1"
+                  >
                     Clock & Day
-                  </span>
+                  </Typography>
                   <div className="w-full">
                     <SidebarClock align="start" />
                   </div>
@@ -102,9 +110,14 @@ export function Navbar() {
                 {/* Focus Timer if active */}
                 {hasActiveSession && (
                   <div className="flex flex-col items-start gap-1 p-3 rounded-2xl bg-surface-secondary/40 border border-separator/30">
-                    <span className="text-[10px] uppercase font-bold text-muted tracking-wider mb-1">
+                    <Typography
+                      color="muted"
+                      type="body-xs"
+                      weight="bold"
+                      className="text-[10px] uppercase tracking-wider mb-1"
+                    >
                       Focus Timer
-                    </span>
+                    </Typography>
                     <div className="w-full">
                       <SidebarTimer align="start" />
                     </div>

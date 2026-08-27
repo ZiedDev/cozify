@@ -37,8 +37,6 @@ export interface ThemeContextValue {
   positionY: number;
   zoom: number;
   hue: number;
-  isThemeModalOpen: boolean;
-  setIsThemeModalOpen: (open: boolean) => void;
   selectBackground: (bg: ThemeBackground | null) => void;
   addCustomBackground: (name: string, url: string) => boolean;
   renameCustomBackground: (id: string, newName: string) => void;
@@ -78,7 +76,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       hue: saved.hue ?? DEFAULT_THEME_CONFIG.hue,
     };
   });
-  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
 
   // Apply OKLCH palette changes across the entire app
   useEffect(() => {
@@ -287,8 +284,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     positionY: config.positionY ?? 50,
     zoom: config.zoom ?? 100,
     hue: config.hue ?? DEFAULT_HUE,
-    isThemeModalOpen,
-    setIsThemeModalOpen,
     selectBackground,
     addCustomBackground,
     renameCustomBackground,

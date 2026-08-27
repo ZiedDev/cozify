@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Tooltip } from "@heroui/react";
+import { Button, Tooltip, Typography } from "@heroui/react";
 import {
   Trash2,
   Edit3,
@@ -49,10 +49,10 @@ export function TodoItemDetailed({
       draggable
       className={`group relative flex flex-col gap-2.5 p-3 md:p-3.5 rounded-2xl border transition-all duration-150 select-none ${
         isDragging
-          ? "bg-surface/60 border-accent/40 shadow-xs"
+          ? "opacity-25 bg-transparent border-dashed border-accent/70 scale-[0.98] shadow-none"
           : todo.completed
-            ? "bg-surface/30 border-separator/20 opacity-60"
-            : "bg-surface/80 hover:bg-surface border-separator/40 hover:border-separator/80 shadow-xs"
+            ? "bg-surface-secondary/80 border-separator/30 opacity-70"
+            : "bg-surface hover:border-separator/80 border-separator/40 shadow-xs"
       }`}
       onDragEnd={onDragEnd}
       onDragOver={(e) => onDragOver(e, todo.id)}
@@ -83,7 +83,7 @@ export function TodoItemDetailed({
             className={`size-5 md:size-5.5 rounded-full border-2 transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
               todo.completed
                 ? "bg-accent border-accent text-accent-foreground shadow-xs scale-95"
-                : "border-muted/50 hover:border-accent hover:scale-110 bg-surface/50"
+                : "border-muted/50 hover:border-accent hover:scale-110 bg-surface"
             }`}
             type="button"
             onClick={() => toggleTodo(todo.id)}
@@ -105,15 +105,17 @@ export function TodoItemDetailed({
           }}
         >
           <div className="flex items-center gap-2 flex-wrap">
-            <span
-              className={`text-sm md:text-base leading-snug wrap-break-word transition-all ${
+            <Typography
+              type="body"
+              weight="medium"
+              className={`text-sm md:text-base leading-snug break-words transition-all ${
                 todo.completed
                   ? "line-through text-muted"
                   : "text-foreground font-medium"
               }`}
             >
               {todo.title}
-            </span>
+            </Typography>
 
             {/* Priority Badge */}
             {todo.priority && todo.priority !== "none" && (
@@ -130,9 +132,13 @@ export function TodoItemDetailed({
 
           {/* Notes preview */}
           {todo.notes && (
-            <p className="text-xs text-muted/80 line-clamp-2 font-light leading-relaxed">
+            <Typography
+              color="muted"
+              type="body-xs"
+              className="text-xs opacity-80 line-clamp-2 font-light leading-relaxed"
+            >
               {todo.notes}
-            </p>
+            </Typography>
           )}
         </div>
 

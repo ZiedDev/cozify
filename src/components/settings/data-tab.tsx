@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Button, Card, toast } from "@heroui/react";
+import { Button, Card, Typography, toast } from "@heroui/react";
 import {
   Download,
   Upload,
@@ -10,6 +10,8 @@ import {
   HardDrive,
   AlertTriangle,
   FileJson,
+  History,
+  ExternalLink,
 } from "lucide-react";
 
 import {
@@ -20,7 +22,11 @@ import {
   StorageOverview,
 } from "@/services/data-management";
 
-export function DataTab() {
+interface DataTabProps {
+  onOpenSessionsLog?: () => void;
+}
+
+export function DataTab({ onOpenSessionsLog }: DataTabProps) {
   const [stats, setStats] = useState<StorageOverview>(() =>
     getStorageOverview(),
   );
@@ -114,13 +120,13 @@ export function DataTab() {
     <div className="space-y-6">
       {/* Header Info */}
       <div>
-        <h3 className="text-base font-semibold text-foreground">
+        <Typography type="h3" weight="semibold" className="text-base text-foreground">
           Data & Storage Management
-        </h3>
-        <p className="text-xs text-muted mt-0.5">
+        </Typography>
+        <Typography color="muted" type="body-xs" className="mt-0.5">
           All your data is stored securely in your browser. Export backups or
           restore anytime.
-        </p>
+        </Typography>
       </div>
 
       {/* Storage Overview Stats Grid */}
@@ -128,43 +134,71 @@ export function DataTab() {
         <div className="rounded-xl border border-border/50 bg-surface/50 p-3 flex flex-col justify-between">
           <div className="flex items-center gap-1.5 text-muted text-xs font-medium mb-1">
             <Database className="size-3.5" />
-            <span>Sessions</span>
+            <Typography color="muted" type="body-xs">Sessions</Typography>
           </div>
-          <span className="text-lg font-bold text-foreground">
+          <Typography type="h3" weight="bold" className="text-lg text-foreground">
             {stats.sessionsCount}
-          </span>
+          </Typography>
         </div>
 
         <div className="rounded-xl border border-border/50 bg-surface/50 p-3 flex flex-col justify-between">
           <div className="flex items-center gap-1.5 text-muted text-xs font-medium mb-1">
             <Clock className="size-3.5" />
-            <span>Focus Time</span>
+            <Typography color="muted" type="body-xs">Focus Time</Typography>
           </div>
-          <span className="text-lg font-bold text-foreground">
+          <Typography type="h3" weight="bold" className="text-lg text-foreground">
             {stats.totalFocusMinutes}m
-          </span>
+          </Typography>
         </div>
 
         <div className="rounded-xl border border-border/50 bg-surface/50 p-3 flex flex-col justify-between">
           <div className="flex items-center gap-1.5 text-muted text-xs font-medium mb-1">
             <Palette className="size-3.5" />
-            <span>Wallpapers</span>
+            <Typography color="muted" type="body-xs">Wallpapers</Typography>
           </div>
-          <span className="text-lg font-bold text-foreground">
+          <Typography type="h3" weight="bold" className="text-lg text-foreground">
             {stats.customWallpapersCount}
-          </span>
+          </Typography>
         </div>
 
         <div className="rounded-xl border border-border/50 bg-surface/50 p-3 flex flex-col justify-between">
           <div className="flex items-center gap-1.5 text-muted text-xs font-medium mb-1">
             <HardDrive className="size-3.5" />
-            <span>Space Used</span>
+            <Typography color="muted" type="body-xs">Space Used</Typography>
           </div>
-          <span className="text-lg font-bold text-foreground">
+          <Typography type="h3" weight="bold" className="text-lg text-foreground">
             {stats.formattedStorageSize}
-          </span>
+          </Typography>
         </div>
       </div>
+
+      {/* Focus Sessions Log Inspection Card */}
+      <Card className="border border-border/50 bg-surface/40">
+        <Card.Header className="pb-2 flex flex-row items-center justify-between">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <History className="size-4 text-blue-400" />
+              <Card.Title className="text-sm font-semibold">
+                Focus Sessions Log
+              </Card.Title>
+            </div>
+            <Card.Description className="text-xs text-muted mt-1">
+              Inspect and view all your recorded focus sessions, notes, and
+              metrics in detail.
+            </Card.Description>
+          </div>
+
+          <Button
+            className="flex items-center gap-1.5 font-medium shrink-0 ml-3 cursor-pointer"
+            size="sm"
+            variant="secondary"
+            onPress={() => onOpenSessionsLog?.()}
+          >
+            <ExternalLink className="size-3.5" />
+            <span>Inspect Log ({stats.sessionsCount})</span>
+          </Button>
+        </Card.Header>
+      </Card>
 
       {/* Export and Import Actions */}
       <Card className="border border-border/50 bg-surface/40">

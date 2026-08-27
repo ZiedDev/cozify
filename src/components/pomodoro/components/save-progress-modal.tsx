@@ -8,13 +8,14 @@ import {
   InputGroup,
   Label,
   TimeField,
+  Typography,
   toast,
 } from "@heroui/react";
 import { Time } from "@internationalized/date";
 import { Bookmark, Clock, CheckCircle2, FileText } from "lucide-react";
 
 import { secondsToHms } from "../logic/time-utils";
-import { calculateSprintsDone } from "../logic/cycle-rules";
+import { calculateCyclesDone } from "../logic/cycle-rules";
 
 import { useTimer } from "@/hooks/use-timer";
 import {
@@ -44,7 +45,7 @@ export function SaveProgressModal({
     discardSession,
   } = useTimer();
 
-  const sprintsDone = calculateSprintsDone(
+  const cyclesDone = calculateCyclesDone(
     mode,
     isCycleActive,
     currentCycle,
@@ -54,7 +55,7 @@ export function SaveProgressModal({
   const initialTotalSeconds =
     accumulatedFocusSeconds > 0
       ? accumulatedFocusSeconds
-      : durations.focus * sprintsDone;
+      : durations.focus * cyclesDone;
 
   const [title, setTitle] = useState("Deep Focus Session");
   const [timeValue, setTimeValue] = useState<TimeValue | null>(() => {
@@ -69,13 +70,13 @@ export function SaveProgressModal({
       const totalSec =
         accumulatedFocusSeconds > 0
           ? accumulatedFocusSeconds
-          : durations.focus * sprintsDone;
+          : durations.focus * cyclesDone;
 
       const { hours, minutes, seconds } = secondsToHms(totalSec);
 
       setTimeValue(new Time(hours, minutes, seconds));
     }
-  }, [isOpen, accumulatedFocusSeconds, durations.focus, sprintsDone]);
+  }, [isOpen, accumulatedFocusSeconds, durations.focus, cyclesDone]);
 
   const handleSave = async () => {
     const totalSecs = timeValue
@@ -88,8 +89,8 @@ export function SaveProgressModal({
       id: `session_${Date.now()}`,
       createdAt: Date.now(),
       title: title.trim() || "Focus Session",
-      sprintsCompleted: sprintsDone,
-      targetSprints: targetCycles,
+      cyclesCompleted: cyclesDone,
+      targetCycles: targetCycles,
       focusMinutes,
       notes: notes.trim() || undefined,
     };
@@ -105,7 +106,7 @@ export function SaveProgressModal({
     ]);
 
     toast("Session Saved! 📊", {
-      description: `Logged ${record.focusMinutes}m across ${record.sprintsCompleted} cycles.`,
+      description: `Logged ${record.focusMinutes}m across ${record.cyclesCompleted} cycles.`,
       variant: "accent",
       timeout: 3000,
     });
@@ -125,9 +126,9 @@ export function SaveProgressModal({
             </Modal.Icon>
             <div>
               <Modal.Heading>Save Session Progress</Modal.Heading>
-              <p className="text-xs text-muted font-normal mt-0.5">
-                Completed {sprintsDone} of {targetCycles} cycles
-              </p>
+              <Typography color="muted" type="body-xs" className="font-normal mt-0.5">
+                Completed {cyclesDone} of {targetCycles} cycles
+              </Typography>
             </div>
           </Modal.Header>
 

@@ -1,4 +1,4 @@
-import { Tabs } from "@heroui/react";
+import { Tabs, Typography } from "@heroui/react";
 
 import { TIMER_MODES, TimerMode } from "@/config/timer";
 
@@ -25,7 +25,9 @@ export function TimerTabs({ mode, onSwitchMode }: TimerTabsProps) {
               className="h-8 xs:h-8.5 sm:h-9 md:h-10 rounded-full px-3 xs:px-4 sm:px-5 md:px-7 w-auto text-xs xs:text-sm md:text-base font-medium whitespace-nowrap shrink-0 flex items-center justify-center cursor-pointer transition-all"
               id={m.id}
             >
-              <span>{m.label}</span>
+              <Typography type="body-sm" weight="medium">
+                {m.label}
+              </Typography>
               <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-sm" />
             </Tabs.Tab>
           ))}

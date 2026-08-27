@@ -47,9 +47,9 @@ export function determinePreferredBreak(
 }
 
 /**
- * Calculates sprints done for session progress logging
+ * Calculates cycles done for session progress logging
  */
-export function calculateSprintsDone(
+export function calculateCyclesDone(
   mode: TimerMode,
   isCycleActive: boolean,
   currentCycle: number,
@@ -62,6 +62,9 @@ export function calculateSprintsDone(
     hasStartedFocus ? Math.max(completedCycles, currentCycle) : completedCycles,
   );
 }
+
+// Backward compatibility alias
+export const calculateSprintsDone = calculateCyclesDone;
 
 /**
  * Calculates current progress percentage of an active focus cycle

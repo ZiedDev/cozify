@@ -1,4 +1,4 @@
-import { Button } from "@heroui/react";
+import { Button, Typography } from "@heroui/react";
 import { Plus, Minus } from "lucide-react";
 
 import { MAX_DURATION_SECONDS } from "@/config/timer";
@@ -38,17 +38,23 @@ export function TimerDisplay({
 
       {/* Main Time Digits & Labels */}
       <div className="flex flex-col items-center justify-center">
-        <span
-          className={`font-sans text-6xl xs:text-7xl sm:text-8xl md:text-9xl lg:text-[9.5rem] font-medium tracking-tight tabular-nums leading-none transition-colors ${
+        <Typography
+          type="h1"
+          weight="medium"
+          className={`font-sans text-6xl xs:text-7xl sm:text-8xl md:text-9xl lg:text-[9.5rem] tracking-tight tabular-nums leading-none transition-colors ${
             isOvertime ? "text-accent" : "text-foreground"
           }`}
         >
           {formattedTime}
-        </span>
+        </Typography>
         {/* Minutes and Seconds Indicators */}
-        <div className="flex items-center justify-between w-full max-w-44 xs:max-w-52 sm:max-w-64 md:max-w-80 px-2 sm:px-4 text-[9px] xs:text-[10px] sm:text-xs font-semibold tracking-widest text-muted uppercase mt-0.5 sm:mt-1">
-          <span>minutes</span>
-          <span>seconds</span>
+        <div className="flex items-center justify-between w-full max-w-44 xs:max-w-52 sm:max-w-64 md:max-w-80 px-2 sm:px-4 text-[9px] xs:text-[10px] sm:text-xs font-semibold tracking-widest uppercase mt-0.5 sm:mt-1">
+          <Typography color="muted" type="body-xs" weight="semibold" className="text-[9px] xs:text-[10px] sm:text-xs tracking-widest uppercase">
+            minutes
+          </Typography>
+          <Typography color="muted" type="body-xs" weight="semibold" className="text-[9px] xs:text-[10px] sm:text-xs tracking-widest uppercase">
+            seconds
+          </Typography>
         </div>
       </div>
 

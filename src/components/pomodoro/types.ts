@@ -26,7 +26,7 @@ export interface ConfirmationState {
   title: string;
   description: string;
   confirmLabel: string;
-  confirmVariant?: "primary" | "secondary" | "danger";
+  confirmVariant?: "primary" | "secondary" | "danger" | "danger-soft";
   status?: "default" | "warning" | "danger" | "success" | "accent";
   onConfirm: () => void;
 }

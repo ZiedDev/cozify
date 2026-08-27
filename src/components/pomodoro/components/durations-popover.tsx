@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Button, Popover, Separator, NumberField } from "@heroui/react";
+import { Button, Popover, Separator, NumberField, Typography } from "@heroui/react";
 import { SlidersHorizontal, RotateCcw } from "lucide-react";
 
 import {
@@ -50,9 +50,14 @@ export function DurationsPopover({
       <Popover.Content>
         <Popover.Dialog className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
-            <h4 className="font-bold text-muted tracking-wider uppercase text-xs">
+            <Typography
+              color="muted"
+              type="body-xs"
+              weight="bold"
+              className="tracking-wider uppercase text-xs"
+            >
               Durations
-            </h4>
+            </Typography>
             <Button
               size="sm"
               variant="ghost"
@@ -74,9 +79,9 @@ export function DurationsPopover({
                 key={m.id}
                 className="flex items-center justify-between gap-3"
               >
-                <span className="text-muted text-sm font-medium">
+                <Typography color="muted" type="body-sm" weight="medium">
                   {TIMER_MODE_LABELS[m.id]}
-                </span>
+                </Typography>
 
                 <div className="flex items-center gap-2">
                   {/* Minutes NumberField */}

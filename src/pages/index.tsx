@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tabs } from "@heroui/react";
+import { Tabs, Typography } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -9,6 +9,7 @@ import { Clock } from "@/components/home/clock";
 import { Timer } from "@/components/pomodoro/timer";
 import { TodoPage } from "@/components/todo/todo-page";
 import { CozyView } from "@/components/cozy/cozy-view";
+import { StatsPage } from "@/components/stats/stats-page";
 import { AppMode } from "@/config/modes";
 
 export default function IndexPage() {
@@ -56,15 +57,21 @@ export default function IndexPage() {
               <CozyView />
             </Tabs.Panel>
 
-            {(["music", "stats"] as const).map((m) => (
-              <Tabs.Panel
-                key={m}
-                className="text-center text-muted font-light text-xl capitalize animate-in fade-in duration-150"
-                id={m}
-              >
-                {m} mode coming up next...
-              </Tabs.Panel>
-            ))}
+            <Tabs.Panel
+              className="w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden animate-in fade-in duration-150"
+              id="stats"
+            >
+              <StatsPage />
+            </Tabs.Panel>
+
+            <Tabs.Panel
+              className="flex items-center justify-center animate-in fade-in duration-150"
+              id="music"
+            >
+              <Typography color="muted" type="h4" className="font-light capitalize">
+                Music mode coming up next...
+              </Typography>
+            </Tabs.Panel>
           </div>
         </section>
       </Tabs>

@@ -1,13 +1,8 @@
-import { AlertDialog, Button } from "@heroui/react";
+import { AlertDialog, Button, Typography } from "@heroui/react";
 
-export interface ConfirmationState {
-  title: string;
-  description: string;
-  confirmLabel: string;
-  confirmVariant?: "primary" | "secondary" | "danger" | "danger-soft";
-  status?: "default" | "warning" | "danger" | "success" | "accent";
-  onConfirm: () => void;
-}
+import { ConfirmationState } from "../types";
+
+export type { ConfirmationState };
 
 interface InterruptAlertProps {
   confirmation: ConfirmationState | null;
@@ -43,9 +38,9 @@ export function InterruptAlert({
           </AlertDialog.Header>
 
           <AlertDialog.Body>
-            <p className="text-muted text-sm leading-relaxed">
+            <Typography color="muted" type="body-sm" className="leading-relaxed">
               {confirmation?.description}
-            </p>
+            </Typography>
           </AlertDialog.Body>
 
           <AlertDialog.Footer>

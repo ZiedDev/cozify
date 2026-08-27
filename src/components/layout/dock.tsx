@@ -1,4 +1,4 @@
-import { Tabs } from "@heroui/react";
+import { Tabs, Typography } from "@heroui/react";
 
 import { DOCK_ITEMS } from "@/config/modes";
 
@@ -21,13 +21,15 @@ export function Dock() {
               {({ isSelected }) => (
                 <>
                   <Icon className="size-4 min-[701px]:size-4.5 shrink-0" />
-                  <span
+                  <Typography
+                    type="body-sm"
+                    weight="medium"
                     className={
                       isSelected ? "inline" : "hidden min-[701px]:inline"
                     }
                   >
                     {item.label}
-                  </span>
+                  </Typography>
                   <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-md" />
                 </>
               )}

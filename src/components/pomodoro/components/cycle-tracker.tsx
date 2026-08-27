@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { NumberField, ProgressBar, Tooltip } from "@heroui/react";
+import { NumberField, ProgressBar, Tooltip, Typography } from "@heroui/react";
 
 import {
   calculateCycleProgressPercent,
@@ -151,10 +151,10 @@ export function CycleTracker({
       </div>
 
       {/* Cycle count and target stepper */}
-      <div className="flex items-center gap-2.5 text-xs md:text-sm text-muted font-medium">
-        <span>
+      <div className="flex items-center gap-2.5">
+        <Typography color="muted" type="body-sm" weight="medium" className="text-xs md:text-sm">
           Cycle <strong className="text-foreground">{currentCycle}</strong> of
-        </span>
+        </Typography>
 
         <NumberField
           aria-label="Target Cycles"

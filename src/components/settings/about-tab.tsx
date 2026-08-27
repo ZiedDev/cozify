@@ -1,4 +1,4 @@
-import { Card, Link } from "@heroui/react";
+import { Card, Link, Typography } from "@heroui/react";
 import { SiGithub } from "@icons-pack/react-simple-icons";
 import { FolderGit2 } from "lucide-react";
 
@@ -9,27 +9,35 @@ export function AboutTab() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h3 className="text-base font-semibold text-foreground">
+        <Typography type="h3" weight="semibold" className="text-base text-foreground">
           About Cozify
-        </h3>
-        <p className="text-muted">Your ideal cozy focus & study environment.</p>
+        </Typography>
+        <Typography color="muted" type="body-sm">
+          Your ideal cozy focus & study environment.
+        </Typography>
       </div>
 
       <Card className="border border-border/50 bg-surface/40">
         <Card.Content className="space-y-3">
           <div className="flex items-center gap-3">
             <div>
-              <h4 className="text-sm font-bold text-foreground font-serif tracking-tight">
+              <Typography
+                type="h4"
+                weight="bold"
+                className="text-sm text-foreground font-serif tracking-tight"
+              >
                 Cozify
-              </h4>
-              <p className="text-xs text-muted">Version {siteConfig.version}</p>
+              </Typography>
+              <Typography color="muted" type="body-xs" className="text-xs">
+                Version {siteConfig.version}
+              </Typography>
             </div>
           </div>
 
-          <p className="text-xs text-muted leading-relaxed">
+          <Typography color="muted" type="body-xs" className="text-xs leading-relaxed">
             Designed for mindful work, deep study sessions, and serene ambient
             productivity.
-          </p>
+          </Typography>
 
           <div className="pt-3 flex flex-wrap items-center gap-4 text-xs border-t border-border/40">
             <Link

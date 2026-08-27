@@ -45,8 +45,10 @@ export interface SessionRecord {
   id: string;
   createdAt: number;
   title: string;
-  sprintsCompleted: number;
-  targetSprints: number;
+  cyclesCompleted?: number;
+  sprintsCompleted?: number; // legacy backwards compatibility
+  targetCycles?: number;
+  targetSprints?: number; // legacy backwards compatibility
   focusMinutes: number;
   overtimeMinutes?: number;
   notes?: string;

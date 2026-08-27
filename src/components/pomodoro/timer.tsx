@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Typography, Kbd } from "@heroui/react";
 
 import { CycleTracker } from "./components/cycle-tracker";
 import { SaveProgressModal } from "./components/save-progress-modal";
@@ -223,13 +224,17 @@ export function Timer() {
       />
 
       {/* Spacebar Shortcut Hint */}
-      <p className="text-[10px] sm:text-xs text-muted/60 tracking-wider uppercase">
+      <Typography
+        color="muted"
+        type="body-xs"
+        className="text-[10px] sm:text-xs opacity-60 tracking-wider uppercase"
+      >
         Press{" "}
-        <kbd className="px-1.5 py-0.5 rounded bg-surface border border-separator/40 text-muted">
+        <Kbd className="px-1.5 py-0.5 rounded bg-surface border border-separator/40 text-muted">
           Space
-        </kbd>{" "}
+        </Kbd>{" "}
         to {isRunning ? "pause" : isPaused ? "resume" : "start"}
-      </p>
+      </Typography>
 
       {/* Break Selection Modal */}
       <BreakModal

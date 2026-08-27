@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from "react";
-import { ScrollShadow, Separator } from "@heroui/react";
+import { ScrollShadow, Separator, Typography } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { CheckCircle2, Coffee, Search } from "lucide-react";
@@ -46,47 +46,16 @@ export function TodoList() {
   }, []);
 
   // Item-level drag handlers
-  const handleDragStart = useCallback(
-    (e: React.DragEvent, id: string) => {
-      e.dataTransfer.setData("text/plain", id);
-      e.dataTransfer.effectAllowed = "move";
+  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+    e.dataTransfer.setData("text/plain", id);
+    e.dataTransfer.effectAllowed = "move";
 
-      // Create a semi-transparent floating drag preview for the cursor
-      const target = e.currentTarget as HTMLElement;
-
-      if (target) {
-        const clone = target.cloneNode(true) as HTMLElement;
-        const rect = target.getBoundingClientRect();
-
-        clone.style.width = `${rect.width}px`;
-        clone.style.opacity = "0.65";
-        clone.style.position = "fixed";
-        clone.style.top = "-9999px";
-        clone.style.left = "-9999px";
-        clone.style.pointerEvents = "none";
-        clone.style.zIndex = "99999";
-        clone.style.borderRadius = "16px";
-        clone.style.boxShadow =
-          "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)";
-
-        document.body.appendChild(clone);
-
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
-
-        e.dataTransfer.setDragImage(clone, offsetX, offsetY);
-
-        requestAnimationFrame(() => {
-          if (clone.parentNode) {
-            clone.parentNode.removeChild(clone);
-          }
-        });
-      }
-
-      updateDraggedId(id);
-    },
-    [updateDraggedId],
-  );
+    draggedIdRef.current = id;
+    // Delay React state update by 0ms so the browser captures the drag image before applying the transparent drag placeholder
+    setTimeout(() => {
+      setDraggedId(id);
+    }, 0);
+  }, []);
 
   const handleItemDragOver = useCallback(
     (e: React.DragEvent, id: string) => {
@@ -244,7 +213,11 @@ export function TodoList() {
             )}
           </div>
           <div className="flex flex-col gap-1">
-            <h3 className="text-sm md:text-base font-medium text-foreground">
+            <Typography
+              type="h4"
+              weight="medium"
+              className="text-sm md:text-base text-foreground font-medium"
+            >
               {searchQuery
                 ? `No tasks matching "${searchQuery}"`
                 : filter === "completed"
@@ -252,14 +225,18 @@ export function TodoList() {
                   : filter === "today"
                     ? "No tasks scheduled for today"
                     : "Your list is clean and cozy"}
-            </h3>
-            <p className="text-xs text-muted max-w-xs leading-relaxed font-light">
+            </Typography>
+            <Typography
+              color="muted"
+              type="body-xs"
+              className="text-xs max-w-xs leading-relaxed font-light"
+            >
               {searchQuery
                 ? "Try a different search term or clear the filter."
                 : filter === "completed"
                   ? "Check off tasks as you finish them to see your progress here."
                   : "Add your first task above to start organizing your day."}
-            </p>
+            </Typography>
           </div>
         </div>
       ) : (
@@ -285,10 +262,16 @@ export function TodoList() {
               const isDropBottom =
                 isDragOverThis && dragOverState?.position === "bottom";
 
+              const isThisDragging = draggedId === todo.id;
+
               return (
                 <div
                   key={todo.id}
-                  className="todo-item-row w-full flex flex-col gap-1 transition-all"
+                  className={`todo-item-row w-full flex flex-col gap-1 transition-all duration-150 ${
+                    isThisDragging
+                      ? "opacity-25 pointer-events-none scale-[0.99]"
+                      : "opacity-100"
+                  }`}
                   data-todo-id={todo.id}
                   onDragOver={(e) => handleItemDragOver(e, todo.id)}
                   onDrop={(e) => handleItemDrop(e, todo.id)}

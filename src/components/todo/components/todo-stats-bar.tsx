@@ -1,4 +1,4 @@
-import { ProgressBar, Button } from "@heroui/react";
+import { ProgressBar, Button, Typography } from "@heroui/react";
 import { Trash2, CheckCircle2 } from "lucide-react";
 
 import { useTodos } from "@/hooks/use-todos";
@@ -11,14 +11,14 @@ export function TodoStatsBar() {
   return (
     <div className="flex flex-col gap-2.5 w-full pt-3 border-t border-separator/30">
       <div className="flex items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2 text-muted">
+        <div className="flex items-center gap-2">
           <CheckCircle2 className="size-3.5 text-accent" />
-          <span>
+          <Typography color="muted" type="body-xs" className="text-xs">
             <strong className="text-foreground font-medium">
               {stats.completed}
             </strong>{" "}
             of {stats.total} tasks completed ({stats.percentage}%)
-          </span>
+          </Typography>
         </div>
 
         {stats.completed > 0 && (
