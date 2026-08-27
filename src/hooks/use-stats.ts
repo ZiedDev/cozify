@@ -29,7 +29,6 @@ import {
   calculateMilestones,
   formatMinutesDisplay,
 } from "@/components/stats/logic/stats-calculator";
-import { generateSampleStatsData } from "@/components/stats/logic/mock-stats-generator";
 
 export interface UseStatsReturn {
   sessions: SessionRecord[];
@@ -59,7 +58,6 @@ export interface UseStatsReturn {
   deleteSession: (id: string) => void;
   updateSession: (id: string, updates: Partial<SessionRecord>) => void;
   clearAllSessions: () => void;
-  loadSampleData: () => void;
   copySummaryToClipboard: () => void;
   exportStatsJson: () => void;
 }
@@ -194,17 +192,6 @@ export function useStats(): UseStatsReturn {
     toast("All session history cleared");
   }, []);
 
-  const loadSampleData = useCallback(() => {
-    const { sessions: sampleSessions, todos: sampleTodos } =
-      generateSampleStatsData();
-
-    setSessions(sampleSessions);
-    setTodos(sampleTodos);
-    storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, sampleSessions);
-    storageAdapter.setItem(STORAGE_KEYS.TODOS, sampleTodos);
-    toast("Sample statistics loaded successfully!");
-  }, []);
-
   const copySummaryToClipboard = useCallback(() => {
     const summary =
       `📊 Cozify Focus Summary\n` +
@@ -272,7 +259,6 @@ export function useStats(): UseStatsReturn {
     deleteSession,
     updateSession,
     clearAllSessions,
-    loadSampleData,
     copySummaryToClipboard,
     exportStatsJson,
   };

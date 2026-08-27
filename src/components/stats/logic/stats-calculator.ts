@@ -486,7 +486,7 @@ export function calculateFocusTrendChartData(
       };
       const displayHour = h % 12 === 0 ? 12 : h % 12;
       const ampm = h >= 12 ? "PM" : "AM";
-      const shortLabel = `${displayHour}${h >= 12 ? "p" : "a"}`;
+      const shortLabel = `${displayHour} ${ampm}`;
       const fullLabel = `${displayHour}:00 ${ampm} - ${displayHour}:59 ${ampm}`;
 
       const intensity =
@@ -509,13 +509,15 @@ export function calculateFocusTrendChartData(
         sessionCount: sData.count,
         taskCompletedCount: sData.tasks,
         intensityLevel: intensity,
+        periodType: "hourly",
+        dateRange: { start: targetDateStr, end: targetDateStr },
       });
     }
 
     return result;
   }
 
-  // 2. DAILY BREAKDOWN FOR MULTI-DAY / RANGE
+  // 2. MULTI-DAY / EXTENDED RANGE BREAKDOWN
   const sessionMap = new Map<
     string,
     { minutes: number; cycles: number; count: number }
@@ -551,24 +553,62 @@ export function calculateFocusTrendChartData(
     }
   });
 
-  if (range === "custom" && customRange?.start && customRange?.end) {
-    const start = new Date(`${customRange.start}T00:00:00`);
-    const end = new Date(`${customRange.end}T00:00:00`);
-    const diffDays = Math.min(
-      60,
-      Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000) + 1),
-    );
+  let startDate: Date;
+  let endDate: Date;
 
+  if (range === "custom" && customRange?.start && customRange?.end) {
+    startDate = new Date(`${customRange.start}T00:00:00`);
+    endDate = new Date(`${customRange.end}T23:59:59`);
+  } else if (range === "all") {
+    let earliestTs = now.getTime() - 29 * 86400000;
+
+    sessions.forEach((s) => {
+      if (s.createdAt && s.createdAt < earliestTs) earliestTs = s.createdAt;
+    });
+    todos.forEach((t) => {
+      const ts = t.completedAt || t.createdAt;
+
+      if (ts && ts < earliestTs) earliestTs = ts;
+    });
+    startDate = new Date(earliestTs);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(now);
+  } else if (range === "month") {
+    startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - 29);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(now);
+  } else {
+    // 7 days default
+    startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - 6);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(now);
+  }
+
+  const diffDays = Math.max(
+    1,
+    Math.round((endDate.getTime() - startDate.getTime()) / 86400000) + 1,
+  );
+
+  // A. DAILY BREAKDOWN (<= 31 days)
+  if (diffDays <= 31) {
     for (let i = 0; i < diffDays; i++) {
-      const d = new Date(start);
+      const d = new Date(startDate);
 
       d.setDate(d.getDate() + i);
 
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      const dayName = d.toLocaleDateString(undefined, { weekday: "short" });
+      const dayName = d.toLocaleDateString(undefined, {
+        weekday: diffDays <= 7 ? "short" : undefined,
+        month: diffDays > 7 ? "numeric" : undefined,
+        day: diffDays > 7 ? "numeric" : undefined,
+      });
       const fullDateLabel = d.toLocaleDateString(undefined, {
+        weekday: "short",
         month: "short",
         day: "numeric",
+        year: "numeric",
       });
 
       const sData = sessionMap.get(dateStr) || {
@@ -593,57 +633,206 @@ export function calculateFocusTrendChartData(
         dayLabel: dayName,
         fullDateLabel,
         focusMinutes: sData.minutes,
+        totalPeriodMinutes: sData.minutes,
         cycleCount: sData.cycles,
         sessionCount: sData.count,
         taskCompletedCount: taskCount,
         intensityLevel: intensity,
+        periodType: "daily",
+        dateRange: { start: dateStr, end: dateStr },
       });
     }
 
     return result;
   }
 
-  const daysCount = range === "month" ? 30 : range === "all" ? 14 : 7;
+  // B. WEEKLY GROUPING (32 to 120 days, ~1 to 4 months)
+  if (diffDays <= 120) {
+    let currentWeekStart = new Date(startDate);
 
-  for (let i = daysCount - 1; i >= 0; i--) {
-    const d = new Date(now);
+    while (currentWeekStart <= endDate) {
+      const currentWeekEnd = new Date(currentWeekStart);
 
-    d.setDate(d.getDate() - i);
+      currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
+      if (currentWeekEnd > endDate) {
+        currentWeekEnd.setTime(endDate.getTime());
+      }
 
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const dayName = d.toLocaleDateString(undefined, { weekday: "short" });
-    const fullDateLabel = d.toLocaleDateString(undefined, {
+      const daysInBucket = Math.max(
+        1,
+        Math.round(
+          (currentWeekEnd.getTime() - currentWeekStart.getTime()) / 86400000,
+        ) + 1,
+      );
+
+      let totalMinutes = 0;
+      let totalCycles = 0;
+      let totalSessions = 0;
+      let totalTasks = 0;
+
+      for (let dayOffset = 0; dayOffset < daysInBucket; dayOffset++) {
+        const d = new Date(currentWeekStart);
+
+        d.setDate(d.getDate() + dayOffset);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const sData = sessionMap.get(dateStr);
+
+        if (sData) {
+          totalMinutes += sData.minutes;
+          totalCycles += sData.cycles;
+          totalSessions += sData.count;
+        }
+        totalTasks += todoMap.get(dateStr) || 0;
+      }
+
+      const avgDailyMinutes = Math.round(totalMinutes / daysInBucket);
+      const shortLabel = currentWeekStart.toLocaleDateString(undefined, {
+        month: "numeric",
+        day: "numeric",
+      });
+      const fullLabel = `Week of ${currentWeekStart.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      })} – ${currentWeekEnd.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+      })}`;
+
+      const intensity =
+        avgDailyMinutes >= 120
+          ? 4
+          : avgDailyMinutes >= 60
+            ? 3
+            : avgDailyMinutes >= 25
+              ? 2
+              : avgDailyMinutes > 0
+                ? 1
+                : 0;
+
+      const wStartStr = `${currentWeekStart.getFullYear()}-${String(currentWeekStart.getMonth() + 1).padStart(2, "0")}-${String(currentWeekStart.getDate()).padStart(2, "0")}`;
+      const wEndStr = `${currentWeekEnd.getFullYear()}-${String(currentWeekEnd.getMonth() + 1).padStart(2, "0")}-${String(currentWeekEnd.getDate()).padStart(2, "0")}`;
+
+      result.push({
+        dateStr: wStartStr,
+        dayLabel: shortLabel,
+        fullDateLabel: fullLabel,
+        focusMinutes: avgDailyMinutes,
+        totalPeriodMinutes: totalMinutes,
+        cycleCount: totalCycles,
+        sessionCount: totalSessions,
+        taskCompletedCount: totalTasks,
+        intensityLevel: intensity,
+        periodType: "weekly",
+        dateRange: { start: wStartStr, end: wEndStr },
+      });
+
+      // Advance by 7 days
+      currentWeekStart = new Date(currentWeekStart);
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    }
+
+    return result;
+  }
+
+  // C. MONTHLY GROUPING (> 120 days, ~4+ months to years)
+  let currentMonth = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    1,
+  );
+  const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
+
+  while (currentMonth <= endMonth) {
+    const mStart = new Date(
+      Math.max(
+        startDate.getTime(),
+        new Date(
+          currentMonth.getFullYear(),
+          currentMonth.getMonth(),
+          1,
+        ).getTime(),
+      ),
+    );
+    const lastDayOfMonth = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
+    const mEnd = new Date(
+      Math.min(endDate.getTime(), lastDayOfMonth.getTime()),
+    );
+
+    const daysInBucket = Math.max(
+      1,
+      Math.round((mEnd.getTime() - mStart.getTime()) / 86400000) + 1,
+    );
+
+    let totalMinutes = 0;
+    let totalCycles = 0;
+    let totalSessions = 0;
+    let totalTasks = 0;
+
+    for (let dayOffset = 0; dayOffset < daysInBucket; dayOffset++) {
+      const d = new Date(mStart);
+
+      d.setDate(d.getDate() + dayOffset);
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const sData = sessionMap.get(dateStr);
+
+      if (sData) {
+        totalMinutes += sData.minutes;
+        totalCycles += sData.cycles;
+        totalSessions += sData.count;
+      }
+      totalTasks += todoMap.get(dateStr) || 0;
+    }
+
+    const avgDailyMinutes = Math.round(totalMinutes / daysInBucket);
+    const shortLabel = currentMonth.toLocaleDateString(undefined, {
       month: "short",
-      day: "numeric",
+    });
+    const fullLabel = currentMonth.toLocaleDateString(undefined, {
+      month: "long",
+      year: "numeric",
     });
 
-    const sData = sessionMap.get(dateStr) || {
-      minutes: 0,
-      cycles: 0,
-      count: 0,
-    };
-    const taskCount = todoMap.get(dateStr) || 0;
     const intensity =
-      sData.minutes >= 120
+      avgDailyMinutes >= 120
         ? 4
-        : sData.minutes >= 60
+        : avgDailyMinutes >= 60
           ? 3
-          : sData.minutes >= 25
+          : avgDailyMinutes >= 25
             ? 2
-            : sData.minutes > 0
+            : avgDailyMinutes > 0
               ? 1
               : 0;
 
+    const mStartStr = `${mStart.getFullYear()}-${String(mStart.getMonth() + 1).padStart(2, "0")}-${String(mStart.getDate()).padStart(2, "0")}`;
+    const mEndStr = `${mEnd.getFullYear()}-${String(mEnd.getMonth() + 1).padStart(2, "0")}-${String(mEnd.getDate()).padStart(2, "0")}`;
+
     result.push({
-      dateStr,
-      dayLabel: dayName,
-      fullDateLabel,
-      focusMinutes: sData.minutes,
-      cycleCount: sData.cycles,
-      sessionCount: sData.count,
-      taskCompletedCount: taskCount,
+      dateStr: mStartStr,
+      dayLabel: shortLabel,
+      fullDateLabel: fullLabel,
+      focusMinutes: avgDailyMinutes,
+      totalPeriodMinutes: totalMinutes,
+      cycleCount: totalCycles,
+      sessionCount: totalSessions,
+      taskCompletedCount: totalTasks,
       intensityLevel: intensity,
+      periodType: "monthly",
+      dateRange: { start: mStartStr, end: mEndStr },
     });
+
+    // Advance to next month
+    currentMonth = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth() + 1,
+      1,
+    );
   }
 
   return result;
@@ -657,53 +846,17 @@ export const calculateDailyChartData = calculateFocusTrendChartData;
 export function calculateHeatmapData(
   sessions: SessionRecord[],
   todos: TodoItem[],
-  range: TimeRangeFilter = "all",
-  customRange: CustomDateRange | null = null,
+  _range: TimeRangeFilter = "all",
+  _customRange: CustomDateRange | null = null,
 ): {
   weeks: DayActivity[][];
   months: { label: string; weekIndex: number }[];
   rangeTitle: string;
 } {
   const now = new Date();
-  let baseEndDate = now;
-  let weeksCount = 10;
-  let rangeTitle = "10-Week Focus Matrix";
-
-  if (range === "today") {
-    weeksCount = 2;
-    rangeTitle = "Current Week Context (14-Day View)";
-  } else if (range === "week") {
-    weeksCount = 2;
-    rangeTitle = "2-Week Focus Matrix";
-  } else if (range === "month") {
-    weeksCount = 5;
-    rangeTitle = "5-Week Focus Matrix";
-  } else if (range === "custom" && customRange?.start && customRange?.end) {
-    try {
-      const s = new Date(`${customRange.start}T00:00:00`);
-      const e = new Date(`${customRange.end}T23:59:59`);
-
-      baseEndDate = e;
-      const daysDiff = Math.max(
-        1,
-        Math.round((e.getTime() - s.getTime()) / 86400000) + 1,
-      );
-
-      weeksCount = Math.min(12, Math.max(2, Math.ceil(daysDiff / 7)));
-      rangeTitle = `${customRange.start} to ${customRange.end}`;
-    } catch {
-      weeksCount = 6;
-      rangeTitle = "Custom Range Matrix";
-    }
-  }
-
-  const totalDays = weeksCount * 7;
-  const dayOfWeek = baseEndDate.getDay(); // 0 is Sunday, 6 is Saturday
-  const daysToEndOfWeek = 6 - dayOfWeek;
-
-  const endDate = new Date(baseEndDate);
-
-  endDate.setDate(endDate.getDate() + daysToEndOfWeek);
+  const currentYear = now.getFullYear();
+  let startYear = currentYear - 1; // Default to at least 2 calendar years
+  const rangeTitle = "Year-Round Consistency & Focus Momentum";
 
   const sessionMap = new Map<
     string,
@@ -740,67 +893,93 @@ export function calculateHeatmapData(
     }
   });
 
-  const allDays: DayActivity[] = [];
+  sessions.forEach((s) => {
+    if (s.createdAt) {
+      const yr = new Date(s.createdAt).getFullYear();
+      if (yr < startYear) {
+        startYear = yr;
+      }
+    }
+  });
 
-  for (let i = totalDays - 1; i >= 0; i--) {
-    const d = new Date(endDate);
+  const todayEndTimestamp = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,
+    59,
+    59,
+    999,
+  ).getTime();
 
-    d.setDate(d.getDate() - i);
-
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    const dayName = d.toLocaleDateString(undefined, { weekday: "short" });
-    const fullDateLabel = d.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    const sData = sessionMap.get(dateStr) || {
-      minutes: 0,
-      cycles: 0,
-      count: 0,
-    };
-    const taskCount = todoMap.get(dateStr) || 0;
-
-    let intensityLevel: 0 | 1 | 2 | 3 | 4 = 0;
-
-    if (sData.minutes >= 120) intensityLevel = 4;
-    else if (sData.minutes >= 60) intensityLevel = 3;
-    else if (sData.minutes >= 25) intensityLevel = 2;
-    else if (sData.minutes > 0 || taskCount > 0) intensityLevel = 1;
-
-    allDays.push({
-      dateStr,
-      dayLabel: dayName,
-      fullDateLabel,
-      focusMinutes: sData.minutes,
-      cycleCount: sData.cycles,
-      sessionCount: sData.count,
-      taskCompletedCount: taskCount,
-      intensityLevel,
-    });
-  }
-
-  // Chunk into columns of 7 days (Sunday - Saturday)
   const weeks: DayActivity[][] = [];
   const months: { label: string; weekIndex: number }[] = [];
   let lastMonth = "";
 
-  for (let w = 0; w < weeksCount; w++) {
-    const weekDays = allDays.slice(w * 7, (w + 1) * 7);
+  // Generate each calendar year strictly in 52-week blocks (Weeks 0-25 = H1, Weeks 26-51 = H2)
+  for (let year = startYear; year <= currentYear; year++) {
+    const jan1 = new Date(year, 0, 1);
+    const startSunday = new Date(jan1);
+    startSunday.setDate(startSunday.getDate() - jan1.getDay());
 
-    weeks.push(weekDays);
+    for (let w = 0; w < 52; w++) {
+      const weekDays: DayActivity[] = [];
 
-    // Track month label on the first day of each week
-    if (weekDays.length > 0) {
-      const firstDayDate = new Date(weekDays[0].dateStr);
-      const monthLabel = firstDayDate.toLocaleDateString(undefined, {
-        month: "short",
-      });
+      for (let d = 0; d < 7; d++) {
+        const dayDate = new Date(startSunday);
+        dayDate.setDate(dayDate.getDate() + w * 7 + d);
 
-      if (monthLabel !== lastMonth) {
-        months.push({ label: monthLabel, weekIndex: w });
-        lastMonth = monthLabel;
+        const isFuture = dayDate.getTime() > todayEndTimestamp;
+        const dateStr = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, "0")}-${String(dayDate.getDate()).padStart(2, "0")}`;
+        const dayName = dayDate.toLocaleDateString(undefined, { weekday: "short" });
+        const fullDateLabel = dayDate.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        });
+
+        const sData = sessionMap.get(dateStr) || {
+          minutes: 0,
+          cycles: 0,
+          count: 0,
+        };
+        const taskCount = todoMap.get(dateStr) || 0;
+
+        let intensityLevel: 0 | 1 | 2 | 3 | 4 = 0;
+
+        if (!isFuture) {
+          if (sData.minutes >= 120) intensityLevel = 4;
+          else if (sData.minutes >= 60) intensityLevel = 3;
+          else if (sData.minutes >= 25) intensityLevel = 2;
+          else if (sData.minutes > 0 || taskCount > 0) intensityLevel = 1;
+        }
+
+        weekDays.push({
+          dateStr,
+          dayLabel: dayName,
+          fullDateLabel,
+          focusMinutes: isFuture ? 0 : sData.minutes,
+          cycleCount: isFuture ? 0 : sData.cycles,
+          sessionCount: isFuture ? 0 : sData.count,
+          taskCompletedCount: isFuture ? 0 : taskCount,
+          intensityLevel,
+          isFuture,
+        });
+      }
+
+      const globalWeekIndex = weeks.length;
+      weeks.push(weekDays);
+
+      if (weekDays.length > 0) {
+        const firstDayDate = new Date(weekDays[0].dateStr);
+        const monthLabel = firstDayDate.toLocaleDateString(undefined, {
+          month: "short",
+        });
+
+        if (monthLabel !== lastMonth) {
+          months.push({ label: monthLabel, weekIndex: globalWeekIndex });
+          lastMonth = monthLabel;
+        }
       }
     }
   }

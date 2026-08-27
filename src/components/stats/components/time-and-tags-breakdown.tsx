@@ -190,20 +190,20 @@ export function TimeAndTagsBreakdown({
           onSelectionChange={(k) => setActiveSubTab(k as string)}
         >
           <Tabs.ListContainer className="rounded-full">
-            <Tabs.List className="rounded-full bg-surface-secondary p-0.5 border border-separator/40 text-[10px] shadow-2xs">
+            <Tabs.List className="rounded-full bg-surface-secondary p-0.5 border border-separator/40 text-xs shadow-2xs">
               <Tabs.Tab
-                className="h-5 px-2 rounded-full font-medium cursor-pointer flex items-center gap-1 text-[10px]"
+                className="h-7 px-2.5 sm:px-3 rounded-full font-medium cursor-pointer flex items-center gap-1.5 text-xs transition-all"
                 id="rhythm"
               >
-                <Clock className="size-2.5" />
+                <Clock className="size-3 shrink-0" />
                 <span>Rhythm</span>
                 <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-2xs" />
               </Tabs.Tab>
               <Tabs.Tab
-                className="h-5 px-2 rounded-full font-medium cursor-pointer flex items-center gap-1 text-[10px]"
+                className="h-7 px-2.5 sm:px-3 rounded-full font-medium cursor-pointer flex items-center gap-1.5 text-xs transition-all"
                 id="tags"
               >
-                <Tag className="size-2.5" />
+                <Tag className="size-3 shrink-0" />
                 <span>Tags</span>
                 <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-2xs" />
               </Tabs.Tab>

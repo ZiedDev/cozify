@@ -1,5 +1,6 @@
-import { Tooltip, Typography } from "@heroui/react";
-import { Grid3X3, Flame, Award, Calendar } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Tooltip, Typography, Button } from "@heroui/react";
+import { ArrowLeft, ArrowRight, Calendar, X } from "lucide-react";
 
 import { DayActivity, OverallStats } from "../types";
 import { formatMinutesDisplay } from "../logic/stats-calculator";
@@ -11,178 +12,489 @@ interface ActivityHeatmapProps {
     rangeTitle?: string;
   };
   overallStats: OverallStats;
+  onSelectDate?: (dateStr: string) => void;
 }
+
+type ViewMode = "6m" | "12m";
 
 export function ActivityHeatmap({
   heatmapData,
-  overallStats,
+  overallStats: _overallStats,
+  onSelectDate,
 }: ActivityHeatmapProps) {
-  const { weeks, months, rangeTitle } = heatmapData;
+  const { weeks } = heatmapData;
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const getCellClass = (level: 0 | 1 | 2 | 3 | 4) => {
-    switch (level) {
+  const [viewMode, setViewMode] = useState<ViewMode>("6m");
+  const [selectedDay, setSelectedDay] = useState<DayActivity | null>(null);
+
+  // 6M mode = 26 weeks per page
+  const total6mPages = Math.max(1, Math.ceil(weeks.length / 26));
+  const [page6m, setPage6m] = useState<number>(total6mPages);
+
+  // 12M mode = 52 weeks per page
+  const total12mPages = Math.max(1, Math.ceil(weeks.length / 52));
+  const [page12m, setPage12m] = useState<number>(total12mPages);
+
+  useEffect(() => {
+    setPage6m(total6mPages);
+  }, [total6mPages]);
+
+  useEffect(() => {
+    setPage12m(total12mPages);
+  }, [total12mPages]);
+
+  // Sliced weeks based on active view mode and current page
+  const visibleWeeks = useMemo(() => {
+    if (viewMode === "6m") {
+      const start = (page6m - 1) * 26;
+      return weeks.slice(start, start + 26);
+    }
+    const start = (page12m - 1) * 52;
+    return weeks.slice(start, start + 52);
+  }, [weeks, viewMode, page6m, page12m]);
+
+  // Auto-scroll to latest week in 12M view
+  useEffect(() => {
+    if (viewMode === "12m" && scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [viewMode, visibleWeeks]);
+
+  // Compute exact column placements for month labels
+  const monthHeaders = useMemo(() => {
+    const headers: { label: string; weekIndex: number }[] = [];
+    let lastMonth = "";
+
+    visibleWeeks.forEach((week, weekIdx) => {
+      const firstOfMonth = week.find((day) => {
+        if (!day) return false;
+        const d = new Date(`${day.dateStr}T12:00:00`);
+        return d.getDate() <= 7;
+      });
+
+      if (firstOfMonth) {
+        const d = new Date(`${firstOfMonth.dateStr}T12:00:00`);
+        const mLabel = d.toLocaleDateString("en-US", { month: "short" });
+        if (mLabel !== lastMonth) {
+          headers.push({ label: mLabel, weekIndex: weekIdx });
+          lastMonth = mLabel;
+        }
+      }
+    });
+
+    return headers;
+  }, [visibleWeeks]);
+
+  // Exact GitHub 5-tier contribution palette with distinct styling for upcoming unreached days
+  const getContributionColor = (day: DayActivity, isSelected: boolean) => {
+    if (day.isFuture) {
+      const selectedRing = isSelected ? "ring-2 ring-muted scale-110 z-10" : "";
+      return `${selectedRing} bg-surface-secondary/25 border-dashed border-separator/30 opacity-40 hover:opacity-80`;
+    }
+
+    const selectedRing = isSelected
+      ? "ring-2 ring-emerald-400 ring-offset-1 ring-offset-background scale-110 z-10"
+      : "";
+
+    switch (day.intensityLevel) {
       case 4:
-        return "bg-accent border-accent text-accent-foreground shadow-2xs";
+        return `${selectedRing} bg-emerald-400 border-emerald-400 text-white`;
       case 3:
-        return "bg-accent/75 border-accent/85";
+        return `${selectedRing} bg-emerald-500 border-emerald-500 text-white`;
       case 2:
-        return "bg-accent/50 border-accent/60";
+        return `${selectedRing} bg-emerald-600/80 border-emerald-600 text-white`;
       case 1:
-        return "bg-accent/25 border-accent/35";
+        return `${selectedRing} bg-emerald-800/60 dark:bg-emerald-900/60 border-emerald-800/50`;
       case 0:
       default:
-        return "bg-surface-secondary border-separator/40 hover:border-separator/70";
+        return `${selectedRing} bg-surface-secondary border-separator/40 hover:border-separator/90`;
     }
   };
 
+  // Metrics for active window (excluding unreached future days)
+  const visibleStats = useMemo(() => {
+    let focusMinutes = 0;
+    let activeDays = 0;
+    let pastDays = 0;
+
+    visibleWeeks.forEach((w) => {
+      w.forEach((d) => {
+        if (d && !d.isFuture) {
+          pastDays++;
+          focusMinutes += d.focusMinutes;
+          if (d.focusMinutes > 0) activeDays++;
+        }
+      });
+    });
+
+    return {
+      focusMinutes,
+      activeDays,
+      totalDays: Math.max(1, pastDays),
+      consistency: Math.round((activeDays / Math.max(1, pastDays)) * 100),
+    };
+  }, [visibleWeeks]);
+
+  // Title & Period label derived from current visible window
+  const periodLabel = useMemo(() => {
+    const firstDay = visibleWeeks[0]?.find(Boolean);
+    const lastDay = visibleWeeks[visibleWeeks.length - 1]
+      ?.filter(Boolean)
+      .pop();
+    if (!firstDay || !lastDay) return "Focus Calendar";
+
+    const d1 = new Date(`${firstDay.dateStr}T12:00:00`);
+    const d2 = new Date(`${lastDay.dateStr}T12:00:00`);
+
+    if (viewMode === "12m") {
+      return `${d2.getFullYear()}`;
+    }
+
+    return `${d1.toLocaleDateString("en-US", { month: "short" })} – ${d2.toLocaleDateString("en-US", { month: "short" })} ${d2.getFullYear()}`;
+  }, [visibleWeeks, viewMode]);
+
+  // Date range label
+  const dateRangeLabel = useMemo(() => {
+    const firstDay = visibleWeeks[0]?.find(Boolean);
+    const lastDay = visibleWeeks[visibleWeeks.length - 1]
+      ?.filter(Boolean)
+      .pop();
+
+    if (!firstDay || !lastDay) return "Focus Grid";
+
+    const d1 = new Date(`${firstDay.dateStr}T12:00:00`);
+    const d2 = new Date(`${lastDay.dateStr}T12:00:00`);
+
+    return `${d1.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })} – ${d2.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })}`;
+  }, [visibleWeeks]);
+
   return (
-    <div className="flex flex-col justify-between gap-2.5 p-3 sm:p-3.5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all w-full select-none">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
-          <div className="size-6 rounded-lg bg-accent/15 border border-accent/30 flex items-center justify-center text-accent shrink-0">
-            <Grid3X3 className="size-3.5" />
-          </div>
-          <div>
-            <Typography type="body-sm" weight="semibold" className="text-xs sm:text-sm text-foreground">
-              Focus Momentum Matrix
-            </Typography>
-            <Typography color="muted" type="body-xs" className="text-[10px] font-light">
-              {rangeTitle || "Consistency and focus frequency"}
-            </Typography>
-          </div>
+    <div className="flex flex-col gap-3.5 p-4 sm:p-5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all w-full select-none">
+      {/* Header: Clean Modern Sans-Serif Typography & Segmented Pill Switcher */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex flex-col">
+          <Typography
+            type="h2"
+            weight="bold"
+            className="text-sm sm:text-base font-sans font-semibold tracking-tight text-foreground"
+          >
+            {formatMinutesDisplay(visibleStats.focusMinutes)} of focus in{" "}
+            {periodLabel}
+          </Typography>
+          <Typography
+            color="muted"
+            type="body-xs"
+            className="text-[11px] font-sans font-normal mt-0.5"
+          >
+            {dateRangeLabel} · {visibleStats.activeDays} active days (
+            {visibleStats.consistency}% consistency)
+          </Typography>
         </div>
 
-        {/* Quick streak pills */}
-        <div className="flex items-center gap-1.5">
-          <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
-            <Flame className="size-2.5" />
-            <span>{overallStats.currentStreakDays}d streak</span>
-          </span>
-          <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium hidden sm:flex">
-            <Award className="size-2.5" />
-            <span>{overallStats.totalActiveDays} active days</span>
-          </span>
+        {/* Crisp, Properly Padded Pill Toggle */}
+        <div className="flex items-center bg-surface-secondary p-0.5 rounded-full border border-separator/40 shadow-2xs">
+          <button
+            type="button"
+            className={`h-6 px-3 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
+              viewMode === "6m"
+                ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+                : "text-muted hover:text-foreground"
+            }`}
+            onClick={() => setViewMode("6m")}
+          >
+            6 Months
+          </button>
+          <button
+            type="button"
+            className={`h-6 px-3 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
+              viewMode === "12m"
+                ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
+                : "text-muted hover:text-foreground"
+            }`}
+            onClick={() => setViewMode("12m")}
+          >
+            1 Year
+          </button>
         </div>
       </div>
 
-      {/* Heatmap Grid with Horizontal Scroll */}
-      <div className="w-full overflow-x-auto pb-0.5 pt-1 select-none scrollbar-thin">
-        <div className="min-w-fit flex flex-col gap-0.5 px-0.5">
-          {/* Month Labels Header */}
-          <div className="flex text-[9px] text-muted/75 font-medium pl-5 mb-0.5">
-            {weeks.map((_, idx) => {
-              const matchMonth = months.find((m) => m.weekIndex === idx);
-
-              return (
-                <div key={idx} className="w-3 sm:w-3.5 shrink-0 text-left">
-                  {matchMonth ? matchMonth.label : ""}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Grid Rows (7 rows, one for each day of the week) */}
-          {[0, 1, 2, 3, 4, 5, 6].map((dayIndex) => (
-            <div key={dayIndex} className="flex items-center gap-0.5">
-              {/* Day Name Label (Mon, Wed, Fri) */}
-              <span className="w-4.5 text-[8px] text-muted/60 text-right pr-0.5 font-medium">
-                {dayIndex === 1
-                  ? "Mon"
-                  : dayIndex === 3
-                    ? "Wed"
-                    : dayIndex === 5
-                      ? "Fri"
-                      : ""}
+      {/* Main Heatmap Grid Canvas */}
+      <div className="w-full overflow-hidden">
+        <div
+          ref={scrollRef}
+          className={`w-full ${
+            viewMode === "12m" ? "overflow-x-auto" : "overflow-x-hidden"
+          } pb-1`}
+        >
+          <div className="flex gap-1.5 w-full min-w-[320px]">
+            {/* Day Labels Column: Aligned strictly to 7 grid rows */}
+            <div className="grid grid-rows-7 gap-1 pt-5 text-[9px] font-sans text-muted/70 font-medium pr-0.5 select-none shrink-0 w-5">
+              <span className="flex items-center justify-end leading-none opacity-0">
+                Sun
               </span>
+              <span className="flex items-center justify-end leading-none">
+                Mon
+              </span>
+              <span className="flex items-center justify-end leading-none opacity-0">
+                Tue
+              </span>
+              <span className="flex items-center justify-end leading-none">
+                Wed
+              </span>
+              <span className="flex items-center justify-end leading-none opacity-0">
+                Thu
+              </span>
+              <span className="flex items-center justify-end leading-none">
+                Fri
+              </span>
+              <span className="flex items-center justify-end leading-none opacity-0">
+                Sat
+              </span>
+            </div>
 
-              {/* Day Cells across weeks */}
-              <div className="flex items-center gap-0.5">
-                {weeks.map((week, weekIdx) => {
-                  const day = week[dayIndex];
+            {/* Grid Area: Month Headers + 7 Rows of Weeks */}
+            <div className="flex-1 flex flex-col gap-1 min-w-0">
+              {/* Month Header: Pinned to exact column indices */}
+              <div
+                className="grid gap-1 text-[10px] font-sans text-muted/85 font-medium h-4 relative"
+                style={{
+                  gridTemplateColumns: `repeat(${visibleWeeks.length}, minmax(0, 1fr))`,
+                }}
+              >
+                {monthHeaders.map((m) => (
+                  <span
+                    key={`${m.label}-${m.weekIndex}`}
+                    className="whitespace-nowrap pointer-events-none leading-none truncate"
+                    style={{ gridColumnStart: m.weekIndex + 1 }}
+                  >
+                    {m.label}
+                  </span>
+                ))}
+              </div>
 
-                  if (!day)
-                    return <div key={weekIdx} className="size-2.5 sm:size-3" />;
-
-                  return (
-                    <Tooltip key={day.dateStr} delay={50}>
-                      <Tooltip.Trigger>
+              {/* 7-Row x N-Column Matrix: Evenly distributed with ZERO gaps */}
+              <div
+                className="grid grid-rows-7 grid-flow-col gap-1 w-full"
+                style={{
+                  gridTemplateColumns: `repeat(${visibleWeeks.length}, minmax(0, 1fr))`,
+                }}
+              >
+                {visibleWeeks.map((week, weekIdx) =>
+                  week.map((day, dayIdx) => {
+                    if (!day) {
+                      return (
                         <div
-                          aria-label={`${day.fullDateLabel}: ${day.focusMinutes} mins`}
-                          className={`size-2.5 sm:size-3 rounded-[2px] border transition-colors duration-150 cursor-pointer hover:border-foreground/80 shrink-0 ${getCellClass(
-                            day.intensityLevel,
-                          )}`}
+                          key={`${weekIdx}-${dayIdx}`}
+                          className="aspect-square w-full rounded-[2.5px] opacity-0"
                         />
-                      </Tooltip.Trigger>
-                      <Tooltip.Content className="text-xs p-2 rounded-xl bg-surface border border-separator shadow-2xl z-50 pointer-events-none">
-                        <div className="flex flex-col gap-1 min-w-28">
-                          <div className="flex items-center gap-1.5 border-b border-separator/40 pb-1 text-muted text-[10px]">
-                            <Calendar className="size-2.5 text-accent" />
-                            <span>{day.fullDateLabel}</span>
-                          </div>
-                          <div className="flex items-center justify-between text-[11px] font-semibold text-foreground pt-0.5">
-                            <span>Focus:</span>
-                            <span className="text-accent">
-                              {formatMinutesDisplay(day.focusMinutes)}
+                      );
+                    }
+
+                    const isSelected = selectedDay?.dateStr === day.dateStr;
+                    const tooltip = day.isFuture
+                      ? `${day.fullDateLabel} (Upcoming)`
+                      : day.focusMinutes > 0
+                        ? `${formatMinutesDisplay(day.focusMinutes)} of focus on ${day.fullDateLabel}`
+                        : `No focus activity on ${day.fullDateLabel}`;
+
+                    return (
+                      <Tooltip key={day.dateStr} delay={50}>
+                        <Tooltip.Trigger className="w-full aspect-square">
+                          <div
+                            aria-label={tooltip}
+                            className={`w-full h-full rounded-[2.5px] border transition-transform duration-75 hover:scale-125 ${
+                              day.isFuture ? "cursor-default" : "cursor-pointer"
+                            } ${getContributionColor(day, isSelected)}`}
+                            onClick={() => {
+                              if (!day.isFuture) {
+                                setSelectedDay(isSelected ? null : day);
+                              }
+                            }}
+                          />
+                        </Tooltip.Trigger>
+                        <Tooltip.Content className="text-xs p-2 rounded-xl bg-surface border border-separator shadow-2xl z-50 pointer-events-none">
+                          <div className="flex flex-col gap-1 min-w-32">
+                            <span className="font-semibold text-foreground text-[11px]">
+                              {day.fullDateLabel} {day.isFuture && "(Upcoming)"}
                             </span>
+                            <div className="flex items-center justify-between text-[11px] pt-0.5 border-t border-separator/40">
+                              <span className="text-muted">Focus:</span>
+                              <span className="font-bold text-accent">
+                                {day.focusMinutes > 0
+                                  ? formatMinutesDisplay(day.focusMinutes)
+                                  : "0m"}
+                              </span>
+                            </div>
+                            {day.cycleCount > 0 && (
+                              <div className="flex items-center justify-between text-[10px] text-muted">
+                                <span>Pomodoros:</span>
+                                <span className="font-medium text-foreground">
+                                  {day.cycleCount}{" "}
+                                  {day.cycleCount === 1 ? "cycle" : "cycles"}
+                                </span>
+                              </div>
+                            )}
+                            {day.taskCompletedCount > 0 && (
+                              <div className="flex items-center justify-between text-[10px] text-emerald-400">
+                                <span>Tasks done:</span>
+                                <span className="font-medium">
+                                  {day.taskCompletedCount}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          {day.cycleCount > 0 && (
-                            <div className="flex items-center justify-between text-[10px] text-muted">
-                              <span>Pomodoros:</span>
-                              <span className="font-medium text-foreground">
-                                {day.cycleCount}{" "}
-                                {day.cycleCount === 1 ? "cycle" : "cycles"}
-                              </span>
-                            </div>
-                          )}
-                          {day.taskCompletedCount > 0 && (
-                            <div className="flex items-center justify-between text-[10px] text-emerald-400">
-                              <span>Tasks Done:</span>
-                              <span className="font-medium">
-                                {day.taskCompletedCount}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </Tooltip.Content>
-                    </Tooltip>
-                  );
-                })}
+                        </Tooltip.Content>
+                      </Tooltip>
+                    );
+                  }),
+                )}
               </div>
             </div>
-          ))}
+          </div>
         </div>
       </div>
 
-      {/* Legend and Intensity Indicators */}
-      <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-separator/20 text-[9px] text-muted flex-wrap">
-        <div className="flex items-center gap-1">
+      {/* Selected Day Activity Inspector */}
+      {selectedDay && (
+        <div className="p-3.5 rounded-xl bg-surface-secondary/80 border border-separator/60 flex items-center justify-between gap-3 flex-wrap shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-accent/15 border border-accent/30 flex flex-col items-center justify-center text-accent font-bold shrink-0">
+              <span className="text-[9px] uppercase leading-none font-sans">
+                {new Date(`${selectedDay.dateStr}T12:00:00`).toLocaleDateString(
+                  "en-US",
+                  {
+                    month: "short",
+                  },
+                )}
+              </span>
+              <span className="text-sm font-extrabold leading-tight font-sans">
+                {new Date(`${selectedDay.dateStr}T12:00:00`).getDate()}
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold font-sans text-foreground">
+                {selectedDay.fullDateLabel}
+              </span>
+              <div className="flex items-center gap-3 text-[11px] font-sans text-muted mt-0.5">
+                <span>
+                  Focus:{" "}
+                  <strong className="text-foreground font-semibold">
+                    {formatMinutesDisplay(selectedDay.focusMinutes)}
+                  </strong>
+                </span>
+                <span>
+                  Pomodoros:{" "}
+                  <strong className="text-foreground font-semibold">
+                    {selectedDay.cycleCount}
+                  </strong>
+                </span>
+                <span>
+                  Tasks:{" "}
+                  <strong className="text-foreground font-semibold">
+                    {selectedDay.taskCompletedCount}
+                  </strong>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              className="h-7 px-3 rounded-full text-xs font-sans font-semibold bg-accent text-accent-foreground cursor-pointer shadow-2xs flex items-center gap-1"
+              size="sm"
+              variant="primary"
+              onPress={() => onSelectDate?.(selectedDay.dateStr)}
+            >
+              <Calendar className="size-5" />
+              <span>Filter Charts to this Day</span>
+            </Button>
+            <Button
+              className="size-7 p-0 rounded-full text-muted hover:text-foreground"
+              size="sm"
+              variant="ghost"
+              onPress={() => setSelectedDay(null)}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Clean, Collision-Free Footer: Pagination on Left, Less/More Legend on Right */}
+      <div className="flex items-center justify-between gap-4 pt-2.5 border-t border-separator/30 flex-wrap">
+        {/* Left Side: Earlier / Recent Pagination for active view mode */}
+        {viewMode === "6m" ? (
+          <div className="flex items-center gap-1.5">
+            <Button
+              className="h-7 px-2.5 rounded-lg text-xs font-sans font-semibold cursor-pointer"
+              isDisabled={page6m <= 1}
+              size="sm"
+              variant="secondary"
+              onPress={() => setPage6m((p) => Math.max(1, p - 1))}
+            >
+              <ArrowLeft />
+              Earlier 6 Months
+            </Button>
+            <Button
+              className="h-7 px-2.5 rounded-lg text-xs font-sans font-semibold cursor-pointer"
+              isDisabled={page6m >= total6mPages}
+              size="sm"
+              variant="secondary"
+              onPress={() => setPage6m((p) => Math.min(total6mPages, p + 1))}
+            >
+              Recent 6 Months
+              <ArrowRight />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <Button
+              className="h-7 px-2.5 rounded-lg text-xs font-sans font-semibold cursor-pointer"
+              isDisabled={page12m <= 1}
+              size="sm"
+              variant="secondary"
+              onPress={() => setPage12m((p) => Math.max(1, p - 1))}
+            >
+              <ArrowLeft />
+              Earlier Year
+            </Button>
+            <Button
+              className="h-7 px-2.5 rounded-lg text-xs font-sans font-semibold cursor-pointer"
+              isDisabled={page12m >= total12mPages}
+              size="sm"
+              variant="secondary"
+              onPress={() => setPage12m((p) => Math.min(total12mPages, p + 1))}
+            >
+              Recent Year
+              <ArrowRight />
+            </Button>
+          </div>
+        )}
+
+        {/* Right Side: GitHub 5-Tier Intensity Legend */}
+        <div className="flex items-center gap-1.5 text-xs font-sans text-muted">
           <span>Less</span>
-          <div className="flex items-center gap-0.5">
-            <span className="size-2 rounded-[1px] bg-surface-secondary border border-separator/40" />
-            <span className="size-2 rounded-[1px] bg-accent/25 border border-accent/35" />
-            <span className="size-2 rounded-[1px] bg-accent/50 border border-accent/60" />
-            <span className="size-2 rounded-[1px] bg-accent/75 border border-accent/85" />
-            <span className="size-2 rounded-[1px] bg-accent border border-accent" />
+          <div className="flex items-center gap-1">
+            <div className="size-2.5 rounded-sm bg-surface-secondary border border-separator/40" />
+            <div className="size-2.5 rounded-sm bg-emerald-800/60 dark:bg-emerald-900/60 border border-emerald-800/50" />
+            <div className="size-2.5 rounded-sm bg-emerald-600/80 border border-emerald-600" />
+            <div className="size-2.5 rounded-sm bg-emerald-500 border border-emerald-500" />
+            <div className="size-2.5 rounded-sm bg-emerald-400 border border-emerald-400" />
           </div>
           <span>More</span>
-        </div>
-
-        <div className="flex items-center gap-2.5 text-muted/80 text-[10px]">
-          <span>
-            Streak:{" "}
-            <strong className="text-foreground font-semibold">
-              {overallStats.bestStreakDays}d
-            </strong>
-          </span>
-          <span>
-            Total Cycles:{" "}
-            <strong className="text-foreground font-semibold">
-              {overallStats.totalCycles}
-            </strong>
-          </span>
         </div>
       </div>
     </div>
   );
 }
+
+export { ActivityHeatmap as FocusGrid };

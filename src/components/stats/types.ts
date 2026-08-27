@@ -9,13 +9,17 @@ export interface CustomDateRange {
 
 export interface DayActivity {
   dateStr: string; // YYYY-MM-DD
-  dayLabel: string; // e.g. "Mon", "Tue"
+  dayLabel: string; // e.g. "Mon", "Tue", "W12", "Jan"
   fullDateLabel: string; // e.g. "Aug 26, 2026"
   focusMinutes: number;
+  totalPeriodMinutes?: number; // total focus minutes when grouped by week/month
   cycleCount: number;
   sessionCount: number;
   taskCompletedCount: number;
   intensityLevel: 0 | 1 | 2 | 3 | 4;
+  periodType?: "hourly" | "daily" | "weekly" | "monthly";
+  dateRange?: { start: string; end: string };
+  isFuture?: boolean;
 }
 
 export interface TimeOfDayStat {

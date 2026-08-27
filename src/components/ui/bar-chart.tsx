@@ -56,6 +56,7 @@ export interface BarChartProps extends React.HTMLAttributes<HTMLDivElement> {
   width?: number | string;
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   children?: ReactNode;
+  onItemClick?: (item: Record<string, any>, index: number) => void;
 }
 
 export function BarChartRoot({
@@ -65,6 +66,8 @@ export function BarChartRoot({
   margin: customMargin,
   children,
   className = "",
+  onItemClick,
+  onClick,
   ...props
 }: BarChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -144,6 +147,13 @@ export function BarChartRoot({
     });
   };
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (hoveredIndex !== null && data[hoveredIndex]) {
+      onItemClick?.(data[hoveredIndex], hoveredIndex);
+    }
+    onClick?.(e);
+  };
+
   return (
     <BarChartContext.Provider
       value={{
@@ -166,8 +176,11 @@ export function BarChartRoot({
     >
       <div
         ref={containerRef}
-        className={`bar-chart relative w-full select-none ${className}`}
+        className={`bar-chart relative w-full select-none ${
+          onItemClick ? "cursor-pointer" : ""
+        } ${className}`}
         style={{ height }}
+        onClick={handleClick}
         onMouseLeave={() => {
           setHoveredIndex(null);
           setMousePosition(null);
@@ -202,8 +215,8 @@ export interface BarChartGridProps {
 }
 
 export function BarChartGrid({
-  strokeDasharray = "3 3",
-  className = "stroke-separator/40",
+  strokeDasharray = "4 4",
+  className = "stroke-separator/80",
   horizontal = true,
   ticksCount = 4,
 }: BarChartGridProps) {
@@ -221,7 +234,7 @@ export function BarChartGrid({
         key={i}
         className={className}
         strokeDasharray={strokeDasharray}
-        strokeWidth="1"
+        strokeWidth="1.25"
         x1="0"
         x2={chartWidth}
         y1={y}
@@ -296,6 +309,10 @@ export function BarChartXAxis({
         const val = item[dataKey];
         const isHovered = hoveredIndex === idx;
 
+        const text = tickFormatter(val, idx);
+
+        if (!text) return null;
+
         return (
           <text
             key={idx}
@@ -307,7 +324,7 @@ export function BarChartXAxis({
             x={x}
             y={y}
           >
-            {tickFormatter(val, idx)}
+            {text}
           </text>
         );
       })}
@@ -406,8 +423,8 @@ export interface BarChartReferenceLineProps {
 export function BarChartReferenceLine({
   y: targetValue,
   label,
-  strokeDasharray = "4 4",
-  className = "stroke-accent/50",
+  strokeDasharray = "5 4",
+  className = "stroke-accent/90",
 }: BarChartReferenceLineProps) {
   const { chartWidth, chartHeight, maxValue } = useBarChartContext();
 
@@ -420,7 +437,7 @@ export function BarChartReferenceLine({
       <line
         className={className}
         strokeDasharray={strokeDasharray}
-        strokeWidth="1.5"
+        strokeWidth="1.75"
         x1="0"
         x2={chartWidth}
         y1={yPos}
@@ -428,7 +445,7 @@ export function BarChartReferenceLine({
       />
       {label && (
         <text
-          className="fill-accent text-[9px] font-medium"
+          className="fill-accent text-[10px] font-semibold tracking-wide"
           dominantBaseline="auto"
           textAnchor="end"
           x={chartWidth - 4}
