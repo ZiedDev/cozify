@@ -10,7 +10,7 @@ export const SECRET_ACHIEVEMENTS: AchievementDefinition[] = [
     description: "↑ ↑ ↓ ↓ ← → ← → B A — 30 Lives, Infinite Flow.",
     category: "secret",
     tier: "diamond",
-    xp: 1337,
+    xp: 3000,
     icon: Gamepad2,
     isSecret: true,
     lockedTitle: "Classified Arcade Vault",
