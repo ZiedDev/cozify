@@ -95,7 +95,6 @@ export function ActivityHeatmap({
     return headers;
   }, [visibleWeeks]);
 
-  // Exact GitHub 5-tier contribution palette with distinct styling for upcoming unreached days
   const getContributionColor = (day: DayActivity, isSelected: boolean) => {
     if (day.isFuture) {
       const selectedRing = isSelected ? "ring-2 ring-muted scale-110 z-10" : "";
@@ -162,7 +161,7 @@ export function ActivityHeatmap({
       return `${d2.getFullYear()}`;
     }
 
-    return `${d1.toLocaleDateString("en-US", { month: "short" })} – ${d2.toLocaleDateString("en-US", { month: "short" })} ${d2.getFullYear()}`;
+    return `${d1.toLocaleDateString("en-US", { month: "short" })} - ${d2.toLocaleDateString("en-US", { month: "short" })} ${d2.getFullYear()}`;
   }, [visibleWeeks, viewMode]);
 
   // Date range label
@@ -248,11 +247,11 @@ export function ActivityHeatmap({
         >
           <div
             className={`flex items-start gap-1.5 w-full ${
-              viewMode === "12m" ? "min-w-[680px]" : "min-w-[500px]"
+              viewMode === "12m" ? "min-w-170" : "min-w-125"
             }`}
           >
             {/* Day Labels Column: Aligned strictly to 7 grid rows */}
-            <div className="grid grid-rows-7 gap-1 pt-[18px] text-[9px] font-sans text-muted/70 font-medium pr-0.5 select-none shrink-0 w-5">
+            <div className="grid grid-rows-7 gap-1 pt-4.5 text-[9px] font-sans text-muted/70 font-medium pr-0.5 select-none shrink-0 w-5">
               <span className="flex items-center justify-end leading-none opacity-0">
                 Sun
               </span>
@@ -288,8 +287,8 @@ export function ActivityHeatmap({
                 {monthHeaders.map((m) => (
                   <span
                     key={`${m.label}-${m.weekIndex}`}
-                    className="whitespace-nowrap pointer-events-none leading-none truncate"
-                    style={{ gridColumnStart: m.weekIndex + 1 }}
+                    className="whitespace-nowrap pointer-events-none leading-none overflow-visible"
+                    style={{ gridColumn: `${m.weekIndex + 1} / span 4` }}
                   >
                     {m.label}
                   </span>
