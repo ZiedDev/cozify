@@ -17,7 +17,7 @@ export function TimerTabs({ mode, onSwitchMode }: TimerTabsProps) {
       <Tabs.ListContainer className="rounded-full">
         <Tabs.List
           aria-label="Timer Modes"
-          className="rounded-full bg-surface p-0.5 sm:p-1"
+          className="rounded-full bg-surface/80 p-0.5 sm:p-1 border border-separator/30 text-xs"
         >
           {TIMER_MODES.map((m) => (
             <Tabs.Tab
@@ -28,7 +28,7 @@ export function TimerTabs({ mode, onSwitchMode }: TimerTabsProps) {
               <Typography type="body-sm" weight="medium">
                 {m.label}
               </Typography>
-              <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-sm" />
+              <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
             </Tabs.Tab>
           ))}
         </Tabs.List>

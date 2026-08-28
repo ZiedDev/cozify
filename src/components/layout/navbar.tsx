@@ -23,8 +23,8 @@ export function Navbar() {
     <header className="sticky top-0 z-40">
       <div className="mx-auto flex h-20 md:h-24 items-center justify-between px-6 sm:px-8 md:px-12">
         <Typography
-          type="h1"
           className="font-serif font-black text-3xl md:text-4xl tracking-tight text-foreground select-none"
+          type="h1"
         >
           Cozify
         </Typography>
@@ -40,7 +40,11 @@ export function Navbar() {
               onPress={() => setIsDrawerOpen(true)}
             >
               <LayoutGrid className="size-3.5 text-accent" />
-              <Typography color="muted" type="body-xs" className="hidden xs:inline text-[11px]">
+              <Typography
+                className="hidden xs:inline text-[11px]"
+                color="muted"
+                type="body-xs"
+              >
                 Widgets
               </Typography>
               {activeTodoCount > 0 && (
@@ -95,10 +99,10 @@ export function Navbar() {
                 {/* Clock & Day Progress Card */}
                 <div className="flex flex-col items-start gap-1 p-3 rounded-2xl bg-surface-secondary/40 border border-separator/30">
                   <Typography
+                    className="text-[10px] uppercase tracking-wider mb-1"
                     color="muted"
                     type="body-xs"
                     weight="bold"
-                    className="text-[10px] uppercase tracking-wider mb-1"
                   >
                     Clock & Day
                   </Typography>
@@ -111,10 +115,10 @@ export function Navbar() {
                 {hasActiveSession && (
                   <div className="flex flex-col items-start gap-1 p-3 rounded-2xl bg-surface-secondary/40 border border-separator/30">
                     <Typography
+                      className="text-[10px] uppercase tracking-wider mb-1"
                       color="muted"
                       type="body-xs"
                       weight="bold"
-                      className="text-[10px] uppercase tracking-wider mb-1"
                     >
                       Focus Timer
                     </Typography>

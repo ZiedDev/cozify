@@ -176,11 +176,18 @@ export function BarChartRoot({
     >
       <div
         ref={containerRef}
+        aria-label="Interactive bar chart"
         className={`bar-chart relative w-full select-none ${
           onItemClick ? "cursor-pointer" : ""
         } ${className}`}
+        role={onItemClick ? "region" : undefined}
         style={{ height }}
         onClick={handleClick}
+        onKeyDown={(e) => {
+          if ((e.key === "Enter" || e.key === " ") && hoveredIndex !== null) {
+            handleClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+          }
+        }}
         onMouseLeave={() => {
           setHoveredIndex(null);
           setMousePosition(null);

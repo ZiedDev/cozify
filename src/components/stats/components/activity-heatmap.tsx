@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Tooltip, Typography, Button } from "@heroui/react";
+import { Tabs, Typography, Button } from "@heroui/react";
 import { ArrowLeft, ArrowRight, Calendar, X } from "lucide-react";
 
 import { DayActivity, OverallStats } from "../types";
@@ -27,6 +27,11 @@ export function ActivityHeatmap({
 
   const [viewMode, setViewMode] = useState<ViewMode>("6m");
   const [selectedDay, setSelectedDay] = useState<DayActivity | null>(null);
+  const [hoveredDay, setHoveredDay] = useState<{
+    day: DayActivity;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // 6M mode = 26 weeks per page
   const total6mPages = Math.max(1, Math.ceil(weeks.length / 26));
@@ -48,15 +53,17 @@ export function ActivityHeatmap({
   const visibleWeeks = useMemo(() => {
     if (viewMode === "6m") {
       const start = (page6m - 1) * 26;
+
       return weeks.slice(start, start + 26);
     }
     const start = (page12m - 1) * 52;
+
     return weeks.slice(start, start + 52);
   }, [weeks, viewMode, page6m, page12m]);
 
-  // Auto-scroll to latest week in 12M view
+  // Auto-scroll to latest week whenever visible weeks or view mode change
   useEffect(() => {
-    if (viewMode === "12m" && scrollRef.current) {
+    if (scrollRef.current) {
       scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
     }
   }, [viewMode, visibleWeeks]);
@@ -70,12 +77,14 @@ export function ActivityHeatmap({
       const firstOfMonth = week.find((day) => {
         if (!day) return false;
         const d = new Date(`${day.dateStr}T12:00:00`);
+
         return d.getDate() <= 7;
       });
 
       if (firstOfMonth) {
         const d = new Date(`${firstOfMonth.dateStr}T12:00:00`);
         const mLabel = d.toLocaleDateString("en-US", { month: "short" });
+
         if (mLabel !== lastMonth) {
           headers.push({ label: mLabel, weekIndex: weekIdx });
           lastMonth = mLabel;
@@ -90,6 +99,7 @@ export function ActivityHeatmap({
   const getContributionColor = (day: DayActivity, isSelected: boolean) => {
     if (day.isFuture) {
       const selectedRing = isSelected ? "ring-2 ring-muted scale-110 z-10" : "";
+
       return `${selectedRing} bg-surface-secondary/25 border-dashed border-separator/30 opacity-40 hover:opacity-80`;
     }
 
@@ -142,6 +152,7 @@ export function ActivityHeatmap({
     const lastDay = visibleWeeks[visibleWeeks.length - 1]
       ?.filter(Boolean)
       .pop();
+
     if (!firstDay || !lastDay) return "Focus Calendar";
 
     const d1 = new Date(`${firstDay.dateStr}T12:00:00`);
@@ -178,66 +189,70 @@ export function ActivityHeatmap({
   }, [visibleWeeks]);
 
   return (
-    <div className="flex flex-col gap-3.5 p-4 sm:p-5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all w-full select-none">
+    <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all w-full select-none">
       {/* Header: Clean Modern Sans-Serif Typography & Segmented Pill Switcher */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex flex-col">
           <Typography
+            className="text-sm sm:text-base font-sans font-semibold tracking-tight text-foreground"
             type="h2"
             weight="bold"
-            className="text-sm sm:text-base font-sans font-semibold tracking-tight text-foreground"
           >
             {formatMinutesDisplay(visibleStats.focusMinutes)} of focus in{" "}
             {periodLabel}
           </Typography>
           <Typography
+            className="text-[11px] font-sans font-normal mt-0.5"
             color="muted"
             type="body-xs"
-            className="text-[11px] font-sans font-normal mt-0.5"
           >
             {dateRangeLabel} · {visibleStats.activeDays} active days (
             {visibleStats.consistency}% consistency)
           </Typography>
         </div>
 
-        {/* Crisp, Properly Padded Pill Toggle */}
-        <div className="flex items-center bg-surface-secondary p-0.5 rounded-full border border-separator/40 shadow-2xs">
-          <button
-            type="button"
-            className={`h-6 px-3 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
-              viewMode === "6m"
-                ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
-                : "text-muted hover:text-foreground"
-            }`}
-            onClick={() => setViewMode("6m")}
-          >
-            6 Months
-          </button>
-          <button
-            type="button"
-            className={`h-6 px-3 rounded-full text-xs font-sans font-medium transition-all cursor-pointer ${
-              viewMode === "12m"
-                ? "bg-accent text-accent-foreground font-semibold shadow-2xs"
-                : "text-muted hover:text-foreground"
-            }`}
-            onClick={() => setViewMode("12m")}
-          >
-            1 Year
-          </button>
-        </div>
+        {/* Heatmap View Mode Switcher */}
+        <Tabs
+          selectedKey={viewMode}
+          onSelectionChange={(k) => setViewMode(k as ViewMode)}
+        >
+          <Tabs.ListContainer className="rounded-full">
+            <Tabs.List
+              aria-label="Heatmap time span"
+              className="rounded-full bg-surface/80 p-0.5 sm:p-1 border-separator/30 text-xs"
+            >
+              <Tabs.Tab
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 whitespace-nowrap rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
+                id="6m"
+              >
+                6 Months
+                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
+              </Tabs.Tab>
+              <Tabs.Tab
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
+                id="12m"
+              >
+                1 Year
+                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+        </Tabs>
       </div>
 
       {/* Main Heatmap Grid Canvas */}
       <div className="w-full overflow-hidden">
         <div
           ref={scrollRef}
-          className={`w-full ${
-            viewMode === "12m" ? "overflow-x-auto" : "overflow-x-hidden"
-          } pb-1`}
+          className="w-full overflow-x-auto scrollbar-thin pb-1"
         >
-          <div className="flex gap-1.5 w-full min-w-[320px]">
+          <div
+            className={`flex items-start gap-1.5 w-full ${
+              viewMode === "12m" ? "min-w-[680px]" : "min-w-[500px]"
+            }`}
+          >
             {/* Day Labels Column: Aligned strictly to 7 grid rows */}
-            <div className="grid grid-rows-7 gap-1 pt-5 text-[9px] font-sans text-muted/70 font-medium pr-0.5 select-none shrink-0 w-5">
+            <div className="grid grid-rows-7 gap-1 pt-[18px] text-[9px] font-sans text-muted/70 font-medium pr-0.5 select-none shrink-0 w-5">
               <span className="flex items-center justify-end leading-none opacity-0">
                 Sun
               </span>
@@ -294,7 +309,7 @@ export function ActivityHeatmap({
                       return (
                         <div
                           key={`${weekIdx}-${dayIdx}`}
-                          className="aspect-square w-full rounded-[2.5px] opacity-0"
+                          className="aspect-square w-full rounded-[2.5px] opacity-0 pointer-events-none"
                         />
                       );
                     }
@@ -307,53 +322,29 @@ export function ActivityHeatmap({
                         : `No focus activity on ${day.fullDateLabel}`;
 
                     return (
-                      <Tooltip key={day.dateStr} delay={50}>
-                        <Tooltip.Trigger className="w-full aspect-square">
-                          <div
-                            aria-label={tooltip}
-                            className={`w-full h-full rounded-[2.5px] border transition-transform duration-75 hover:scale-125 ${
-                              day.isFuture ? "cursor-default" : "cursor-pointer"
-                            } ${getContributionColor(day, isSelected)}`}
-                            onClick={() => {
-                              if (!day.isFuture) {
-                                setSelectedDay(isSelected ? null : day);
-                              }
-                            }}
-                          />
-                        </Tooltip.Trigger>
-                        <Tooltip.Content className="text-xs p-2 rounded-xl bg-surface border border-separator shadow-2xl z-50 pointer-events-none">
-                          <div className="flex flex-col gap-1 min-w-32">
-                            <span className="font-semibold text-foreground text-[11px]">
-                              {day.fullDateLabel} {day.isFuture && "(Upcoming)"}
-                            </span>
-                            <div className="flex items-center justify-between text-[11px] pt-0.5 border-t border-separator/40">
-                              <span className="text-muted">Focus:</span>
-                              <span className="font-bold text-accent">
-                                {day.focusMinutes > 0
-                                  ? formatMinutesDisplay(day.focusMinutes)
-                                  : "0m"}
-                              </span>
-                            </div>
-                            {day.cycleCount > 0 && (
-                              <div className="flex items-center justify-between text-[10px] text-muted">
-                                <span>Pomodoros:</span>
-                                <span className="font-medium text-foreground">
-                                  {day.cycleCount}{" "}
-                                  {day.cycleCount === 1 ? "cycle" : "cycles"}
-                                </span>
-                              </div>
-                            )}
-                            {day.taskCompletedCount > 0 && (
-                              <div className="flex items-center justify-between text-[10px] text-emerald-400">
-                                <span>Tasks done:</span>
-                                <span className="font-medium">
-                                  {day.taskCompletedCount}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </Tooltip.Content>
-                      </Tooltip>
+                      <button
+                        key={day.dateStr}
+                        aria-label={tooltip}
+                        className={`w-full aspect-square rounded-[2.5px] border transition-transform duration-75 hover:scale-125 ${
+                          day.isFuture ? "cursor-default" : "cursor-pointer"
+                        } ${getContributionColor(day, isSelected)}`}
+                        type="button"
+                        onClick={() => {
+                          if (!day.isFuture) {
+                            setSelectedDay(isSelected ? null : day);
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+
+                          setHoveredDay({
+                            day,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top,
+                          });
+                        }}
+                        onMouseLeave={() => setHoveredDay(null)}
+                      />
                     );
                   }),
                 )}
@@ -493,6 +484,49 @@ export function ActivityHeatmap({
           <span>More</span>
         </div>
       </div>
+
+      {/* Floating Hover Tooltip (Zero DOM overhead in the grid) */}
+      {hoveredDay && (
+        <div
+          className="fixed z-50 pointer-events-none px-2.5 py-1.5 rounded-xl bg-surface border border-separator shadow-2xl text-xs -translate-x-1/2 -translate-y-full mb-2 animate-in fade-in zoom-in-95 duration-100 min-w-32"
+          style={{
+            left: hoveredDay.x,
+            top: hoveredDay.y - 6,
+          }}
+        >
+          <div className="flex flex-col gap-1">
+            <span className="font-semibold text-foreground text-[11px]">
+              {hoveredDay.day.fullDateLabel}{" "}
+              {hoveredDay.day.isFuture && "(Upcoming)"}
+            </span>
+            <div className="flex items-center justify-between text-[11px] pt-0.5 border-t border-separator/40">
+              <span className="text-muted">Focus:</span>
+              <span className="font-bold text-accent">
+                {hoveredDay.day.focusMinutes > 0
+                  ? formatMinutesDisplay(hoveredDay.day.focusMinutes)
+                  : "0m"}
+              </span>
+            </div>
+            {hoveredDay.day.cycleCount > 0 && (
+              <div className="flex items-center justify-between text-[10px] text-muted">
+                <span>Pomodoros:</span>
+                <span className="font-medium text-foreground">
+                  {hoveredDay.day.cycleCount}{" "}
+                  {hoveredDay.day.cycleCount === 1 ? "cycle" : "cycles"}
+                </span>
+              </div>
+            )}
+            {hoveredDay.day.taskCompletedCount > 0 && (
+              <div className="flex items-center justify-between text-[10px] text-emerald-400">
+                <span>Tasks done:</span>
+                <span className="font-medium">
+                  {hoveredDay.day.taskCompletedCount}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

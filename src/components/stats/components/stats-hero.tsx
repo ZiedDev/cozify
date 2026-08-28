@@ -10,12 +10,24 @@ interface StatsHeroProps {
   customDateRange: CustomDateRange | null;
 }
 
+const formatToDDMMYY = (dateStr: string) => {
+  const parts = dateStr.split("-");
+
+  if (parts.length !== 3) return dateStr;
+  const [y, m, d] = parts;
+  const yy = y.slice(-2);
+  const mm = m.padStart(2, "0");
+  const dd = d.padStart(2, "0");
+
+  return `${dd}/${mm}/${yy}`;
+};
+
 export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
   const getRangeLabel = () => {
     if (customDateRange) {
       return customDateRange.start === customDateRange.end
-        ? customDateRange.start
-        : `${customDateRange.start} – ${customDateRange.end}`;
+        ? formatToDDMMYY(customDateRange.start)
+        : `${formatToDDMMYY(customDateRange.start)} - ${formatToDDMMYY(customDateRange.end)}`;
     }
     switch (range) {
       case "today":
@@ -41,9 +53,9 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
           </div>
           <div className="flex items-baseline gap-2 mt-1">
             <Typography
+              className="text-2xl sm:text-3xl font-serif tracking-tight text-foreground tabular-nums"
               type="h1"
               weight="bold"
-              className="text-2xl sm:text-3xl font-serif tracking-tight text-foreground tabular-nums"
             >
               {formatMinutesDisplay(stats.totalFocusMinutes)}
             </Typography>
@@ -52,7 +64,10 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
                 (avg{" "}
                 <strong className="text-foreground font-semibold">
                   {formatMinutesDisplay(
-                    Math.round(stats.totalFocusMinutes / Math.max(1, stats.totalActiveDays)),
+                    Math.round(
+                      stats.totalFocusMinutes /
+                        Math.max(1, stats.totalActiveDays),
+                    ),
                   )}
                 </strong>
                 /day)
@@ -62,12 +77,13 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
         </div>
 
         {/* Peak Rhythm Badge */}
-        {stats.peakProductivePeriod && stats.peakProductivePeriod !== "Flexible" && (
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/25 text-accent text-xs font-semibold">
-            <Zap className="size-3" />
-            <span>Peak: {stats.peakProductivePeriod}</span>
-          </div>
-        )}
+        {stats.peakProductivePeriod &&
+          stats.peakProductivePeriod !== "Flexible" && (
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/25 text-accent text-xs font-semibold">
+              <Zap className="size-3" />
+              <span>Peak: {stats.peakProductivePeriod}</span>
+            </div>
+          )}
       </div>
 
       {/* Bottom Row: 4 Unified Metric Tiles */}
@@ -76,7 +92,11 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
         <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20">
           <div className="flex items-center gap-1.5 text-amber-400 mb-1">
             <Flame className="size-3.5" />
-            <Typography type="body-xs" weight="semibold" className="text-[11px] text-foreground">
+            <Typography
+              className="text-[11px] text-foreground"
+              type="body-xs"
+              weight="semibold"
+            >
               Streak
             </Typography>
           </div>
@@ -94,7 +114,11 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
         <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20">
           <div className="flex items-center gap-1.5 text-purple-400 mb-1">
             <Target className="size-3.5" />
-            <Typography type="body-xs" weight="semibold" className="text-[11px] text-foreground">
+            <Typography
+              className="text-[11px] text-foreground"
+              type="body-xs"
+              weight="semibold"
+            >
               Pomodoros
             </Typography>
           </div>
@@ -112,7 +136,11 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
         <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20">
           <div className="flex items-center gap-1.5 text-emerald-400 mb-1">
             <CheckCircle2 className="size-3.5" />
-            <Typography type="body-xs" weight="semibold" className="text-[11px] text-foreground">
+            <Typography
+              className="text-[11px] text-foreground"
+              type="body-xs"
+              weight="semibold"
+            >
               Tasks Done
             </Typography>
           </div>
@@ -130,7 +158,11 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
         <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20">
           <div className="flex items-center gap-1.5 text-blue-400 mb-1">
             <Clock className="size-3.5" />
-            <Typography type="body-xs" weight="semibold" className="text-[11px] text-foreground">
+            <Typography
+              className="text-[11px] text-foreground"
+              type="body-xs"
+              weight="semibold"
+            >
               Sessions
             </Typography>
           </div>

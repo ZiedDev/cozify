@@ -17,16 +17,16 @@ export function Clock() {
       {/* Centered Clock Display */}
       <div className="inline-flex items-start justify-center">
         <Typography
+          className="font-sans text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-foreground tabular-nums leading-none"
           type="h1"
           weight="medium"
-          className="font-sans text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-foreground tabular-nums leading-none"
         >
           {time12}
         </Typography>
         <Typography
+          className="text-base sm:text-lg md:text-xl lg:text-2xl text-accent uppercase tracking-wider ml-2 sm:ml-3 pt-1 sm:pt-2 select-none"
           type="h3"
           weight="medium"
-          className="text-base sm:text-lg md:text-xl lg:text-2xl text-accent uppercase tracking-wider ml-2 sm:ml-3 pt-1 sm:pt-2 select-none"
         >
           {period}
         </Typography>
@@ -34,20 +34,20 @@ export function Clock() {
 
       {/* Full Date */}
       <Typography
+        className="text-base sm:text-lg md:text-xl lg:text-2xl tracking-wide mt-0.5 sm:mt-1 font-normal"
         color="muted"
         type="h4"
         weight="normal"
-        className="text-base sm:text-lg md:text-xl lg:text-2xl tracking-wide mt-0.5 sm:mt-1 font-normal"
       >
         {fullDate}
       </Typography>
 
       {/* Greeting Mantra */}
       <Typography
+        className="text-xs sm:text-sm md:text-base lg:text-lg opacity-75 font-light mt-1.5 sm:mt-2 tracking-wide"
         color="muted"
         type="body"
         weight="normal"
-        className="text-xs sm:text-sm md:text-base lg:text-lg opacity-75 font-light mt-1.5 sm:mt-2 tracking-wide"
       >
         {timeGreeting}. {greeting}
       </Typography>

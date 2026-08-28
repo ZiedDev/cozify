@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Button, Card, Typography, toast } from "@heroui/react";
+import { Button, Card, Typography, Modal, toast } from "@heroui/react";
 import {
   Download,
   Upload,
@@ -120,10 +120,14 @@ export function DataTab({ onOpenSessionsLog }: DataTabProps) {
     <div className="space-y-6">
       {/* Header Info */}
       <div>
-        <Typography type="h3" weight="semibold" className="text-base text-foreground">
+        <Typography
+          className="text-base text-foreground"
+          type="h3"
+          weight="semibold"
+        >
           Data & Storage Management
         </Typography>
-        <Typography color="muted" type="body-xs" className="mt-0.5">
+        <Typography className="mt-0.5" color="muted" type="body-xs">
           All your data is stored securely in your browser. Export backups or
           restore anytime.
         </Typography>
@@ -134,9 +138,15 @@ export function DataTab({ onOpenSessionsLog }: DataTabProps) {
         <div className="rounded-xl border border-border/50 bg-surface/50 p-3 flex flex-col justify-between">
           <div className="flex items-center gap-1.5 text-muted text-xs font-medium mb-1">
             <Database className="size-3.5" />
-            <Typography color="muted" type="body-xs">Sessions</Typography>
+            <Typography color="muted" type="body-xs">
+              Sessions
+            </Typography>
           </div>
-          <Typography type="h3" weight="bold" className="text-lg text-foreground">
+          <Typography
+            className="text-lg text-foreground"
+            type="h3"
+            weight="bold"
+          >
             {stats.sessionsCount}
           </Typography>
         </div>
@@ -144,9 +154,15 @@ export function DataTab({ onOpenSessionsLog }: DataTabProps) {
         <div className="rounded-xl border border-border/50 bg-surface/50 p-3 flex flex-col justify-between">
           <div className="flex items-center gap-1.5 text-muted text-xs font-medium mb-1">
             <Clock className="size-3.5" />
-            <Typography color="muted" type="body-xs">Focus Time</Typography>
+            <Typography color="muted" type="body-xs">
+              Focus Time
+            </Typography>
           </div>
-          <Typography type="h3" weight="bold" className="text-lg text-foreground">
+          <Typography
+            className="text-lg text-foreground"
+            type="h3"
+            weight="bold"
+          >
             {stats.totalFocusMinutes}m
           </Typography>
         </div>
@@ -154,9 +170,15 @@ export function DataTab({ onOpenSessionsLog }: DataTabProps) {
         <div className="rounded-xl border border-border/50 bg-surface/50 p-3 flex flex-col justify-between">
           <div className="flex items-center gap-1.5 text-muted text-xs font-medium mb-1">
             <Palette className="size-3.5" />
-            <Typography color="muted" type="body-xs">Wallpapers</Typography>
+            <Typography color="muted" type="body-xs">
+              Wallpapers
+            </Typography>
           </div>
-          <Typography type="h3" weight="bold" className="text-lg text-foreground">
+          <Typography
+            className="text-lg text-foreground"
+            type="h3"
+            weight="bold"
+          >
             {stats.customWallpapersCount}
           </Typography>
         </div>
@@ -164,9 +186,15 @@ export function DataTab({ onOpenSessionsLog }: DataTabProps) {
         <div className="rounded-xl border border-border/50 bg-surface/50 p-3 flex flex-col justify-between">
           <div className="flex items-center gap-1.5 text-muted text-xs font-medium mb-1">
             <HardDrive className="size-3.5" />
-            <Typography color="muted" type="body-xs">Space Used</Typography>
+            <Typography color="muted" type="body-xs">
+              Space Used
+            </Typography>
           </div>
-          <Typography type="h3" weight="bold" className="text-lg text-foreground">
+          <Typography
+            className="text-lg text-foreground"
+            type="h3"
+            weight="bold"
+          >
             {stats.formattedStorageSize}
           </Typography>
         </div>
@@ -268,43 +296,84 @@ export function DataTab({ onOpenSessionsLog }: DataTabProps) {
         </Card.Header>
 
         <Card.Content className="pt-2">
-          {isResetConfirming ? (
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-lg bg-danger/10 border border-danger/20">
-              <span className="text-xs text-danger font-medium">
-                Are you sure? This will wipe all local data.
-              </span>
-              <div className="flex items-center gap-2">
-                <Button
-                  className="text-xs"
-                  size="sm"
-                  variant="ghost"
-                  onPress={() => setIsResetConfirming(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="text-xs"
-                  size="sm"
-                  variant="danger"
-                  onPress={handleResetAll}
-                >
-                  Yes, Reset Everything
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <Button
-              className="text-xs text-danger hover:bg-danger/10 hover:text-danger flex items-center gap-1.5"
-              size="sm"
-              variant="tertiary"
-              onPress={() => setIsResetConfirming(true)}
-            >
-              <RotateCcw className="size-3.5" />
-              <span>Clear All Data</span>
-            </Button>
-          )}
+          <Button
+            className="text-xs flex items-center gap-1.5 rounded-full font-medium"
+            size="sm"
+            variant="danger-soft"
+            onPress={() => setIsResetConfirming(true)}
+          >
+            <RotateCcw className="size-3.5" />
+            <span>Reset All Application Data</span>
+          </Button>
         </Card.Content>
       </Card>
+
+      {/* Reset Application Data Confirmation Modal */}
+      <Modal.Backdrop
+        isOpen={isResetConfirming}
+        onOpenChange={(open) => !open && setIsResetConfirming(false)}
+      >
+        <Modal.Container>
+          <Modal.Dialog className="sm:max-w-105 rounded-2xl bg-surface border border-separator shadow-2xl p-4 sm:p-5">
+            <Modal.CloseTrigger />
+            <Modal.Header className="flex items-center gap-2.5 pb-2">
+              <Modal.Icon className="bg-danger/15 text-danger border border-danger/30 rounded-xl p-2 shrink-0">
+                <AlertTriangle className="size-4" />
+              </Modal.Icon>
+              <div>
+                <Modal.Heading className="text-sm sm:text-base font-semibold text-foreground">
+                  Reset Application Data?
+                </Modal.Heading>
+                <Typography
+                  className="text-xs font-normal mt-0.5"
+                  color="muted"
+                  type="body-xs"
+                >
+                  Permanently clear all local data & settings
+                </Typography>
+              </div>
+            </Modal.Header>
+
+            <Modal.Body className="py-2.5 space-y-2">
+              <Typography className="text-xs text-muted" type="body-xs">
+                This will wipe all your saved focus sessions, streaks,
+                achievements, custom wallpapers, task history, and sound
+                preferences.
+              </Typography>
+              <Typography
+                className="text-xs text-danger font-medium"
+                type="body-xs"
+              >
+                This action cannot be undone. We recommend exporting a backup
+                first if you wish to keep your data.
+              </Typography>
+            </Modal.Body>
+
+            <Modal.Footer className="flex items-center justify-end gap-2 pt-3 border-t border-separator/30">
+              <Button
+                className="h-7.5 px-3 rounded-full text-xs font-medium cursor-pointer"
+                size="sm"
+                variant="secondary"
+                onPress={() => setIsResetConfirming(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="h-7.5 px-3.5 rounded-full text-xs font-semibold cursor-pointer shadow-2xs flex items-center gap-1.5"
+                size="sm"
+                variant="danger-soft"
+                onPress={() => {
+                  setIsResetConfirming(false);
+                  handleResetAll();
+                }}
+              >
+                <RotateCcw className="size-3.5" />
+                <span>Yes, Reset Everything</span>
+              </Button>
+            </Modal.Footer>
+          </Modal.Dialog>
+        </Modal.Container>
+      </Modal.Backdrop>
     </div>
   );
 }

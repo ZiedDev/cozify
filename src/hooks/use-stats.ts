@@ -69,7 +69,7 @@ export function useStats(): UseStatsReturn {
   const [todos, setTodos] = useState<TodoItem[]>(() =>
     storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []),
   );
-  const [range, setRange] = useState<TimeRangeFilter>("all");
+  const [range, setRange] = useState<TimeRangeFilter>("week");
   const [customDateRange, setCustomDateRange] =
     useState<CustomDateRange | null>(null);
   const [isAchievementsModalOpen, setIsAchievementsModalOpen] =
@@ -137,8 +137,8 @@ export function useStats(): UseStatsReturn {
   );
 
   const heatmapData = useMemo(
-    () => calculateHeatmapData(sessions, todos, range, customDateRange),
-    [sessions, todos, range, customDateRange],
+    () => calculateHeatmapData(sessions, todos),
+    [sessions, todos],
   );
 
   const timeOfDayStats = useMemo(

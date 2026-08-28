@@ -33,7 +33,11 @@ export function BreakModal({
             </Modal.Icon>
             <div>
               <Modal.Heading>Time to Recharge</Modal.Heading>
-              <Typography color="muted" type="body-xs" className="font-normal mt-0.5">
+              <Typography
+                className="font-normal mt-0.5"
+                color="muted"
+                type="body-xs"
+              >
                 Starting a break will count the current cycle as completed
               </Typography>
             </div>
@@ -53,9 +57,9 @@ export function BreakModal({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <Typography
+                      className="text-foreground group-hover:text-accent transition-colors"
                       type="body-sm"
                       weight="semibold"
-                      className="text-foreground group-hover:text-accent transition-colors"
                     >
                       Short Break
                     </Typography>
@@ -68,15 +72,15 @@ export function BreakModal({
                       Completes current cycle
                     </Chip>
                   </div>
-                  <Typography color="muted" type="body-xs" className="block">
+                  <Typography className="block" color="muted" type="body-xs">
                     Quick stretch, water, or eye rest
                   </Typography>
                 </div>
                 <Typography
+                  className="group-hover:text-accent shrink-0 pl-2"
                   color="muted"
                   type="body-xs"
                   weight="bold"
-                  className="group-hover:text-accent shrink-0 pl-2"
                 >
                   {formatDurationLabel(durations.shortBreak)}
                 </Typography>
@@ -94,9 +98,9 @@ export function BreakModal({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <Typography
+                      className="text-foreground group-hover:text-accent transition-colors"
                       type="body-sm"
                       weight="semibold"
-                      className="text-foreground group-hover:text-accent transition-colors"
                     >
                       Long Break
                     </Typography>
@@ -109,15 +113,15 @@ export function BreakModal({
                       Completes current cycle
                     </Chip>
                   </div>
-                  <Typography color="muted" type="body-xs" className="block">
+                  <Typography className="block" color="muted" type="body-xs">
                     Walk around, snack, or mental reset
                   </Typography>
                 </div>
                 <Typography
+                  className="group-hover:text-accent shrink-0 pl-2"
                   color="muted"
                   type="body-xs"
                   weight="bold"
-                  className="group-hover:text-accent shrink-0 pl-2"
                 >
                   {formatDurationLabel(durations.longBreak)}
                 </Typography>
@@ -141,18 +145,18 @@ export function BreakModal({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <Typography
-                      type="body-sm"
-                      weight="semibold"
                       className={`transition-colors ${
                         isCycleCompleted
                           ? "text-foreground group-hover:text-accent"
                           : "text-muted"
                       }`}
+                      type="body-sm"
+                      weight="semibold"
                     >
                       Skip Break
                     </Typography>
                   </div>
-                  <Typography color="muted" type="body-xs" className="block">
+                  <Typography className="block" color="muted" type="body-xs">
                     {isCycleCompleted
                       ? "Jump straight into the next focus cycle"
                       : "Complete the current focus cycle first"}

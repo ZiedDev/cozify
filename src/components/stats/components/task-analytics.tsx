@@ -31,18 +31,26 @@ export function TaskAnalytics({
               <Flag className="size-3.5" />
             </div>
             <div>
-              <Typography type="body-sm" weight="semibold" className="text-xs sm:text-sm text-foreground">
+              <Typography
+                className="text-xs sm:text-sm text-foreground"
+                type="body-sm"
+                weight="semibold"
+              >
                 Tasks by Priority
               </Typography>
-              <Typography color="muted" type="body-xs" className="text-[10px] font-light">
+              <Typography
+                className="text-[10px] font-light"
+                color="muted"
+                type="body-xs"
+              >
                 Completion across urgency levels
               </Typography>
             </div>
           </div>
           <Typography
+            className="text-[10px] text-foreground bg-surface-secondary px-2 py-0.5 rounded-full border border-separator/30"
             type="body-xs"
             weight="medium"
-            className="text-[10px] text-foreground bg-surface-secondary px-2 py-0.5 rounded-full border border-separator/30"
           >
             {overallStats.tasksCompleted}/{overallStats.tasksTotal} Done
           </Typography>
@@ -57,10 +65,18 @@ export function TaskAnalytics({
                   <span className="font-medium text-foreground">{p.label}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px] tabular-nums">
-                  <Typography color="muted" type="body-xs" className="text-[11px]">
+                  <Typography
+                    className="text-[11px]"
+                    color="muted"
+                    type="body-xs"
+                  >
                     {p.completed}/{p.total}
                   </Typography>
-                  <Typography type="body-xs" weight="semibold" className="text-foreground w-7 text-right">
+                  <Typography
+                    className="text-foreground w-7 text-right"
+                    type="body-xs"
+                    weight="semibold"
+                  >
                     {p.percentage}%
                   </Typography>
                 </div>
@@ -79,7 +95,11 @@ export function TaskAnalytics({
         </div>
       </div>
 
-      <Typography color="muted" type="body-xs" className="text-[10px] opacity-70 font-light mt-2 pt-1.5 border-t border-separator/20">
+      <Typography
+        className="text-[10px] opacity-70 font-light mt-2 pt-1.5 border-t border-separator/20"
+        color="muted"
+        type="body-xs"
+      >
         Overall task hit rate:{" "}
         <strong className="text-foreground font-medium">
           {overallStats.taskCompletionRate}%
@@ -98,22 +118,39 @@ export function TaskAnalytics({
               <Tag className="size-3.5" />
             </div>
             <div>
-              <Typography type="body-sm" weight="semibold" className="text-xs sm:text-sm text-foreground">
+              <Typography
+                className="text-xs sm:text-sm text-foreground"
+                type="body-sm"
+                weight="semibold"
+              >
                 Tasks by Tag
               </Typography>
-              <Typography color="muted" type="body-xs" className="text-[10px] font-light">
+              <Typography
+                className="text-[10px] font-light"
+                color="muted"
+                type="body-xs"
+              >
                 Completed tasks per category
               </Typography>
             </div>
           </div>
-          <Typography color="muted" type="body-xs" weight="medium" className="text-[10px]">
+          <Typography
+            className="text-[10px]"
+            color="muted"
+            type="body-xs"
+            weight="medium"
+          >
             {tagStats.length} Tags
           </Typography>
         </div>
 
         <div className="flex flex-col gap-1.5 pt-1">
           {tagStats.length === 0 ? (
-            <Typography color="muted" type="body-xs" className="py-4 text-center text-[11px]">
+            <Typography
+              className="py-4 text-center text-[11px]"
+              color="muted"
+              type="body-xs"
+            >
               No tasks with tags yet.
             </Typography>
           ) : (
@@ -136,10 +173,18 @@ export function TaskAnalytics({
                       </span>
                     </div>
                     <div className="flex items-center gap-1.5 text-[11px] tabular-nums">
-                      <Typography color="muted" type="body-xs" className="text-[11px]">
+                      <Typography
+                        className="text-[11px]"
+                        color="muted"
+                        type="body-xs"
+                      >
                         {tag.completedTaskCount}/{tag.taskCount}
                       </Typography>
-                      <Typography type="body-xs" weight="semibold" className="text-foreground w-7 text-right">
+                      <Typography
+                        className="text-foreground w-7 text-right"
+                        type="body-xs"
+                        weight="semibold"
+                      >
                         {compPercent}%
                       </Typography>
                     </div>
@@ -163,7 +208,11 @@ export function TaskAnalytics({
         </div>
       </div>
 
-      <Typography color="muted" type="body-xs" className="text-[10px] opacity-70 font-light mt-2 pt-1.5 border-t border-separator/20">
+      <Typography
+        className="text-[10px] opacity-70 font-light mt-2 pt-1.5 border-t border-separator/20"
+        color="muted"
+        type="body-xs"
+      >
         Filter and organize tasks using tags.
       </Typography>
     </div>
@@ -177,22 +226,25 @@ export function TaskAnalytics({
           onSelectionChange={(k) => setActiveSubTab(k as string)}
         >
           <Tabs.ListContainer className="rounded-full">
-            <Tabs.List className="rounded-full bg-surface-secondary p-0.5 border border-separator/40 text-xs shadow-2xs">
+            <Tabs.List
+              aria-label="Priorities and Tags"
+              className="rounded-full bg-surface-secondary/70 p-0.5 border border-separator/40 text-xs"
+            >
               <Tabs.Tab
-                className="h-7 px-2.5 sm:px-3 rounded-full font-medium cursor-pointer flex items-center gap-1.5 text-xs transition-all"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
                 id="priorities"
               >
                 <Flag className="size-3 shrink-0" />
                 <span>Priority</span>
-                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-2xs" />
+                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
               </Tabs.Tab>
               <Tabs.Tab
-                className="h-7 px-2.5 sm:px-3 rounded-full font-medium cursor-pointer flex items-center gap-1.5 text-xs transition-all"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
                 id="categories"
               >
                 <Tag className="size-3 shrink-0" />
                 <span>Tags</span>
-                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-2xs" />
+                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
               </Tabs.Tab>
             </Tabs.List>
           </Tabs.ListContainer>

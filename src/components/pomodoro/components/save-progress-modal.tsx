@@ -126,7 +126,11 @@ export function SaveProgressModal({
             </Modal.Icon>
             <div>
               <Modal.Heading>Save Session Progress</Modal.Heading>
-              <Typography color="muted" type="body-xs" className="font-normal mt-0.5">
+              <Typography
+                className="font-normal mt-0.5"
+                color="muted"
+                type="body-xs"
+              >
                 Completed {cyclesDone} of {targetCycles} cycles
               </Typography>
             </div>

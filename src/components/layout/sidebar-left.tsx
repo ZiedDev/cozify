@@ -24,18 +24,18 @@ export function SidebarTodoWidget({
       {/* Widget Header */}
       <div className="flex items-center justify-between gap-2 border-b border-separator/30 pb-1.5 px-0.5 w-full">
         <Typography
+          className="text-[11px] md:text-xs text-foreground/90 tracking-wide uppercase"
           type="body-xs"
           weight="semibold"
-          className="text-[11px] md:text-xs text-foreground/90 tracking-wide uppercase"
         >
           To-Do
         </Typography>
         {totalActive > 0 && (
           <Typography
+            className="text-[9px] md:text-[10px] px-2 py-0.5 rounded-full bg-surface-secondary border border-separator/30"
             color="muted"
             type="body-xs"
             weight="medium"
-            className="text-[9px] md:text-[10px] px-2 py-0.5 rounded-full bg-surface-secondary border border-separator/30"
           >
             {totalActive} left
           </Typography>
@@ -46,7 +46,11 @@ export function SidebarTodoWidget({
       {activeTodos.length === 0 ? (
         <div className="flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-surface/40 border border-separator/30 text-muted w-full">
           <CheckCircle2 className="size-3.5 text-accent shrink-0" />
-          <Typography color="muted" type="body-xs" className="text-[11px] md:text-xs font-light">
+          <Typography
+            className="text-[11px] md:text-xs font-light"
+            color="muted"
+            type="body-xs"
+          >
             All clear
           </Typography>
         </div>
@@ -81,9 +85,9 @@ export function SidebarTodoWidget({
                 {/* Title */}
                 <Typography
                   truncate
+                  className="text-[11px] md:text-xs text-foreground/90 flex-1 min-w-0"
                   type="body-xs"
                   weight="medium"
-                  className="text-[11px] md:text-xs text-foreground/90 flex-1 min-w-0"
                 >
                   {todo.title}
                 </Typography>

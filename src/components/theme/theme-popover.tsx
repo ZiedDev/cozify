@@ -136,10 +136,18 @@ export function ThemePopover() {
                 <Palette className="size-4" />
               </span>
               <div>
-                <Typography type="h3" weight="bold" className="text-sm text-foreground">
+                <Typography
+                  className="text-sm text-foreground"
+                  type="h3"
+                  weight="bold"
+                >
                   Appearance
                 </Typography>
-                <Typography color="muted" type="body-xs" className="text-[11px]">
+                <Typography
+                  className="text-[11px]"
+                  color="muted"
+                  type="body-xs"
+                >
                   {activeBackground ? activeBackground.name : "Clean Slate"}
                 </Typography>
               </div>
@@ -152,21 +160,27 @@ export function ThemePopover() {
             selectedKey={activeTab}
             onSelectionChange={(key) => setActiveTab(key as string)}
           >
-            <Tabs.ListContainer>
+            <Tabs.ListContainer className="rounded-full">
               <Tabs.List
                 aria-label="Appearance Navigation"
-                className="rounded-4xl bg-surface-secondary"
+                className="rounded-full bg-surface-secondary/70 p-0.5 sm:p-1 border-separator/30 text-xs"
               >
-                <Tabs.Tab className="flex gap-1.5" id="gallery">
+                <Tabs.Tab
+                  className="h-7 px-3 rounded-full text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition-all"
+                  id="gallery"
+                >
                   <ImageIcon className="size-3.5" />
                   <span>Wallpapers</span>
-                  <Tabs.Indicator className="bg-surface text-foreground" />
+                  <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
                 </Tabs.Tab>
 
-                <Tabs.Tab className="flex gap-1.5" id="adjust">
+                <Tabs.Tab
+                  className="h-7 px-3 rounded-full text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition-all"
+                  id="adjust"
+                >
                   <Sliders className="size-3.5" />
                   <span>Fine Tuning</span>
-                  <Tabs.Indicator className="bg-surface text-foreground" />
+                  <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
                 </Tabs.Tab>
               </Tabs.List>
             </Tabs.ListContainer>

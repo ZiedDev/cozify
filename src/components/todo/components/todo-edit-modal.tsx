@@ -74,7 +74,11 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
             </Modal.Icon>
             <div>
               <Modal.Heading>Edit Task</Modal.Heading>
-              <Typography color="muted" type="body-xs" className="font-normal mt-0.5">
+              <Typography
+                className="font-normal mt-0.5"
+                color="muted"
+                type="body-xs"
+              >
                 Customize details, notes, priority, and due dates.
               </Typography>
             </div>

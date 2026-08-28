@@ -13,7 +13,8 @@ interface FocusChartProps {
 }
 
 export function FocusChart({ data, onSelectRange }: FocusChartProps) {
-  const periodType = data[0]?.periodType || (data.length === 24 ? "hourly" : "daily");
+  const periodType =
+    data[0]?.periodType || (data.length === 24 ? "hourly" : "daily");
   const isHourly = periodType === "hourly";
   const isWeekly = periodType === "weekly";
   const isMonthly = periodType === "monthly";
@@ -22,11 +23,10 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
     (acc, d) => acc + (d.totalPeriodMinutes ?? d.focusMinutes),
     0,
   );
-  const activeIntervals = data.filter((d) => d.focusMinutes > 0).length;
   const avgFocusInChart =
-    activeIntervals > 0
+    data.length > 0
       ? Math.round(
-          data.reduce((acc, d) => acc + d.focusMinutes, 0) / activeIntervals,
+          data.reduce((acc, d) => acc + d.focusMinutes, 0) / data.length,
         )
       : 0;
 
@@ -60,10 +60,18 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
             <BarChart2 className="size-3.5" />
           </div>
           <div>
-            <Typography type="body-sm" weight="semibold" className="text-sm text-foreground">
+            <Typography
+              className="text-sm text-foreground"
+              type="body-sm"
+              weight="semibold"
+            >
               Focus Trend
             </Typography>
-            <Typography color="muted" type="body-xs" className="text-[11px] font-light">
+            <Typography
+              className="text-[11px] font-light"
+              color="muted"
+              type="body-xs"
+            >
               {getSubtitle()}
             </Typography>
           </div>
@@ -71,10 +79,10 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
 
         {/* Focus total pill */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-secondary border border-separator/40 text-xs tabular-nums font-medium text-foreground">
-          <Typography color="muted" type="body-xs" className="text-[11px]">
+          <Typography className="text-[11px]" color="muted" type="body-xs">
             Total:
           </Typography>
-          <Typography type="body-xs" weight="semibold" className="text-accent">
+          <Typography className="text-accent" type="body-xs" weight="semibold">
             {formatMinutesDisplay(totalFocusInChart)}
           </Typography>
         </div>
@@ -92,7 +100,10 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
             }
           }}
         >
-          <BarChart.Grid className="stroke-separator/85" strokeDasharray="4 4" />
+          <BarChart.Grid
+            className="stroke-separator/85"
+            strokeDasharray="4 4"
+          />
           <BarChart.YAxis
             tickFormatter={(v) => (v === 0 ? "0m" : `${v}m`)}
             ticksCount={3}
@@ -132,7 +143,8 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
               // Render label if on step stride or last item with enough distance
               if (
                 idx % step === 0 ||
-                (idx === count - 1 && (count - 1) % step >= Math.floor(step / 2))
+                (idx === count - 1 &&
+                  (count - 1) % step >= Math.floor(step / 2))
               ) {
                 return String(val);
               }
@@ -140,7 +152,14 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
               return "";
             }}
           />
-          {!isHourly && <BarChart.ReferenceLine className="stroke-accent" label="1h/d Goal" strokeDasharray="5 4" y={60} />}
+          {avgFocusInChart > 0 && (
+            <BarChart.ReferenceLine
+              className="stroke-accent/80"
+              label={`Avg: ${formatMinutesDisplay(avgFocusInChart)}`}
+              strokeDasharray="5 4"
+              y={avgFocusInChart}
+            />
+          )}
           <BarChart.Bar
             className="fill-accent/85 transition-all duration-200 cursor-pointer"
             dataKey="focusMinutes"
@@ -161,14 +180,15 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
                     {isWeekly || isMonthly ? "/day" : ""}
                   </span>
                 </div>
-                {(isWeekly || isMonthly) && item.totalPeriodMinutes !== undefined && (
-                  <div className="flex items-center justify-between text-[11px] text-muted">
-                    <span>Total Focus:</span>
-                    <span className="font-medium text-foreground">
-                      {formatMinutesDisplay(item.totalPeriodMinutes)}
-                    </span>
-                  </div>
-                )}
+                {(isWeekly || isMonthly) &&
+                  item.totalPeriodMinutes !== undefined && (
+                    <div className="flex items-center justify-between text-[11px] text-muted">
+                      <span>Total Focus:</span>
+                      <span className="font-medium text-foreground">
+                        {formatMinutesDisplay(item.totalPeriodMinutes)}
+                      </span>
+                    </div>
+                  )}
                 {item.cycleCount > 0 && (
                   <div className="flex items-center justify-between text-[11px] text-muted">
                     <span>Pomodoros:</span>
@@ -195,26 +215,38 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
       {/* Chart Footer Summary Cards */}
       <div className="grid grid-cols-3 gap-2 pt-2 border-t border-separator/30 text-center">
         <div className="flex flex-col items-center p-1.5 rounded-xl bg-surface-secondary border border-separator/30">
-          <Typography color="muted" type="body-xs" className="text-[10px]">
+          <Typography className="text-[10px]" color="muted" type="body-xs">
             Period Total
           </Typography>
-          <Typography type="body-xs" weight="semibold" className="text-xs sm:text-sm text-foreground tabular-nums">
+          <Typography
+            className="text-xs sm:text-sm text-foreground tabular-nums"
+            type="body-xs"
+            weight="semibold"
+          >
             {formatMinutesDisplay(totalFocusInChart)}
           </Typography>
         </div>
         <div className="flex flex-col items-center p-1.5 rounded-xl bg-surface-secondary border border-separator/30">
-          <Typography color="muted" type="body-xs" className="text-[10px]">
+          <Typography className="text-[10px]" color="muted" type="body-xs">
             {isHourly ? "Active Hour Avg" : "Daily Average"}
           </Typography>
-          <Typography type="body-xs" weight="semibold" className="text-xs sm:text-sm text-foreground tabular-nums">
+          <Typography
+            className="text-xs sm:text-sm text-foreground tabular-nums"
+            type="body-xs"
+            weight="semibold"
+          >
             {formatMinutesDisplay(avgFocusInChart)}
           </Typography>
         </div>
         <div className="flex flex-col items-center p-1.5 rounded-xl bg-surface-secondary border border-separator/30">
-          <Typography color="muted" type="body-xs" className="text-[10px]">
+          <Typography className="text-[10px]" color="muted" type="body-xs">
             {getPeakLabel()}
           </Typography>
-          <Typography type="body-xs" weight="semibold" className="text-xs sm:text-sm text-accent tabular-nums flex items-center gap-1">
+          <Typography
+            className="text-xs sm:text-sm text-accent tabular-nums flex items-center gap-1"
+            type="body-xs"
+            weight="semibold"
+          >
             <TrendingUp className="size-3" />
             {peakInterval && peakInterval.focusMinutes > 0
               ? `${formatMinutesDisplay(peakInterval.focusMinutes)}${isHourly || isWeekly || isMonthly ? ` (${peakInterval.dayLabel})` : ""}`

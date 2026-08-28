@@ -22,11 +22,11 @@ export function Dock() {
                 <>
                   <Icon className="size-4 min-[701px]:size-4.5 shrink-0" />
                   <Typography
-                    type="body-sm"
-                    weight="medium"
                     className={
                       isSelected ? "inline" : "hidden min-[701px]:inline"
                     }
+                    type="body-sm"
+                    weight="medium"
                   >
                     {item.label}
                   </Typography>

@@ -125,10 +125,10 @@ export function SessionsLogModal({
                 {/* Search Bar */}
                 <div className="flex flex-col gap-1.5">
                   <Typography
+                    className="text-[11px] uppercase tracking-wider"
                     color="muted"
                     type="body-xs"
                     weight="medium"
-                    className="text-[11px] uppercase tracking-wider"
                   >
                     Search
                   </Typography>
@@ -150,32 +150,50 @@ export function SessionsLogModal({
                 {/* Summary Stats Breakdown */}
                 <div className="flex flex-col gap-2">
                   <Typography
+                    className="text-[11px] uppercase tracking-wider"
                     color="muted"
                     type="body-xs"
                     weight="medium"
-                    className="text-[11px] uppercase tracking-wider"
                   >
                     Summary
                   </Typography>
 
                   <div className="flex flex-col gap-2 text-xs">
                     <div className="flex items-center justify-between p-2 rounded-xl bg-surface/70 border border-separator/30">
-                      <Typography color="muted" type="body-xs">Total Sessions</Typography>
-                      <Typography type="body-xs" weight="semibold" className="text-foreground tabular-nums">
+                      <Typography color="muted" type="body-xs">
+                        Total Sessions
+                      </Typography>
+                      <Typography
+                        className="text-foreground tabular-nums"
+                        type="body-xs"
+                        weight="semibold"
+                      >
                         {sessions.length}
                       </Typography>
                     </div>
 
                     <div className="flex items-center justify-between p-2 rounded-xl bg-surface/70 border border-separator/30">
-                      <Typography color="muted" type="body-xs">Total Focus</Typography>
-                      <Typography type="body-xs" weight="semibold" className="text-accent tabular-nums">
+                      <Typography color="muted" type="body-xs">
+                        Total Focus
+                      </Typography>
+                      <Typography
+                        className="text-accent tabular-nums"
+                        type="body-xs"
+                        weight="semibold"
+                      >
                         {formatMinutesDisplay(totalFocusMinutes)}
                       </Typography>
                     </div>
 
                     <div className="flex items-center justify-between p-2 rounded-xl bg-surface/70 border border-separator/30">
-                      <Typography color="muted" type="body-xs">Total Cycles</Typography>
-                      <Typography type="body-xs" weight="semibold" className="text-purple-400 tabular-nums">
+                      <Typography color="muted" type="body-xs">
+                        Total Cycles
+                      </Typography>
+                      <Typography
+                        className="text-purple-400 tabular-nums"
+                        type="body-xs"
+                        weight="semibold"
+                      >
                         {totalCycles}
                       </Typography>
                     </div>
@@ -184,7 +202,11 @@ export function SessionsLogModal({
               </div>
 
               {/* Read-only footer note */}
-              <Typography color="muted" type="body-xs" className="px-1 text-[11px] opacity-70">
+              <Typography
+                className="px-1 text-[11px] opacity-70"
+                color="muted"
+                type="body-xs"
+              >
                 Read-only inspection log of all completed Pomodoro sessions.
               </Typography>
             </div>
@@ -200,12 +222,20 @@ export function SessionsLogModal({
                   <div className="size-12 rounded-2xl bg-surface-secondary flex items-center justify-center mb-3">
                     <History className="size-6 text-muted/60" />
                   </div>
-                  <Typography type="body-sm" weight="semibold" className="text-foreground">
+                  <Typography
+                    className="text-foreground"
+                    type="body-sm"
+                    weight="semibold"
+                  >
                     {searchQuery
                       ? "No matching sessions found"
                       : "No sessions recorded yet"}
                   </Typography>
-                  <Typography color="muted" type="body-xs" className="mt-1 max-w-xs opacity-70">
+                  <Typography
+                    className="mt-1 max-w-xs opacity-70"
+                    color="muted"
+                    type="body-xs"
+                  >
                     {searchQuery
                       ? "Try searching for a different keyword."
                       : "Complete your first focus session to see it logged here."}
@@ -230,9 +260,9 @@ export function SessionsLogModal({
                           <div className="flex flex-col min-w-0">
                             <Typography
                               truncate
+                              className="text-xs sm:text-sm text-foreground"
                               type="body-sm"
                               weight="semibold"
-                              className="text-xs sm:text-sm text-foreground"
                             >
                               {s.title || "Focus Session"}
                             </Typography>
@@ -281,7 +311,10 @@ export function SessionsLogModal({
                         {s.notes && (
                           <div className="flex items-start gap-1.5 p-2 rounded-xl bg-surface-secondary/50 border border-separator/20 text-xs text-foreground/80 mt-1">
                             <FileText className="size-3.5 text-muted shrink-0 mt-0.5" />
-                            <Typography type="body-xs" className="leading-relaxed whitespace-pre-wrap">
+                            <Typography
+                              className="leading-relaxed whitespace-pre-wrap"
+                              type="body-xs"
+                            >
                               {s.notes}
                             </Typography>
                           </div>

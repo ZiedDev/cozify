@@ -106,13 +106,13 @@ export function TodoItemDetailed({
         >
           <div className="flex items-center gap-2 flex-wrap">
             <Typography
-              type="body"
-              weight="medium"
               className={`text-sm md:text-base leading-snug break-words transition-all ${
                 todo.completed
                   ? "line-through text-muted"
                   : "text-foreground font-medium"
               }`}
+              type="body"
+              weight="medium"
             >
               {todo.title}
             </Typography>
@@ -133,9 +133,9 @@ export function TodoItemDetailed({
           {/* Notes preview */}
           {todo.notes && (
             <Typography
+              className="text-xs opacity-80 line-clamp-2 font-light leading-relaxed"
               color="muted"
               type="body-xs"
-              className="text-xs opacity-80 line-clamp-2 font-light leading-relaxed"
             >
               {todo.notes}
             </Typography>

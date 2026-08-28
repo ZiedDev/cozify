@@ -38,7 +38,11 @@ export function InterruptAlert({
           </AlertDialog.Header>
 
           <AlertDialog.Body>
-            <Typography color="muted" type="body-sm" className="leading-relaxed">
+            <Typography
+              className="leading-relaxed"
+              color="muted"
+              type="body-sm"
+            >
               {confirmation?.description}
             </Typography>
           </AlertDialog.Body>

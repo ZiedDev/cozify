@@ -9,7 +9,11 @@ export function AboutTab() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <Typography type="h3" weight="semibold" className="text-base text-foreground">
+        <Typography
+          className="text-base text-foreground"
+          type="h3"
+          weight="semibold"
+        >
           About Cozify
         </Typography>
         <Typography color="muted" type="body-sm">
@@ -22,19 +26,23 @@ export function AboutTab() {
           <div className="flex items-center gap-3">
             <div>
               <Typography
+                className="text-sm text-foreground font-serif tracking-tight"
                 type="h4"
                 weight="bold"
-                className="text-sm text-foreground font-serif tracking-tight"
               >
                 Cozify
               </Typography>
-              <Typography color="muted" type="body-xs" className="text-xs">
+              <Typography className="text-xs" color="muted" type="body-xs">
                 Version {siteConfig.version}
               </Typography>
             </div>
           </div>
 
-          <Typography color="muted" type="body-xs" className="text-xs leading-relaxed">
+          <Typography
+            className="text-xs leading-relaxed"
+            color="muted"
+            type="body-xs"
+          >
             Designed for mindful work, deep study sessions, and serene ambient
             productivity.
           </Typography>

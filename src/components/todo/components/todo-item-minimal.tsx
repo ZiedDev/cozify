@@ -83,8 +83,6 @@ export function TodoItemMinimal({
       {/* Task Title (Clicking toggles complete) */}
       <Typography
         truncate
-        type="body-sm"
-        weight="medium"
         className={`text-xs md:text-sm transition-all text-left flex-1 min-w-0 cursor-pointer ${
           todo.completed
             ? "line-through text-muted"
@@ -92,6 +90,8 @@ export function TodoItemMinimal({
         }`}
         role="button"
         tabIndex={0}
+        type="body-sm"
+        weight="medium"
         onClick={() => toggleTodo(todo.id)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {

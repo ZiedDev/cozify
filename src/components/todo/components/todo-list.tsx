@@ -1,5 +1,11 @@
-import React, { useState, useRef, useCallback } from "react";
-import { ScrollShadow, Separator, Typography } from "@heroui/react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
+import { ScrollShadow, Separator, Typography, Button } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { CheckCircle2, Coffee, Search } from "lucide-react";
@@ -17,10 +23,31 @@ interface DragOverState {
   position: "top" | "bottom";
 }
 
+const PAGE_SIZE = 20;
+
 export function TodoList() {
-  const { filteredTodos, viewMode, filter, searchQuery, moveTodoToPosition } =
-    useTodos();
+  const {
+    filteredTodos,
+    viewMode,
+    filter,
+    searchQuery,
+    selectedTag,
+    moveTodoToPosition,
+  } = useTodos();
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
+  const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
+
+  // Reset pagination when filter, search, or tag changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [filter, searchQuery, selectedTag]);
+
+  const visibleTodos = useMemo(
+    () => filteredTodos.slice(0, visibleCount),
+    [filteredTodos, visibleCount],
+  );
+  const hasMore = visibleCount < filteredTodos.length;
+  const remainingCount = filteredTodos.length - visibleCount;
 
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverState, setDragOverState] = useState<DragOverState | null>(
@@ -132,8 +159,8 @@ export function TodoList() {
       }
 
       // If dragging in container space above all items or below all items
-      const firstItem = filteredTodos[0];
-      const lastItem = filteredTodos[filteredTodos.length - 1];
+      const firstItem = visibleTodos[0];
+      const lastItem = visibleTodos[visibleTodos.length - 1];
 
       if (relativeY < 32 && firstItem) {
         updateDragOver({ id: firstItem.id, position: "top" });
@@ -141,7 +168,7 @@ export function TodoList() {
         updateDragOver({ id: lastItem.id, position: "bottom" });
       }
     },
-    [filteredTodos, updateDragOver],
+    [visibleTodos, updateDragOver],
   );
 
   const handleContainerDrop = useCallback(
@@ -159,7 +186,7 @@ export function TodoList() {
 
       if (!el) return;
 
-      const currentIds = filteredTodos.map((t) => t.id);
+      const currentIds = visibleTodos.map((t) => t.id);
 
       if (isInitialMountRef.current) {
         isInitialMountRef.current = false;
@@ -196,7 +223,7 @@ export function TodoList() {
         });
       }
     },
-    { dependencies: [filteredTodos], scope: listRef },
+    { dependencies: [visibleTodos], scope: listRef },
   );
 
   return (
@@ -214,9 +241,9 @@ export function TodoList() {
           </div>
           <div className="flex flex-col gap-1">
             <Typography
+              className="text-sm md:text-base text-foreground font-medium"
               type="h4"
               weight="medium"
-              className="text-sm md:text-base text-foreground font-medium"
             >
               {searchQuery
                 ? `No tasks matching "${searchQuery}"`
@@ -227,9 +254,9 @@ export function TodoList() {
                     : "Your list is clean and cozy"}
             </Typography>
             <Typography
+              className="text-xs max-w-xs leading-relaxed font-light"
               color="muted"
               type="body-xs"
-              className="text-xs max-w-xs leading-relaxed font-light"
             >
               {searchQuery
                 ? "Try a different search term or clear the filter."
@@ -254,7 +281,7 @@ export function TodoList() {
               viewMode === "minimal" ? "gap-1.5" : "gap-2.5"
             }`}
           >
-            {filteredTodos.map((todo, idx) => {
+            {visibleTodos.map((todo, idx) => {
               const isDragOverThis =
                 dragOverState?.id === todo.id && draggedId !== todo.id;
               const isDropTop =
@@ -316,6 +343,20 @@ export function TodoList() {
                 </div>
               );
             })}
+
+            {/* Load more button at the end of the scroll when there are more items */}
+            {hasMore && (
+              <div className="flex justify-center pt-2 pb-3">
+                <Button
+                  className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-all cursor-pointer shadow-xs"
+                  size="sm"
+                  variant="secondary"
+                  onPress={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                >
+                  Load more ({remainingCount} remaining)
+                </Button>
+              </div>
+            )}
           </div>
         </ScrollShadow>
       )}

@@ -1,5 +1,5 @@
 import { SearchField, Tabs, ScrollShadow, Typography } from "@heroui/react";
-import { LayoutList, CheckSquare } from "lucide-react";
+import { LayoutList, CheckSquare, Check } from "lucide-react";
 
 import { TodoFilter, TodoViewMode, PRESET_TAGS } from "../types";
 
@@ -25,19 +25,17 @@ export function TodoHeader() {
         {/* Left Title & Counter */}
         <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
           <Typography
-            type="h1"
             className="text-xl md:text-2xl lg:text-3xl font-serif font-medium tracking-tight text-foreground select-none"
+            type="h1"
           >
             To-Do
           </Typography>
-          <Typography
-            color="muted"
-            type="body-xs"
-            weight="medium"
-            className="flex items-center px-2 md:px-2.5 py-0.5 rounded-full text-[11px] md:text-xs bg-surface border border-separator/40 shadow-2xs tabular-nums"
-          >
-            {stats.completed}/{stats.total}
-          </Typography>
+          <div className="flex items-center px-2 md:px-2.5 py-0.5 h-6 md:h-7 rounded-full text-[11px] md:text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 gap-1.5 shadow-2xs tabular-nums select-none">
+            <Check className="size-3" />
+            <span>
+              {stats.completed}/{stats.total}
+            </span>
+          </div>
         </div>
 
         {/* Right Controls: Search + View Switcher */}
@@ -77,13 +75,13 @@ export function TodoHeader() {
                     <>
                       <CheckSquare className="size-3.5 shrink-0" />
                       <Typography
-                        type="body-xs"
-                        weight="medium"
                         className={
                           isSelected
                             ? "hidden min-[426px]:inline text-xs"
                             : "hidden lg:inline text-xs"
                         }
+                        type="body-xs"
+                        weight="medium"
                       >
                         Minimal
                       </Typography>
@@ -99,13 +97,13 @@ export function TodoHeader() {
                     <>
                       <LayoutList className="size-3.5 shrink-0" />
                       <Typography
-                        type="body-xs"
-                        weight="medium"
                         className={
                           isSelected
                             ? "hidden min-[426px]:inline text-xs"
                             : "hidden lg:inline text-xs"
                         }
+                        type="body-xs"
+                        weight="medium"
                       >
                         Detailed
                       </Typography>

@@ -20,15 +20,19 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
                 <div className="size-6 rounded-xl border flex items-center justify-center shrink-0 text-blue-400 bg-blue-500/10 border-blue-500/25">
                   <Clock className="size-3.5" />
                 </div>
-                <Typography type="body-xs" weight="semibold" className="text-foreground">
+                <Typography
+                  className="text-foreground"
+                  type="body-xs"
+                  weight="semibold"
+                >
                   Focus Time
                 </Typography>
               </div>
               <Typography
+                className="text-[10px] px-2 py-0.5 rounded-full bg-surface-secondary border border-separator/30"
                 color="muted"
                 type="body-xs"
                 weight="medium"
-                className="text-[10px] px-2 py-0.5 rounded-full bg-surface-secondary border border-separator/30"
               >
                 {stats.totalSessions}{" "}
                 {stats.totalSessions === 1 ? "session" : "sessions"}
@@ -37,9 +41,9 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
             <div className="flex items-baseline gap-1 my-1">
               <Typography
+                className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
                 type="h2"
                 weight="bold"
-                className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
               >
                 {formatMinutesDisplay(stats.totalFocusMinutes)}
               </Typography>
@@ -48,18 +52,26 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
           <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-separator/20 text-center">
             <div className="flex flex-col p-1 rounded-lg bg-surface-secondary/60">
-              <Typography color="muted" type="body-xs" className="text-[9px]">
+              <Typography className="text-[9px]" color="muted" type="body-xs">
                 Avg Session
               </Typography>
-              <Typography type="body-xs" weight="semibold" className="text-[11px] text-foreground tabular-nums">
+              <Typography
+                className="text-[11px] text-foreground tabular-nums"
+                type="body-xs"
+                weight="semibold"
+              >
                 {stats.avgSessionMinutes}m
               </Typography>
             </div>
             <div className="flex flex-col p-1 rounded-lg bg-surface-secondary/60">
-              <Typography color="muted" type="body-xs" className="text-[9px]">
+              <Typography className="text-[9px]" color="muted" type="body-xs">
                 Longest
               </Typography>
-              <Typography type="body-xs" weight="semibold" className="text-[11px] text-foreground tabular-nums">
+              <Typography
+                className="text-[11px] text-foreground tabular-nums"
+                type="body-xs"
+                weight="semibold"
+              >
                 {stats.longestSessionMinutes}m
               </Typography>
             </div>
@@ -76,7 +88,11 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
                 <div className="size-6 rounded-xl border flex items-center justify-center shrink-0 text-purple-400 bg-purple-500/10 border-purple-500/25">
                   <Target className="size-3.5" />
                 </div>
-                <Typography type="body-xs" weight="semibold" className="text-foreground">
+                <Typography
+                  className="text-foreground"
+                  type="body-xs"
+                  weight="semibold"
+                >
                   Pomodoro Cycles
                 </Typography>
               </div>
@@ -87,13 +103,17 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
             <div className="flex items-baseline gap-1.5 my-1">
               <Typography
+                className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
                 type="h2"
                 weight="bold"
-                className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
               >
                 {stats.totalCycles}
               </Typography>
-              <Typography color="muted" type="body-xs" className="text-xs font-normal">
+              <Typography
+                className="text-xs font-normal"
+                color="muted"
+                type="body-xs"
+              >
                 / {stats.targetCyclesTotal || stats.totalCycles} target
               </Typography>
             </div>
@@ -109,10 +129,14 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
               </ProgressBar.Track>
             </ProgressBar>
             <div className="flex items-center justify-between text-[10px]">
-              <Typography color="muted" type="body-xs" className="text-[10px]">
+              <Typography className="text-[10px]" color="muted" type="body-xs">
                 Target Completion
               </Typography>
-              <Typography type="body-xs" weight="medium" className="text-[10px] text-foreground">
+              <Typography
+                className="text-[10px] text-foreground"
+                type="body-xs"
+                weight="medium"
+              >
                 {stats.cycleCompletionRate}%
               </Typography>
             </div>
@@ -129,7 +153,11 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
                 <div className="size-6 rounded-xl border flex items-center justify-center shrink-0 text-amber-400 bg-amber-500/10 border-amber-500/25">
                   <Flame className="size-3.5" />
                 </div>
-                <Typography type="body-xs" weight="semibold" className="text-foreground">
+                <Typography
+                  className="text-foreground"
+                  type="body-xs"
+                  weight="semibold"
+                >
                   Consistency Streak
                 </Typography>
               </div>
@@ -140,13 +168,17 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
             <div className="flex items-baseline gap-1.5 my-1">
               <Typography
+                className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
                 type="h2"
                 weight="bold"
-                className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
               >
                 {stats.currentStreakDays}
               </Typography>
-              <Typography color="muted" type="body-xs" className="text-xs font-normal">
+              <Typography
+                className="text-xs font-normal"
+                color="muted"
+                type="body-xs"
+              >
                 {stats.currentStreakDays === 1 ? "day streak" : "days streak"}
               </Typography>
             </div>
@@ -154,18 +186,26 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
           <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-separator/20 text-center">
             <div className="flex flex-col p-1 rounded-lg bg-surface-secondary/60">
-              <Typography color="muted" type="body-xs" className="text-[9px]">
+              <Typography className="text-[9px]" color="muted" type="body-xs">
                 Best Streak
               </Typography>
-              <Typography type="body-xs" weight="semibold" className="text-[11px] text-amber-400 tabular-nums">
+              <Typography
+                className="text-[11px] text-amber-400 tabular-nums"
+                type="body-xs"
+                weight="semibold"
+              >
                 {stats.bestStreakDays}d
               </Typography>
             </div>
             <div className="flex flex-col p-1 rounded-lg bg-surface-secondary/60">
-              <Typography color="muted" type="body-xs" className="text-[9px]">
+              <Typography className="text-[9px]" color="muted" type="body-xs">
                 Total Days
               </Typography>
-              <Typography type="body-xs" weight="semibold" className="text-[11px] text-foreground tabular-nums">
+              <Typography
+                className="text-[11px] text-foreground tabular-nums"
+                type="body-xs"
+                weight="semibold"
+              >
                 {stats.totalActiveDays}d
               </Typography>
             </div>
@@ -182,7 +222,11 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
                 <div className="size-6 rounded-xl border flex items-center justify-center shrink-0 text-emerald-400 bg-emerald-500/10 border-emerald-500/25">
                   <CheckCircle2 className="size-3.5" />
                 </div>
-                <Typography type="body-xs" weight="semibold" className="text-foreground">
+                <Typography
+                  className="text-foreground"
+                  type="body-xs"
+                  weight="semibold"
+                >
                   Tasks Finished
                 </Typography>
               </div>
@@ -195,13 +239,17 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
             <div className="flex items-baseline gap-1.5 my-1">
               <Typography
+                className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
                 type="h2"
                 weight="bold"
-                className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
               >
                 {stats.tasksCompleted}
               </Typography>
-              <Typography color="muted" type="body-xs" className="text-xs font-normal">
+              <Typography
+                className="text-xs font-normal"
+                color="muted"
+                type="body-xs"
+              >
                 / {stats.tasksTotal} total
               </Typography>
             </div>
@@ -217,10 +265,14 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
               </ProgressBar.Track>
             </ProgressBar>
             <div className="flex items-center justify-between text-[10px]">
-              <Typography color="muted" type="body-xs" className="text-[10px]">
+              <Typography className="text-[10px]" color="muted" type="body-xs">
                 Completion Rate
               </Typography>
-              <Typography type="body-xs" weight="medium" className="text-[10px] text-foreground">
+              <Typography
+                className="text-[10px] text-foreground"
+                type="body-xs"
+                weight="medium"
+              >
                 {stats.taskCompletionRate}%
               </Typography>
             </div>

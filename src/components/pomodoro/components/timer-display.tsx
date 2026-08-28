@@ -39,20 +39,30 @@ export function TimerDisplay({
       {/* Main Time Digits & Labels */}
       <div className="flex flex-col items-center justify-center">
         <Typography
-          type="h1"
-          weight="medium"
           className={`font-sans text-6xl xs:text-7xl sm:text-8xl md:text-9xl lg:text-[9.5rem] tracking-tight tabular-nums leading-none transition-colors ${
             isOvertime ? "text-accent" : "text-foreground"
           }`}
+          type="h1"
+          weight="medium"
         >
           {formattedTime}
         </Typography>
         {/* Minutes and Seconds Indicators */}
         <div className="flex items-center justify-between w-full max-w-44 xs:max-w-52 sm:max-w-64 md:max-w-80 px-2 sm:px-4 text-[9px] xs:text-[10px] sm:text-xs font-semibold tracking-widest uppercase mt-0.5 sm:mt-1">
-          <Typography color="muted" type="body-xs" weight="semibold" className="text-[9px] xs:text-[10px] sm:text-xs tracking-widest uppercase">
+          <Typography
+            className="text-[9px] xs:text-[10px] sm:text-xs tracking-widest uppercase"
+            color="muted"
+            type="body-xs"
+            weight="semibold"
+          >
             minutes
           </Typography>
-          <Typography color="muted" type="body-xs" weight="semibold" className="text-[9px] xs:text-[10px] sm:text-xs tracking-widest uppercase">
+          <Typography
+            className="text-[9px] xs:text-[10px] sm:text-xs tracking-widest uppercase"
+            color="muted"
+            type="body-xs"
+            weight="semibold"
+          >
             seconds
           </Typography>
         </div>

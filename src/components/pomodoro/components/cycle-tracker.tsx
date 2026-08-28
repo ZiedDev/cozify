@@ -152,7 +152,12 @@ export function CycleTracker({
 
       {/* Cycle count and target stepper */}
       <div className="flex items-center gap-2.5">
-        <Typography color="muted" type="body-sm" weight="medium" className="text-xs md:text-sm">
+        <Typography
+          className="text-xs md:text-sm"
+          color="muted"
+          type="body-sm"
+          weight="medium"
+        >
           Cycle <strong className="text-foreground">{currentCycle}</strong> of
         </Typography>
 

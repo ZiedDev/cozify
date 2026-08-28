@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Modal, Tabs, ScrollShadow, Separator, Typography } from "@heroui/react";
+import {
+  Modal,
+  Tabs,
+  ScrollShadow,
+  Separator,
+  Typography,
+} from "@heroui/react";
 import { Settings as SettingsIcon, Database, Info } from "lucide-react";
 
 import { DataTab } from "./data-tab";
@@ -79,9 +85,9 @@ export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
                   </Tabs.ListContainer>
 
                   <Typography
+                    className="hidden sm:block px-3 py-2 text-[11px] opacity-70 capitalize"
                     color="muted"
                     type="body-xs"
-                    className="hidden sm:block px-3 py-2 text-[11px] opacity-70 capitalize"
                   >
                     {siteConfig.version}
                   </Typography>

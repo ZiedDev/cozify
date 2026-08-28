@@ -132,8 +132,8 @@ export function AchievementsModal({
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
                       <Typography
-                        type="h3"
                         className="text-lg sm:text-xl font-serif font-semibold tracking-tight text-foreground"
+                        type="h3"
                       >
                         Achievements & Trophies
                       </Typography>
@@ -144,7 +144,12 @@ export function AchievementsModal({
                       >
                         Level {rank.level} • {rank.title}
                       </span>
-                      <Typography color="muted" type="body-xs" weight="medium" className="text-xs tabular-nums">
+                      <Typography
+                        className="text-xs tabular-nums"
+                        color="muted"
+                        type="body-xs"
+                        weight="medium"
+                      >
                         {totalXp} / {maxXp} XP
                       </Typography>
                     </div>
@@ -153,14 +158,20 @@ export function AchievementsModal({
 
                 {/* Unlocked Count Badge */}
                 <div className="hidden sm:flex flex-col items-end shrink-0">
-                  <Typography color="muted" type="body-xs" className="text-xs">Completed</Typography>
+                  <Typography className="text-xs" color="muted" type="body-xs">
+                    Completed
+                  </Typography>
                   <Typography
+                    className="text-lg font-serif text-foreground tabular-nums"
                     type="h3"
                     weight="bold"
-                    className="text-lg font-serif text-foreground tabular-nums"
                   >
                     {unlockedCount}{" "}
-                    <Typography color="muted" type="body-xs" className="text-xs inline font-normal">
+                    <Typography
+                      className="text-xs inline font-normal"
+                      color="muted"
+                      type="body-xs"
+                    >
                       / {totalCount}
                     </Typography>
                   </Typography>
@@ -197,7 +208,7 @@ export function AchievementsModal({
               <Tabs.ListContainer className="rounded-full">
                 <Tabs.List
                   aria-label="Achievement Categories"
-                  className="rounded-full bg-surface-secondary p-0.5 border border-separator/40 text-xs shadow-2xs"
+                  className="rounded-full bg-surface-secondary/70 p-0.5 border border-separator/40 text-xs"
                 >
                   {CATEGORY_TABS.map((tab) => {
                     const Icon = tab.icon;
@@ -205,12 +216,12 @@ export function AchievementsModal({
                     return (
                       <Tabs.Tab
                         key={tab.id}
-                        className="h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
+                        className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
                         id={tab.id}
                       >
                         <Icon className="size-3.5" />
                         <span>{tab.label}</span>
-                        <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-2xs" />
+                        <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
                       </Tabs.Tab>
                     );
                   })}
@@ -218,23 +229,42 @@ export function AchievementsModal({
               </Tabs.ListContainer>
             </Tabs>
 
-            {/* Quick Status Filter Pills */}
-            <div className="flex items-center gap-1 bg-surface-secondary p-0.5 rounded-full border border-separator/40 text-[10px] sm:text-[11px]">
-              {(["all", "unlocked", "locked"] as const).map((mode) => (
-                <button
-                  key={mode}
-                  className={`px-2.5 py-1 rounded-full font-medium transition-all capitalize cursor-pointer ${
-                    filterMode === mode
-                      ? "bg-accent text-accent-foreground shadow-2xs font-semibold"
-                      : "text-muted hover:text-foreground"
-                  }`}
-                  type="button"
-                  onClick={() => setFilterMode(mode)}
+            {/* Quick Status Filter Tabs */}
+            <Tabs
+              selectedKey={filterMode}
+              onSelectionChange={(k) =>
+                setFilterMode(k as "all" | "unlocked" | "locked")
+              }
+            >
+              <Tabs.ListContainer className="rounded-full">
+                <Tabs.List
+                  aria-label="Filter status"
+                  className="rounded-full bg-surface-secondary/70 p-0.5 border border-separator/40 text-xs"
                 >
-                  {mode === "all" ? "All" : mode}
-                </button>
-              ))}
-            </div>
+                  <Tabs.Tab
+                    className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
+                    id="all"
+                  >
+                    All
+                    <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
+                  </Tabs.Tab>
+                  <Tabs.Tab
+                    className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
+                    id="unlocked"
+                  >
+                    Unlocked
+                    <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
+                  </Tabs.Tab>
+                  <Tabs.Tab
+                    className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
+                    id="locked"
+                  >
+                    Locked
+                    <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
+                  </Tabs.Tab>
+                </Tabs.List>
+              </Tabs.ListContainer>
+            </Tabs>
           </div>
 
           {/* Scrollable Achievements Grid */}
@@ -286,17 +316,17 @@ export function AchievementsModal({
                           <div className="flex flex-col min-w-0">
                             <Typography
                               truncate
+                              className="text-xs sm:text-sm text-foreground"
                               type="body-sm"
                               weight="bold"
-                              className="text-xs sm:text-sm text-foreground"
                             >
                               {m.title}
                             </Typography>
                             <Typography
+                              className="text-[10px] capitalize"
                               color="muted"
                               type="body-xs"
                               weight="medium"
-                              className="text-[10px] capitalize"
                             >
                               {m.tier} • {m.category}
                             </Typography>
@@ -324,9 +354,9 @@ export function AchievementsModal({
 
                       {/* Description */}
                       <Typography
+                        className="text-xs font-normal leading-relaxed mb-3 relative z-10"
                         color="muted"
                         type="body-xs"
-                        className="text-xs font-normal leading-relaxed mb-3 relative z-10"
                       >
                         {m.description}
                       </Typography>
@@ -334,10 +364,18 @@ export function AchievementsModal({
                       {/* Progress Bar (If in progress or locked) */}
                       <div className="flex flex-col gap-1 pt-2 border-t border-separator/30 mt-auto relative z-10">
                         <div className="flex items-center justify-between text-[10px]">
-                          <Typography color="muted" type="body-xs" className="text-[10px]">
+                          <Typography
+                            className="text-[10px]"
+                            color="muted"
+                            type="body-xs"
+                          >
                             {m.unlocked ? "Mastered" : "Progress"}
                           </Typography>
-                          <Typography type="body-xs" weight="medium" className="text-[10px] text-foreground tabular-nums">
+                          <Typography
+                            className="text-[10px] text-foreground tabular-nums"
+                            type="body-xs"
+                            weight="medium"
+                          >
                             {m.unlocked
                               ? `${m.maxProgress} / ${m.maxProgress}`
                               : `${m.progress} / ${m.maxProgress}`}

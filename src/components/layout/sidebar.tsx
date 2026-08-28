@@ -26,17 +26,17 @@ export function SidebarClock({
       <div className="inline-flex items-baseline gap-1 md:gap-1.5 font-sans text-xl md:text-2xl lg:text-3xl font-medium text-foreground tabular-nums leading-none">
         <span>{time12}</span>
         <Typography
+          className="text-[10px] md:text-xs lg:text-sm font-normal uppercase"
           color="muted"
           type="body-xs"
-          className="text-[10px] md:text-xs lg:text-sm font-normal uppercase"
         >
           {period}
         </Typography>
       </div>
       <Typography
+        className="text-[11px] md:text-xs font-light mt-1 tracking-wide opacity-80"
         color="muted"
         type="body-xs"
-        className="text-[11px] md:text-xs font-light mt-1 tracking-wide opacity-80"
       >
         {sidebarDate}
       </Typography>
@@ -54,10 +54,14 @@ export function SidebarClock({
         </Tooltip.Trigger>
         <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator shadow-lg pointer-events-auto">
           <div className="flex flex-col gap-0.5">
-            <Typography type="body-xs" weight="semibold" className="text-foreground text-xs">
+            <Typography
+              className="text-foreground text-xs"
+              type="body-xs"
+              weight="semibold"
+            >
               {Math.round(dayPercent)}% of day completed
             </Typography>
-            <Typography color="muted" type="body-xs" className="text-[11px]">
+            <Typography className="text-[11px]" color="muted" type="body-xs">
               Ending in {hoursLeft}h {minutesLeft}m
             </Typography>
           </div>
@@ -115,17 +119,17 @@ export function SidebarTimer({
           <span className="size-1.5 rounded-full bg-accent animate-pulse" />
         )}
         <Typography
+          className="text-[11px] md:text-xs font-light tracking-wide opacity-80"
           color="muted"
           type="body-xs"
-          className="text-[11px] md:text-xs font-light tracking-wide opacity-80"
         >
           {TIMER_MODE_LABELS[mode]} {isRunning ? "• In Progress" : "• Paused"}
         </Typography>
       </div>
       <Typography
+        className="text-[10px] md:text-[11px] font-normal mt-0.5 tracking-wide tabular-nums"
         color="muted"
         type="body-xs"
-        className="text-[10px] md:text-[11px] font-normal mt-0.5 tracking-wide tabular-nums"
       >
         Focus elapsed:{" "}
         <span className="text-foreground/90 font-medium">{formattedFocus}</span>

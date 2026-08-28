@@ -68,7 +68,11 @@ export default function IndexPage() {
               className="flex items-center justify-center animate-in fade-in duration-150"
               id="music"
             >
-              <Typography color="muted" type="h4" className="font-light capitalize">
+              <Typography
+                className="font-light capitalize"
+                color="muted"
+                type="h4"
+              >
                 Music mode coming up next...
               </Typography>
             </Tabs.Panel>

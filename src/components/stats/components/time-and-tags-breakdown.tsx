@@ -42,10 +42,18 @@ export function TimeAndTagsBreakdown({
               <Clock className="size-3.5" />
             </div>
             <div>
-              <Typography type="body-sm" weight="semibold" className="text-xs sm:text-sm text-foreground">
+              <Typography
+                className="text-xs sm:text-sm text-foreground"
+                type="body-sm"
+                weight="semibold"
+              >
                 Productivity Rhythm
               </Typography>
-              <Typography color="muted" type="body-xs" className="text-[10px] font-light">
+              <Typography
+                className="text-[10px] font-light"
+                color="muted"
+                type="body-xs"
+              >
                 Focus distribution throughout the day
               </Typography>
             </div>
@@ -99,7 +107,11 @@ export function TimeAndTagsBreakdown({
         </div>
       </div>
 
-      <Typography color="muted" type="body-xs" className="text-[10px] opacity-70 font-light mt-2 pt-1.5 border-t border-separator/20">
+      <Typography
+        className="text-[10px] opacity-70 font-light mt-2 pt-1.5 border-t border-separator/20"
+        color="muted"
+        type="body-xs"
+      >
         Peak productivity:{" "}
         <strong className="text-foreground font-medium">
           {overallStats.peakProductivePeriod}
@@ -118,22 +130,39 @@ export function TimeAndTagsBreakdown({
               <Tag className="size-3.5" />
             </div>
             <div>
-              <Typography type="body-sm" weight="semibold" className="text-xs sm:text-sm text-foreground">
+              <Typography
+                className="text-xs sm:text-sm text-foreground"
+                type="body-sm"
+                weight="semibold"
+              >
                 Tag Breakdown
               </Typography>
-              <Typography color="muted" type="body-xs" className="text-[10px] font-light">
+              <Typography
+                className="text-[10px] font-light"
+                color="muted"
+                type="body-xs"
+              >
                 Focus allocation across categories
               </Typography>
             </div>
           </div>
-          <Typography color="muted" type="body-xs" weight="medium" className="text-[10px]">
+          <Typography
+            className="text-[10px]"
+            color="muted"
+            type="body-xs"
+            weight="medium"
+          >
             {tagStats.length} Tags
           </Typography>
         </div>
 
         <div className="flex flex-col gap-1.5 pt-1">
           {tagStats.length === 0 ? (
-            <Typography color="muted" type="body-xs" className="py-4 text-center text-[11px]">
+            <Typography
+              className="py-4 text-center text-[11px]"
+              color="muted"
+              type="body-xs"
+            >
               No tagged focus sessions yet.
             </Typography>
           ) : (
@@ -176,7 +205,11 @@ export function TimeAndTagsBreakdown({
         </div>
       </div>
 
-      <Typography color="muted" type="body-xs" className="text-[10px] opacity-70 font-light mt-2 pt-1.5 border-t border-separator/20">
+      <Typography
+        className="text-[10px] opacity-70 font-light mt-2 pt-1.5 border-t border-separator/20"
+        color="muted"
+        type="body-xs"
+      >
         Categorize your sessions and tasks with tags.
       </Typography>
     </div>
@@ -190,22 +223,25 @@ export function TimeAndTagsBreakdown({
           onSelectionChange={(k) => setActiveSubTab(k as string)}
         >
           <Tabs.ListContainer className="rounded-full">
-            <Tabs.List className="rounded-full bg-surface-secondary p-0.5 border border-separator/40 text-xs shadow-2xs">
+            <Tabs.List
+              aria-label="Rhythm and Tags"
+              className="rounded-full bg-surface-secondary/70 p-0.5 border border-separator/40 text-xs"
+            >
               <Tabs.Tab
-                className="h-7 px-2.5 sm:px-3 rounded-full font-medium cursor-pointer flex items-center gap-1.5 text-xs transition-all"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
                 id="rhythm"
               >
                 <Clock className="size-3 shrink-0" />
                 <span>Rhythm</span>
-                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-2xs" />
+                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
               </Tabs.Tab>
               <Tabs.Tab
-                className="h-7 px-2.5 sm:px-3 rounded-full font-medium cursor-pointer flex items-center gap-1.5 text-xs transition-all"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
                 id="tags"
               >
                 <Tag className="size-3 shrink-0" />
                 <span>Tags</span>
-                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground shadow-2xs" />
+                <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
               </Tabs.Tab>
             </Tabs.List>
           </Tabs.ListContainer>

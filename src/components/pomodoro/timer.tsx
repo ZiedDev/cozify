@@ -225,9 +225,9 @@ export function Timer() {
 
       {/* Spacebar Shortcut Hint */}
       <Typography
+        className="text-[10px] sm:text-xs opacity-60 tracking-wider uppercase"
         color="muted"
         type="body-xs"
-        className="text-[10px] sm:text-xs opacity-60 tracking-wider uppercase"
       >
         Press{" "}
         <Kbd className="px-1.5 py-0.5 rounded bg-surface border border-separator/40 text-muted">
