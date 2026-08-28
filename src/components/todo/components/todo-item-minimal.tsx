@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Tooltip, Typography } from "@heroui/react";
-import { Trash2, Edit3, Check, GripVertical } from "lucide-react";
+import { Archive, Edit3, Check, GripVertical } from "lucide-react";
 
 import { TodoItem, PRIORITY_CONFIG } from "../types";
 
@@ -123,22 +123,22 @@ export function TodoItemMinimal({
           </Tooltip.Content>
         </Tooltip>
 
-        {/* Delete Button */}
+        {/* Archive Button */}
         <Tooltip delay={300}>
           <Tooltip.Trigger>
             <Button
               isIconOnly
-              aria-label="Delete task"
-              className="size-7 rounded-lg text-muted/60 hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer"
+              aria-label="Archive task"
+              className="size-7 rounded-lg text-muted/60 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
               size="sm"
               variant="ghost"
               onPress={() => deleteTodo(todo.id)}
             >
-              <Trash2 className="size-3.5" />
+              <Archive className="size-3.5" />
             </Button>
           </Tooltip.Trigger>
-          <Tooltip.Content className="text-xs px-2 py-1 rounded-lg bg-surface text-danger border border-separator shadow-md">
-            Delete
+          <Tooltip.Content className="text-xs px-2 py-1 rounded-lg bg-surface text-foreground border border-separator shadow-md">
+            Archive
           </Tooltip.Content>
         </Tooltip>
       </div>

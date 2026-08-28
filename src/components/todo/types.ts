@@ -14,6 +14,8 @@ export interface TodoItem {
   dueDate?: string; // YYYY-MM-DD
   tag?: string;
   notes?: string;
+  archived?: boolean;
+  archivedAt?: number;
 }
 
 export interface TagOption {

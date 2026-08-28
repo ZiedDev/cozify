@@ -27,8 +27,6 @@ export function StatsPage() {
     tagStats,
     priorityStats,
     milestones,
-    copySummaryToClipboard,
-    exportStatsJson,
   } = useStats();
 
   const hasData = sessions.length > 0 || todos.some((t) => t.completed);
@@ -43,9 +41,7 @@ export function StatsPage() {
           milestones={milestones}
           overallStats={overallStats}
           range={range}
-          onCopySummary={copySummaryToClipboard}
           onCustomDateRangeChange={setCustomDateRange}
-          onExportJson={exportStatsJson}
           onOpenAchievements={() => setIsAchievementsModalOpen(true)}
           onRangeChange={setRange}
         />

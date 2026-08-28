@@ -23,6 +23,7 @@ export interface CozifyBackup {
 
 export interface StorageOverview {
   sessionsCount: number;
+  todosCount: number;
   totalFocusMinutes: number;
   customWallpapersCount: number;
   storageSizeBytes: number;
@@ -37,6 +38,7 @@ export function getStorageOverview(): StorageOverview {
     STORAGE_KEYS.SESSIONS_HISTORY,
     [],
   );
+  const todos = storageAdapter.getItem<any[]>(STORAGE_KEYS.TODOS, []);
   const theme = storageAdapter.getItem<Partial<ThemeConfig> | null>(
     STORAGE_KEYS.THEME_CONFIG,
     null,
@@ -84,6 +86,7 @@ export function getStorageOverview(): StorageOverview {
 
   return {
     sessionsCount: Array.isArray(sessions) ? sessions.length : 0,
+    todosCount: Array.isArray(todos) ? todos.length : 0,
     totalFocusMinutes,
     customWallpapersCount,
     storageSizeBytes: totalBytes,

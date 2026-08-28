@@ -12,12 +12,20 @@ import {
   toast,
 } from "@heroui/react";
 import { Time } from "@internationalized/date";
-import { Bookmark, Clock, CheckCircle2, FileText } from "lucide-react";
+import {
+  Bookmark,
+  Clock,
+  CheckCircle2,
+  FileText,
+  Tag,
+  Zap,
+} from "lucide-react";
 
 import { secondsToHms } from "../logic/time-utils";
 import { calculateCyclesDone } from "../logic/cycle-rules";
 
 import { useTimer } from "@/hooks/use-timer";
+import { PRESET_TAGS } from "@/components/todo/types";
 import {
   storageAdapter,
   STORAGE_KEYS,
@@ -41,6 +49,7 @@ export function SaveProgressModal({
     targetCycles,
     durations,
     accumulatedFocusSeconds,
+    accumulatedOvertimeSeconds,
     startNewSession,
     discardSession,
   } = useTimer();
@@ -58,8 +67,16 @@ export function SaveProgressModal({
       : durations.focus * cyclesDone;
 
   const [title, setTitle] = useState("Deep Focus Session");
+  const [tag, setTag] = useState<string | undefined>(undefined);
   const [timeValue, setTimeValue] = useState<TimeValue | null>(() => {
     const { hours, minutes, seconds } = secondsToHms(initialTotalSeconds);
+
+    return new Time(hours, minutes, seconds);
+  });
+  const [overtimeValue, setOvertimeValue] = useState<TimeValue | null>(() => {
+    const { hours, minutes, seconds } = secondsToHms(
+      accumulatedOvertimeSeconds,
+    );
 
     return new Time(hours, minutes, seconds);
   });
@@ -75,23 +92,43 @@ export function SaveProgressModal({
       const { hours, minutes, seconds } = secondsToHms(totalSec);
 
       setTimeValue(new Time(hours, minutes, seconds));
+
+      const ovHms = secondsToHms(accumulatedOvertimeSeconds);
+
+      setOvertimeValue(new Time(ovHms.hours, ovHms.minutes, ovHms.seconds));
     }
-  }, [isOpen, accumulatedFocusSeconds, durations.focus, cyclesDone]);
+  }, [
+    isOpen,
+    accumulatedFocusSeconds,
+    accumulatedOvertimeSeconds,
+    durations.focus,
+    cyclesDone,
+  ]);
 
   const handleSave = async () => {
     const totalSecs = timeValue
       ? timeValue.hour * 3600 + timeValue.minute * 60 + timeValue.second
       : Math.max(60, initialTotalSeconds);
 
+    const overtimeSecs = overtimeValue
+      ? overtimeValue.hour * 3600 +
+        overtimeValue.minute * 60 +
+        overtimeValue.second
+      : accumulatedOvertimeSeconds;
+
     const focusMinutes = Math.max(1, Math.round(totalSecs / 60));
+    const overtimeMinutes = Math.round(overtimeSecs / 60);
 
     const record: SessionRecord = {
       id: `session_${Date.now()}`,
       createdAt: Date.now(),
       title: title.trim() || "Focus Session",
+      tag,
       cyclesCompleted: cyclesDone,
       targetCycles: targetCycles,
       focusMinutes,
+      overtimeMinutes: overtimeMinutes > 0 ? overtimeMinutes : undefined,
+      overtimeSeconds: overtimeSecs > 0 ? overtimeSecs : undefined,
       notes: notes.trim() || undefined,
     };
 
@@ -105,8 +142,13 @@ export function SaveProgressModal({
       ...existingHistory,
     ]);
 
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
+
     toast("Session Saved! 📊", {
-      description: `Logged ${record.focusMinutes}m across ${record.cyclesCompleted} cycles.`,
+      description: `Logged ${record.focusMinutes}m${
+        record.overtimeMinutes ? ` (+${record.overtimeMinutes}m OT)` : ""
+      } across ${record.cyclesCompleted} cycles.`,
       variant: "accent",
       timeout: 3000,
     });
@@ -148,6 +190,41 @@ export function SaveProgressModal({
               </InputGroup>
             </TextField>
 
+            {/* Tag Selection */}
+            <div className="flex flex-col gap-1.5">
+              <Label className="flex items-center gap-1.5">
+                <Tag className="size-3.5" />
+                <span>Category Tag</span>
+              </Label>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <button
+                  className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                    !tag
+                      ? "bg-accent text-accent-foreground border-accent font-semibold"
+                      : "bg-surface-secondary/40 text-muted border-separator/30 hover:text-foreground"
+                  }`}
+                  type="button"
+                  onClick={() => setTag(undefined)}
+                >
+                  None
+                </button>
+                {PRESET_TAGS.map((t) => (
+                  <button
+                    key={t.id}
+                    className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                      tag === t.id
+                        ? "bg-accent/20 text-accent border-accent font-semibold"
+                        : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground"
+                    }`}
+                    type="button"
+                    onClick={() => setTag(t.id)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Total Focus Time using HeroUI TimeField with hh:mm:ss editing */}
             <TimeField
               fullWidth
@@ -161,6 +238,28 @@ export function SaveProgressModal({
               <TimeField.Group>
                 <TimeField.Prefix>
                   <Clock className="size-4 text-muted" />
+                </TimeField.Prefix>
+                <TimeField.Input>
+                  {(segment) => <TimeField.Segment segment={segment} />}
+                </TimeField.Input>
+              </TimeField.Group>
+            </TimeField>
+
+            {/* Total Overtime TimeField with hh:mm:ss editing */}
+            <TimeField
+              fullWidth
+              granularity="second"
+              hourCycle={24}
+              name="overtime"
+              value={overtimeValue}
+              onChange={setOvertimeValue}
+            >
+              <Label className="flex items-center gap-1.5">
+                <span>Overtime Duration</span>
+              </Label>
+              <TimeField.Group>
+                <TimeField.Prefix>
+                  <Zap className="size-4 text-amber-400" />
                 </TimeField.Prefix>
                 <TimeField.Input>
                   {(segment) => <TimeField.Segment segment={segment} />}

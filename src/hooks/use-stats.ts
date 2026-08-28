@@ -69,11 +69,20 @@ export function useStats(): UseStatsReturn {
   const [todos, setTodos] = useState<TodoItem[]>(() =>
     storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []),
   );
-  const [range, setRange] = useState<TimeRangeFilter>("week");
+  const [range, setRangeState] = useState<TimeRangeFilter>(() =>
+    storageAdapter.getItem<TimeRangeFilter>("cozify_stats_range", "week"),
+  );
   const [customDateRange, setCustomDateRange] =
     useState<CustomDateRange | null>(null);
   const [isAchievementsModalOpen, setIsAchievementsModalOpen] =
     useState<boolean>(false);
+
+  const [revision, setRevision] = useState<number>(0);
+
+  const setRange = useCallback((r: TimeRangeFilter) => {
+    setRangeState(r);
+    storageAdapter.setItem("cozify_stats_range", r);
+  }, []);
 
   // Sync / reload helper
   const reloadFromStorage = useCallback(() => {
@@ -85,6 +94,7 @@ export function useStats(): UseStatsReturn {
 
     setSessions(Array.isArray(s) ? s : []);
     setTodos(Array.isArray(t) ? t : []);
+    setRevision((r) => r + 1);
   }, []);
 
   // Listen to window focus & storage updates
@@ -97,10 +107,15 @@ export function useStats(): UseStatsReturn {
 
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("focus", handleStorageChange);
+    window.addEventListener("cozify_achievements_changed", handleStorageChange);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("focus", handleStorageChange);
+      window.removeEventListener(
+        "cozify_achievements_changed",
+        handleStorageChange,
+      );
     };
   }, [reloadFromStorage]);
 
@@ -115,14 +130,14 @@ export function useStats(): UseStatsReturn {
     [todos, range, customDateRange],
   );
 
-  const overallStats = useMemo(
-    () => calculateOverallStats(filteredSessions, filteredTodos),
-    [filteredSessions, filteredTodos],
-  );
-
   const allTimeStats = useMemo(
     () => calculateOverallStats(sessions, todos),
     [sessions, todos],
+  );
+
+  const overallStats = useMemo(
+    () => calculateOverallStats(filteredSessions, filteredTodos),
+    [filteredSessions, filteredTodos],
   );
 
   const dailyChartData = useMemo(
@@ -158,7 +173,7 @@ export function useStats(): UseStatsReturn {
 
   const milestones = useMemo(
     () => calculateMilestones(sessions, todos, allTimeStats),
-    [sessions, todos, allTimeStats],
+    [sessions, todos, allTimeStats, revision],
   );
 
   // CRUD actions for sessions

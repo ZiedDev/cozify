@@ -79,7 +79,7 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
                 color="muted"
                 type="body-xs"
               >
-                Customize details, notes, priority, and due dates.
+                Customize task details, notes, priority, tag, and due date.
               </Typography>
             </div>
           </Modal.Header>

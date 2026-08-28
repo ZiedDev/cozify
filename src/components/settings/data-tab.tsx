@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   FileJson,
   History,
+  CheckSquare,
   ExternalLink,
 } from "lucide-react";
 
@@ -24,9 +25,10 @@ import {
 
 interface DataTabProps {
   onOpenSessionsLog?: () => void;
+  onOpenTasksLog?: () => void;
 }
 
-export function DataTab({ onOpenSessionsLog }: DataTabProps) {
+export function DataTab({ onOpenSessionsLog, onOpenTasksLog }: DataTabProps) {
   const [stats, setStats] = useState<StorageOverview>(() =>
     getStorageOverview(),
   );
@@ -224,6 +226,34 @@ export function DataTab({ onOpenSessionsLog }: DataTabProps) {
           >
             <ExternalLink className="size-3.5" />
             <span>Inspect Log ({stats.sessionsCount})</span>
+          </Button>
+        </Card.Header>
+      </Card>
+
+      {/* Tasks & Archive Log Inspection Card */}
+      <Card className="border border-border/50 bg-surface/40">
+        <Card.Header className="pb-2 flex flex-row items-center justify-between">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="size-4 text-emerald-400" />
+              <Card.Title className="text-sm font-semibold">
+                Tasks & Archive Log
+              </Card.Title>
+            </div>
+            <Card.Description className="text-xs text-muted mt-1">
+              Inspect all created, completed, and archived to-do tasks or
+              restore them.
+            </Card.Description>
+          </div>
+
+          <Button
+            className="flex items-center gap-1.5 font-medium shrink-0 ml-3 cursor-pointer"
+            size="sm"
+            variant="secondary"
+            onPress={() => onOpenTasksLog?.()}
+          >
+            <ExternalLink className="size-3.5" />
+            <span>Inspect Log ({stats.todosCount})</span>
           </Button>
         </Card.Header>
       </Card>

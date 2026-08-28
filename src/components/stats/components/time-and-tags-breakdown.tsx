@@ -11,6 +11,14 @@ interface TimeAndTagsBreakdownProps {
   overallStats: OverallStats;
 }
 
+const TAG_COLORS: Record<string, { dot: string; fill: string }> = {
+  work: { dot: "bg-blue-400", fill: "bg-blue-400" },
+  study: { dot: "bg-purple-400", fill: "bg-purple-400" },
+  personal: { dot: "bg-emerald-400", fill: "bg-emerald-400" },
+  creative: { dot: "bg-amber-400", fill: "bg-amber-400" },
+  general: { dot: "bg-muted", fill: "bg-muted" },
+};
+
 export function TimeAndTagsBreakdown({
   timeOfDayStats,
   tagStats,
@@ -166,41 +174,46 @@ export function TimeAndTagsBreakdown({
               No tagged focus sessions yet.
             </Typography>
           ) : (
-            tagStats.slice(0, 4).map((tag) => (
-              <div key={tag.id} className="flex flex-col gap-0.5">
-                <div className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5">
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                    <span className="font-medium text-foreground">
-                      {tag.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] tabular-nums">
-                    <span className="font-semibold text-foreground">
-                      {formatMinutesDisplay(tag.focusMinutes)}
-                    </span>
-                    <span className="text-[10px] text-muted w-7 text-right">
-                      {tag.percentage}%
-                    </span>
-                  </div>
-                </div>
+            tagStats.slice(0, 4).map((tag) => {
+              const colorInfo = TAG_COLORS[tag.id] || {
+                dot: "bg-accent",
+                fill: "bg-accent",
+              };
 
-                <ProgressBar
-                  aria-label={`${tag.label} focus distribution`}
-                  value={tag.percentage}
-                >
-                  <ProgressBar.Track className="h-1 bg-surface-secondary rounded-full overflow-hidden border border-separator/30">
-                    <ProgressBar.Fill
-                      className="rounded-full transition-all duration-300 shadow-2xs"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                  </ProgressBar.Track>
-                </ProgressBar>
-              </div>
-            ))
+              return (
+                <div key={tag.id} className="flex flex-col gap-0.5">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`size-2 rounded-full ${colorInfo.dot}`}
+                      />
+                      <span className="font-medium text-foreground">
+                        {tag.label}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] tabular-nums">
+                      <span className="font-semibold text-foreground">
+                        {formatMinutesDisplay(tag.focusMinutes)}
+                      </span>
+                      <span className="text-[10px] text-muted w-7 text-right">
+                        {tag.percentage}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <ProgressBar
+                    aria-label={`${tag.label} focus distribution`}
+                    value={tag.percentage}
+                  >
+                    <ProgressBar.Track className="h-1 bg-surface-secondary rounded-full overflow-hidden border border-separator/30">
+                      <ProgressBar.Fill
+                        className={`rounded-full transition-all duration-300 shadow-2xs ${colorInfo.fill}`}
+                      />
+                    </ProgressBar.Track>
+                  </ProgressBar>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

@@ -38,6 +38,8 @@ interface TodoContextType {
   toggleTodo: (id: string) => void;
   updateTodo: (id: string, updates: Partial<TodoItem>) => void;
   deleteTodo: (id: string) => void;
+  permanentlyDeleteTodo: (id: string) => void;
+  restoreTodo: (id: string) => void;
   clearCompleted: () => void;
   moveTodoToPosition: (
     sourceId: string,
@@ -87,9 +89,16 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     return (settings.todo?.mode as TodoViewMode) || "detailed";
   });
 
-  const [filter, setFilter] = useState<TodoFilter>("all");
+  const [filter, setFilterState] = useState<TodoFilter>(() =>
+    storageAdapter.getItem<TodoFilter>("cozify_todo_filter", "all"),
+  );
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const setFilter = useCallback((f: TodoFilter) => {
+    setFilterState(f);
+    storageAdapter.setItem("cozify_todo_filter", f);
+  }, []);
 
   // Sync todos to localStorage
   useEffect(() => {
@@ -160,12 +169,38 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  // Archive task on delete instead of completely removing
   const deleteTodo = useCallback((id: string) => {
+    setTodos((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, archived: true, archivedAt: Date.now() } : t,
+      ),
+    );
+  }, []);
+
+  // Permanently delete task from storage
+  const permanentlyDeleteTodo = useCallback((id: string) => {
     setTodos((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  // Restore an archived task back to the active list
+  const restoreTodo = useCallback((id: string) => {
+    setTodos((prev) =>
+      prev.map((t) =>
+        t.id === id ? { ...t, archived: false, archivedAt: undefined } : t,
+      ),
+    );
+  }, []);
+
+  // Archive all completed tasks
   const clearCompleted = useCallback(() => {
-    setTodos((prev) => prev.filter((t) => !t.completed));
+    setTodos((prev) =>
+      prev.map((t) =>
+        t.completed && !t.archived
+          ? { ...t, archived: true, archivedAt: Date.now() }
+          : t,
+      ),
+    );
   }, []);
 
   const moveTodoToPosition = useCallback(
@@ -195,9 +230,12 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
 
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
+  // Active unarchived todos
+  const activeTodos = useMemo(() => todos.filter((t) => !t.archived), [todos]);
+
   // Filtered & Searched Todos
   const filteredTodos = useMemo(() => {
-    return todos.filter((todo) => {
+    return activeTodos.filter((todo) => {
       // 1. Tag filter
       if (selectedTag && todo.tag !== selectedTag) {
         return false;
@@ -224,21 +262,21 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
 
       return true;
     });
-  }, [todos, filter, selectedTag, searchQuery, todayStr]);
+  }, [activeTodos, filter, selectedTag, searchQuery, todayStr]);
 
-  // Statistics
+  // Statistics on active unarchived todos
   const stats = useMemo(() => {
-    const total = todos.length;
-    const completed = todos.filter((t) => t.completed).length;
+    const total = activeTodos.length;
+    const completed = activeTodos.filter((t) => t.completed).length;
     const active = total - completed;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     return { total, completed, active, percentage };
-  }, [todos]);
+  }, [activeTodos]);
 
   const value = useMemo(
     () => ({
-      todos,
+      todos: activeTodos,
       filteredTodos,
       viewMode,
       filter,
@@ -249,6 +287,8 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       toggleTodo,
       updateTodo,
       deleteTodo,
+      permanentlyDeleteTodo,
+      restoreTodo,
       clearCompleted,
       moveTodoToPosition,
       setViewMode,
@@ -257,7 +297,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       setSearchQuery,
     }),
     [
-      todos,
+      activeTodos,
       filteredTodos,
       viewMode,
       filter,
@@ -268,9 +308,12 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       toggleTodo,
       updateTodo,
       deleteTodo,
+      permanentlyDeleteTodo,
+      restoreTodo,
       clearCompleted,
       moveTodoToPosition,
       setViewMode,
+      setFilter,
     ],
   );
 

@@ -1,25 +1,4 @@
-import {
-  Flame,
-  Award,
-  Zap,
-  Target,
-  Clock,
-  Sun,
-  Moon,
-  CheckCircle2,
-  Trophy,
-  Medal,
-  Star,
-  Shield,
-  Crown,
-  Compass,
-  Rocket,
-  Coffee,
-  Layers,
-  Flag,
-  Bookmark,
-} from "lucide-react";
-
+import { ACHIEVEMENT_DEFINITIONS, AchievementMetrics } from "../achievements";
 import {
   TimeRangeFilter,
   CustomDateRange,
@@ -1150,22 +1129,41 @@ export function calculateTagStats(
     completedTaskCount: 0,
   });
 
-  // Match sessions to tags by keyword in title or notes
+  // Match sessions to tags (explicit s.tag first, fallback to keyword matching)
   for (let i = 0; i < sessions.length; i++) {
     const s = sessions[i];
     const mins =
       (Number(s.focusMinutes) || 0) + (Number(s.overtimeMinutes) || 0);
-    const text = `${s.title} ${s.notes || ""}`.toLowerCase();
 
     let matched = false;
 
-    for (const tag of PRESET_TAGS) {
-      if (text.includes(tag.id) || text.includes(tag.label.toLowerCase())) {
-        const item = tagMap.get(tag.id)!;
+    if (s.tag) {
+      const existing = tagMap.get(s.tag);
 
-        item.focusMinutes += mins;
+      if (existing) {
+        existing.focusMinutes += mins;
         matched = true;
-        break;
+      } else {
+        tagMap.set(s.tag, {
+          label: s.tag.charAt(0).toUpperCase() + s.tag.slice(1),
+          color: "text-accent bg-accent/10 border-accent/30",
+          focusMinutes: mins,
+          taskCount: 0,
+          completedTaskCount: 0,
+        });
+        matched = true;
+      }
+    } else {
+      const text = `${s.title} ${s.notes || ""}`.toLowerCase();
+
+      for (const tag of PRESET_TAGS) {
+        if (text.includes(tag.id) || text.includes(tag.label.toLowerCase())) {
+          const item = tagMap.get(tag.id)!;
+
+          item.focusMinutes += mins;
+          matched = true;
+          break;
+        }
       }
     }
 
@@ -1282,6 +1280,31 @@ export function calculateMilestones(
   todos: TodoItem[],
   overall: OverallStats,
 ): Milestone[] {
+  // 1. Sort sessions chronologically (oldest to newest) to detect exact unlock time
+  const sortedSessions = [...sessions].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+
+  // 2. Sort completed todos chronologically
+  const sortedCompletedTodos = todos
+    .filter((t) => t.completed)
+    .sort((a, b) => {
+      const timeA = new Date(a.completedAt || a.createdAt).getTime();
+      const timeB = new Date(b.completedAt || b.createdAt).getTime();
+
+      return timeA - timeB;
+    });
+
+  const isKonamiUnlocked = Boolean(
+    typeof window !== "undefined" &&
+      localStorage.getItem("cozify_konami_code") === "true",
+  );
+
+  const unlockTimes: Record<string, string> = {};
+
+  let cumulativeCycles = 0;
+  let cumulativeMinutes = 0;
+  let cumulativeOvertime = 0;
   let hasEarlyMorningSession = false;
   let morningSessionsCount = 0;
   let hasAfternoonSession = false;
@@ -1294,33 +1317,105 @@ export function calculateMilestones(
   let hadSun = false;
   const dayCounts = new Map<string, number>();
 
-  for (let i = 0; i < sessions.length; i++) {
-    const s = sessions[i];
+  for (let i = 0; i < sortedSessions.length; i++) {
+    const s = sortedSessions[i];
+    const sIso = new Date(s.createdAt).toISOString();
     const d = new Date(s.createdAt);
     const h = d.getHours();
     const day = d.getDay();
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-    if (h >= 5 && h < 9) hasEarlyMorningSession = true;
-    if (h >= 5 && h < 12) morningSessionsCount++;
-    if (h >= 12 && h < 17) hasAfternoonSession = true;
-    if (h >= 22 || h < 4) hasLateNightSession = true;
+    if (i === 0 && !unlockTimes.first_focus) unlockTimes.first_focus = sIso;
 
-    const done = Number(s.cyclesCompleted ?? s.sprintsCompleted) || 0;
-    const target = Number(s.targetCycles ?? s.targetSprints) || 0;
+    const cycles = Number(s.cyclesCompleted ?? s.sprintsCompleted) || 0;
 
-    if (done >= target && target > 0) hasPerfectSession = true;
+    cumulativeCycles += cycles;
+    if (cumulativeCycles >= 3 && !unlockTimes.focus_novice)
+      unlockTimes.focus_novice = sIso;
+    if (cumulativeCycles >= 10 && !unlockTimes.flow_starter)
+      unlockTimes.flow_starter = sIso;
+    if (cumulativeCycles >= 25 && !unlockTimes.focus_adept)
+      unlockTimes.focus_adept = sIso;
+    if (cumulativeCycles >= 50 && !unlockTimes.marathon_runner)
+      unlockTimes.marathon_runner = sIso;
+    if (cumulativeCycles >= 100 && !unlockTimes.grand_centurion)
+      unlockTimes.grand_centurion = sIso;
 
-    const ot = Number(s.overtimeMinutes) || 0;
+    const mins = Number(s.focusMinutes) || 0;
 
-    if (ot >= 5) hasOvertime5 = true;
-    if (ot >= 15) hasOvertime15 = true;
-    totalOvertimeMins += ot;
+    cumulativeMinutes += mins;
+    if (cumulativeMinutes >= 100 && !unlockTimes.century_club)
+      unlockTimes.century_club = sIso;
+    if (cumulativeMinutes >= 300 && !unlockTimes.half_day_focus)
+      unlockTimes.half_day_focus = sIso;
+    if (cumulativeMinutes >= 480 && !unlockTimes.workday_master)
+      unlockTimes.workday_master = sIso;
+    if (cumulativeMinutes >= 1000 && !unlockTimes.kilo_focus)
+      unlockTimes.kilo_focus = sIso;
+
+    if (mins >= 45 && !unlockTimes.deep_session_45)
+      unlockTimes.deep_session_45 = sIso;
+    if (mins >= 60 && !unlockTimes.deep_session_60)
+      unlockTimes.deep_session_60 = sIso;
+    if (mins >= 90 && !unlockTimes.deep_session_90)
+      unlockTimes.deep_session_90 = sIso;
+
+    if (h >= 5 && h < 9) {
+      hasEarlyMorningSession = true;
+      if (!unlockTimes.early_bird) unlockTimes.early_bird = sIso;
+    }
+    if (h >= 5 && h < 12) {
+      morningSessionsCount++;
+      if (morningSessionsCount >= 2 && !unlockTimes.morning_clarity)
+        unlockTimes.morning_clarity = sIso;
+    }
+    if (h >= 12 && h < 17) {
+      hasAfternoonSession = true;
+      if (!unlockTimes.afternoon_surge) unlockTimes.afternoon_surge = sIso;
+    }
+    if (h >= 22 || h < 4) {
+      hasLateNightSession = true;
+      if (!unlockTimes.night_owl) unlockTimes.night_owl = sIso;
+    }
 
     if (day === 6) hadSat = true;
     if (day === 0) hadSun = true;
+    if (hadSat && hadSun && !unlockTimes.weekend_warrior) {
+      unlockTimes.weekend_warrior = sIso;
+    }
 
-    dayCounts.set(dateStr, (dayCounts.get(dateStr) || 0) + 1);
+    const target = Number(s.targetCycles ?? s.targetSprints) || 0;
+
+    if (cycles >= target && target > 0) {
+      hasPerfectSession = true;
+      if (!unlockTimes.flawless_target) unlockTimes.flawless_target = sIso;
+    }
+
+    const ot = Number(s.overtimeMinutes) || 0;
+
+    if (ot >= 5) {
+      hasOvertime5 = true;
+      if (!unlockTimes.overdrive_5) unlockTimes.overdrive_5 = sIso;
+    }
+    if (ot >= 15) {
+      hasOvertime15 = true;
+      if (!unlockTimes.overdrive_15) unlockTimes.overdrive_15 = sIso;
+    }
+    totalOvertimeMins += ot;
+    cumulativeOvertime += ot;
+    if (cumulativeOvertime >= 60 && !unlockTimes.overtime_total_60) {
+      unlockTimes.overtime_total_60 = sIso;
+    }
+
+    const currentDayCount = (dayCounts.get(dateStr) || 0) + 1;
+
+    dayCounts.set(dateStr, currentDayCount);
+    if (currentDayCount >= 2 && !unlockTimes.double_down)
+      unlockTimes.double_down = sIso;
+    if (currentDayCount >= 3 && !unlockTimes.triple_threat)
+      unlockTimes.triple_threat = sIso;
+    if (currentDayCount >= 4 && !unlockTimes.quad_power)
+      unlockTimes.quad_power = sIso;
   }
 
   let maxSessionsInSingleDay = 0;
@@ -1330,793 +1425,122 @@ export function calculateMilestones(
   }
   const hasWeekendSession = hadSat && hadSun;
 
+  const latestSessionDate =
+    sortedSessions.length > 0
+      ? new Date(
+          sortedSessions[sortedSessions.length - 1].createdAt,
+        ).toISOString()
+      : new Date().toISOString();
+
+  if (overall.bestStreakDays >= 2) unlockTimes.first_streak = latestSessionDate;
+  if (overall.bestStreakDays >= 3) unlockTimes.streak_3 = latestSessionDate;
+  if (overall.bestStreakDays >= 5) unlockTimes.streak_5 = latestSessionDate;
+  if (overall.bestStreakDays >= 7) unlockTimes.week_of_fire = latestSessionDate;
+  if (overall.bestStreakDays >= 10) unlockTimes.streak_10 = latestSessionDate;
+  if (overall.bestStreakDays >= 14) unlockTimes.streak_14 = latestSessionDate;
+  if (overall.bestStreakDays >= 21) unlockTimes.streak_21 = latestSessionDate;
+  if (overall.bestStreakDays >= 30) unlockTimes.streak_30 = latestSessionDate;
+
   let completedHighPriority = 0;
   let completedWithNotes = 0;
   const completedTags = new Set<string>();
-  let allCompleted = todos.length >= 5;
-  let completedCount = 0;
 
-  for (let i = 0; i < todos.length; i++) {
-    const t = todos[i];
+  for (let i = 0; i < sortedCompletedTodos.length; i++) {
+    const t = sortedCompletedTodos[i];
+    const rawTime = t.completedAt || t.createdAt;
+    const taskTime = rawTime
+      ? new Date(rawTime).toISOString()
+      : new Date().toISOString();
 
-    if (t.completed) {
-      completedCount++;
-      if (t.tag) completedTags.add(t.tag);
-      if (t.priority === "high") completedHighPriority++;
-      if (t.notes && t.notes.trim().length > 0) completedWithNotes++;
-    } else {
-      allCompleted = false;
+    if (i === 0 && !unlockTimes.first_todo) unlockTimes.first_todo = taskTime;
+    if (i + 1 >= 5 && !unlockTimes.task_starter_5)
+      unlockTimes.task_starter_5 = taskTime;
+    if (i + 1 >= 10 && !unlockTimes.task_crusher_10)
+      unlockTimes.task_crusher_10 = taskTime;
+    if (i + 1 >= 25 && !unlockTimes.task_slayer_25)
+      unlockTimes.task_slayer_25 = taskTime;
+    if (i + 1 >= 50 && !unlockTimes.task_machine_50)
+      unlockTimes.task_machine_50 = taskTime;
+    if (i + 1 >= 100 && !unlockTimes.task_centurion_100)
+      unlockTimes.task_centurion_100 = taskTime;
+
+    if (t.priority === "high") {
+      completedHighPriority++;
+      if (completedHighPriority >= 1 && !unlockTimes.priority_first)
+        unlockTimes.priority_first = taskTime;
+      if (completedHighPriority >= 5 && !unlockTimes.priority_pilot_5)
+        unlockTimes.priority_pilot_5 = taskTime;
+      if (completedHighPriority >= 15 && !unlockTimes.priority_master_15)
+        unlockTimes.priority_master_15 = taskTime;
+    }
+
+    if (t.tag && !completedTags.has(t.tag)) {
+      completedTags.add(t.tag);
+      if (completedTags.size >= 3 && !unlockTimes.tag_polymath_3)
+        unlockTimes.tag_polymath_3 = taskTime;
+      if (completedTags.size >= 5 && !unlockTimes.tag_master_5)
+        unlockTimes.tag_master_5 = taskTime;
+    }
+
+    if (t.notes && t.notes.trim().length > 0) {
+      completedWithNotes++;
+      if (completedWithNotes >= 3 && !unlockTimes.note_taker)
+        unlockTimes.note_taker = taskTime;
     }
   }
-  const hasCleanSweep = allCompleted && completedCount >= 5;
 
-  const milestones: Milestone[] = [
-    // ==========================================
-    // 1. FOCUS MASTERY & DURATION
-    // ==========================================
-    {
-      id: "first_focus",
-      title: "First Flow",
-      description: "Complete your first pomodoro focus session",
-      category: "focus",
-      tier: "bronze",
-      xp: 50,
-      icon: Target,
-      unlocked: overall.totalSessions >= 1,
-      progress: Math.min(1, overall.totalSessions),
-      maxProgress: 1,
-      badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-      borderHighlight:
-        "border-blue-500/80 shadow-[0_0_12px_rgba(59,130,246,0.3)]",
-    },
-    {
-      id: "focus_novice",
-      title: "Getting in the Zone",
-      description: "Complete 3 total pomodoro focus cycles",
-      category: "focus",
-      tier: "bronze",
-      xp: 75,
-      icon: Compass,
-      unlocked: overall.totalCycles >= 3,
-      progress: Math.min(3, overall.totalCycles),
-      maxProgress: 3,
-      badgeColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
-      borderHighlight:
-        "border-cyan-400/80 shadow-[0_0_12px_rgba(34,211,238,0.3)]",
-    },
-    {
-      id: "flow_starter",
-      title: "Flow Apprentice",
-      description: "Complete 10 total pomodoro cycles",
-      category: "focus",
-      tier: "bronze",
-      xp: 150,
-      icon: Zap,
-      unlocked: overall.totalCycles >= 10,
-      progress: Math.min(10, overall.totalCycles),
-      maxProgress: 10,
-      badgeColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
-      borderHighlight:
-        "border-cyan-500/80 shadow-[0_0_12px_rgba(6,182,212,0.3)]",
-    },
-    {
-      id: "century_club",
-      title: "Century Club",
-      description: "Accumulate 100+ total focus minutes",
-      category: "focus",
-      tier: "bronze",
-      xp: 150,
-      icon: Clock,
-      unlocked: overall.totalFocusMinutes >= 100,
-      progress: Math.min(100, overall.totalFocusMinutes),
-      maxProgress: 100,
-      badgeColor: "text-accent bg-accent/10 border-accent/30",
-      borderHighlight:
-        "border-accent/80 shadow-[0_0_12px_rgba(234,179,8,0.35)]",
-    },
-    {
-      id: "focus_adept",
-      title: "Deep Work Adept",
-      description: "Complete 25 total pomodoro focus cycles",
-      category: "focus",
-      tier: "silver",
-      xp: 300,
-      icon: Shield,
-      unlocked: overall.totalCycles >= 25,
-      progress: Math.min(25, overall.totalCycles),
-      maxProgress: 25,
-      badgeColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-      borderHighlight:
-        "border-purple-400/80 shadow-[0_0_12px_rgba(192,132,252,0.3)]",
-    },
-    {
-      id: "deep_session_45",
-      title: "Deep Immersion",
-      description: "Complete an uninterrupted 45+ minute single session",
-      category: "focus",
-      tier: "silver",
-      xp: 250,
-      icon: Compass,
-      unlocked: overall.longestSessionMinutes >= 45,
-      progress: Math.min(45, overall.longestSessionMinutes),
-      maxProgress: 45,
-      badgeColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/30",
-      borderHighlight:
-        "border-indigo-400/80 shadow-[0_0_12px_rgba(129,140,248,0.3)]",
-    },
-    {
-      id: "deep_session_60",
-      title: "Hour of Power",
-      description: "Complete a 60+ minute single focus session",
-      category: "focus",
-      tier: "silver",
-      xp: 350,
-      icon: Flame,
-      unlocked: overall.longestSessionMinutes >= 60,
-      progress: Math.min(60, overall.longestSessionMinutes),
-      maxProgress: 60,
-      badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      borderHighlight:
-        "border-amber-400/80 shadow-[0_0_12px_rgba(251,191,36,0.3)]",
-    },
-    {
-      id: "deep_session_90",
-      title: "Iron Focus",
-      description: "Complete a 90+ minute marathon session",
-      category: "focus",
-      tier: "gold",
-      xp: 500,
-      icon: Award,
-      unlocked: overall.longestSessionMinutes >= 90,
-      progress: Math.min(90, overall.longestSessionMinutes),
-      maxProgress: 90,
-      badgeColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
-      borderHighlight:
-        "border-rose-400/80 shadow-[0_0_14px_rgba(244,63,94,0.35)]",
-    },
-    {
-      id: "half_day_focus",
-      title: "Focus Dynamo",
-      description: "Accumulate 300 total focus minutes (5 hours)",
-      category: "focus",
-      tier: "silver",
-      xp: 400,
-      icon: Zap,
-      unlocked: overall.totalFocusMinutes >= 300,
-      progress: Math.min(300, overall.totalFocusMinutes),
-      maxProgress: 300,
-      badgeColor: "text-violet-400 bg-violet-500/10 border-violet-500/30",
-      borderHighlight:
-        "border-violet-400/80 shadow-[0_0_12px_rgba(167,139,250,0.3)]",
-    },
-    {
-      id: "workday_master",
-      title: "Full Shift",
-      description: "Accumulate 480 total focus minutes (8 full hours)",
-      category: "focus",
-      tier: "gold",
-      xp: 600,
-      icon: Clock,
-      unlocked: overall.totalFocusMinutes >= 480,
-      progress: Math.min(480, overall.totalFocusMinutes),
-      maxProgress: 480,
-      badgeColor: "text-teal-400 bg-teal-500/10 border-teal-500/30",
-      borderHighlight:
-        "border-teal-400/80 shadow-[0_0_14px_rgba(45,212,191,0.35)]",
-    },
-    {
-      id: "marathon_runner",
-      title: "Marathon Legend",
-      description: "Complete 50 total pomodoro focus cycles",
-      category: "focus",
-      tier: "gold",
-      xp: 800,
-      icon: Award,
-      unlocked: overall.totalCycles >= 50,
-      progress: Math.min(50, overall.totalCycles),
-      maxProgress: 50,
-      badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      borderHighlight:
-        "border-amber-400/80 shadow-[0_0_14px_rgba(245,158,11,0.35)]",
-    },
-    {
-      id: "kilo_focus",
-      title: "Kilo-Minute",
-      description: "Accumulate 1,000 total minutes of deep focus",
-      category: "focus",
-      tier: "platinum",
-      xp: 1200,
-      icon: Crown,
-      unlocked: overall.totalFocusMinutes >= 1000,
-      progress: Math.min(1000, overall.totalFocusMinutes),
-      maxProgress: 1000,
-      badgeColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
-      borderHighlight:
-        "border-rose-500/90 shadow-[0_0_16px_rgba(244,63,94,0.4)]",
-    },
-    {
-      id: "grand_centurion",
-      title: "Grand Centurion",
-      description: "Complete 100 total pomodoro cycles",
-      category: "focus",
-      tier: "diamond",
-      xp: 2000,
-      icon: Trophy,
-      unlocked: overall.totalCycles >= 100,
-      progress: Math.min(100, overall.totalCycles),
-      maxProgress: 100,
-      badgeColor: "text-amber-300 bg-amber-400/10 border-amber-400/40",
-      borderHighlight:
-        "border-amber-300 shadow-[0_0_18px_rgba(252,211,77,0.45)]",
-    },
+  const metrics: AchievementMetrics = {
+    totalSessions: overall.totalSessions,
+    totalCycles: overall.totalCycles,
+    totalFocusMinutes: overall.totalFocusMinutes,
+    longestSessionMinutes: overall.longestSessionMinutes,
+    currentStreakDays: overall.currentStreakDays,
+    totalActiveDays: overall.totalActiveDays,
+    morningSessionsCount,
+    hasEarlyMorningSession,
+    hasAfternoonSession,
+    hasLateNightSession,
+    hadSatAndSun: hasWeekendSession,
+    maxDailySessions: maxSessionsInSingleDay,
+    completedTodosCount: sortedCompletedTodos.length,
+    completedHighPriority,
+    completedTagsCount: completedTags.size,
+    completedWithNotes,
+    hasPerfectSession,
+    hasOvertime5,
+    hasOvertime15,
+    totalOvertimeMins,
+    isKonamiUnlocked,
+  };
 
-    // ==========================================
-    // 2. RHYTHM, CONSISTENCY & STREAKS
-    // ==========================================
-    {
-      id: "first_streak",
-      title: "First Spark",
-      description: "Log focus sessions 2 days in a row",
-      category: "consistency",
-      tier: "bronze",
-      xp: 75,
-      icon: Flame,
-      unlocked: overall.bestStreakDays >= 2,
-      progress: Math.min(2, overall.bestStreakDays),
-      maxProgress: 2,
-      badgeColor: "text-orange-400 bg-orange-500/10 border-orange-500/30",
-      borderHighlight:
-        "border-orange-400/80 shadow-[0_0_12px_rgba(251,146,60,0.3)]",
-    },
-    {
-      id: "streak_3",
-      title: "Ignition",
-      description: "Maintain a 3-day consecutive focus streak",
-      category: "consistency",
-      tier: "bronze",
-      xp: 150,
-      icon: Flame,
-      unlocked: overall.bestStreakDays >= 3,
-      progress: Math.min(3, overall.bestStreakDays),
-      maxProgress: 3,
-      badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      borderHighlight:
-        "border-amber-400/80 shadow-[0_0_12px_rgba(251,191,36,0.3)]",
-    },
-    {
-      id: "streak_5",
-      title: "Workweek Warrior",
-      description: "Maintain a 5-day consecutive focus streak",
-      category: "consistency",
-      tier: "silver",
-      xp: 250,
-      icon: Flame,
-      unlocked: overall.bestStreakDays >= 5,
-      progress: Math.min(5, overall.bestStreakDays),
-      maxProgress: 5,
-      badgeColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
-      borderHighlight:
-        "border-rose-400/80 shadow-[0_0_12px_rgba(251,113,133,0.3)]",
-    },
-    {
-      id: "week_of_fire",
-      title: "Week of Fire",
-      description: "Maintain a full 7-day consecutive focus streak",
-      category: "consistency",
-      tier: "silver",
-      xp: 400,
-      icon: Flame,
-      unlocked: overall.bestStreakDays >= 7,
-      progress: Math.min(7, overall.bestStreakDays),
-      maxProgress: 7,
-      badgeColor: "text-red-400 bg-red-500/10 border-red-500/30",
-      borderHighlight:
-        "border-red-500/80 shadow-[0_0_14px_rgba(239,68,68,0.35)]",
-    },
-    {
-      id: "streak_10",
-      title: "Tenacious Ten",
-      description: "Maintain a 10-day consecutive focus streak",
-      category: "consistency",
-      tier: "silver",
-      xp: 500,
-      icon: Shield,
-      unlocked: overall.bestStreakDays >= 10,
-      progress: Math.min(10, overall.bestStreakDays),
-      maxProgress: 10,
-      badgeColor: "text-violet-400 bg-violet-500/10 border-violet-500/30",
-      borderHighlight:
-        "border-violet-400/80 shadow-[0_0_14px_rgba(167,139,250,0.35)]",
-    },
-    {
-      id: "streak_14",
-      title: "Fortnight of Flow",
-      description: "Achieve a monumental 14-day streak",
-      category: "consistency",
-      tier: "gold",
-      xp: 800,
-      icon: Rocket,
-      unlocked: overall.bestStreakDays >= 14,
-      progress: Math.min(14, overall.bestStreakDays),
-      maxProgress: 14,
-      badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      borderHighlight:
-        "border-emerald-400/80 shadow-[0_0_14px_rgba(52,211,153,0.35)]",
-    },
-    {
-      id: "streak_21",
-      title: "Habit Formed",
-      description: "Reach a 21-day consecutive productivity streak",
-      category: "consistency",
-      tier: "gold",
-      xp: 1200,
-      icon: Crown,
-      unlocked: overall.bestStreakDays >= 21,
-      progress: Math.min(21, overall.bestStreakDays),
-      maxProgress: 21,
-      badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      borderHighlight:
-        "border-amber-400/90 shadow-[0_0_16px_rgba(251,191,36,0.4)]",
-    },
-    {
-      id: "streak_30",
-      title: "Monthly Phenomenon",
-      description: "Maintain a flawless 30-day consecutive streak",
-      category: "consistency",
-      tier: "platinum",
-      xp: 2000,
-      icon: Trophy,
-      unlocked: overall.bestStreakDays >= 30,
-      progress: Math.min(30, overall.bestStreakDays),
-      maxProgress: 30,
-      badgeColor: "text-teal-300 bg-teal-400/10 border-teal-400/40",
-      borderHighlight:
-        "border-teal-300 shadow-[0_0_18px_rgba(94,234,212,0.45)]",
-    },
-    {
-      id: "early_bird",
-      title: "Dawn Patrol",
-      description: "Complete a focus session before 9:00 AM",
-      category: "consistency",
-      tier: "bronze",
-      xp: 120,
-      icon: Sun,
-      unlocked: hasEarlyMorningSession,
-      progress: hasEarlyMorningSession ? 1 : 0,
-      maxProgress: 1,
-      badgeColor: "text-amber-300 bg-amber-400/10 border-amber-400/30",
-      borderHighlight:
-        "border-amber-300/80 shadow-[0_0_12px_rgba(252,211,77,0.3)]",
-    },
-    {
-      id: "morning_clarity",
-      title: "Morning Clarity",
-      description: "Log 2 or more focus sessions before 12:00 PM",
-      category: "consistency",
-      tier: "bronze",
-      xp: 150,
-      icon: Sun,
-      unlocked: morningSessionsCount >= 2,
-      progress: Math.min(2, morningSessionsCount),
-      maxProgress: 2,
-      badgeColor: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
-      borderHighlight:
-        "border-yellow-400/80 shadow-[0_0_12px_rgba(250,204,21,0.3)]",
-    },
-    {
-      id: "afternoon_surge",
-      title: "Afternoon Surge",
-      description: "Complete a focus session during afternoon hours",
-      category: "consistency",
-      tier: "bronze",
-      xp: 100,
-      icon: Zap,
-      unlocked: hasAfternoonSession,
-      progress: hasAfternoonSession ? 1 : 0,
-      maxProgress: 1,
-      badgeColor: "text-orange-400 bg-orange-500/10 border-orange-500/30",
-      borderHighlight:
-        "border-orange-400/80 shadow-[0_0_12px_rgba(251,146,60,0.3)]",
-    },
-    {
-      id: "night_owl",
-      title: "Midnight Oil",
-      description: "Complete a focus session after 10:00 PM",
-      category: "consistency",
-      tier: "bronze",
-      xp: 120,
-      icon: Moon,
-      unlocked: hasLateNightSession,
-      progress: hasLateNightSession ? 1 : 0,
-      maxProgress: 1,
-      badgeColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/30",
-      borderHighlight:
-        "border-indigo-400/80 shadow-[0_0_12px_rgba(129,140,248,0.3)]",
-    },
-    {
-      id: "weekend_warrior",
-      title: "Weekend Hustle",
-      description: "Log focus sessions on both Saturday and Sunday",
-      category: "consistency",
-      tier: "silver",
-      xp: 250,
-      icon: Coffee,
-      unlocked: hasWeekendSession,
-      progress: hasWeekendSession ? 1 : 0,
-      maxProgress: 1,
-      badgeColor: "text-teal-400 bg-teal-500/10 border-teal-500/30",
-      borderHighlight:
-        "border-teal-400/80 shadow-[0_0_12px_rgba(45,212,191,0.3)]",
-    },
-    {
-      id: "double_down",
-      title: "Double Down",
-      description: "Log 2 or more focus sessions in a single day",
-      category: "consistency",
-      tier: "bronze",
-      xp: 100,
-      icon: Layers,
-      unlocked: maxSessionsInSingleDay >= 2,
-      progress: Math.min(2, maxSessionsInSingleDay),
-      maxProgress: 2,
-      badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-      borderHighlight:
-        "border-blue-400/80 shadow-[0_0_12px_rgba(96,165,250,0.3)]",
-    },
-    {
-      id: "triple_threat",
-      title: "Triple Threat",
-      description: "Log 3 or more focus sessions in a single day",
-      category: "consistency",
-      tier: "silver",
-      xp: 250,
-      icon: Layers,
-      unlocked: maxSessionsInSingleDay >= 3,
-      progress: Math.min(3, maxSessionsInSingleDay),
-      maxProgress: 3,
-      badgeColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-      borderHighlight:
-        "border-purple-400/80 shadow-[0_0_12px_rgba(192,132,252,0.3)]",
-    },
-    {
-      id: "quad_power",
-      title: "Relentless Flow",
-      description: "Log 4 or more focus sessions in a single day",
-      category: "consistency",
-      tier: "gold",
-      xp: 450,
-      icon: Flame,
-      unlocked: maxSessionsInSingleDay >= 4,
-      progress: Math.min(4, maxSessionsInSingleDay),
-      maxProgress: 4,
-      badgeColor: "text-red-400 bg-red-500/10 border-red-500/30",
-      borderHighlight:
-        "border-red-400/80 shadow-[0_0_14px_rgba(248,113,113,0.35)]",
-    },
+  const milestones: Milestone[] = ACHIEVEMENT_DEFINITIONS.map((def) => {
+    const rawVal = def.getValue(metrics);
+    const progress = Math.min(def.maxProgress, rawVal);
+    const unlocked = def.maxProgress > 0 ? progress >= def.maxProgress : false;
+    const unlockedAt = unlocked
+      ? unlockTimes[def.id] || latestSessionDate
+      : undefined;
 
-    // ==========================================
-    // 3. TASKS & EXECUTION
-    // ==========================================
-    {
-      id: "first_todo",
-      title: "First Checkmark",
-      description: "Mark your first to-do task as completed",
-      category: "tasks",
-      tier: "bronze",
-      xp: 50,
-      icon: CheckCircle2,
-      unlocked: overall.tasksCompleted >= 1,
-      progress: Math.min(1, overall.tasksCompleted),
-      maxProgress: 1,
-      badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      borderHighlight:
-        "border-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.3)]",
-    },
-    {
-      id: "task_starter_5",
-      title: "Gaining Momentum",
-      description: "Complete 5 to-do tasks",
-      category: "tasks",
-      tier: "bronze",
-      xp: 100,
-      icon: CheckCircle2,
-      unlocked: overall.tasksCompleted >= 5,
-      progress: Math.min(5, overall.tasksCompleted),
-      maxProgress: 5,
-      badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      borderHighlight:
-        "border-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.3)]",
-    },
-    {
-      id: "task_crusher_10",
-      title: "Task Crusher",
-      description: "Complete 10 to-do tasks",
-      category: "tasks",
-      tier: "bronze",
-      xp: 150,
-      icon: Medal,
-      unlocked: overall.tasksCompleted >= 10,
-      progress: Math.min(10, overall.tasksCompleted),
-      maxProgress: 10,
-      badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      borderHighlight:
-        "border-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.3)]",
-    },
-    {
-      id: "task_slayer_25",
-      title: "Task Slayer",
-      description: "Complete 25 to-do tasks",
-      category: "tasks",
-      tier: "silver",
-      xp: 350,
-      icon: Target,
-      unlocked: overall.tasksCompleted >= 25,
-      progress: Math.min(25, overall.tasksCompleted),
-      maxProgress: 25,
-      badgeColor: "text-teal-400 bg-teal-500/10 border-teal-500/30",
-      borderHighlight:
-        "border-teal-400/80 shadow-[0_0_12px_rgba(45,212,191,0.3)]",
-    },
-    {
-      id: "task_machine_50",
-      title: "Productivity Engine",
-      description: "Complete 50 to-do tasks",
-      category: "tasks",
-      tier: "gold",
-      xp: 700,
-      icon: Trophy,
-      unlocked: overall.tasksCompleted >= 50,
-      progress: Math.min(50, overall.tasksCompleted),
-      maxProgress: 50,
-      badgeColor: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
-      borderHighlight:
-        "border-yellow-400/80 shadow-[0_0_14px_rgba(250,204,21,0.35)]",
-    },
-    {
-      id: "task_centurion_100",
-      title: "Task Centurion",
-      description: "Complete 100 to-do tasks",
-      category: "tasks",
-      tier: "platinum",
-      xp: 1500,
-      icon: Crown,
-      unlocked: overall.tasksCompleted >= 100,
-      progress: Math.min(100, overall.tasksCompleted),
-      maxProgress: 100,
-      badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      borderHighlight:
-        "border-amber-400/90 shadow-[0_0_16px_rgba(251,191,36,0.4)]",
-    },
-    {
-      id: "priority_first",
-      title: "High Stakes",
-      description: "Complete your first High-Priority task",
-      category: "tasks",
-      tier: "bronze",
-      xp: 75,
-      icon: Flag,
-      unlocked: completedHighPriority >= 1,
-      progress: Math.min(1, completedHighPriority),
-      maxProgress: 1,
-      badgeColor: "text-red-400 bg-red-500/10 border-red-500/30",
-      borderHighlight:
-        "border-red-400/80 shadow-[0_0_12px_rgba(248,113,113,0.3)]",
-    },
-    {
-      id: "priority_pilot_5",
-      title: "Priority Ace",
-      description: "Finish 5 High-Priority tasks",
-      category: "tasks",
-      tier: "silver",
-      xp: 250,
-      icon: Star,
-      unlocked: completedHighPriority >= 5,
-      progress: Math.min(5, completedHighPriority),
-      maxProgress: 5,
-      badgeColor: "text-red-400 bg-red-500/10 border-red-500/30",
-      borderHighlight:
-        "border-red-400/80 shadow-[0_0_12px_rgba(248,113,113,0.3)]",
-    },
-    {
-      id: "priority_master_15",
-      title: "Mission Commander",
-      description: "Finish 15 High-Priority tasks",
-      category: "tasks",
-      tier: "gold",
-      xp: 600,
-      icon: Shield,
-      unlocked: completedHighPriority >= 15,
-      progress: Math.min(15, completedHighPriority),
-      maxProgress: 15,
-      badgeColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
-      borderHighlight:
-        "border-rose-400/80 shadow-[0_0_14px_rgba(244,63,94,0.35)]",
-    },
-    {
-      id: "tag_polymath_3",
-      title: "Balanced Mind",
-      description: "Complete tasks across 3 different category tags",
-      category: "tasks",
-      tier: "silver",
-      xp: 300,
-      icon: Layers,
-      unlocked: completedTags.size >= 3,
-      progress: Math.min(3, completedTags.size),
-      maxProgress: 3,
-      badgeColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-      borderHighlight:
-        "border-purple-400/80 shadow-[0_0_12px_rgba(192,132,252,0.3)]",
-    },
-    {
-      id: "tag_master_5",
-      title: "Multi-Disciplinary",
-      description: "Complete tasks across 5 different category tags",
-      category: "tasks",
-      tier: "gold",
-      xp: 500,
-      icon: Layers,
-      unlocked: completedTags.size >= 5,
-      progress: Math.min(5, completedTags.size),
-      maxProgress: 5,
-      badgeColor: "text-violet-400 bg-violet-500/10 border-violet-500/30",
-      borderHighlight:
-        "border-violet-400/80 shadow-[0_0_14px_rgba(167,139,250,0.35)]",
-    },
-    {
-      id: "clean_sweep",
-      title: "Clean Slate",
-      description: "Have zero pending tasks with at least 5 completed",
-      category: "tasks",
-      tier: "silver",
-      xp: 300,
-      icon: CheckCircle2,
-      unlocked: hasCleanSweep,
-      progress: hasCleanSweep ? 1 : 0,
-      maxProgress: 1,
-      badgeColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      borderHighlight:
-        "border-emerald-400/80 shadow-[0_0_12px_rgba(52,211,153,0.3)]",
-    },
-    {
-      id: "note_taker",
-      title: "Diligent Notes",
-      description: "Complete 3 tasks that have detailed notes attached",
-      category: "tasks",
-      tier: "bronze",
-      xp: 100,
-      icon: Bookmark,
-      unlocked: completedWithNotes >= 3,
-      progress: Math.min(3, completedWithNotes),
-      maxProgress: 3,
-      badgeColor: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-      borderHighlight:
-        "border-blue-400/80 shadow-[0_0_12px_rgba(96,165,250,0.3)]",
-    },
-
-    // ==========================================
-    // 4. MASTERY & SPECIAL FEATS
-    // ==========================================
-    {
-      id: "flawless_target",
-      title: "Flawless Target",
-      description: "Hit 100% of your cycle goals in a multi-cycle session",
-      category: "mastery",
-      tier: "silver",
-      xp: 250,
-      icon: Target,
-      unlocked: hasPerfectSession,
-      progress: hasPerfectSession ? 1 : 0,
-      maxProgress: 1,
-      badgeColor: "text-teal-400 bg-teal-500/10 border-teal-500/30",
-      borderHighlight:
-        "border-teal-400/80 shadow-[0_0_12px_rgba(45,212,191,0.3)]",
-    },
-    {
-      id: "overdrive_5",
-      title: "Bonus Drive",
-      description: "Log 5+ minutes of bonus overtime focus",
-      category: "mastery",
-      tier: "bronze",
-      xp: 100,
-      icon: Zap,
-      unlocked: hasOvertime5,
-      progress: hasOvertime5 ? 1 : 0,
-      maxProgress: 1,
-      badgeColor: "text-orange-400 bg-orange-500/10 border-orange-500/30",
-      borderHighlight:
-        "border-orange-400/80 shadow-[0_0_12px_rgba(251,146,60,0.3)]",
-    },
-    {
-      id: "overdrive_15",
-      title: "Overdrive",
-      description: "Log 15+ minutes of overtime in a single session",
-      category: "mastery",
-      tier: "silver",
-      xp: 250,
-      icon: Flame,
-      unlocked: hasOvertime15,
-      progress: hasOvertime15 ? 1 : 0,
-      maxProgress: 1,
-      badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      borderHighlight:
-        "border-amber-400/80 shadow-[0_0_12px_rgba(251,191,36,0.3)]",
-    },
-    {
-      id: "overtime_total_60",
-      title: "Overtime Virtuoso",
-      description: "Accumulate 60+ total minutes in overtime work",
-      category: "mastery",
-      tier: "gold",
-      xp: 500,
-      icon: Award,
-      unlocked: totalOvertimeMins >= 60,
-      progress: Math.min(60, totalOvertimeMins),
-      maxProgress: 60,
-      badgeColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-      borderHighlight:
-        "border-purple-400/80 shadow-[0_0_14px_rgba(192,132,252,0.35)]",
-    },
-    {
-      id: "trophy_hunter_10",
-      title: "Trophy Hunter",
-      description: "Unlock 10 achievements across your journey",
-      category: "mastery",
-      tier: "bronze",
-      xp: 200,
-      icon: Trophy,
-      unlocked: false,
-      progress: 0,
-      maxProgress: 10,
-      badgeColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
-      borderHighlight:
-        "border-cyan-400/80 shadow-[0_0_12px_rgba(34,211,238,0.3)]",
-    },
-    {
-      id: "trophy_hunter_20",
-      title: "Master Collector",
-      description: "Unlock 20 achievements across your journey",
-      category: "mastery",
-      tier: "silver",
-      xp: 500,
-      icon: Trophy,
-      unlocked: false,
-      progress: 0,
-      maxProgress: 20,
-      badgeColor: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-      borderHighlight:
-        "border-purple-400/80 shadow-[0_0_14px_rgba(192,132,252,0.35)]",
-    },
-    {
-      id: "trophy_hunter_30",
-      title: "Grand Laureate",
-      description: "Unlock 30 achievements across your journey",
-      category: "mastery",
-      tier: "gold",
-      xp: 1000,
-      icon: Crown,
-      unlocked: false,
-      progress: 0,
-      maxProgress: 30,
-      badgeColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      borderHighlight:
-        "border-amber-400/90 shadow-[0_0_16px_rgba(251,191,36,0.4)]",
-    },
-    {
-      id: "cozy_legend",
-      title: "Cozify Deity",
-      description: "Unlock 40 achievements across your journey",
-      category: "mastery",
-      tier: "diamond",
-      xp: 3000,
-      icon: Trophy,
-      unlocked: false,
-      progress: 0,
-      maxProgress: 40,
-      badgeColor: "text-amber-300 bg-amber-400/10 border-amber-400/40",
-      borderHighlight:
-        "border-amber-300 shadow-[0_0_20px_rgba(252,211,77,0.5)]",
-    },
-  ];
+    return {
+      id: def.id,
+      title: def.title,
+      description: def.description,
+      category: def.category,
+      tier: def.tier,
+      xp: def.xp,
+      icon: def.icon,
+      unlocked,
+      unlockedAt,
+      progress,
+      maxProgress: def.maxProgress,
+      badgeColor: def.badgeColor,
+      borderHighlight: def.borderHighlight,
+      isSecret: def.isSecret,
+      lockedTitle: def.lockedTitle,
+      lockedDescription: def.lockedDescription,
+      lockedIcon: def.lockedIcon,
+    };
+  });
 
   // Dynamically calculate the meta-achievement progress
   const unlockedBaseCount = milestones.filter(
@@ -2131,6 +1555,7 @@ export function calculateMilestones(
   if (th10) {
     th10.progress = Math.min(10, unlockedBaseCount);
     th10.unlocked = unlockedBaseCount >= 10;
+    if (th10.unlocked) th10.unlockedAt = latestSessionDate;
   }
 
   const th20 = milestones.find((m) => m.id === "trophy_hunter_20");
@@ -2138,6 +1563,7 @@ export function calculateMilestones(
   if (th20) {
     th20.progress = Math.min(20, unlockedBaseCount);
     th20.unlocked = unlockedBaseCount >= 20;
+    if (th20.unlocked) th20.unlockedAt = latestSessionDate;
   }
 
   const th30 = milestones.find((m) => m.id === "trophy_hunter_30");
@@ -2145,6 +1571,7 @@ export function calculateMilestones(
   if (th30) {
     th30.progress = Math.min(30, unlockedBaseCount);
     th30.unlocked = unlockedBaseCount >= 30;
+    if (th30.unlocked) th30.unlockedAt = latestSessionDate;
   }
 
   const cl = milestones.find((m) => m.id === "cozy_legend");
@@ -2156,6 +1583,7 @@ export function calculateMilestones(
 
     cl.progress = Math.min(40, totalUnlockedAll);
     cl.unlocked = totalUnlockedAll >= 40;
+    if (cl.unlocked) cl.unlockedAt = latestSessionDate;
   }
 
   return milestones;

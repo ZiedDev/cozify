@@ -56,7 +56,7 @@ export interface Milestone {
   id: string;
   title: string;
   description: string;
-  category: "focus" | "consistency" | "tasks" | "mastery";
+  category: "focus" | "consistency" | "tasks" | "mastery" | "secret";
   tier: "bronze" | "silver" | "gold" | "platinum" | "diamond";
   xp: number;
   icon: LucideIcon;
@@ -66,6 +66,10 @@ export interface Milestone {
   unlockedAt?: string;
   badgeColor: string;
   borderHighlight: string;
+  isSecret?: boolean;
+  lockedTitle?: string;
+  lockedDescription?: string;
+  lockedIcon?: LucideIcon;
 }
 
 export interface OverallStats {

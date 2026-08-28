@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ProgressBar, Button, Typography, Modal } from "@heroui/react";
-import { Trash2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Archive, CheckCircle2 } from "lucide-react";
 
 import { useTodos } from "@/hooks/use-todos";
 
@@ -28,11 +28,11 @@ export function TodoStatsBar() {
             <Button
               className="text-[11px] h-6 px-2.5 rounded-lg cursor-pointer"
               size="sm"
-              variant="danger-soft"
+              variant="secondary"
               onPress={() => setIsConfirmOpen(true)}
             >
-              <Trash2 className="size-3 mr-1" />
-              Clear Done ({stats.completed})
+              <Archive className="size-3 mr-1 text-muted" />
+              Archive Done ({stats.completed})
             </Button>
           )}
         </div>
@@ -48,7 +48,7 @@ export function TodoStatsBar() {
         </ProgressBar>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Archive Confirmation Modal */}
       <Modal.Backdrop
         isOpen={isConfirmOpen}
         onOpenChange={(open) => !open && setIsConfirmOpen(false)}
@@ -57,31 +57,32 @@ export function TodoStatsBar() {
           <Modal.Dialog className="sm:max-w-96 rounded-2xl bg-surface border border-separator shadow-2xl p-4 sm:p-5">
             <Modal.CloseTrigger />
             <Modal.Header className="flex items-center gap-2.5 pb-2">
-              <Modal.Icon className="bg-danger/15 text-danger border border-danger/30 rounded-xl p-2 shrink-0">
-                <AlertTriangle className="size-4" />
+              <Modal.Icon className="bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-xl p-2 shrink-0">
+                <Archive className="size-4" />
               </Modal.Icon>
               <div>
                 <Modal.Heading className="text-sm sm:text-base font-semibold text-foreground">
-                  Clear Completed Tasks?
+                  Archive Completed Tasks?
                 </Modal.Heading>
                 <Typography
                   className="text-xs font-normal mt-0.5"
                   color="muted"
                   type="body-xs"
                 >
-                  This action cannot be undone
+                  Move tasks to the archive log
                 </Typography>
               </div>
             </Modal.Header>
 
             <Modal.Body className="py-2.5">
               <Typography className="text-xs text-muted" type="body-xs">
-                Are you sure you want to permanently remove{" "}
+                Are you sure you want to archive{" "}
                 <strong className="text-foreground font-semibold">
                   {stats.completed}{" "}
                   {stats.completed === 1 ? "completed task" : "completed tasks"}
                 </strong>
-                ?
+                ? You can inspect and restore archived tasks at any time from
+                Settings &gt; Data &amp; Storage.
               </Typography>
             </Modal.Body>
 
@@ -97,15 +98,15 @@ export function TodoStatsBar() {
               <Button
                 className="h-7.5 px-3.5 rounded-full text-xs font-semibold cursor-pointer shadow-2xs flex items-center gap-1.5"
                 size="sm"
-                variant="danger-soft"
+                variant="primary"
                 onPress={() => {
                   clearCompleted();
                   setIsConfirmOpen(false);
                 }}
               >
-                <Trash2 className="size-3.5" />
+                <Archive className="size-3.5" />
                 <span>
-                  Clear {stats.completed}{" "}
+                  Archive {stats.completed}{" "}
                   {stats.completed === 1 ? "Task" : "Tasks"}
                 </span>
               </Button>

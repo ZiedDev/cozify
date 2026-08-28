@@ -45,11 +45,13 @@ export interface SessionRecord {
   id: string;
   createdAt: number;
   title: string;
+  tag?: string;
   cyclesCompleted?: number;
   sprintsCompleted?: number; // legacy backwards compatibility
   targetCycles?: number;
   targetSprints?: number; // legacy backwards compatibility
   focusMinutes: number;
   overtimeMinutes?: number;
+  overtimeSeconds?: number;
   notes?: string;
 }

@@ -2,19 +2,11 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Tabs,
   Button,
-  Dropdown,
   Popover,
   RangeCalendar,
   Typography,
 } from "@heroui/react";
-import {
-  Download,
-  Copy,
-  MoreVertical,
-  Trophy,
-  Calendar as CalendarIcon,
-  X,
-} from "lucide-react";
+import { Trophy, Calendar as CalendarIcon, X } from "lucide-react";
 import {
   parseDate,
   today,
@@ -34,12 +26,10 @@ interface StatsHeaderProps {
   onRangeChange: (r: TimeRangeFilter) => void;
   customDateRange: CustomDateRange | null;
   onCustomDateRangeChange: (r: CustomDateRange | null) => void;
-  overallStats: OverallStats;
+  overallStats?: OverallStats;
   milestones: Milestone[];
   onOpenAchievements: () => void;
-  onCopySummary: () => void;
-  onExportJson: () => void;
-  hasData: boolean;
+  hasData?: boolean;
 }
 
 const TIME_RANGES: { id: TimeRangeFilter; label: string }[] = [
@@ -70,8 +60,6 @@ export function StatsHeader({
   overallStats: _overallStats,
   milestones,
   onOpenAchievements,
-  onCopySummary,
-  onExportJson,
   hasData: _hasData,
 }: StatsHeaderProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -185,40 +173,6 @@ export function StatsHeader({
               {unlockedMilestonesCount}/{totalMilestonesCount}
             </span>
           </Button>
-        </div>
-
-        {/* Right Controls: Quick Actions Dropdown */}
-        <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-          <Dropdown>
-            <Dropdown.Trigger
-              aria-label="More statistics actions"
-              className="size-7 md:size-8 rounded-full bg-surface/90 border border-separator/40 text-muted hover:text-foreground flex items-center justify-center cursor-pointer shadow-2xs hover:border-separator/80 transition-colors"
-            >
-              <MoreVertical className="size-3.5 md:size-4" />
-            </Dropdown.Trigger>
-
-            <Dropdown.Popover className="rounded-2xl min-w-44 p-1 shadow-xl bg-surface border border-separator/60">
-              <Dropdown.Menu aria-label="Statistics actions">
-                <Dropdown.Item
-                  className="flex items-center gap-2 px-3 py-2 text-xs rounded-xl cursor-pointer hover:bg-surface-secondary"
-                  id="copy"
-                  onAction={onCopySummary}
-                >
-                  <Copy className="size-3.5 text-accent" />
-                  <span>Copy Summary</span>
-                </Dropdown.Item>
-
-                <Dropdown.Item
-                  className="flex items-center gap-2 px-3 py-2 text-xs rounded-xl cursor-pointer hover:bg-surface-secondary"
-                  id="export"
-                  onAction={onExportJson}
-                >
-                  <Download className="size-3.5 text-blue-400" />
-                  <span>Export JSON</span>
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown.Popover>
-          </Dropdown>
         </div>
       </div>
 

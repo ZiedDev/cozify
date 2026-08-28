@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Tooltip, Typography } from "@heroui/react";
 import {
-  Trash2,
+  Archive,
   Edit3,
   Calendar,
   Tag,
@@ -163,22 +163,22 @@ export function TodoItemDetailed({
             </Tooltip.Content>
           </Tooltip>
 
-          {/* Delete Button */}
+          {/* Archive Button */}
           <Tooltip delay={300}>
             <Tooltip.Trigger>
               <Button
                 isIconOnly
-                aria-label="Delete task"
-                className="size-7 md:size-7.5 rounded-xl text-muted/60 hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer"
+                aria-label="Archive task"
+                className="size-7 md:size-7.5 rounded-xl text-muted/60 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
                 size="sm"
                 variant="ghost"
                 onPress={() => deleteTodo(todo.id)}
               >
-                <Trash2 className="size-3.5 md:size-4" />
+                <Archive className="size-3.5 md:size-4" />
               </Button>
             </Tooltip.Trigger>
-            <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-danger border border-separator shadow-lg">
-              Delete Task
+            <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-foreground border border-separator shadow-lg">
+              Archive Task
             </Tooltip.Content>
           </Tooltip>
         </div>

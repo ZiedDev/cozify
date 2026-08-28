@@ -11,6 +11,7 @@ import { Settings as SettingsIcon, Database, Info } from "lucide-react";
 import { DataTab } from "./data-tab";
 import { AboutTab } from "./about-tab";
 import { SessionsLogModal } from "./sessions-log-modal";
+import { TasksLogModal } from "./tasks-log-modal";
 
 import { siteConfig } from "@/config/site";
 
@@ -22,16 +23,28 @@ interface SettingsModalProps {
 export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
   const [selectedTab, setSelectedTab] = useState<string>("data");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+  const [isTasksLogModalOpen, setIsTasksLogModalOpen] = useState(false);
 
   const handleOpenSessionsLog = () => {
-    onOpenChange(false); // Close Settings modal
-    setIsLogModalOpen(true); // Open Sessions Log modal
+    onOpenChange(false);
+    setIsLogModalOpen(true);
   };
 
   const handleCloseSessionsLog = () => {
-    setIsLogModalOpen(false); // Close Sessions Log modal
-    setSelectedTab("data"); // Ensure Data & Storage tab is active
-    onOpenChange(true); // Reopen Settings modal
+    setIsLogModalOpen(false);
+    setSelectedTab("data");
+    onOpenChange(true);
+  };
+
+  const handleOpenTasksLog = () => {
+    onOpenChange(false);
+    setIsTasksLogModalOpen(true);
+  };
+
+  const handleCloseTasksLog = () => {
+    setIsTasksLogModalOpen(false);
+    setSelectedTab("data");
+    onOpenChange(true);
   };
 
   return (
@@ -100,7 +113,10 @@ export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
                   size={24}
                 >
                   <Tabs.Panel className="p-0 m-0 outline-none" id="data">
-                    <DataTab onOpenSessionsLog={handleOpenSessionsLog} />
+                    <DataTab
+                      onOpenSessionsLog={handleOpenSessionsLog}
+                      onOpenTasksLog={handleOpenTasksLog}
+                    />
                   </Tabs.Panel>
 
                   <Tabs.Panel className="p-0 m-0 outline-none" id="about">
@@ -121,6 +137,18 @@ export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
             handleCloseSessionsLog();
           } else {
             setIsLogModalOpen(true);
+          }
+        }}
+      />
+
+      {/* Tasks Log Inspection Modal (Chained Modal) */}
+      <TasksLogModal
+        isOpen={isTasksLogModalOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCloseTasksLog();
+          } else {
+            setIsTasksLogModalOpen(true);
           }
         }}
       />

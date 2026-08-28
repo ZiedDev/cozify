@@ -9,51 +9,39 @@ import {
   Button,
 } from "@heroui/react";
 import {
-  History,
+  CheckSquare,
   Search,
   Calendar,
-  Clock,
-  Zap,
-  FileText,
-  Target,
-  Trash2,
   Tag,
+  Flag,
+  FileText,
+  Trash2,
+  RotateCcw,
+  CheckCircle2,
+  Archive,
 } from "lucide-react";
 
-import {
-  storageAdapter,
-  STORAGE_KEYS,
-  SessionRecord,
-} from "@/services/storage";
-import { PRESET_TAGS } from "@/components/todo/types";
-import { formatMinutesDisplay } from "@/components/stats/logic/stats-calculator";
+import { TodoItem, PRESET_TAGS } from "@/components/todo/types";
+import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
 
-interface SessionsLogModalProps {
+interface TasksLogModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 const PAGE_SIZE = 20;
 
-export function SessionsLogModal({
-  isOpen,
-  onOpenChange,
-}: SessionsLogModalProps) {
+export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<
-    "all" | "cycles" | "overtime" | "notes"
+    "all" | "completed" | "archived" | "active"
   >("all");
-  const [sessions, setSessions] = useState<SessionRecord[]>([]);
+  const [todos, setTodos] = useState<TodoItem[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
 
   useEffect(() => {
     if (isOpen) {
-      setSessions(
-        storageAdapter.getItem<SessionRecord[]>(
-          STORAGE_KEYS.SESSIONS_HISTORY,
-          [],
-        ),
-      );
+      setTodos(storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []));
       setVisibleCount(PAGE_SIZE);
       setFilterMode("all");
     }
@@ -65,11 +53,11 @@ export function SessionsLogModal({
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDeleteSession = (id: string) => {
-    const next = sessions.filter((s) => s.id !== id);
+  const handlePermanentDelete = (id: string) => {
+    const next = todos.filter((t) => t.id !== id);
 
-    setSessions(next);
-    storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
+    setTodos(next);
+    storageAdapter.setItem(STORAGE_KEYS.TODOS, next);
     setConfirmDeleteId(null);
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
@@ -77,81 +65,73 @@ export function SessionsLogModal({
 
   const triggerDelete = (id: string, e?: React.MouseEvent) => {
     if (e?.shiftKey) {
-      handleDeleteSession(id);
+      handlePermanentDelete(id);
     } else {
       setConfirmDeleteId((prev) => (prev === id ? null : id));
     }
   };
 
-  const filteredSessions = useMemo(() => {
+  const handleRestoreTodo = (id: string) => {
+    const next = todos.map((t) =>
+      t.id === id ? { ...t, archived: false, archivedAt: undefined } : t,
+    );
+
+    setTodos(next);
+    storageAdapter.setItem(STORAGE_KEYS.TODOS, next);
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
+  };
+
+  const filteredTodos = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
 
-    return sessions.filter((s) => {
+    return todos.filter((t) => {
       // 1. Status Filter Mode
-      if (
-        filterMode === "cycles" &&
-        Number(s.cyclesCompleted ?? (s.sprintsCompleted || 0)) <= 1
-      )
-        return false;
-      if (filterMode === "overtime" && Number(s.overtimeMinutes || 0) <= 0)
-        return false;
-      if (filterMode === "notes" && !(s.notes && s.notes.trim())) return false;
+      if (filterMode === "completed" && !t.completed) return false;
+      if (filterMode === "archived" && !t.archived) return false;
+      if (filterMode === "active" && (t.completed || t.archived)) return false;
 
       // 2. Search query
       if (q) {
-        const matchTitle = (s.title || "").toLowerCase().includes(q);
-        const matchNotes = (s.notes || "").toLowerCase().includes(q);
-        const matchTag = (s.tag || "").toLowerCase().includes(q);
+        const matchTitle = (t.title || "").toLowerCase().includes(q);
+        const matchNotes = (t.notes || "").toLowerCase().includes(q);
+        const matchTag = (t.tag || "").toLowerCase().includes(q);
 
         if (!matchTitle && !matchNotes && !matchTag) return false;
       }
 
       return true;
     });
-  }, [sessions, searchQuery, filterMode]);
+  }, [todos, searchQuery, filterMode]);
 
-  const visibleSessions = useMemo(
-    () => filteredSessions.slice(0, visibleCount),
-    [filteredSessions, visibleCount],
+  const visibleTodos = useMemo(
+    () => filteredTodos.slice(0, visibleCount),
+    [filteredTodos, visibleCount],
   );
-  const hasMore = visibleCount < filteredSessions.length;
-  const remainingCount = filteredSessions.length - visibleCount;
+  const hasMore = visibleCount < filteredTodos.length;
+  const remainingCount = filteredTodos.length - visibleCount;
 
-  const multiCycleCount = useMemo(
-    () =>
-      sessions.filter(
-        (s) => Number(s.cyclesCompleted ?? (s.sprintsCompleted || 0)) > 1,
-      ).length,
-    [sessions],
-  );
+  const stats = useMemo(() => {
+    const total = todos.length;
+    const completed = todos.filter((t) => t.completed).length;
+    const archived = todos.filter((t) => t.archived).length;
+    const active = todos.filter((t) => !t.completed && !t.archived).length;
 
-  const overtimeCount = useMemo(
-    () => sessions.filter((s) => Number(s.overtimeMinutes || 0) > 0).length,
-    [sessions],
-  );
+    return { total, completed, archived, active };
+  }, [todos]);
 
-  const notesCount = useMemo(
-    () => sessions.filter((s) => Boolean(s.notes && s.notes.trim())).length,
-    [sessions],
-  );
-
-  const formatSessionDateTime = (dateVal?: number | string) => {
-    if (!dateVal) return { date: "—", time: "—" };
+  const formatDateTime = (timestamp?: number) => {
+    if (!timestamp) return "—";
     try {
-      const d = new Date(dateVal);
-      const date = d.toLocaleDateString(undefined, {
+      const d = new Date(timestamp);
+
+      return d.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
         year: "numeric",
       });
-      const time = d.toLocaleTimeString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      return { date, time };
     } catch {
-      return { date: "—", time: "—" };
+      return "—";
     }
   };
 
@@ -164,16 +144,16 @@ export function SessionsLogModal({
           {/* Modal Header */}
           <Modal.Header className="px-6 py-4 gap-2.5">
             <Modal.Icon>
-              <History className="size-5 text-accent" />
+              <CheckSquare className="size-5 text-accent" />
             </Modal.Icon>
             <Modal.Heading className="text-base font-semibold">
-              Focus Sessions Log
+              Tasks & Archive Log
             </Modal.Heading>
           </Modal.Header>
 
           <Separator />
 
-          {/* Modal Body: Matching 2-Column Split Structure */}
+          {/* Modal Body: 2-Column Split Structure */}
           <Modal.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
             {/* Left Sidebar: Search & Summary Stats */}
             <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-border/40 p-4 bg-surface-secondary/40 shrink-0 flex flex-col justify-between gap-4">
@@ -194,7 +174,7 @@ export function SessionsLogModal({
                     </InputGroup.Prefix>
                     <Input
                       className="text-xs bg-surface"
-                      placeholder="Filter title or notes..."
+                      placeholder="Filter title, notes, or tag..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
@@ -233,60 +213,60 @@ export function SessionsLogModal({
                         color={filterMode === "all" ? "default" : "muted"}
                         type="body-xs"
                       >
-                        Total Sessions
+                        Total Tasks
                       </Typography>
                       <Typography
                         className="text-foreground tabular-nums"
                         type="body-xs"
                         weight="semibold"
                       >
-                        {sessions.length}
+                        {stats.total}
                       </Typography>
                     </div>
 
                     <div
                       className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer select-none ${
-                        filterMode === "cycles"
-                          ? "bg-purple-500/15 border-purple-500/50 shadow-2xs"
+                        filterMode === "completed"
+                          ? "bg-emerald-500/15 border-emerald-500/50 shadow-2xs"
                           : "bg-surface/70 border-separator/30 hover:bg-surface hover:border-separator/60"
                       }`}
                       role="button"
                       tabIndex={0}
                       onClick={() =>
                         setFilterMode((prev) =>
-                          prev === "cycles" ? "all" : "cycles",
+                          prev === "completed" ? "all" : "completed",
                         )
                       }
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           setFilterMode((prev) =>
-                            prev === "cycles" ? "all" : "cycles",
+                            prev === "completed" ? "all" : "completed",
                           );
                         }
                       }}
                     >
                       <Typography
                         className={
-                          filterMode === "cycles"
-                            ? "text-purple-400 font-medium"
+                          filterMode === "completed"
+                            ? "text-emerald-400 font-medium"
                             : "text-muted"
                         }
                         type="body-xs"
                       >
-                        Multi-Cycle (2+)
+                        Completed
                       </Typography>
                       <Typography
-                        className="text-purple-400 tabular-nums"
+                        className="text-emerald-400 tabular-nums"
                         type="body-xs"
                         weight="semibold"
                       >
-                        {multiCycleCount}
+                        {stats.completed}
                       </Typography>
                     </div>
 
                     <div
                       className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer select-none ${
-                        filterMode === "overtime"
+                        filterMode === "archived"
                           ? "bg-amber-500/15 border-amber-500/50 shadow-2xs"
                           : "bg-surface/70 border-separator/30 hover:bg-surface hover:border-separator/60"
                       }`}
@@ -294,73 +274,73 @@ export function SessionsLogModal({
                       tabIndex={0}
                       onClick={() =>
                         setFilterMode((prev) =>
-                          prev === "overtime" ? "all" : "overtime",
+                          prev === "archived" ? "all" : "archived",
                         )
                       }
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           setFilterMode((prev) =>
-                            prev === "overtime" ? "all" : "overtime",
+                            prev === "archived" ? "all" : "archived",
                           );
                         }
                       }}
                     >
                       <Typography
                         className={
-                          filterMode === "overtime"
+                          filterMode === "archived"
                             ? "text-amber-400 font-medium"
                             : "text-muted"
                         }
                         type="body-xs"
                       >
-                        With Overtime
+                        Archived
                       </Typography>
                       <Typography
                         className="text-amber-400 tabular-nums"
                         type="body-xs"
                         weight="semibold"
                       >
-                        {overtimeCount}
+                        {stats.archived}
                       </Typography>
                     </div>
 
                     <div
                       className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer select-none ${
-                        filterMode === "notes"
-                          ? "bg-blue-500/15 border-blue-500/50 shadow-2xs"
+                        filterMode === "active"
+                          ? "bg-accent/15 border-accent/50 shadow-2xs"
                           : "bg-surface/70 border-separator/30 hover:bg-surface hover:border-separator/60"
                       }`}
                       role="button"
                       tabIndex={0}
                       onClick={() =>
                         setFilterMode((prev) =>
-                          prev === "notes" ? "all" : "notes",
+                          prev === "active" ? "all" : "active",
                         )
                       }
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           setFilterMode((prev) =>
-                            prev === "notes" ? "all" : "notes",
+                            prev === "active" ? "all" : "active",
                           );
                         }
                       }}
                     >
                       <Typography
                         className={
-                          filterMode === "notes"
-                            ? "text-blue-400 font-medium"
+                          filterMode === "active"
+                            ? "text-accent font-medium"
                             : "text-muted"
                         }
                         type="body-xs"
                       >
-                        With Notes
+                        Active
                       </Typography>
                       <Typography
-                        className="text-blue-400 tabular-nums"
+                        className="text-accent tabular-nums"
                         type="body-xs"
                         weight="semibold"
                       >
-                        {notesCount}
+                        {stats.active}
                       </Typography>
                     </div>
                   </div>
@@ -373,20 +353,20 @@ export function SessionsLogModal({
                 color="muted"
                 type="body-xs"
               >
-                Log of all recorded Pomodoro focus sessions.
+                Log of all tasks including completed and archived items.
               </Typography>
             </div>
 
-            {/* Right Panel: Scrollable Session Records List */}
+            {/* Right Panel: Scrollable Task Records List */}
             <ScrollShadow
               className="flex-1 min-h-0 h-full overflow-y-auto p-6 sm:p-7 bg-background/40"
               orientation="vertical"
               size={24}
             >
-              {filteredSessions.length === 0 ? (
+              {filteredTodos.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center py-12 text-center text-muted">
                   <div className="size-12 rounded-2xl bg-surface-secondary flex items-center justify-center mb-3">
-                    <History className="size-6 text-muted/60" />
+                    <CheckSquare className="size-6 text-muted/60" />
                   </div>
                   <Typography
                     className="text-foreground"
@@ -394,8 +374,8 @@ export function SessionsLogModal({
                     weight="semibold"
                   >
                     {searchQuery
-                      ? "No matching sessions found"
-                      : "No sessions recorded yet"}
+                      ? "No matching tasks found"
+                      : "No tasks recorded yet"}
                   </Typography>
                   <Typography
                     className="mt-1 max-w-xs opacity-70"
@@ -403,62 +383,98 @@ export function SessionsLogModal({
                     type="body-xs"
                   >
                     {searchQuery
-                      ? "Try searching for a different keyword."
-                      : "Complete your first focus session to see it logged here."}
+                      ? "Try searching for a different keyword or tag."
+                      : "Add tasks in your To-Do list to see them logged here."}
                   </Typography>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {visibleSessions.map((s) => {
-                    const { date, time } = formatSessionDateTime(s.createdAt);
-                    const totalMins =
-                      (Number(s.focusMinutes) || 0) +
-                      (Number(s.overtimeMinutes) || 0);
-                    const cycleCount = s.cyclesCompleted ?? s.sprintsCompleted;
+                  {visibleTodos.map((t) => {
+                    const tagObj = PRESET_TAGS.find(
+                      (p) => p.id === t.tag || p.label === t.tag,
+                    );
+                    const tagColor =
+                      tagObj?.color ||
+                      "text-muted bg-surface-secondary border-separator/40";
 
                     return (
                       <div
-                        key={s.id}
+                        key={t.id}
                         className="group relative flex flex-col gap-2 p-3.5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all select-none"
                       >
-                        {/* Top Row: Title, Date & Time, Duration Pill + Delete Action */}
+                        {/* Top Row: Title, Badges, Actions */}
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex flex-col min-w-0">
-                            <Typography
-                              truncate
-                              className="text-xs sm:text-sm text-foreground"
-                              type="body-sm"
-                              weight="semibold"
-                            >
-                              {s.title || "Focus Session"}
-                            </Typography>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Typography
+                                truncate
+                                className={`text-xs sm:text-sm ${
+                                  t.completed
+                                    ? "line-through text-muted"
+                                    : "text-foreground"
+                                }`}
+                                type="body-sm"
+                                weight="semibold"
+                              >
+                                {t.title}
+                              </Typography>
+
+                              {t.completed && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                  <CheckCircle2 className="size-2.5" />
+                                  <span>Done</span>
+                                </span>
+                              )}
+
+                              {t.archived && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                                  <Archive className="size-2.5" />
+                                  <span>Archived</span>
+                                </span>
+                              )}
+                            </div>
+
                             <div className="flex items-center gap-2.5 text-[11px] text-muted font-light mt-0.5">
                               <span className="flex items-center gap-1">
-                                <Calendar className="size-3 text-accent" />
-                                <span>{date}</span>
+                                <Calendar className="size-3 text-muted" />
+                                <span>
+                                  Created {formatDateTime(t.createdAt)}
+                                </span>
                               </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="size-3 text-muted" />
-                                <span>{time}</span>
-                              </span>
+                              {t.dueDate && (
+                                <span className="flex items-center gap-1 text-accent">
+                                  <span>Due: {t.dueDate}</span>
+                                </span>
+                              )}
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="px-2.5 py-1 rounded-full bg-accent/15 border border-accent/30 text-xs font-semibold text-accent tabular-nums">
-                              {formatMinutesDisplay(totalMins)}
-                            </span>
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            {t.archived && (
+                              <Button
+                                isIconOnly
+                                aria-label="Restore task"
+                                className="size-7 rounded-xl text-muted hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
+                                size="sm"
+                                variant="ghost"
+                                onPress={() => handleRestoreTodo(t.id)}
+                              >
+                                <RotateCcw className="size-3.5" />
+                              </Button>
+                            )}
+
                             <Button
                               isIconOnly
-                              aria-label="Delete session (Hold Shift to skip confirmation)"
+                              aria-label="Permanently delete task (Hold Shift to skip confirmation)"
                               className={`size-7 rounded-xl transition-colors cursor-pointer ${
-                                confirmDeleteId === s.id
+                                confirmDeleteId === t.id
                                   ? "text-danger bg-danger/15"
                                   : "text-muted hover:text-danger hover:bg-danger/10"
                               }`}
                               size="sm"
                               variant="ghost"
-                              onClick={(e) => triggerDelete(s.id, e)}
+                              onClick={(e) => triggerDelete(t.id, e)}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -466,17 +482,17 @@ export function SessionsLogModal({
                         </div>
 
                         {/* Confirmation Banner */}
-                        {confirmDeleteId === s.id && (
+                        {confirmDeleteId === t.id && (
                           <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-danger/10 border border-danger/25 text-xs animate-in fade-in zoom-in-95">
                             <span className="text-[11px] text-danger font-medium">
-                              Delete this focus session?
+                              Permanently delete this task?
                             </span>
                             <div className="flex items-center gap-1.5 shrink-0">
                               <Button
                                 className="h-6 px-2.5 text-[11px] font-semibold rounded-lg bg-danger text-danger-foreground hover:bg-danger/90 cursor-pointer"
                                 size="sm"
                                 variant="primary"
-                                onPress={() => handleDeleteSession(s.id)}
+                                onPress={() => handlePermanentDelete(t.id)}
                               >
                                 Delete
                               </Button>
@@ -492,53 +508,42 @@ export function SessionsLogModal({
                           </div>
                         )}
 
-                        {/* Sub-details row: Cycles, Overtime, Tag */}
+                        {/* Metadata row: Priority & Tag */}
                         <div className="flex items-center gap-2 flex-wrap text-[11px] pt-0.5">
-                          {cycleCount !== undefined && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-secondary text-muted border border-separator/30">
-                              <Target className="size-3 text-purple-400" />
-                              <span>
-                                {cycleCount}{" "}
-                                {cycleCount === 1 ? "cycle" : "cycles"}
-                              </span>
+                          {t.priority && t.priority !== "none" && (
+                            <span
+                              className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${
+                                t.priority === "high"
+                                  ? "text-rose-400 bg-rose-500/10 border-rose-500/30"
+                                  : t.priority === "medium"
+                                    ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
+                                    : "text-blue-400 bg-blue-500/10 border-blue-500/30"
+                              }`}
+                            >
+                              <Flag className="size-2.5" />
+                              <span className="capitalize">{t.priority}</span>
                             </span>
                           )}
 
-                          {s.overtimeMinutes !== undefined &&
-                            s.overtimeMinutes > 0 && (
-                              <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                <Zap className="size-3" />
-                                <span>
-                                  +{formatMinutesDisplay(s.overtimeMinutes)}{" "}
-                                  overtime
-                                </span>
-                              </span>
-                            )}
-
-                          {s.tag && (
+                          {t.tag && (
                             <span
-                              className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${
-                                PRESET_TAGS.find(
-                                  (p) => p.id === s.tag || p.label === s.tag,
-                                )?.color ||
-                                "text-muted bg-surface-secondary border-separator/40"
-                              }`}
+                              className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${tagColor}`}
                             >
                               <Tag className="size-2.5" />
-                              <span className="capitalize">{s.tag}</span>
+                              <span>{t.tag}</span>
                             </span>
                           )}
                         </div>
 
                         {/* Optional Notes */}
-                        {s.notes && (
+                        {t.notes && (
                           <div className="flex items-start gap-1.5 p-2 rounded-xl bg-surface-secondary/50 border border-separator/20 text-xs text-foreground/80 mt-1">
                             <FileText className="size-3.5 text-muted shrink-0 mt-0.5" />
                             <Typography
                               className="leading-relaxed whitespace-pre-wrap"
                               type="body-xs"
                             >
-                              {s.notes}
+                              {t.notes}
                             </Typography>
                           </div>
                         )}

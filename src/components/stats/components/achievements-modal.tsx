@@ -1,17 +1,9 @@
 import { useState, useMemo } from "react";
 import { Modal, ProgressBar, Tabs, Typography } from "@heroui/react";
-import {
-  Trophy,
-  CheckCircle2,
-  Lock,
-  Zap,
-  Flame,
-  Shield,
-  Layers,
-  Crown,
-} from "lucide-react";
+import { Trophy, CheckCircle2, Lock, HelpCircle, Shield } from "lucide-react";
 
 import { Milestone } from "../types";
+import { ACHIEVEMENT_CATEGORY_TABS, getRankFromXp } from "../achievements";
 
 interface AchievementsModalProps {
   isOpen: boolean;
@@ -19,13 +11,14 @@ interface AchievementsModalProps {
   milestones: Milestone[];
 }
 
-const CATEGORY_TABS = [
-  { id: "all", label: "All", icon: Trophy },
-  { id: "focus", label: "Focus", icon: Zap },
-  { id: "consistency", label: "Streaks", icon: Flame },
-  { id: "tasks", label: "Tasks", icon: Layers },
-  { id: "mastery", label: "Mastery", icon: Crown },
-] as const;
+function formatUnlockDate(dateStr?: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+
+  return isNaN(d.getTime())
+    ? dateStr
+    : new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(d);
+}
 
 export function AchievementsModal({
   isOpen,
@@ -59,44 +52,7 @@ export function AchievementsModal({
   );
 
   // Compute rank title based on total XP
-  const rank = useMemo(() => {
-    if (totalXp >= 6000)
-      return {
-        title: "Zen Grandmaster",
-        level: 6,
-        color: "text-amber-400 border-amber-500/40 bg-amber-500/15",
-      };
-    if (totalXp >= 4000)
-      return {
-        title: "Deep Flow Knight",
-        level: 5,
-        color: "text-purple-400 border-purple-500/40 bg-purple-500/15",
-      };
-    if (totalXp >= 2500)
-      return {
-        title: "Focus Champion",
-        level: 4,
-        color: "text-cyan-400 border-cyan-500/40 bg-cyan-500/15",
-      };
-    if (totalXp >= 1200)
-      return {
-        title: "Habit Builder",
-        level: 3,
-        color: "text-emerald-400 border-emerald-500/40 bg-emerald-500/15",
-      };
-    if (totalXp >= 400)
-      return {
-        title: "Flow Apprentice",
-        level: 2,
-        color: "text-blue-400 border-blue-500/40 bg-blue-500/15",
-      };
-
-    return {
-      title: "Focus Explorer",
-      level: 1,
-      color: "text-muted border-separator bg-surface-secondary",
-    };
-  }, [totalXp]);
+  const rank = useMemo(() => getRankFromXp(totalXp), [totalXp]);
 
   const filteredMilestones = useMemo(() => {
     return milestones.filter((m) => {
@@ -138,7 +94,7 @@ export function AchievementsModal({
                         Achievements & Trophies
                       </Typography>
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex flex-wrap items-center gap-2 mt-0.5">
                       <span
                         className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${rank.color}`}
                       >
@@ -154,27 +110,6 @@ export function AchievementsModal({
                       </Typography>
                     </div>
                   </div>
-                </div>
-
-                {/* Unlocked Count Badge */}
-                <div className="hidden sm:flex flex-col items-end shrink-0">
-                  <Typography className="text-xs" color="muted" type="body-xs">
-                    Completed
-                  </Typography>
-                  <Typography
-                    className="text-lg font-serif text-foreground tabular-nums"
-                    type="h3"
-                    weight="bold"
-                  >
-                    {unlockedCount}{" "}
-                    <Typography
-                      className="text-xs inline font-normal"
-                      color="muted"
-                      type="body-xs"
-                    >
-                      / {totalCount}
-                    </Typography>
-                  </Typography>
                 </div>
               </div>
 
@@ -210,17 +145,22 @@ export function AchievementsModal({
                   aria-label="Achievement Categories"
                   className="rounded-full bg-surface-secondary/70 p-0.5 border border-separator/40 text-xs"
                 >
-                  {CATEGORY_TABS.map((tab) => {
+                  {ACHIEVEMENT_CATEGORY_TABS.map((tab) => {
                     const Icon = tab.icon;
+                    const isSelected = activeCategory === tab.id;
 
                     return (
                       <Tabs.Tab
                         key={tab.id}
-                        className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
+                        className="h-6.5 sm:h-7 px-1 sm:px-2 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1 sm:gap-1.5 transition-all"
                         id={tab.id}
                       >
-                        <Icon className="size-3.5" />
-                        <span>{tab.label}</span>
+                        <Icon className="size-3.5 shrink-0" />
+                        <span
+                          className={isSelected ? "inline" : "hidden sm:inline"}
+                        >
+                          {tab.label}
+                        </span>
                         <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
                       </Tabs.Tab>
                     );
@@ -242,7 +182,7 @@ export function AchievementsModal({
                   className="rounded-full bg-surface-secondary/70 p-0.5 border border-separator/40 text-xs"
                 >
                   <Tabs.Tab
-                    className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
+                    className="h-6.5 sm:h-7 px-1 sm:px-2 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
                     id="all"
                   >
                     All
@@ -282,7 +222,18 @@ export function AchievementsModal({
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-2">
                 {filteredMilestones.map((m) => {
-                  const Icon = m.icon;
+                  const isSecretLocked = Boolean(m.isSecret && !m.unlocked);
+                  const displayTitle = isSecretLocked
+                    ? m.lockedTitle || "Secret Achievement"
+                    : m.title;
+                  const displayDescription = isSecretLocked
+                    ? m.lockedDescription ||
+                      "A mysterious secret lies hidden here. Complete the unknown feat to uncover it."
+                    : m.description;
+                  const DisplayIcon = isSecretLocked
+                    ? m.lockedIcon || HelpCircle
+                    : m.icon;
+
                   const percent =
                     m.maxProgress > 0
                       ? Math.min(
@@ -297,21 +248,23 @@ export function AchievementsModal({
                       className={`relative flex flex-col justify-between p-3.5 rounded-2xl transition-all duration-200 ${
                         m.unlocked
                           ? `bg-surface border-2 ${m.borderHighlight}`
-                          : "bg-surface-secondary/40 border border-separator/30 opacity-75"
+                          : isSecretLocked
+                            ? "bg-surface-secondary/25 border border-dashed border-separator/40 opacity-70"
+                            : "bg-surface-secondary/40 border border-separator/30 opacity-75"
                       }`}
                     >
                       {/* Card Top: Icon, Title, Tier & XP */}
                       <div className="flex items-start justify-between gap-2.5 mb-2 relative z-10">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className={`size-9 rounded-xl border flex items-center justify-center shrink-0 shadow-2xs ${
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <DisplayIcon
+                            className={`size-5 sm:size-5.5 shrink-0 transition-colors ${
                               m.unlocked
                                 ? m.badgeColor
-                                : "bg-surface text-muted/50 border-separator/40"
+                                : isSecretLocked
+                                  ? "text-muted/60"
+                                  : "text-muted/40"
                             }`}
-                          >
-                            <Icon className="size-4.5" />
-                          </div>
+                          />
 
                           <div className="flex flex-col min-w-0">
                             <Typography
@@ -320,7 +273,7 @@ export function AchievementsModal({
                               type="body-sm"
                               weight="bold"
                             >
-                              {m.title}
+                              {displayTitle}
                             </Typography>
                             <Typography
                               className="text-[10px] capitalize"
@@ -346,7 +299,9 @@ export function AchievementsModal({
                           ) : (
                             <span className="flex items-center gap-1 text-[10px] text-muted/70">
                               <Lock className="size-3" />
-                              <span>Locked</span>
+                              <span>
+                                {isSecretLocked ? "Hidden" : "Locked"}
+                              </span>
                             </span>
                           )}
                         </div>
@@ -358,7 +313,7 @@ export function AchievementsModal({
                         color="muted"
                         type="body-xs"
                       >
-                        {m.description}
+                        {displayDescription}
                       </Typography>
 
                       {/* Progress Bar (If in progress or locked) */}
@@ -369,7 +324,11 @@ export function AchievementsModal({
                             color="muted"
                             type="body-xs"
                           >
-                            {m.unlocked ? "Mastered" : "Progress"}
+                            {m.unlocked
+                              ? m.unlockedAt
+                                ? `Unlocked ${formatUnlockDate(m.unlockedAt)}`
+                                : "Mastered"
+                              : "Progress"}
                           </Typography>
                           <Typography
                             className="text-[10px] text-foreground tabular-nums"
