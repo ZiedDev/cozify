@@ -22,6 +22,8 @@ export function BreakModal({
   onSelectBreak,
   onSkipBreak,
 }: BreakModalProps) {
+  if (!isOpen) return null;
+
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
@@ -47,7 +49,7 @@ export function BreakModal({
             <div className="space-y-2 pt-1">
               {/* Short Break */}
               <button
-                className="w-full p-3 rounded-2xl bg-surface-secondary/70 hover:bg-accent/10 border border-separator/60 hover:border-accent/40 text-left transition-all flex items-center justify-between group cursor-pointer"
+                className="w-full p-3 rounded-2xl bg-surface-secondary/70 hover:bg-accent/10 border border-separator/60 hover:border-accent/40 text-left transition-colors flex items-center justify-between group cursor-pointer"
                 type="button"
                 onClick={() => {
                   onOpenChange(false);
@@ -88,7 +90,7 @@ export function BreakModal({
 
               {/* Long Break */}
               <button
-                className="w-full p-3 rounded-2xl bg-surface-secondary/70 hover:bg-accent/10 border border-separator/60 hover:border-accent/40 text-left transition-all flex items-center justify-between group cursor-pointer"
+                className="w-full p-3 rounded-2xl bg-surface-secondary/70 hover:bg-accent/10 border border-separator/60 hover:border-accent/40 text-left transition-colors flex items-center justify-between group cursor-pointer"
                 type="button"
                 onClick={() => {
                   onOpenChange(false);
@@ -129,7 +131,7 @@ export function BreakModal({
 
               {/* Skip Break Option - only active when current cycle is completed */}
               <button
-                className={`w-full p-3 rounded-2xl border text-left transition-all flex items-center justify-between group ${
+                className={`w-full p-3 rounded-2xl border text-left transition-colors flex items-center justify-between group ${
                   isCycleCompleted
                     ? "bg-surface-secondary/70 hover:bg-accent/10 border-separator/60 hover:border-accent/40 cursor-pointer"
                     : "bg-surface-secondary/30 border-separator/30 opacity-45 cursor-not-allowed"

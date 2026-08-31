@@ -157,6 +157,8 @@ export function SaveProgressModal({
     startNewSession();
   };
 
+  if (!isOpen) return null;
+
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
@@ -198,7 +200,7 @@ export function SaveProgressModal({
               </Label>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
-                  className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                     !tag
                       ? "bg-accent text-accent-foreground border-accent font-semibold"
                       : "bg-surface-secondary/40 text-muted border-separator/30 hover:text-foreground"
@@ -211,7 +213,7 @@ export function SaveProgressModal({
                 {PRESET_TAGS.map((t) => (
                   <button
                     key={t.id}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                       tag === t.id
                         ? "bg-accent/20 text-accent border-accent font-semibold"
                         : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground"

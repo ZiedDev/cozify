@@ -43,7 +43,7 @@ export function TodoHeader() {
           {/* HeroUI SearchField */}
           <SearchField
             aria-label="Search tasks"
-            className="w-28 xs:w-36 md:w-44 transition-all"
+            className="w-28 xs:w-36 md:w-44"
             value={searchQuery}
             onChange={(val) => setSearchQuery(val)}
           >
@@ -68,7 +68,7 @@ export function TodoHeader() {
                 className="rounded-full bg-surface/90 p-0.5 border border-separator/40 text-xs"
               >
                 <Tabs.Tab
-                  className="h-7 px-2 md:px-3 rounded-full text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
+                  className="h-7 px-2 md:px-3 rounded-full text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-colors"
                   id="minimal"
                 >
                   {({ isSelected }) => (
@@ -90,7 +90,7 @@ export function TodoHeader() {
                   )}
                 </Tabs.Tab>
                 <Tabs.Tab
-                  className="h-7 px-2 md:px-3 rounded-full text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
+                  className="h-7 px-2 md:px-3 rounded-full text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-colors"
                   id="detailed"
                 >
                   {({ isSelected }) => (
@@ -176,7 +176,7 @@ export function TodoHeader() {
               return (
                 <button
                   key={t.id}
-                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-all shrink-0 cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors shrink-0 cursor-pointer ${
                     isSelected
                       ? "bg-accent text-accent-foreground border-accent shadow-2xs font-semibold"
                       : "bg-surface/60 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"

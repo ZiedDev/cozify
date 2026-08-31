@@ -15,6 +15,8 @@ export function InterruptAlert({
 }: InterruptAlertProps) {
   const isOpen = confirmation !== null;
 
+  if (!isOpen || !confirmation) return null;
+
   return (
     <AlertDialog.Backdrop
       isOpen={isOpen}

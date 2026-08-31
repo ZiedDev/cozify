@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   Modal,
-  Input,
+  TextField,
+  InputGroup,
   ScrollShadow,
   Separator,
-  InputGroup,
   Typography,
   Button,
 } from "@heroui/react";
@@ -18,6 +18,9 @@ import {
   Target,
   Trash2,
   Tag,
+  Edit3,
+  Check,
+  X,
 } from "lucide-react";
 
 import {
@@ -46,6 +49,14 @@ export function SessionsLogModal({
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
 
+  // Edit state
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editFocusMinutes, setEditFocusMinutes] = useState<number>(25);
+  const [editOvertimeMinutes, setEditOvertimeMinutes] = useState<number>(0);
+  const [editTag, setEditTag] = useState<string | undefined>(undefined);
+  const [editNotes, setEditNotes] = useState<string>("");
+
   useEffect(() => {
     if (isOpen) {
       setSessions(
@@ -56,6 +67,7 @@ export function SessionsLogModal({
       );
       setVisibleCount(PAGE_SIZE);
       setFilterMode("all");
+      setEditingSessionId(null);
     }
   }, [isOpen]);
 
@@ -71,6 +83,7 @@ export function SessionsLogModal({
     setSessions(next);
     storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
     setConfirmDeleteId(null);
+    if (editingSessionId === id) setEditingSessionId(null);
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
   };
@@ -80,7 +93,39 @@ export function SessionsLogModal({
       handleDeleteSession(id);
     } else {
       setConfirmDeleteId((prev) => (prev === id ? null : id));
+      if (editingSessionId === id) setEditingSessionId(null);
     }
+  };
+
+  const handleStartEdit = (s: SessionRecord) => {
+    setEditingSessionId(s.id);
+    setEditTitle(s.title || "Focus Session");
+    setEditFocusMinutes(s.focusMinutes ?? 25);
+    setEditOvertimeMinutes(s.overtimeMinutes ?? 0);
+    setEditTag(s.tag);
+    setEditNotes(s.notes ?? "");
+    setConfirmDeleteId(null);
+  };
+
+  const handleSaveEdit = (id: string) => {
+    const next = sessions.map((s) => {
+      if (s.id !== id) return s;
+
+      return {
+        ...s,
+        title: editTitle.trim() || "Focus Session",
+        focusMinutes: Math.max(1, editFocusMinutes),
+        overtimeMinutes: Math.max(0, editOvertimeMinutes),
+        tag: editTag || undefined,
+        notes: editNotes.trim() || undefined,
+      };
+    });
+
+    setSessions(next);
+    storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
+    setEditingSessionId(null);
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
   };
 
   const filteredSessions = useMemo(() => {
@@ -155,14 +200,16 @@ export function SessionsLogModal({
     }
   };
 
+  if (!isOpen) return null;
+
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container size="lg">
-        <Modal.Dialog className="sm:max-w-195 md:max-w-210 w-full h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-3xl border border-border/50">
+        <Modal.Dialog className="max-sm:mt-0! sm:max-w-195 md:max-w-210 w-full h-[85vh] sm:h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-separator/50 bg-surface shadow-2xl">
           <Modal.CloseTrigger />
 
           {/* Modal Header */}
-          <Modal.Header className="px-6 py-4 gap-2.5">
+          <Modal.Header className="px-5 sm:px-6 py-3.5 sm:py-4 gap-2.5">
             <Modal.Icon>
               <History className="size-5 text-accent" />
             </Modal.Icon>
@@ -173,13 +220,13 @@ export function SessionsLogModal({
 
           <Separator />
 
-          {/* Modal Body: Matching 2-Column Split Structure */}
+          {/* Modal Body: Responsive 2-Column Split Structure */}
           <Modal.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
             {/* Left Sidebar: Search & Summary Stats */}
-            <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-border/40 p-4 bg-surface-secondary/40 shrink-0 flex flex-col justify-between gap-4">
-              <div className="flex flex-col gap-3.5">
-                {/* Search Bar */}
-                <div className="flex flex-col gap-1.5">
+            <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-separator/40 p-3 sm:p-4 bg-surface-secondary/40 shrink-0 flex flex-col gap-3">
+              <div className="flex flex-col gap-3">
+                {/* Search Bar with HeroUI InputGroup */}
+                <div className="flex flex-col gap-1.5 w-full">
                   <Typography
                     className="text-[11px] uppercase tracking-wider"
                     color="muted"
@@ -188,17 +235,19 @@ export function SessionsLogModal({
                   >
                     Search
                   </Typography>
-                  <InputGroup fullWidth>
-                    <InputGroup.Prefix>
-                      <Search className="size-3.5 text-muted" />
-                    </InputGroup.Prefix>
-                    <Input
-                      className="text-xs bg-surface"
-                      placeholder="Filter title or notes..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </InputGroup>
+                  <TextField fullWidth aria-label="Search focus sessions">
+                    <InputGroup fullWidth className="bg-surface border border-separator/40 rounded-xl h-8">
+                      <InputGroup.Prefix className="pl-2.5 pr-1 text-muted">
+                        <Search className="size-3.5" />
+                      </InputGroup.Prefix>
+                      <InputGroup.Input
+                        className="text-xs"
+                        placeholder="Filter title or notes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </InputGroup>
+                  </TextField>
                 </div>
 
                 <Separator />
@@ -214,9 +263,9 @@ export function SessionsLogModal({
                     Summary
                   </Typography>
 
-                  <div className="flex flex-col gap-1.5 text-xs">
+                  <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 text-xs">
                     <div
-                      className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer select-none ${
+                      className={`flex items-center justify-between p-2 rounded-xl border transition-colors cursor-pointer select-none ${
                         filterMode === "all"
                           ? "bg-accent/15 border-accent/50 text-foreground shadow-2xs"
                           : "bg-surface/70 border-separator/30 hover:bg-surface hover:border-separator/60 text-muted"
@@ -245,7 +294,7 @@ export function SessionsLogModal({
                     </div>
 
                     <div
-                      className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer select-none ${
+                      className={`flex items-center justify-between p-2 rounded-xl border transition-colors cursor-pointer select-none ${
                         filterMode === "cycles"
                           ? "bg-purple-500/15 border-purple-500/50 shadow-2xs"
                           : "bg-surface/70 border-separator/30 hover:bg-surface hover:border-separator/60"
@@ -273,7 +322,7 @@ export function SessionsLogModal({
                         }
                         type="body-xs"
                       >
-                        Multi-Cycle (2+)
+                        Multi-Cycle
                       </Typography>
                       <Typography
                         className="text-purple-400 tabular-nums"
@@ -285,7 +334,7 @@ export function SessionsLogModal({
                     </div>
 
                     <div
-                      className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer select-none ${
+                      className={`flex items-center justify-between p-2 rounded-xl border transition-colors cursor-pointer select-none ${
                         filterMode === "overtime"
                           ? "bg-amber-500/15 border-amber-500/50 shadow-2xs"
                           : "bg-surface/70 border-separator/30 hover:bg-surface hover:border-separator/60"
@@ -325,7 +374,7 @@ export function SessionsLogModal({
                     </div>
 
                     <div
-                      className={`flex items-center justify-between p-2 rounded-xl border transition-all cursor-pointer select-none ${
+                      className={`flex items-center justify-between p-2 rounded-xl border transition-colors cursor-pointer select-none ${
                         filterMode === "notes"
                           ? "bg-blue-500/15 border-blue-500/50 shadow-2xs"
                           : "bg-surface/70 border-separator/30 hover:bg-surface hover:border-separator/60"
@@ -366,35 +415,25 @@ export function SessionsLogModal({
                   </div>
                 </div>
               </div>
-
-              {/* Footer note */}
-              <Typography
-                className="px-1 text-[11px] opacity-70"
-                color="muted"
-                type="body-xs"
-              >
-                Log of all recorded Pomodoro focus sessions.
-              </Typography>
             </div>
 
-            {/* Right Panel: Scrollable Session Records List */}
+            {/* Right Column: Scrollable Sessions Feed */}
             <ScrollShadow
-              className="flex-1 min-h-0 h-full overflow-y-auto p-6 sm:p-7 bg-background/40"
+              className="flex-1 min-h-0 h-full overflow-y-auto p-4 sm:p-5 bg-background/30"
               orientation="vertical"
-              size={24}
+              size={20}
             >
               {filteredSessions.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center py-12 text-center text-muted">
-                  <div className="size-12 rounded-2xl bg-surface-secondary flex items-center justify-center mb-3">
-                    <History className="size-6 text-muted/60" />
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 select-none">
+                  <div className="size-12 rounded-2xl bg-surface-secondary/70 border border-separator/40 flex items-center justify-center text-muted mb-3">
+                    <History className="size-6 opacity-60" />
                   </div>
                   <Typography
-                    className="text-foreground"
+                    className="font-medium text-foreground"
                     type="body-sm"
-                    weight="semibold"
                   >
                     {searchQuery
-                      ? "No matching sessions found"
+                      ? "No sessions match your search"
                       : "No sessions recorded yet"}
                   </Typography>
                   <Typography
@@ -415,13 +454,153 @@ export function SessionsLogModal({
                       (Number(s.focusMinutes) || 0) +
                       (Number(s.overtimeMinutes) || 0);
                     const cycleCount = s.cyclesCompleted ?? s.sprintsCompleted;
+                    const isEditing = editingSessionId === s.id;
+
+                    if (isEditing) {
+                      return (
+                        <div
+                          key={s.id}
+                          className="flex flex-col gap-3 p-3.5 rounded-2xl bg-surface border border-accent/60 shadow-sm animate-in fade-in"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-accent flex items-center gap-1.5">
+                              <Edit3 className="size-3.5" />
+                              Edit Session Record
+                            </span>
+                            <span className="text-[11px] text-muted font-light">
+                              {date} · {time}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {/* Title */}
+                            <div className="sm:col-span-1 flex flex-col gap-1">
+                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                                Title
+                              </label>
+                              <input
+                                className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
+                                value={editTitle}
+                                onChange={(e) => setEditTitle(e.target.value)}
+                              />
+                            </div>
+
+                            {/* Focus Minutes */}
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                                Focus (Mins)
+                              </label>
+                              <input
+                                className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
+                                min={1}
+                                type="number"
+                                value={editFocusMinutes}
+                                onChange={(e) =>
+                                  setEditFocusMinutes(
+                                    Math.max(1, Number(e.target.value) || 1),
+                                  )
+                                }
+                              />
+                            </div>
+
+                            {/* Overtime Minutes */}
+                            <div className="flex flex-col gap-1">
+                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                                Overtime (Mins)
+                              </label>
+                              <input
+                                className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
+                                min={0}
+                                type="number"
+                                value={editOvertimeMinutes}
+                                onChange={(e) =>
+                                  setEditOvertimeMinutes(
+                                    Math.max(0, Number(e.target.value) || 0),
+                                  )
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          {/* Tag selector */}
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                              Tag
+                            </label>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <button
+                                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
+                                  !editTag
+                                    ? "bg-accent/15 border-accent text-accent"
+                                    : "bg-surface-secondary border-separator/40 text-muted"
+                                }`}
+                                type="button"
+                                onClick={() => setEditTag(undefined)}
+                              >
+                                None
+                              </button>
+                              {PRESET_TAGS.map((t) => (
+                                <button
+                                  key={t.id}
+                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
+                                    editTag === t.id
+                                      ? "bg-accent/15 border-accent text-accent"
+                                      : "bg-surface-secondary border-separator/40 text-muted"
+                                  }`}
+                                  type="button"
+                                  onClick={() => setEditTag(t.id)}
+                                >
+                                  {t.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Notes */}
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                              Notes
+                            </label>
+                            <textarea
+                              className="w-full p-2 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent resize-none"
+                              placeholder="Session notes or reflections..."
+                              rows={2}
+                              value={editNotes}
+                              onChange={(e) => setEditNotes(e.target.value)}
+                            />
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center justify-end gap-2 pt-1 border-t border-separator/30">
+                            <Button
+                              className="h-7 px-3 text-xs rounded-lg"
+                              size="sm"
+                              variant="ghost"
+                              onPress={() => setEditingSessionId(null)}
+                            >
+                              <X className="size-3.5 mr-1" />
+                              Cancel
+                            </Button>
+                            <Button
+                              className="h-7 px-3 text-xs rounded-lg bg-accent text-accent-foreground"
+                              size="sm"
+                              variant="primary"
+                              onPress={() => handleSaveEdit(s.id)}
+                            >
+                              <Check className="size-3.5 mr-1" />
+                              Save Changes
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    }
 
                     return (
                       <div
                         key={s.id}
-                        className="group relative flex flex-col gap-2 p-3.5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all select-none"
+                        className="group relative flex flex-col gap-2 p-3.5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors select-none"
                       >
-                        {/* Top Row: Title, Date & Time, Duration Pill + Delete Action */}
+                        {/* Top Row: Title, Date & Time, Duration Pill + Actions */}
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex flex-col min-w-0">
                             <Typography
@@ -444,17 +623,27 @@ export function SessionsLogModal({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="px-2.5 py-1 rounded-full bg-accent/15 border border-accent/30 text-xs font-semibold text-accent tabular-nums">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="px-2.5 py-1 rounded-full bg-accent/15 border border-accent/30 text-xs font-semibold text-accent tabular-nums mr-1">
                               {formatMinutesDisplay(totalMins)}
                             </span>
+                            <Button
+                              isIconOnly
+                              aria-label="Edit session"
+                              className="size-7 rounded-xl text-muted hover:text-foreground hover:bg-surface-secondary transition-colors cursor-pointer"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleStartEdit(s)}
+                            >
+                              <Edit3 className="size-3.5" />
+                            </Button>
                             <Button
                               isIconOnly
                               aria-label="Delete session (Hold Shift to skip confirmation)"
                               className={`size-7 rounded-xl transition-colors cursor-pointer ${
                                 confirmDeleteId === s.id
-                                  ? "text-danger bg-danger/15"
-                                  : "text-muted hover:text-danger hover:bg-danger/10"
+                                    ? "text-danger bg-danger/15"
+                                    : "text-muted hover:text-danger hover:bg-danger/10"
                               }`}
                               size="sm"
                               variant="ghost"
@@ -550,7 +739,7 @@ export function SessionsLogModal({
                   {hasMore && (
                     <div className="flex justify-center pt-2 pb-3">
                       <Button
-                        className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-all cursor-pointer shadow-xs"
+                        className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-colors cursor-pointer shadow-xs"
                         size="sm"
                         variant="secondary"
                         onPress={() =>

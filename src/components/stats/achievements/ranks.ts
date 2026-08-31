@@ -1,30 +1,30 @@
 export const ACHIEVEMENT_RANKS = [
   {
-    minXp: 6000,
+    minXp: 10000,
     level: 6,
     title: "Zen Grandmaster",
     color: "text-amber-400 border-amber-500/40 bg-amber-500/15",
   },
   {
-    minXp: 4000,
+    minXp: 7500,
     level: 5,
     title: "Deep Flow Knight",
     color: "text-purple-400 border-purple-500/40 bg-purple-500/15",
   },
   {
-    minXp: 2500,
+    minXp: 5000,
     level: 4,
     title: "Focus Champion",
     color: "text-cyan-400 border-cyan-500/40 bg-cyan-500/15",
   },
   {
-    minXp: 1200,
+    minXp: 2500,
     level: 3,
     title: "Habit Builder",
     color: "text-emerald-400 border-emerald-500/40 bg-emerald-500/15",
   },
   {
-    minXp: 500,
+    minXp: 1000,
     level: 2,
     title: "Flow Apprentice",
     color: "text-blue-400 border-blue-500/40 bg-blue-500/15",

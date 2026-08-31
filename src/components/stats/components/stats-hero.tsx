@@ -43,7 +43,7 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 sm:p-5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all w-full select-none">
+    <div className="flex flex-col gap-3 p-4 sm:p-5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full select-none">
       {/* Top Row: Hero Focus Metric & Context */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex flex-col">

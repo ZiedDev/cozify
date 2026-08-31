@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Tabs, Typography } from "@heroui/react";
+import { Typography } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -20,65 +20,65 @@ export default function IndexPage() {
       <SidebarLeft activeMode={activeMode} />
       <Sidebar activeMode={activeMode} />
 
-      <Tabs
-        className="flex flex-col flex-1 items-center justify-between w-full h-full min-h-0 overflow-hidden"
-        selectedKey={activeMode}
-        onSelectionChange={(k) => setActiveMode(k as AppMode)}
-      >
-        <Dock />
+      <Dock activeMode={activeMode} onSelectMode={setActiveMode} />
 
-        <section className="flex flex-col items-center justify-center flex-1 w-full h-full py-1 min-h-0 overflow-hidden">
-          <div className="w-full h-full flex flex-col items-center justify-center flex-1 min-h-0 overflow-hidden">
-            <Tabs.Panel
-              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 animate-in fade-in duration-150"
-              id="home"
-            >
-              <Clock />
-            </Tabs.Panel>
-
-            <Tabs.Panel
-              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 animate-in fade-in duration-150"
-              id="pomodoro"
-            >
-              <Timer />
-            </Tabs.Panel>
-
-            <Tabs.Panel
-              className="w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden animate-in fade-in duration-150"
-              id="todo"
-            >
-              <TodoPage />
-            </Tabs.Panel>
-
-            <Tabs.Panel
-              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden animate-in fade-in duration-150"
-              id="cozy"
-            >
-              <CozyView />
-            </Tabs.Panel>
-
-            <Tabs.Panel
-              className="w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden animate-in fade-in duration-150"
-              id="stats"
-            >
-              <StatsPage />
-            </Tabs.Panel>
-
-            <Tabs.Panel
-              className="flex items-center justify-center animate-in fade-in duration-150"
-              id="music"
-            >
-              <Typography
-                className="font-light capitalize"
-                color="muted"
-                type="h4"
-              >
-                Music mode coming up next...
-              </Typography>
-            </Tabs.Panel>
+      <section className="flex flex-col items-center justify-center flex-1 w-full h-full py-1 min-h-0 overflow-hidden">
+        <div className="w-full h-full flex flex-col items-center justify-center flex-1 min-h-0 overflow-hidden">
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 ${
+              activeMode === "home" ? "" : "hidden"
+            }`}
+          >
+            <Clock />
           </div>
-        </section>
-      </Tabs>
+
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 ${
+              activeMode === "pomodoro" ? "" : "hidden"
+            }`}
+          >
+            <Timer />
+          </div>
+
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden ${
+              activeMode === "todo" ? "" : "hidden"
+            }`}
+          >
+            <TodoPage />
+          </div>
+
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden ${
+              activeMode === "cozy" ? "" : "hidden"
+            }`}
+          >
+            <CozyView />
+          </div>
+
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden ${
+              activeMode === "stats" ? "" : "hidden"
+            }`}
+          >
+            <StatsPage />
+          </div>
+
+          <div
+            className={`flex items-center justify-center ${
+              activeMode === "music" ? "" : "hidden"
+            }`}
+          >
+            <Typography
+              className="font-light capitalize"
+              color="muted"
+              type="h4"
+            >
+              Music mode coming up next...
+            </Typography>
+          </div>
+        </div>
+      </section>
     </DefaultLayout>
   );
 }

@@ -97,7 +97,7 @@ export function CycleTracker({
               <Tooltip.Trigger>
                 <button
                   aria-label={`Cycle ${cycleNumber}: ${Math.round(cyclePercent)}%`}
-                  className={`flex items-center cursor-pointer transition-all duration-200 focus-visible:outline-none rounded-full p-0.5 ${
+                  className={`flex items-center cursor-pointer transition-[opacity,transform] duration-200 focus-visible:outline-none rounded-full p-0.5 ${
                     isCurrent
                       ? "ring-2 ring-accent ring-offset-2 ring-offset-background scale-105"
                       : "hover:opacity-80"
@@ -122,7 +122,7 @@ export function CycleTracker({
                       }`}
                     >
                       <ProgressBar.Fill
-                        className={`rounded-full transition-all duration-300 ${
+                        className={`rounded-full transition-[width,background-color] duration-300 ${
                           isCurrent
                             ? "bg-accent shadow-sm"
                             : isCompleted

@@ -103,19 +103,9 @@ export function DataTab({ onOpenSessionsLog, onOpenTasksLog }: DataTabProps) {
   };
 
   const handleResetAll = () => {
-    resetAllCozifyData();
-    toast("All Data Cleared", {
-      description: "Local data has been reset to defaults. Refreshing...",
-      variant: "default",
-      timeout: 2000,
-    });
-
     setIsResetConfirming(false);
-    refreshStats();
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
+    resetAllCozifyData();
+    window.location.reload();
   };
 
   return (
@@ -204,7 +194,7 @@ export function DataTab({ onOpenSessionsLog, onOpenTasksLog }: DataTabProps) {
 
       {/* Focus Sessions Log Inspection Card */}
       <Card className="border border-border/50 bg-surface/40">
-        <Card.Header className="pb-2 flex flex-row items-center justify-between">
+        <Card.Header className="pb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <History className="size-4 text-blue-400" />
@@ -219,7 +209,7 @@ export function DataTab({ onOpenSessionsLog, onOpenTasksLog }: DataTabProps) {
           </div>
 
           <Button
-            className="flex items-center gap-1.5 font-medium shrink-0 ml-3 cursor-pointer"
+            className="flex items-center justify-center gap-1.5 font-medium shrink-0 w-full sm:w-auto cursor-pointer"
             size="sm"
             variant="secondary"
             onPress={() => onOpenSessionsLog?.()}
@@ -232,7 +222,7 @@ export function DataTab({ onOpenSessionsLog, onOpenTasksLog }: DataTabProps) {
 
       {/* Tasks & Archive Log Inspection Card */}
       <Card className="border border-border/50 bg-surface/40">
-        <Card.Header className="pb-2 flex flex-row items-center justify-between">
+        <Card.Header className="pb-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
               <CheckSquare className="size-4 text-emerald-400" />
@@ -247,7 +237,7 @@ export function DataTab({ onOpenSessionsLog, onOpenTasksLog }: DataTabProps) {
           </div>
 
           <Button
-            className="flex items-center gap-1.5 font-medium shrink-0 ml-3 cursor-pointer"
+            className="flex items-center justify-center gap-1.5 font-medium shrink-0 w-full sm:w-auto cursor-pointer"
             size="sm"
             variant="secondary"
             onPress={() => onOpenTasksLog?.()}

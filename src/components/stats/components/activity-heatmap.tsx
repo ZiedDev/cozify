@@ -188,7 +188,7 @@ export function ActivityHeatmap({
   }, [visibleWeeks]);
 
   return (
-    <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all w-full select-none">
+    <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full select-none">
       {/* Header: Clean Modern Sans-Serif Typography & Segmented Pill Switcher */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex flex-col">
@@ -221,14 +221,14 @@ export function ActivityHeatmap({
               className="rounded-full bg-surface/80 p-0.5 sm:p-1 border-separator/30 text-xs"
             >
               <Tabs.Tab
-                className="h-6.5 sm:h-7 px-2.5 sm:px-3 whitespace-nowrap rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 whitespace-nowrap rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-colors"
                 id="6m"
               >
                 6 Months
                 <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
               </Tabs.Tab>
               <Tabs.Tab
-                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-all"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-colors"
                 id="12m"
               >
                 1 Year
@@ -251,28 +251,31 @@ export function ActivityHeatmap({
             }`}
           >
             {/* Day Labels Column: Aligned strictly to 7 grid rows */}
-            <div className="grid grid-rows-7 gap-1 pt-4.5 text-[9px] font-sans text-muted/70 font-medium pr-0.5 select-none shrink-0 w-5">
-              <span className="flex items-center justify-end leading-none opacity-0">
-                Sun
-              </span>
-              <span className="flex items-center justify-end leading-none">
-                Mon
-              </span>
-              <span className="flex items-center justify-end leading-none opacity-0">
-                Tue
-              </span>
-              <span className="flex items-center justify-end leading-none">
-                Wed
-              </span>
-              <span className="flex items-center justify-end leading-none opacity-0">
-                Thu
-              </span>
-              <span className="flex items-center justify-end leading-none">
-                Fri
-              </span>
-              <span className="flex items-center justify-end leading-none opacity-0">
-                Sat
-              </span>
+            <div className="flex flex-col gap-1 select-none shrink-0 w-5">
+              <div className="h-4 pointer-events-none" />
+              <div className="grid grid-rows-7 gap-1 text-[9px] font-sans text-muted/70 font-medium pr-0.5">
+                <span className="aspect-square flex items-center justify-end leading-none opacity-0">
+                  Sun
+                </span>
+                <span className="aspect-square flex items-center justify-end leading-none">
+                  Mon
+                </span>
+                <span className="aspect-square flex items-center justify-end leading-none opacity-0">
+                  Tue
+                </span>
+                <span className="aspect-square flex items-center justify-end leading-none">
+                  Wed
+                </span>
+                <span className="aspect-square flex items-center justify-end leading-none opacity-0">
+                  Thu
+                </span>
+                <span className="aspect-square flex items-center justify-end leading-none">
+                  Fri
+                </span>
+                <span className="aspect-square flex items-center justify-end leading-none opacity-0">
+                  Sat
+                </span>
+              </div>
             </div>
 
             {/* Grid Area: Month Headers + 7 Rows of Weeks */}

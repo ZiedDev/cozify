@@ -87,7 +87,7 @@ export function TaskAnalytics({
                 value={p.percentage}
               >
                 <ProgressBar.Track className="h-1 bg-surface-secondary rounded-full overflow-hidden border border-separator/30">
-                  <ProgressBar.Fill className="bg-accent rounded-full transition-all duration-300 shadow-2xs" />
+                  <ProgressBar.Fill className="bg-accent rounded-full transition-[width] duration-300 shadow-2xs" />
                 </ProgressBar.Track>
               </ProgressBar>
             </div>
@@ -196,7 +196,7 @@ export function TaskAnalytics({
                   >
                     <ProgressBar.Track className="h-1 bg-surface-secondary rounded-full overflow-hidden border border-separator/30">
                       <ProgressBar.Fill
-                        className="rounded-full transition-all duration-300 shadow-2xs"
+                        className="rounded-full transition-[width] duration-300 shadow-2xs"
                         style={{ backgroundColor: tag.color }}
                       />
                     </ProgressBar.Track>
@@ -219,7 +219,7 @@ export function TaskAnalytics({
   );
 
   return (
-    <div className="p-3 sm:p-3.5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all w-full h-full flex flex-col justify-between select-none">
+    <div className="p-3 sm:p-3.5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full h-full flex flex-col justify-between select-none">
       <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-separator/30">
         <Tabs
           selectedKey={activeSubTab}
@@ -231,7 +231,7 @@ export function TaskAnalytics({
               className="rounded-full bg-surface-secondary/70 p-0.5 border border-separator/40 text-xs"
             >
               <Tabs.Tab
-                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-colors"
                 id="priorities"
               >
                 <Flag className="size-3 shrink-0" />
@@ -239,7 +239,7 @@ export function TaskAnalytics({
                 <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
               </Tabs.Tab>
               <Tabs.Tab
-                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-all"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer flex items-center gap-1.5 transition-colors"
                 id="categories"
               >
                 <Tag className="size-3 shrink-0" />

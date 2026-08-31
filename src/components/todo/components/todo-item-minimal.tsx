@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Tooltip, Typography } from "@heroui/react";
-import { Archive, Edit3, Check, GripVertical } from "lucide-react";
+import { Archive, Edit3, Check, GripVertical, Trash2 } from "lucide-react";
 
 import { TodoItem, PRIORITY_CONFIG } from "../types";
 
@@ -11,6 +11,7 @@ export interface TodoItemMinimalProps {
   index?: number;
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
+  onDelete: (todo: TodoItem) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
   onDragOver: (e: React.DragEvent, id: string) => void;
   onDragEnd: () => void;
@@ -21,6 +22,7 @@ export function TodoItemMinimal({
   todo,
   isDragging = false,
   onEdit,
+  onDelete,
   onDragStart,
   onDragOver,
   onDragEnd,
@@ -33,7 +35,7 @@ export function TodoItemMinimal({
   return (
     <div
       draggable
-      className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 md:py-2.5 rounded-xl border transition-all duration-150 select-none ${
+      className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 md:py-2.5 rounded-xl border transition-[background-color,border-color,opacity,transform] duration-150 select-none ${
         isDragging
           ? "opacity-25 bg-transparent border-dashed border-accent/70 scale-[0.98] shadow-none"
           : todo.completed
@@ -61,7 +63,7 @@ export function TodoItemMinimal({
             ? `Mark "${todo.title}" as active`
             : `Mark "${todo.title}" as completed`
         }
-        className={`size-4.5 md:size-5 rounded-full border-2 transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
+        className={`size-4.5 md:size-5 rounded-full border-2 transition-[background-color,border-color,transform] duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
           todo.completed
             ? "bg-accent border-accent text-accent-foreground shadow-xs scale-95"
             : "border-muted/50 hover:border-accent hover:scale-110 bg-surface"
@@ -83,7 +85,7 @@ export function TodoItemMinimal({
       {/* Task Title (Clicking toggles complete) */}
       <Typography
         truncate
-        className={`text-xs md:text-sm transition-all text-left flex-1 min-w-0 cursor-pointer ${
+        className={`text-xs md:text-sm transition-colors text-left flex-1 min-w-0 cursor-pointer ${
           todo.completed
             ? "line-through text-muted"
             : "text-foreground font-medium"
@@ -139,6 +141,25 @@ export function TodoItemMinimal({
           </Tooltip.Trigger>
           <Tooltip.Content className="text-xs px-2 py-1 rounded-lg bg-surface text-foreground border border-separator shadow-md">
             Archive
+          </Tooltip.Content>
+        </Tooltip>
+
+        {/* Delete Button */}
+        <Tooltip delay={300}>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              aria-label="Delete task permanently"
+              className="size-7 rounded-lg text-muted/60 hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer"
+              size="sm"
+              variant="ghost"
+              onPress={() => onDelete(todo)}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="text-xs px-2 py-1 rounded-lg bg-surface text-foreground border border-separator shadow-md">
+            Delete Permanently
           </Tooltip.Content>
         </Tooltip>
       </div>

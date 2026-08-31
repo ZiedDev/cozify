@@ -63,6 +63,8 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
     onClose();
   };
 
+  if (!isOpen || !todo) return null;
+
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Modal.Container>
@@ -112,7 +114,7 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
                   (p) => (
                     <button
                       key={p}
-                      className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                      className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                         priority === p
                           ? "bg-accent/20 border-accent text-accent font-semibold shadow-xs"
                           : "bg-surface-secondary/40 border-separator/30 text-muted hover:text-foreground"
@@ -232,7 +234,7 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
               </Label>
               <div className="flex items-center gap-1.5 flex-wrap">
                 <button
-                  className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                     !tag
                       ? "bg-accent text-accent-foreground border-accent font-semibold"
                       : "bg-surface-secondary/40 text-muted border-separator/30 hover:text-foreground"
@@ -245,7 +247,7 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
                 {PRESET_TAGS.map((t) => (
                   <button
                     key={t.id}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-all cursor-pointer ${
+                    className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                       tag === t.id
                         ? "bg-accent/20 text-accent border-accent font-semibold"
                         : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground"

@@ -52,7 +52,7 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all w-full select-none">
+    <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full select-none">
       {/* Header with Title and Range Subtitle */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
@@ -161,7 +161,7 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
             />
           )}
           <BarChart.Bar
-            className="fill-accent/85 transition-all duration-200 cursor-pointer"
+            className="fill-accent/85 transition-[fill,opacity] duration-200 cursor-pointer"
             dataKey="focusMinutes"
             hoverClassName="fill-accent"
             radius={4}

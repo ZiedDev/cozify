@@ -62,7 +62,7 @@ export function SidebarTodoWidget({
             return (
               <button
                 key={todo.id}
-                className="group w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 shadow-2xs transition-all duration-150 cursor-pointer select-none text-left"
+                className="group w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 shadow-2xs transition-colors duration-150 cursor-pointer select-none text-left"
                 title="Click to complete task"
                 type="button"
                 onClick={() => toggleTodo(todo.id)}
@@ -70,7 +70,7 @@ export function SidebarTodoWidget({
                 {/* Tactile Circular Check Button */}
                 <span
                   aria-label={`Mark "${todo.title}" as complete`}
-                  className="size-3.5 md:size-4 rounded-full border-2 border-muted/50 group-hover:border-accent group-hover:scale-110 bg-surface/50 transition-all duration-150 flex items-center justify-center cursor-pointer shrink-0"
+                  className="size-3.5 md:size-4 rounded-full border-2 border-muted/50 group-hover:border-accent group-hover:scale-110 bg-surface/50 transition-[border-color,transform] duration-150 flex items-center justify-center cursor-pointer shrink-0"
                 >
                   <Check className="size-2 md:size-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />
                 </span>

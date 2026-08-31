@@ -5,7 +5,13 @@ import React, {
   useEffect,
   useMemo,
 } from "react";
-import { ScrollShadow, Separator, Typography, Button } from "@heroui/react";
+import {
+  AlertDialog,
+  ScrollShadow,
+  Separator,
+  Typography,
+  Button,
+} from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { CheckCircle2, Coffee, Search } from "lucide-react";
@@ -33,8 +39,10 @@ export function TodoList() {
     searchQuery,
     selectedTag,
     moveTodoToPosition,
+    permanentlyDeleteTodo,
   } = useTodos();
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
+  const [deletingTodo, setDeletingTodo] = useState<TodoItem | null>(null);
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
 
   // Reset pagination when filter, search, or tag changes
@@ -294,7 +302,7 @@ export function TodoList() {
               return (
                 <div
                   key={todo.id}
-                  className={`todo-item-row w-full flex flex-col gap-1 transition-all duration-150 ${
+                  className={`todo-item-row w-full flex flex-col gap-1 transition-[opacity,transform] duration-150 ${
                     isThisDragging
                       ? "opacity-25 pointer-events-none scale-[0.99]"
                       : "opacity-100"
@@ -315,6 +323,7 @@ export function TodoList() {
                       index={idx}
                       isDragging={draggedId === todo.id}
                       todo={todo}
+                      onDelete={setDeletingTodo}
                       onDragEnd={handleDragEnd}
                       onDragOver={handleItemDragOver}
                       onDragStart={handleDragStart}
@@ -326,6 +335,7 @@ export function TodoList() {
                       index={idx}
                       isDragging={draggedId === todo.id}
                       todo={todo}
+                      onDelete={setDeletingTodo}
                       onDragEnd={handleDragEnd}
                       onDragOver={handleItemDragOver}
                       onDragStart={handleDragStart}
@@ -348,7 +358,7 @@ export function TodoList() {
             {hasMore && (
               <div className="flex justify-center pt-2 pb-3">
                 <Button
-                  className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-all cursor-pointer shadow-xs"
+                  className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-colors cursor-pointer shadow-xs"
                   size="sm"
                   variant="secondary"
                   onPress={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
@@ -367,6 +377,60 @@ export function TodoList() {
         todo={editingTodo}
         onClose={() => setEditingTodo(null)}
       />
+
+      {/* Permanent Delete Confirmation Dialog */}
+      {deletingTodo && (
+        <AlertDialog.Backdrop
+          isOpen={Boolean(deletingTodo)}
+          onOpenChange={(open) => !open && setDeletingTodo(null)}
+        >
+          <AlertDialog.Container>
+            <AlertDialog.Dialog className="sm:max-w-md">
+              <AlertDialog.CloseTrigger />
+              <AlertDialog.Header>
+                <AlertDialog.Icon status="danger" />
+                <AlertDialog.Heading>
+                  Permanently Delete Task?
+                </AlertDialog.Heading>
+              </AlertDialog.Header>
+              <AlertDialog.Body>
+                <Typography
+                  className="leading-relaxed"
+                  color="muted"
+                  type="body-sm"
+                >
+                  Are you sure you want to permanently delete{" "}
+                  <strong className="text-foreground">
+                    &quot;{deletingTodo.title}&quot;
+                  </strong>
+                  ? This action cannot be undone and will affect your task
+                  completion statistics.
+                </Typography>
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button
+                  slot="close"
+                  variant="tertiary"
+                  onPress={() => setDeletingTodo(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="danger"
+                  onPress={() => {
+                    if (deletingTodo) {
+                      permanentlyDeleteTodo(deletingTodo.id);
+                      setDeletingTodo(null);
+                    }
+                  }}
+                >
+                  Delete Task
+                </Button>
+              </AlertDialog.Footer>
+            </AlertDialog.Dialog>
+          </AlertDialog.Container>
+        </AlertDialog.Backdrop>
+      )}
     </div>
   );
 }

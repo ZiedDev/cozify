@@ -302,14 +302,11 @@ export function importBackupFromJson(jsonString: string): ImportResult {
 }
 
 /**
- * Resets all Cozify data in localStorage
+ * Resets all Cozify data by clearing localStorage entirely
  */
 export function resetAllCozifyData(): void {
   try {
-    Object.values(STORAGE_KEYS).forEach((key) => {
-      localStorage.removeItem(key);
-    });
-    localStorage.removeItem("heroui-theme");
+    storageAdapter.clear();
   } catch {
     // Storage access issue fallback
   }

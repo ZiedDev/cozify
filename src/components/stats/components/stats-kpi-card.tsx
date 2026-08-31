@@ -13,7 +13,7 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
   switch (type) {
     case "kpi_focus_time":
       return (
-        <div className="flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all duration-200 select-none h-full">
+        <div className="flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors duration-200 select-none h-full">
           <div>
             <div className="flex items-center justify-between gap-1.5 mb-2">
               <div className="flex items-center gap-2">
@@ -81,7 +81,7 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
     case "kpi_pomodoros":
       return (
-        <div className="flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all duration-200 select-none h-full">
+        <div className="flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors duration-200 select-none h-full">
           <div>
             <div className="flex items-center justify-between gap-1.5 mb-2">
               <div className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
               value={stats.cycleCompletionRate}
             >
               <ProgressBar.Track className="h-1.5 bg-surface-secondary rounded-full overflow-hidden border border-separator/30">
-                <ProgressBar.Fill className="bg-purple-500 rounded-full transition-all duration-300 shadow-2xs" />
+                <ProgressBar.Fill className="bg-purple-500 rounded-full transition-[width] duration-300 shadow-2xs" />
               </ProgressBar.Track>
             </ProgressBar>
             <div className="flex items-center justify-between text-[10px]">
@@ -146,7 +146,7 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
     case "kpi_streaks":
       return (
-        <div className="flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all duration-200 select-none h-full">
+        <div className="flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors duration-200 select-none h-full">
           <div>
             <div className="flex items-center justify-between gap-1.5 mb-2">
               <div className="flex items-center gap-2">
@@ -215,7 +215,7 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
 
     case "kpi_tasks":
       return (
-        <div className="flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-all duration-200 select-none h-full">
+        <div className="flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors duration-200 select-none h-full">
           <div>
             <div className="flex items-center justify-between gap-1.5 mb-2">
               <div className="flex items-center gap-2">
@@ -261,7 +261,7 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
               value={stats.taskCompletionRate}
             >
               <ProgressBar.Track className="h-1.5 bg-surface-secondary rounded-full overflow-hidden border border-separator/30">
-                <ProgressBar.Fill className="bg-emerald-500 rounded-full transition-all duration-300 shadow-2xs" />
+                <ProgressBar.Fill className="bg-emerald-500 rounded-full transition-[width] duration-300 shadow-2xs" />
               </ProgressBar.Track>
             </ProgressBar>
             <div className="flex items-center justify-between text-[10px]">

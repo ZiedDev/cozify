@@ -32,7 +32,7 @@ export function StatsPage() {
   const hasData = sessions.length > 0 || todos.some((t) => t.completed);
 
   return (
-    <div className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden transition-all select-none">
+    <div className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden select-none">
       {/* Header with Title, Subtitle, Range Tabs, Custom Date Picker, and Achievements */}
       <div className="shrink-0 w-full">
         <StatsHeader

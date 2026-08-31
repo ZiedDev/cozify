@@ -350,7 +350,7 @@ export interface BarChartBarProps {
 export function BarChartBar({
   dataKey,
   radius = 4,
-  className = "fill-accent/85 transition-all duration-200 cursor-pointer",
+  className = "fill-accent/85 transition-[fill,opacity] duration-200 cursor-pointer",
   hoverClassName = "fill-accent",
 }: BarChartBarProps) {
   const {
@@ -519,7 +519,7 @@ function BarChartTooltipRenderer() {
 
   return (
     <div
-      className="absolute z-50 pointer-events-none transition-all duration-75 ease-out"
+      className="absolute z-50 pointer-events-none transition-[left,top,transform] duration-75 ease-out"
       style={{
         left: `${mousePosition.percentX}%`,
         top: `${topPos}px`,

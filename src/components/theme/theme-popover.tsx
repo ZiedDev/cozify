@@ -166,7 +166,7 @@ export function ThemePopover() {
                 className="rounded-full bg-surface-secondary/70 p-0.5 sm:p-1 border-separator/30 text-xs"
               >
                 <Tabs.Tab
-                  className="h-7 px-3 rounded-full text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition-all"
+                  className="h-7 px-3 rounded-full text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
                   id="gallery"
                 >
                   <ImageIcon className="size-3.5" />
@@ -175,7 +175,7 @@ export function ThemePopover() {
                 </Tabs.Tab>
 
                 <Tabs.Tab
-                  className="h-7 px-3 rounded-full text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition-all"
+                  className="h-7 px-3 rounded-full text-xs font-medium cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
                   id="adjust"
                 >
                   <Sliders className="size-3.5" />
@@ -261,7 +261,7 @@ export function ThemePopover() {
                 <ScrollShadow className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto p-2">
                   {/* Clean Slate Minimal Option */}
                   <button
-                    className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-all border cursor-pointer overflow-hidden ${
+                    className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-colors border cursor-pointer overflow-hidden ${
                       activeBackground === null
                         ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 bg-surface"
                         : "border-separator/80 hover:border-muted bg-surface-secondary/70"
@@ -284,7 +284,7 @@ export function ThemePopover() {
                     return (
                       <button
                         key={bg.id}
-                        className={`group relative rounded-xl aspect-[16/11] p-2 text-left flex flex-col justify-between transition-all border cursor-pointer overflow-hidden bg-cover bg-center ${
+                        className={`group relative rounded-xl aspect-[16/11] p-2 text-left flex flex-col justify-between transition-[border-color,transform] border cursor-pointer overflow-hidden bg-cover bg-center ${
                           isSelected
                             ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
                             : "border-separator/80 hover:border-muted hover:scale-[1.02]"
@@ -312,7 +312,7 @@ export function ThemePopover() {
                     return (
                       <div
                         key={bg.id}
-                        className={`group relative rounded-xl aspect-[16/11] p-2 text-left flex flex-col justify-between transition-all border overflow-hidden bg-cover bg-center cursor-pointer ${
+                        className={`group relative rounded-xl aspect-[16/11] p-2 text-left flex flex-col justify-between transition-[border-color,transform] border overflow-hidden bg-cover bg-center cursor-pointer ${
                           isSelected
                             ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
                             : "border-separator/80 hover:border-muted hover:scale-[1.02]"
@@ -481,7 +481,7 @@ export function ThemePopover() {
                       return (
                         <button
                           key={preset.name}
-                          className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-all border flex items-center gap-1 cursor-pointer ${
+                          className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-[background-color,border-color,color,transform] border flex items-center gap-1 cursor-pointer ${
                             isSelected
                               ? "bg-surface text-foreground border-accent shadow-xs scale-105"
                               : "bg-surface-secondary/70 text-muted border-separator/60 hover:text-foreground hover:border-muted hover:scale-102"

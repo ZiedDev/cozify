@@ -7,15 +7,15 @@ export const SECRET_ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: "konami_code",
     title: "Konami Code",
-    description: "↑ ↑ ↓ ↓ ← → ← → B A — 30 Lives, Infinite Flow.",
+    description:
+      "Cheat code activated. You are now officially winning at wasting time.",
     category: "secret",
     tier: "diamond",
     xp: 3000,
     icon: Gamepad2,
     isSecret: true,
-    lockedTitle: "Classified Arcade Vault",
-    lockedDescription:
-      "A legendary sequence of 10 keystrokes unlocks infinite power.",
+    lockedTitle: "Secrete achievement",
+    lockedDescription: "Input sequence pending.",
     lockedIcon: HelpCircle,
     maxProgress: 1,
     badgeColor: "text-pink-400",

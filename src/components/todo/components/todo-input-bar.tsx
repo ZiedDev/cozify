@@ -58,7 +58,7 @@ export function TodoInputBar() {
 
   return (
     <form
-      className="flex flex-col gap-2.5 w-full rounded-2xl bg-surface p-2.5 md:p-3 border border-separator/40 shadow-sm transition-all focus-within:border-accent/60 shrink-0"
+      className="flex flex-col gap-2.5 w-full rounded-2xl bg-surface p-2.5 md:p-3 border border-separator/40 shadow-sm transition-colors focus-within:border-accent/60 shrink-0"
       onSubmit={handleAdd}
     >
       <div className="flex items-center gap-2 w-full">
@@ -83,7 +83,7 @@ export function TodoInputBar() {
         <Button
           isIconOnly
           aria-label="Add task"
-          className="size-8 md:size-9 rounded-xl bg-accent text-accent-foreground shrink-0 shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition-all"
+          className="size-8 md:size-9 rounded-xl bg-accent text-accent-foreground shrink-0 shadow-xs cursor-pointer hover:opacity-90 active:scale-95 transition-[opacity,transform]"
           isDisabled={!title.trim()}
           size="sm"
           type="submit"
@@ -99,7 +99,7 @@ export function TodoInputBar() {
           <Popover>
             <Popover.Trigger>
               <button
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
                   priority !== "none"
                     ? PRIORITY_CONFIG[priority].badgeClass
                     : "bg-surface-secondary/40 text-muted border-separator/30 hover:text-foreground hover:bg-surface-secondary/60"
@@ -144,7 +144,7 @@ export function TodoInputBar() {
           <Popover>
             <Popover.Trigger>
               <button
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
                   dueDate
                     ? "bg-accent/10 text-accent border-accent/30 font-semibold"
                     : "bg-surface-secondary/40 text-muted border-separator/30 hover:text-foreground hover:bg-surface-secondary/60"
@@ -249,7 +249,7 @@ export function TodoInputBar() {
           <Popover>
             <Popover.Trigger>
               <button
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all cursor-pointer ${
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
                   tag
                     ? "bg-accent/10 text-accent border-accent/30 font-semibold"
                     : "bg-surface-secondary/40 text-muted border-separator/30 hover:text-foreground hover:bg-surface-secondary/60"

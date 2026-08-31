@@ -163,7 +163,7 @@ export function StatsHeader({
 
           <Button
             aria-label="View achievements and trophies"
-            className="flex items-center px-2 md:px-2.5 py-0.5 h-6 md:h-7 rounded-full text-[11px] md:text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 gap-1.5 cursor-pointer transition-all hover:bg-amber-500/25 shadow-2xs"
+            className="flex items-center px-2 md:px-2.5 py-0.5 h-6 md:h-7 rounded-full text-[11px] md:text-xs font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 gap-1.5 cursor-pointer transition-colors hover:bg-amber-500/25 shadow-2xs"
             size="sm"
             variant="ghost"
             onPress={onOpenAchievements}
@@ -182,7 +182,7 @@ export function StatsHeader({
           {range === "custom" && customDateRange ? (
             <div
               ref={customTabRef}
-              className="h-6.5 md:h-7 pl-2.5 md:pl-3 pr-1.5 md:pr-2 rounded-full text-[11px] md:text-xs font-semibold bg-accent text-accent-foreground flex items-center gap-1.5 shadow-2xs cursor-pointer select-none transition-all"
+              className="h-6.5 md:h-7 pl-2.5 md:pl-3 pr-1.5 md:pr-2 rounded-full text-[11px] md:text-xs font-semibold bg-accent text-accent-foreground flex items-center gap-1.5 shadow-2xs cursor-pointer select-none transition-colors"
               role="button"
               tabIndex={0}
               onClick={() => setIsCalendarOpen(true)}
@@ -196,7 +196,7 @@ export function StatsHeader({
               <span>{customTabLabel}</span>
               <button
                 aria-label="Clear custom date range"
-                className="size-4 rounded-full flex items-center justify-center bg-black/10 hover:bg-black/25 dark:bg-white/15 dark:hover:bg-white/30 text-accent-foreground/90 hover:text-accent-foreground transition-all cursor-pointer ml-0.5"
+                className="size-4 rounded-full flex items-center justify-center bg-black/10 hover:bg-black/25 dark:bg-white/15 dark:hover:bg-white/30 text-accent-foreground/90 hover:text-accent-foreground transition-colors cursor-pointer ml-0.5"
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -222,7 +222,7 @@ export function StatsHeader({
                       <Tabs.Tab
                         key={item.id}
                         ref={isCustom ? customTabRef : undefined}
-                        className="h-6.5 md:h-7 px-2 md:px-3 rounded-full text-[11px] md:text-xs font-medium cursor-pointer transition-all flex items-center gap-1"
+                        className="h-6.5 md:h-7 px-2 md:px-3 rounded-full text-[11px] md:text-xs font-medium cursor-pointer transition-colors flex items-center gap-1"
                         id={item.id}
                         onClick={
                           isCustom

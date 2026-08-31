@@ -24,6 +24,14 @@ export const storageAdapter = {
       // Storage disabled
     }
   },
+
+  clear(): void {
+    try {
+      localStorage.clear();
+    } catch {
+      // Storage disabled
+    }
+  },
 };
 
 export const STORAGE_KEYS = {

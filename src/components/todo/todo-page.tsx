@@ -5,7 +5,7 @@ import { TodoStatsBar } from "./components/todo-stats-bar";
 
 export function TodoPage() {
   return (
-    <div className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden transition-all">
+    <div className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden">
       {/* Header & Quick Add anchored at top */}
       <div className="flex flex-col gap-3 w-full shrink-0">
         <TodoHeader />

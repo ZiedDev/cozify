@@ -11,6 +11,7 @@ import {
 import { Trophy, Star } from "lucide-react";
 
 import { Milestone } from "@/components/stats/types";
+import { TIER_CONFIG } from "@/components/stats/achievements/types";
 
 export interface AchievementToastContentValue {
   milestone: Milestone;
@@ -33,15 +34,16 @@ export function AchievementToastProvider() {
       {({ toast: toastItem }) => {
         const milestone = toastItem.content.milestone;
         const Icon = milestone.icon;
+        const tierConfig = TIER_CONFIG[milestone.tier] || TIER_CONFIG.bronze;
 
         return (
           <Toast
-            className={`border-2 ${milestone.borderHighlight}`}
+            className={`border-2 ${tierConfig.borderHighlight}`}
             toast={toastItem}
           >
             {/* Illuminated Icon Halo */}
             <div
-              className={`size-11 sm:size-12 rounded-xl bg-surface-secondary/90 border border-separator/40 flex items-center justify-center shrink-0 shadow-inner relative ${milestone.badgeColor}`}
+              className={`size-11 sm:size-12 rounded-xl bg-surface-secondary/90 border border-separator/40 flex items-center justify-center shrink-0 shadow-inner relative ${tierConfig.iconColor}`}
             >
               <Icon className="size-6 sm:size-6.5" />
               <span className="absolute -top-1 -right-1 flex items-center justify-center size-4.5 rounded-full bg-amber-400 text-black shadow-xs">
@@ -61,8 +63,10 @@ export function AchievementToastProvider() {
                     Achievement Unlocked!
                   </span>
                 </div>
-                <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded-full bg-surface-secondary border border-separator/40 text-muted">
-                  {milestone.tier}
+                <span
+                  className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded-md border ${tierConfig.badgeClass}`}
+                >
+                  {tierConfig.label}
                 </span>
               </div>
 

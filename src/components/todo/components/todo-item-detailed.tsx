@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Check,
   GripVertical,
+  Trash2,
 } from "lucide-react";
 
 import { TodoItem, PRIORITY_CONFIG, PRESET_TAGS } from "../types";
@@ -19,6 +20,7 @@ export interface TodoItemDetailedProps {
   index?: number;
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
+  onDelete: (todo: TodoItem) => void;
   onDragStart: (e: React.DragEvent, id: string) => void;
   onDragOver: (e: React.DragEvent, id: string) => void;
   onDragEnd: () => void;
@@ -29,6 +31,7 @@ export function TodoItemDetailed({
   todo,
   isDragging = false,
   onEdit,
+  onDelete,
   onDragStart,
   onDragOver,
   onDragEnd,
@@ -47,7 +50,7 @@ export function TodoItemDetailed({
   return (
     <div
       draggable
-      className={`group relative flex flex-col gap-2.5 p-3 md:p-3.5 rounded-2xl border transition-all duration-150 select-none ${
+      className={`group relative flex flex-col gap-2.5 p-3 md:p-3.5 rounded-2xl border transition-[background-color,border-color,opacity,transform] duration-150 select-none ${
         isDragging
           ? "opacity-25 bg-transparent border-dashed border-accent/70 scale-[0.98] shadow-none"
           : todo.completed
@@ -80,7 +83,7 @@ export function TodoItemDetailed({
                 ? `Mark "${todo.title}" as active`
                 : `Mark "${todo.title}" as completed`
             }
-            className={`size-5 md:size-5.5 rounded-full border-2 transition-all duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
+            className={`size-5 md:size-5.5 rounded-full border-2 transition-[background-color,border-color,transform] duration-200 flex items-center justify-center cursor-pointer shrink-0 ${
               todo.completed
                 ? "bg-accent border-accent text-accent-foreground shadow-xs scale-95"
                 : "border-muted/50 hover:border-accent hover:scale-110 bg-surface"
@@ -106,7 +109,7 @@ export function TodoItemDetailed({
         >
           <div className="flex items-center gap-2 flex-wrap">
             <Typography
-              className={`text-sm md:text-base leading-snug break-words transition-all ${
+              className={`text-sm md:text-base leading-snug break-words transition-colors ${
                 todo.completed
                   ? "line-through text-muted"
                   : "text-foreground font-medium"
@@ -179,6 +182,25 @@ export function TodoItemDetailed({
             </Tooltip.Trigger>
             <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-foreground border border-separator shadow-lg">
               Archive Task
+            </Tooltip.Content>
+          </Tooltip>
+
+          {/* Delete Button */}
+          <Tooltip delay={300}>
+            <Tooltip.Trigger>
+              <Button
+                isIconOnly
+                aria-label="Delete task permanently"
+                className="size-7 md:size-7.5 rounded-xl text-muted/60 hover:text-danger hover:bg-danger/10 transition-colors cursor-pointer"
+                size="sm"
+                variant="ghost"
+                onPress={() => onDelete(todo)}
+              >
+                <Trash2 className="size-3.5 md:size-4" />
+              </Button>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-foreground border border-separator shadow-lg">
+              Delete Permanently
             </Tooltip.Content>
           </Tooltip>
         </div>

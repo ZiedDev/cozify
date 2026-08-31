@@ -43,7 +43,7 @@ export function TodoStatsBar() {
           value={stats.percentage}
         >
           <ProgressBar.Track className="h-1 bg-surface-secondary/60 rounded-full overflow-hidden border border-separator/30">
-            <ProgressBar.Fill className="bg-accent rounded-full transition-all duration-300" />
+            <ProgressBar.Fill className="bg-accent rounded-full transition-[width] duration-300" />
           </ProgressBar.Track>
         </ProgressBar>
       </div>

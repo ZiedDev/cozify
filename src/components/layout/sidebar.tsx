@@ -47,7 +47,7 @@ export function SidebarClock({
           <div className="w-28 md:w-32 lg:w-36 mt-1.5 md:mt-2 pointer-events-auto cursor-pointer group">
             <ProgressBar aria-label="Day progress" value={dayPercent}>
               <ProgressBar.Track className="h-1 sm:h-1.5 bg-surface-secondary/90 rounded-full overflow-hidden border border-separator/40">
-                <ProgressBar.Fill className="bg-accent/85 group-hover:bg-accent rounded-full transition-all duration-300" />
+                <ProgressBar.Fill className="bg-accent/85 group-hover:bg-accent rounded-full transition-[width,background-color] duration-300" />
               </ProgressBar.Track>
             </ProgressBar>
           </div>

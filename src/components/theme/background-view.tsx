@@ -23,7 +23,7 @@ export function BackgroundView() {
     >
       {/* High Performance Background Image with bounded pan, shift & zoom */}
       <div
-        className="absolute inset-0 bg-cover bg-center transition-all duration-300 ease-out"
+        className="absolute inset-0 bg-cover bg-center transition-[transform,filter] duration-300 ease-out"
         style={{
           backgroundImage: `url(${activeBackground.url})`,
           transform: `scale(${effectiveScale}) translate3d(${panX}%, ${panY}%, 0)`,
