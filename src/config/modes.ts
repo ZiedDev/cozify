@@ -5,10 +5,9 @@ import {
   Music,
   BarChart2,
   LucideIcon,
-  Coffee,
 } from "lucide-react";
 
-export type AppMode = "home" | "pomodoro" | "cozy" | "todo" | "music" | "stats";
+export type AppMode = "home" | "pomodoro" | "todo" | "music" | "stats";
 
 export interface DockItem {
   id: AppMode;
@@ -18,7 +17,6 @@ export interface DockItem {
 
 export const DOCK_ITEMS: readonly DockItem[] = [
   { id: "home", label: "Home", icon: Home },
-  { id: "cozy", label: "Cozy", icon: Coffee },
   { id: "pomodoro", label: "Pomodoro", icon: TimerIcon },
   { id: "todo", label: "To-Do", icon: ListTodo },
   { id: "music", label: "Music", icon: Music },

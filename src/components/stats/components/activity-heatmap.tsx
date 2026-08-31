@@ -246,112 +246,109 @@ export function ActivityHeatmap({
           className="w-full overflow-x-auto scrollbar-thin pb-1"
         >
           <div
-            className={`flex items-start gap-1.5 w-full ${
+            className={`grid gap-1 w-full select-none items-center ${
               viewMode === "12m" ? "min-w-170" : "min-w-125"
             }`}
+            style={{
+              gridTemplateColumns: `auto repeat(${visibleWeeks.length}, minmax(0, 1fr))`,
+              gridTemplateRows: `auto repeat(7, minmax(0, 1fr))`,
+            }}
           >
-            {/* Day Labels Column: Aligned strictly to 7 grid rows */}
-            <div className="flex flex-col gap-1 select-none shrink-0 w-5">
-              <div className="h-4 pointer-events-none" />
-              <div className="grid grid-rows-7 gap-1 text-[9px] font-sans text-muted/70 font-medium pr-0.5">
-                <span className="aspect-square flex items-center justify-end leading-none opacity-0">
-                  Sun
-                </span>
-                <span className="aspect-square flex items-center justify-end leading-none">
-                  Mon
-                </span>
-                <span className="aspect-square flex items-center justify-end leading-none opacity-0">
-                  Tue
-                </span>
-                <span className="aspect-square flex items-center justify-end leading-none">
-                  Wed
-                </span>
-                <span className="aspect-square flex items-center justify-end leading-none opacity-0">
-                  Thu
-                </span>
-                <span className="aspect-square flex items-center justify-end leading-none">
-                  Fri
-                </span>
-                <span className="aspect-square flex items-center justify-end leading-none opacity-0">
-                  Sat
-                </span>
-              </div>
-            </div>
+            {/* Top-left empty spacer */}
+            <div
+              className="h-4 w-5 pointer-events-none"
+              style={{ gridRow: 1, gridColumn: 1 }}
+            />
 
-            {/* Grid Area: Month Headers + 7 Rows of Weeks */}
-            <div className="flex-1 flex flex-col gap-1 min-w-0">
-              {/* Month Header: Pinned to exact column indices */}
-              <div
-                className="grid gap-1 text-[10px] font-sans text-muted/85 font-medium h-4 relative"
+            {/* Month Header: Row 1, Columns 2..N */}
+            {monthHeaders.map((m) => (
+              <span
+                key={`${m.label}-${m.weekIndex}`}
+                className="text-[10px] font-sans text-muted/85 font-medium whitespace-nowrap pointer-events-none leading-none overflow-visible h-4 flex items-center"
                 style={{
-                  gridTemplateColumns: `repeat(${visibleWeeks.length}, minmax(0, 1fr))`,
+                  gridRow: 1,
+                  gridColumn: `${m.weekIndex + 2} / span 4`,
                 }}
               >
-                {monthHeaders.map((m) => (
-                  <span
-                    key={`${m.label}-${m.weekIndex}`}
-                    className="whitespace-nowrap pointer-events-none leading-none overflow-visible"
-                    style={{ gridColumn: `${m.weekIndex + 1} / span 4` }}
-                  >
-                    {m.label}
-                  </span>
-                ))}
-              </div>
+                {m.label}
+              </span>
+            ))}
 
-              {/* 7-Row x N-Column Matrix: Evenly distributed with ZERO gaps */}
-              <div
-                className="grid grid-rows-7 grid-flow-col gap-1 w-full"
+            {/* Day Labels Column: Rows 2..8, Column 1 */}
+            {[
+              { label: "Sun", show: false },
+              { label: "Mon", show: true },
+              { label: "Tue", show: false },
+              { label: "Wed", show: true },
+              { label: "Thu", show: false },
+              { label: "Fri", show: true },
+              { label: "Sat", show: false },
+            ].map((day, idx) => (
+              <span
+                key={day.label}
+                className={`text-[9px] font-sans text-muted/70 font-medium pr-1 flex items-center justify-end leading-none pointer-events-none ${
+                  day.show ? "" : "opacity-0"
+                }`}
                 style={{
-                  gridTemplateColumns: `repeat(${visibleWeeks.length}, minmax(0, 1fr))`,
+                  gridRow: idx + 2,
+                  gridColumn: 1,
                 }}
               >
-                {visibleWeeks.map((week, weekIdx) =>
-                  week.map((day, dayIdx) => {
-                    if (!day) {
-                      return (
-                        <div
-                          key={`${weekIdx}-${dayIdx}`}
-                          className="aspect-square w-full rounded-[2.5px] opacity-0 pointer-events-none"
-                        />
-                      );
-                    }
+                {day.label}
+              </span>
+            ))}
 
-                    const isSelected = selectedDay?.dateStr === day.dateStr;
-                    const tooltip = day.isFuture
-                      ? `${day.fullDateLabel} (Upcoming)`
-                      : day.focusMinutes > 0
-                        ? `${formatMinutesDisplay(day.focusMinutes)} of focus on ${day.fullDateLabel}`
-                        : `No focus activity on ${day.fullDateLabel}`;
+            {/* Heatmap Cells: Rows 2..8, Columns 2..N */}
+            {visibleWeeks.map((week, weekIdx) =>
+              week.map((day, dayIdx) => {
+                const row = dayIdx + 2;
+                const col = weekIdx + 2;
 
-                    return (
-                      <button
-                        key={day.dateStr}
-                        aria-label={tooltip}
-                        className={`w-full aspect-square rounded-[2.5px] border transition-transform duration-75 hover:scale-125 ${
-                          day.isFuture ? "cursor-default" : "cursor-pointer"
-                        } ${getContributionColor(day, isSelected)}`}
-                        type="button"
-                        onClick={() => {
-                          if (!day.isFuture) {
-                            setSelectedDay(isSelected ? null : day);
-                          }
-                        }}
-                        onMouseEnter={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
+                if (!day) {
+                  return (
+                    <div
+                      key={`${weekIdx}-${dayIdx}`}
+                      className="aspect-square w-full rounded-[2.5px] opacity-0 pointer-events-none"
+                      style={{ gridRow: row, gridColumn: col }}
+                    />
+                  );
+                }
 
-                          setHoveredDay({
-                            day,
-                            x: rect.left + rect.width / 2,
-                            y: rect.top,
-                          });
-                        }}
-                        onMouseLeave={() => setHoveredDay(null)}
-                      />
-                    );
-                  }),
-                )}
-              </div>
-            </div>
+                const isSelected = selectedDay?.dateStr === day.dateStr;
+                const tooltip = day.isFuture
+                  ? `${day.fullDateLabel} (Upcoming)`
+                  : day.focusMinutes > 0
+                    ? `${formatMinutesDisplay(day.focusMinutes)} of focus on ${day.fullDateLabel}`
+                    : `No focus activity on ${day.fullDateLabel}`;
+
+                return (
+                  <button
+                    key={day.dateStr}
+                    aria-label={tooltip}
+                    className={`w-full aspect-square rounded-[2.5px] border transition-transform duration-75 hover:scale-125 ${
+                      day.isFuture ? "cursor-default" : "cursor-pointer"
+                    } ${getContributionColor(day, isSelected)}`}
+                    style={{ gridRow: row, gridColumn: col }}
+                    type="button"
+                    onClick={() => {
+                      if (!day.isFuture) {
+                        setSelectedDay(isSelected ? null : day);
+                      }
+                    }}
+                    onMouseEnter={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+
+                      setHoveredDay({
+                        day,
+                        x: rect.left + rect.width / 2,
+                        y: rect.top,
+                      });
+                    }}
+                    onMouseLeave={() => setHoveredDay(null)}
+                  />
+                );
+              }),
+            )}
           </div>
         </div>
       </div>

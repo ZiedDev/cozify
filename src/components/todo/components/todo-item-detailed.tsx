@@ -109,7 +109,7 @@ export function TodoItemDetailed({
         >
           <div className="flex items-center gap-2 flex-wrap">
             <Typography
-              className={`text-sm md:text-base leading-snug break-words transition-colors ${
+              className={`text-sm md:text-base leading-snug wrap-break-word transition-colors ${
                 todo.completed
                   ? "line-through text-muted"
                   : "text-foreground font-medium"

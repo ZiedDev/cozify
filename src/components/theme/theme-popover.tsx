@@ -27,6 +27,8 @@ import {
   Move,
   RotateCcw,
   Image,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 import { useTheme } from "@/hooks/use-theme";
@@ -46,6 +48,7 @@ export function ThemePopover() {
     addCustomBackground,
     renameCustomBackground,
     removeCustomBackground,
+    moveCustomBackground,
     overlayOpacity,
     setOverlayOpacity,
     blur,
@@ -111,16 +114,16 @@ export function ThemePopover() {
         <Button
           isIconOnly
           aria-label="Wallpapers & Themes"
-          className="rounded-full text-muted hover:text-foreground"
-          size="sm"
+          className="size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 text-foreground transition-[background-color,border-color] duration-200 cursor-pointer shadow-2xs"
+          size="md"
           variant="ghost"
         >
-          <Palette className="size-5" />
+          <Palette className="size-4 md:size-5" />
         </Button>
       </Popover.Trigger>
 
       <Popover.Content
-        className="w-90 sm:w-105 p-4 rounded-3xl bg-surface/95 backdrop-blur-2xl border border-separator/80 shadow-2xl z-[90]"
+        className="w-90 sm:w-105 p-4 rounded-3xl bg-surface/95 backdrop-blur-2xl border border-separator/80 shadow-2xl z-90"
         placement="bottom start"
       >
         <Popover.Dialog className="space-y-3.5 outline-none">
@@ -284,7 +287,7 @@ export function ThemePopover() {
                     return (
                       <button
                         key={bg.id}
-                        className={`group relative rounded-xl aspect-[16/11] p-2 text-left flex flex-col justify-between transition-[border-color,transform] border cursor-pointer overflow-hidden bg-cover bg-center ${
+                        className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-[border-color,transform] border cursor-pointer overflow-hidden bg-cover bg-center ${
                           isSelected
                             ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
                             : "border-separator/80 hover:border-muted hover:scale-[1.02]"
@@ -293,7 +296,7 @@ export function ThemePopover() {
                         type="button"
                         onClick={() => selectBackground(bg)}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
                         <div className="relative z-10 flex items-center justify-between w-full">
                           <ImageIcon className="size-3 text-white/80" />
                         </div>
@@ -312,7 +315,7 @@ export function ThemePopover() {
                     return (
                       <div
                         key={bg.id}
-                        className={`group relative rounded-xl aspect-[16/11] p-2 text-left flex flex-col justify-between transition-[border-color,transform] border overflow-hidden bg-cover bg-center cursor-pointer ${
+                        className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-[border-color,transform] border overflow-hidden bg-cover bg-center cursor-pointer ${
                           isSelected
                             ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
                             : "border-separator/80 hover:border-muted hover:scale-[1.02]"
@@ -329,7 +332,7 @@ export function ThemePopover() {
                           }
                         }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
+                        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
 
                         <div className="relative z-10 flex items-center justify-between w-full">
                           <span className="text-[8px] px-1 py-0.5 rounded bg-black/60 text-white/90">
@@ -341,24 +344,68 @@ export function ThemePopover() {
                             role="presentation"
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
                           >
+                            {/* Move Left */}
+                            <Tooltip delay={150}>
+                              <Tooltip.Trigger>
+                                <button
+                                  aria-label="Move left"
+                                  className="size-4.5 rounded-full bg-black/70 hover:bg-surface text-white flex items-center justify-center cursor-pointer transition-colors"
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    moveCustomBackground(bg.id, "left");
+                                  }}
+                                >
+                                  <ChevronLeft className="size-2.5" />
+                                </button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
+                                Move Left
+                              </Tooltip.Content>
+                            </Tooltip>
+
+                            {/* Move Right */}
+                            <Tooltip delay={150}>
+                              <Tooltip.Trigger>
+                                <button
+                                  aria-label="Move right"
+                                  className="size-4.5 rounded-full bg-black/70 hover:bg-surface text-white flex items-center justify-center cursor-pointer transition-colors"
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    moveCustomBackground(bg.id, "right");
+                                  }}
+                                >
+                                  <ChevronRight className="size-2.5" />
+                                </button>
+                              </Tooltip.Trigger>
+                              <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
+                                Move Right
+                              </Tooltip.Content>
+                            </Tooltip>
+
                             {/* Rename toggle button */}
                             <Tooltip delay={150}>
                               <Tooltip.Trigger>
-                                <Button
-                                  isIconOnly
+                                <button
                                   aria-label={
                                     isEditing
                                       ? `Save ${bg.name}`
                                       : `Rename ${bg.name}`
                                   }
-                                  className={`size-4 min-w-0 p-0 rounded-full text-white opacity-80 group-hover:opacity-100 transition-opacity ${
+                                  className={`size-4.5 rounded-full text-white flex items-center justify-center cursor-pointer transition-colors ${
                                     isEditing
-                                      ? "bg-accent hover:bg-accent/80 text-accent-foreground"
-                                      : "bg-black/60 hover:bg-surface"
+                                      ? "bg-accent text-accent-foreground"
+                                      : "bg-black/70 hover:bg-surface"
                                   }`}
-                                  size="sm"
-                                  onPress={() => {
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
                                     if (isEditing) {
                                       handleSaveRename(bg.id);
                                     } else {
@@ -372,7 +419,7 @@ export function ThemePopover() {
                                   ) : (
                                     <Pencil className="size-2.5" />
                                   )}
-                                </Button>
+                                </button>
                               </Tooltip.Trigger>
                               <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
                                 {isEditing ? "Save Name" : "Rename"}
@@ -382,15 +429,18 @@ export function ThemePopover() {
                             {/* Delete button */}
                             <Tooltip delay={150}>
                               <Tooltip.Trigger>
-                                <Button
-                                  isIconOnly
+                                <button
                                   aria-label={`Delete ${bg.name}`}
-                                  className="size-4 min-w-0 p-0 rounded-full bg-black/60 hover:bg-danger text-white opacity-80 group-hover:opacity-100 transition-opacity"
-                                  size="sm"
-                                  onPress={() => removeCustomBackground(bg.id)}
+                                  className="size-4.5 rounded-full bg-black/70 hover:bg-danger text-white flex items-center justify-center cursor-pointer transition-colors"
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    removeCustomBackground(bg.id);
+                                  }}
                                 >
                                   <Trash2 className="size-2.5" />
-                                </Button>
+                                </button>
                               </Tooltip.Trigger>
                               <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
                                 Delete

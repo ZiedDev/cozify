@@ -71,7 +71,7 @@ export function TodoItemMinimal({
         type="button"
         onClick={() => toggleTodo(todo.id)}
       >
-        {todo.completed && <Check className="size-2.5 md:size-3 stroke-[3]" />}
+        {todo.completed && <Check className="size-2.5 md:size-3 stroke-3" />}
       </button>
 
       {/* Priority Indicator Dot */}

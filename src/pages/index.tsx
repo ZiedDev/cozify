@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Typography } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -8,8 +7,10 @@ import { Dock } from "@/components/layout/dock";
 import { Clock } from "@/components/home/clock";
 import { Timer } from "@/components/pomodoro/timer";
 import { TodoPage } from "@/components/todo/todo-page";
-import { CozyView } from "@/components/cozy/cozy-view";
 import { StatsPage } from "@/components/stats/stats-page";
+import { MusicView } from "@/components/music/music-view";
+import { MusicWidget } from "@/components/music/music-widget";
+import { PlaylistPickerModal } from "@/components/music/playlist-picker-modal";
 import { AppMode } from "@/config/modes";
 
 export default function IndexPage() {
@@ -21,6 +22,10 @@ export default function IndexPage() {
       <Sidebar activeMode={activeMode} />
 
       <Dock activeMode={activeMode} onSelectMode={setActiveMode} />
+
+      {/* Floating Audio Deck & Library Modal */}
+      <MusicWidget activeMode={activeMode} />
+      <PlaylistPickerModal />
 
       <section className="flex flex-col items-center justify-center flex-1 w-full h-full py-1 min-h-0 overflow-hidden">
         <div className="w-full h-full flex flex-col items-center justify-center flex-1 min-h-0 overflow-hidden">
@@ -49,14 +54,6 @@ export default function IndexPage() {
           </div>
 
           <div
-            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden ${
-              activeMode === "cozy" ? "" : "hidden"
-            }`}
-          >
-            <CozyView />
-          </div>
-
-          <div
             className={`w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden ${
               activeMode === "stats" ? "" : "hidden"
             }`}
@@ -65,17 +62,11 @@ export default function IndexPage() {
           </div>
 
           <div
-            className={`flex items-center justify-center ${
+            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden ${
               activeMode === "music" ? "" : "hidden"
             }`}
           >
-            <Typography
-              className="font-light capitalize"
-              color="muted"
-              type="h4"
-            >
-              Music mode coming up next...
-            </Typography>
+            <MusicView />
           </div>
         </div>
       </section>

@@ -41,6 +41,7 @@ export interface ThemeContextValue {
   addCustomBackground: (name: string, url: string) => boolean;
   renameCustomBackground: (id: string, newName: string) => void;
   removeCustomBackground: (id: string) => void;
+  moveCustomBackground: (id: string, direction: "left" | "right") => void;
   setOverlayOpacity: (opacity: number) => void;
   setBlur: (blur: number) => void;
   setPositionX: (x: number) => void;
@@ -228,6 +229,31 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const moveCustomBackground = useCallback(
+    (id: string, direction: "left" | "right") => {
+      setConfig((prev) => {
+        const index = prev.customBackgrounds.findIndex((bg) => bg.id === id);
+
+        if (index === -1) return prev;
+        const targetIndex = direction === "left" ? index - 1 : index + 1;
+
+        if (targetIndex < 0 || targetIndex >= prev.customBackgrounds.length)
+          return prev;
+
+        const next = [...prev.customBackgrounds];
+        const [moved] = next.splice(index, 1);
+
+        next.splice(targetIndex, 0, moved);
+
+        return {
+          ...prev,
+          customBackgrounds: next,
+        };
+      });
+    },
+    [],
+  );
+
   const setOverlayOpacity = useCallback((opacity: number) => {
     setConfig((prev) => ({
       ...prev,
@@ -288,6 +314,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     addCustomBackground,
     renameCustomBackground,
     removeCustomBackground,
+    moveCustomBackground,
     setOverlayOpacity,
     setBlur,
     setPositionX,
