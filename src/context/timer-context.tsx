@@ -747,3 +747,13 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     <TimerContext.Provider value={value}>{children}</TimerContext.Provider>
   );
 }
+
+export function useTimer(): TimerContextValue {
+  const context = React.useContext(TimerContext);
+
+  if (!context) {
+    throw new Error("useTimer must be used within a TimerProvider");
+  }
+
+  return context;
+}

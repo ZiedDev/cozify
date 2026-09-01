@@ -44,15 +44,15 @@ export function getStorageOverview(): StorageOverview {
     null,
   );
 
-  let totalFocusMinutes = 0;
-
-  if (Array.isArray(sessions)) {
-    totalFocusMinutes = sessions.reduce(
-      (acc, s) =>
-        acc + (Number(s.focusMinutes) || 0) + (Number(s.overtimeMinutes) || 0),
-      0,
-    );
-  }
+  const totalFocusMinutes = Array.isArray(sessions)
+    ? sessions.reduce(
+        (acc, s) =>
+          acc +
+          (Number(s.focusMinutes) || 0) +
+          (Number(s.overtimeMinutes) || 0),
+        0,
+      )
+    : 0;
 
   const customWallpapersCount =
     theme && Array.isArray(theme.customBackgrounds)

@@ -114,7 +114,7 @@ export function TimerControls({
         <span>Finish</span>
       </Button>
 
-      {/* Ultra-Compact Duration Customization Popover */}
+      {/* Duration Customization Popover */}
       <DurationsPopover
         durations={durations}
         isOpen={isDurationPopoverOpen}

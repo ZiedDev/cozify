@@ -222,7 +222,7 @@ export function PlaylistPickerModal() {
                             </div>
                           )}
                           {/* Glossy Jacket overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-tr from-black/30 via-transparent to-white/20 pointer-events-none" />
+                          <div className="absolute inset-0 bg-linear-to-tr from-black/30 via-transparent to-white/20 pointer-events-none" />
                         </div>
                       </div>
 

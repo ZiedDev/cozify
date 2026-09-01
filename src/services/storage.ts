@@ -11,39 +11,45 @@ export const STORAGE_KEYS = {
   SETTINGS: "settings",
 } as const;
 
+// Storage engine dispatch maps
+const DB_GETTERS: Record<string, () => any> = {
+  [STORAGE_KEYS.SESSIONS_HISTORY]: () => db.sessions.getAll(),
+  [STORAGE_KEYS.TODOS]: () => db.todos.getAll(),
+  [STORAGE_KEYS.THEME_CONFIG]: () => db.theme.get(),
+  [STORAGE_KEYS.TIMER_STATE]: () => db.timer.get(),
+  [STORAGE_KEYS.SETTINGS]: () => db.settings.get(),
+};
+
+const DB_SETTERS: Record<string, (val: any) => void> = {
+  [STORAGE_KEYS.SESSIONS_HISTORY]: (v) =>
+    Array.isArray(v) && db.sessions.saveAll(v),
+  [STORAGE_KEYS.TODOS]: (v) => Array.isArray(v) && db.todos.saveAll(v),
+  [STORAGE_KEYS.THEME_CONFIG]: (v) => typeof v === "object" && db.theme.save(v),
+  [STORAGE_KEYS.TIMER_STATE]: (v) => typeof v === "object" && db.timer.save(v),
+  [STORAGE_KEYS.SETTINGS]: (v) => typeof v === "object" && db.settings.save(v),
+};
+
+const DB_CLEARERS: Record<string, () => void> = {
+  [STORAGE_KEYS.SESSIONS_HISTORY]: () => db.sessions.clear(),
+  [STORAGE_KEYS.TODOS]: () => db.todos.clear(),
+  [STORAGE_KEYS.THEME_CONFIG]: () => db.theme.clear(),
+  [STORAGE_KEYS.TIMER_STATE]: () => db.timer.clear(),
+  [STORAGE_KEYS.SETTINGS]: () => db.settings.clear(),
+};
+
 /**
  * Storage adapter with in-memory caching and IndexedDB write-behind
  */
 export const storageAdapter = {
   getItem<T>(key: string, fallback: T): T {
     try {
-      if (key === STORAGE_KEYS.SESSIONS_HISTORY) {
-        const items = db.sessions.getAll();
+      if (DB_GETTERS[key]) {
+        const item = DB_GETTERS[key]();
 
-        return (items.length > 0 ? items : fallback) as T;
+        return (Array.isArray(item) ? item.length > 0 : item !== null)
+          ? (item as T)
+          : fallback;
       }
-      if (key === STORAGE_KEYS.TODOS) {
-        const items = db.todos.getAll();
-
-        return (items.length > 0 ? items : fallback) as T;
-      }
-      if (key === STORAGE_KEYS.THEME_CONFIG) {
-        const item = db.theme.get();
-
-        return (item !== null ? item : fallback) as T;
-      }
-      if (key === STORAGE_KEYS.TIMER_STATE) {
-        const item = db.timer.get();
-
-        return (item !== null ? item : fallback) as T;
-      }
-      if (key === STORAGE_KEYS.SETTINGS) {
-        const item = db.settings.get();
-
-        return (item !== null ? item : fallback) as T;
-      }
-
-      // Generic fallback for minor keys (e.g. cozify_todo_filter, cozify_stats_range)
       const raw =
         typeof localStorage !== "undefined" ? localStorage.getItem(key) : null;
 
@@ -55,89 +61,37 @@ export const storageAdapter = {
 
   setItem<T>(key: string, value: T): void {
     try {
-      if (key === STORAGE_KEYS.SESSIONS_HISTORY && Array.isArray(value)) {
-        db.sessions.saveAll(value as SessionRecord[]);
+      if (DB_SETTERS[key]) {
+        DB_SETTERS[key](value);
 
         return;
       }
-      if (key === STORAGE_KEYS.TODOS && Array.isArray(value)) {
-        db.todos.saveAll(value as any);
-
-        return;
-      }
-      if (key === STORAGE_KEYS.THEME_CONFIG && typeof value === "object") {
-        db.theme.save(value as any);
-
-        return;
-      }
-      if (key === STORAGE_KEYS.TIMER_STATE && typeof value === "object") {
-        db.timer.save(value as any);
-
-        return;
-      }
-      if (key === STORAGE_KEYS.SETTINGS && typeof value === "object") {
-        db.settings.save(value as any);
-
-        return;
-      }
-
       if (typeof localStorage !== "undefined") {
         localStorage.setItem(key, JSON.stringify(value));
       }
-    } catch {
-      // Storage quota exceeded or disabled
-    }
+    } catch {}
   },
 
   removeItem(key: string): void {
     try {
-      if (key === STORAGE_KEYS.SESSIONS_HISTORY) {
-        db.sessions.clear();
+      if (DB_CLEARERS[key]) {
+        DB_CLEARERS[key]();
 
         return;
       }
-      if (key === STORAGE_KEYS.TODOS) {
-        db.todos.clear();
-
-        return;
-      }
-      if (key === STORAGE_KEYS.THEME_CONFIG) {
-        db.theme.clear();
-
-        return;
-      }
-      if (key === STORAGE_KEYS.TIMER_STATE) {
-        db.timer.clear();
-
-        return;
-      }
-      if (key === STORAGE_KEYS.SETTINGS) {
-        db.settings.clear();
-
-        return;
-      }
-
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem(key);
       }
-    } catch {
-      // Storage disabled
-    }
+    } catch {}
   },
 
   clear(): void {
     try {
-      db.sessions.clear();
-      db.todos.clear();
-      db.theme.clear();
-      db.timer.clear();
-      db.settings.clear();
+      Object.values(DB_CLEARERS).forEach((clearer) => clearer());
       if (typeof localStorage !== "undefined") {
         localStorage.clear();
       }
-    } catch {
-      // Storage disabled
-    }
+    } catch {}
   },
 
   flush(): Promise<void> {

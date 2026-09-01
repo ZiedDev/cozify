@@ -190,61 +190,25 @@ export async function fetchMediaDetails(url: string): Promise<{
       targetOEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${vidId}&format=json`;
     }
 
-    // 1. YouTube OEMBED
-    try {
-      const res = await fetch(targetOEmbedUrl);
+    // Attempt YouTube oEmbed
+    const details =
+      (await fetchOEmbed(targetOEmbedUrl, fallbackCover)) ||
+      (parsed.type === "playlist" && parsed.videoId
+        ? await fetchOEmbed(
+            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${parsed.videoId}&format=json`,
+            fallbackCover,
+          )
+        : null) ||
+      (await fetchOEmbed(
+        `https://noembed.com/embed?url=${encodeURIComponent(
+          parsed.videoId
+            ? `https://www.youtube.com/watch?v=${parsed.videoId}`
+            : parsed.originalUrl,
+        )}`,
+        fallbackCover,
+      ));
 
-      if (res.ok) {
-        const data = await res.json();
-
-        return {
-          title: data.title || "YouTube Audio",
-          author: data.author_name || "YouTube",
-          coverUrl: data.thumbnail_url || fallbackCover,
-          platform: "youtube",
-        };
-      }
-    } catch {}
-
-    // Fallback if playlist OEMBED failed but videoId is available
-    if (parsed.type === "playlist" && parsed.videoId) {
-      try {
-        const videoOEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${parsed.videoId}&format=json`;
-        const res = await fetch(videoOEmbedUrl);
-
-        if (res.ok) {
-          const data = await res.json();
-
-          return {
-            title: data.title || "YouTube Mix",
-            author: data.author_name || "YouTube",
-            coverUrl: data.thumbnail_url || fallbackCover,
-            platform: "youtube",
-          };
-        }
-      } catch {}
-    }
-
-    // 2. NoEmbed fallback for YouTube
-    try {
-      const noEmbedUrl = `https://noembed.com/embed?url=${encodeURIComponent(
-        parsed.videoId
-          ? `https://www.youtube.com/watch?v=${parsed.videoId}`
-          : parsed.originalUrl,
-      )}`;
-      const res = await fetch(noEmbedUrl);
-
-      if (res.ok) {
-        const data = await res.json();
-
-        return {
-          title: data.title || "YouTube Audio",
-          author: data.author_name || "YouTube",
-          coverUrl: data.thumbnail_url || fallbackCover,
-          platform: "youtube",
-        };
-      }
-    } catch {}
+    if (details) return details;
 
     return {
       title: parsed.type === "playlist" ? "YouTube Playlist" : "YouTube Audio",
@@ -253,6 +217,33 @@ export async function fetchMediaDetails(url: string): Promise<{
       platform: "youtube",
     };
   }
+
+  return null;
+}
+
+async function fetchOEmbed(
+  url: string,
+  fallbackCover?: string,
+): Promise<{
+  title: string;
+  author: string;
+  coverUrl?: string;
+  platform: MusicPlatform;
+} | null> {
+  try {
+    const res = await fetch(url);
+
+    if (res.ok) {
+      const data = await res.json();
+
+      return {
+        title: data.title || "YouTube Audio",
+        author: data.author_name || "YouTube",
+        coverUrl: data.thumbnail_url || fallbackCover,
+        platform: "youtube",
+      };
+    }
+  } catch {}
 
   return null;
 }

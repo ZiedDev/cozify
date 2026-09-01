@@ -262,7 +262,7 @@ export function CozyMusicCard() {
             aria-label={
               isPosterHidden ? "Switch to vinyl mode" : "Switch to video mode"
             }
-            className={`relative size-48 sm:size-56 md:size-60 my-2 overflow-hidden ring-2 ring-white/15 transition-[border-radius,box-shadow,transform] duration-400 ease-in-out hover:scale-[1.02] active:scale-[0.98] cursor-pointer select-none text-left p-0 border-none outline-none focus-visible:ring-2 focus-visible:ring-accent group shrink-0 ${
+            className={`relative size-48 sm:size-56 md:size-60 my-2 overflow-hidden ring-2 ring-white/15 transition-[border-radius,box-shadow,transform,scale] duration-400 ease-in-out hover:scale-[1.02] active:scale-[0.98] cursor-pointer select-none text-left p-0 border-none outline-none focus-visible:ring-2 focus-visible:ring-accent group shrink-0 ${
               isPosterHidden
                 ? "bg-black shadow-2xl"
                 : "bg-transparent shadow-xl"
@@ -414,7 +414,7 @@ export function CozyMusicCard() {
             </div>
           </div>
 
-          {/* Tactical 3-Column Controls Row: Left (Playlist Viewer), Center (Play Controls), Right (Volume) */}
+          {/* Controls Row: Left (Queue Toggle), Center (Play/Pause/Skip), Right (Volume) */}
           <div className="w-full flex items-center justify-between px-1 pt-1">
             {/* Left: Playlist Viewer Button (Disabled when no playlist tracks) */}
             <div className="flex items-center justify-start w-24">

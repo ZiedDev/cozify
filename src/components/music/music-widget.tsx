@@ -249,7 +249,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
 
           {/* Spotify Embed Player View with clean fixed height and no overflow */}
           {activePlatform === "spotify" && spotifyEmbedUrl && (
-            <div className="w-full h-[152px] rounded-2xl overflow-hidden border border-separator/40 bg-surface-secondary/60 shrink-0">
+            <div className="w-full h-38 rounded-2xl overflow-hidden border border-separator/40 bg-surface-secondary/60 shrink-0">
               <iframe
                 allow="encrypted-media; fullscreen; picture-in-picture"
                 className="w-full h-full border-none block"

@@ -8,10 +8,10 @@ import {
 } from "@heroui/react";
 import { Settings as SettingsIcon, Database, Info } from "lucide-react";
 
-import { DataTab } from "./data-tab";
-import { AboutTab } from "./about-tab";
-import { SessionsLogModal } from "./sessions-log-modal";
-import { TasksLogModal } from "./tasks-log-modal";
+import { DataTab } from "./components/data-tab";
+import { AboutTab } from "./components/about-tab";
+import { SessionsLogModal } from "./components/sessions-log-modal";
+import { TasksLogModal } from "./components/tasks-log-modal";
 
 import { siteConfig } from "@/config/site";
 
