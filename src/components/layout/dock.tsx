@@ -25,7 +25,7 @@ export function Dock({ activeMode, onSelectMode }: DockProps) {
               return (
                 <Tabs.Tab
                   key={item.id}
-                  className="flex items-center gap-1.5 min-[701px]:gap-2 rounded-full px-3 min-[701px]:px-5 py-2 min-[701px]:py-2.5 text-xs min-[701px]:text-sm md:text-base font-medium whitespace-nowrap w-auto shrink-0 cursor-pointer transition-[opacity,transform] duration-200 hover:opacity-90 active:scale-95"
+                  className="flex items-center gap-1.5 min-[701px]:gap-2 rounded-full px-3 min-[701px]:px-5 py-2 min-[701px]:py-2.5 text-xs min-[701px]:text-sm md:text-base font-medium whitespace-nowrap w-auto shrink-0 cursor-pointer transition-[opacity,transform,scale] duration-200 hover:opacity-90 active:scale-95"
                   id={item.id}
                 >
                   {({ isSelected }) => (

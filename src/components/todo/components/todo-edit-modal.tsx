@@ -14,7 +14,13 @@ import {
 import { parseDate } from "@internationalized/date";
 import { Edit3, Flag, Calendar as CalendarIcon, Tag } from "lucide-react";
 
-import { TodoItem, TodoPriority, PRIORITY_CONFIG, PRESET_TAGS } from "../types";
+import {
+  TodoItem,
+  TodoPriority,
+  PRIORITY_CONFIG,
+  PRESET_TAGS,
+  getTagIcon,
+} from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
 
@@ -244,20 +250,25 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
                 >
                   None
                 </button>
-                {PRESET_TAGS.map((t) => (
-                  <button
-                    key={t.id}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                      tag === t.id
-                        ? "bg-accent/20 text-accent border-accent font-semibold"
-                        : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground"
-                    }`}
-                    type="button"
-                    onClick={() => setTag(t.id)}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+                {PRESET_TAGS.map((t) => {
+                  const TagIconComp = getTagIcon(t.id);
+
+                  return (
+                    <button
+                      key={t.id}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
+                        tag === t.id
+                          ? `${t.color} font-semibold ring-1 ring-accent/30`
+                          : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground hover:bg-surface-secondary"
+                      }`}
+                      type="button"
+                      onClick={() => setTag(t.id)}
+                    >
+                      <TagIconComp className="size-3 opacity-80" />
+                      <span>{t.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </Modal.Body>

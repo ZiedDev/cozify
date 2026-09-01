@@ -1,8 +1,15 @@
 import React from "react";
 import { Button, Tooltip, Typography } from "@heroui/react";
-import { Archive, Edit3, Check, GripVertical, Trash2 } from "lucide-react";
+import {
+  Archive,
+  Edit3,
+  Check,
+  GripVertical,
+  Trash2,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 
-import { TodoItem, PRIORITY_CONFIG } from "../types";
+import { TodoItem, getIntegratedTagPriorityInfo } from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
 
@@ -30,7 +37,15 @@ export function TodoItemMinimal({
 }: TodoItemMinimalProps) {
   const { toggleTodo, deleteTodo } = useTodos();
 
-  const priorityConfig = PRIORITY_CONFIG[todo.priority || "none"];
+  const integratedMeta = getIntegratedTagPriorityInfo(
+    todo.tag,
+    todo.priority || "none",
+  );
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const isOverdue =
+    Boolean(todo.dueDate) && !todo.completed && (todo.dueDate || "") < todayStr;
+  const isDueToday = todo.dueDate === todayStr;
 
   return (
     <div
@@ -74,26 +89,27 @@ export function TodoItemMinimal({
         {todo.completed && <Check className="size-2.5 md:size-3 stroke-3" />}
       </button>
 
-      {/* Priority Indicator Dot */}
-      {todo.priority && todo.priority !== "none" && (
-        <span
-          className={`size-1.5 md:size-2 rounded-full shrink-0 ${priorityConfig.dotColor}`}
-          title={`Priority: ${priorityConfig.label}`}
-        />
+      {/* Tag / Priority Icon in place of the old dot */}
+      {(integratedMeta.hasTag || integratedMeta.hasPriority) && (
+        <Tooltip delay={200}>
+          <Tooltip.Trigger>
+            <span className="flex items-center justify-center shrink-0 cursor-default">
+              <integratedMeta.Icon
+                className={`size-4 md:size-4.5 shrink-0 transition-colors ${integratedMeta.iconColor}`}
+              />
+            </span>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-foreground border border-separator shadow-lg">
+            {integratedMeta.tooltipText}
+          </Tooltip.Content>
+        </Tooltip>
       )}
 
       {/* Task Title (Clicking toggles complete) */}
-      <Typography
-        truncate
-        className={`text-xs md:text-sm transition-colors text-left flex-1 min-w-0 cursor-pointer ${
-          todo.completed
-            ? "line-through text-muted"
-            : "text-foreground font-medium"
-        }`}
+      <div
+        className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer overflow-hidden"
         role="button"
         tabIndex={0}
-        type="body-sm"
-        weight="medium"
         onClick={() => toggleTodo(todo.id)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -101,8 +117,35 @@ export function TodoItemMinimal({
           }
         }}
       >
-        {todo.title}
-      </Typography>
+        <Typography
+          truncate
+          className={`text-xs md:text-sm transition-colors text-left flex-1 min-w-0 ${
+            todo.completed
+              ? "line-through text-muted"
+              : "text-foreground font-medium"
+          }`}
+          type="body-sm"
+          weight="medium"
+        >
+          {todo.title}
+        </Typography>
+
+        {/* Compact Due Date Indicator */}
+        {todo.dueDate && (
+          <span
+            className={`hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border shrink-0 ${
+              isOverdue
+                ? "bg-danger/10 text-danger border-danger/30"
+                : isDueToday
+                  ? "bg-accent/15 text-accent border-accent/40 font-semibold"
+                  : "bg-surface-secondary/50 text-muted/80 border-separator/30"
+            }`}
+          >
+            <CalendarIcon className="size-3 opacity-70" />
+            <span>{isDueToday ? "Today" : todo.dueDate}</span>
+          </span>
+        )}
+      </div>
 
       {/* Right Action Buttons */}
       <div className="flex items-center gap-0.5 shrink-0 opacity-80 md:opacity-0 group-hover:opacity-100 transition-opacity">

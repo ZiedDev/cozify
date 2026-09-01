@@ -59,7 +59,7 @@ export function AchievementToastProvider() {
               <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                 <div className="flex items-center gap-1 text-amber-400">
                   <Trophy className="size-3 shrink-0" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">
+                  <span className="text-[10px] font-bold uppercase r">
                     Achievement Unlocked!
                   </span>
                 </div>

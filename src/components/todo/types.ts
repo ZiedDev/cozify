@@ -1,4 +1,21 @@
-export type TodoPriority = "none" | "low" | "medium" | "high";
+import {
+  TagDefinition,
+  TodoPriority,
+  PRESET_TAGS,
+  PRIORITY_THEMES,
+  getTagInfo,
+  getTagIcon,
+  getIntegratedTagPriorityInfo,
+} from "@/config/tags";
+
+export type { TagDefinition, TodoPriority };
+export {
+  PRESET_TAGS,
+  PRIORITY_THEMES,
+  getTagInfo,
+  getTagIcon,
+  getIntegratedTagPriorityInfo,
+};
 
 export type TodoFilter = "all" | "today" | "active" | "completed";
 
@@ -18,34 +35,7 @@ export interface TodoItem {
   archivedAt?: number;
 }
 
-export interface TagOption {
-  id: string;
-  label: string;
-  color: string;
-}
-
-export const PRESET_TAGS: readonly TagOption[] = [
-  {
-    id: "work",
-    label: "Work",
-    color: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-  },
-  {
-    id: "study",
-    label: "Study",
-    color: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-  },
-  {
-    id: "personal",
-    label: "Personal",
-    color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-  },
-  {
-    id: "creative",
-    label: "Creative",
-    color: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-  },
-] as const;
+export type TagOption = TagDefinition;
 
 export const PRIORITY_CONFIG: Record<
   TodoPriority,
@@ -71,8 +61,8 @@ export const PRIORITY_CONFIG: Record<
   },
   high: {
     label: "High",
-    color: "text-danger",
-    dotColor: "bg-danger",
-    badgeClass: "text-danger bg-danger/10 border-danger/30",
+    color: "text-rose-400",
+    dotColor: "bg-rose-400",
+    badgeClass: "text-rose-400 bg-rose-500/10 border-rose-500/30",
   },
 };

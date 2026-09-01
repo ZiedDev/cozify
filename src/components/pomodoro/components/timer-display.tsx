@@ -48,9 +48,9 @@ export function TimerDisplay({
           {formattedTime}
         </Typography>
         {/* Minutes and Seconds Indicators */}
-        <div className="flex items-center justify-between w-full max-w-44 xs:max-w-52 sm:max-w-64 md:max-w-80 px-2 sm:px-4 text-[9px] xs:text-[10px] sm:text-xs font-semibold tracking-widest uppercase mt-0.5 sm:mt-1">
+        <div className="flex items-center justify-between w-full max-w-44 xs:max-w-52 sm:max-w-64 md:max-w-80 px-2 sm:px-4 text-[9px] xs:text-[10px] sm:text-xs font-semibold st uppercase mt-0.5 sm:mt-1">
           <Typography
-            className="text-[9px] xs:text-[10px] sm:text-xs tracking-widest uppercase"
+            className="text-[9px] xs:text-[10px] sm:text-xs st uppercase"
             color="muted"
             type="body-xs"
             weight="semibold"
@@ -58,7 +58,7 @@ export function TimerDisplay({
             minutes
           </Typography>
           <Typography
-            className="text-[9px] xs:text-[10px] sm:text-xs tracking-widest uppercase"
+            className="text-[9px] xs:text-[10px] sm:text-xs st uppercase"
             color="muted"
             type="body-xs"
             weight="semibold"

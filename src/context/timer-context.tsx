@@ -228,12 +228,18 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isRunning, timeLeft, mode, currentCycle, durations.focus]);
 
-  // Start / Resume helper: resumes seamlessly from remainingOnPauseRef
+  // Start / Resume helper: resumes seamlessly from remainingOnPauseRef or state timeLeft
   const start = useCallback(() => {
     toast.clear();
     setIsRunning(true);
-    targetEndTimeRef.current = Date.now() + remainingOnPauseRef.current * 1000;
-  }, []);
+    const remaining =
+      typeof remainingOnPauseRef.current === "number"
+        ? remainingOnPauseRef.current
+        : timeLeft;
+
+    remainingOnPauseRef.current = remaining;
+    targetEndTimeRef.current = Date.now() + remaining * 1000;
+  }, [timeLeft]);
 
   // Clean Toggle between Start/Resume and Pause
   const toggle = useCallback(() => {

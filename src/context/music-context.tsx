@@ -1343,7 +1343,21 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <MusicContext.Provider value={value}>{children}</MusicContext.Provider>
+    <MusicContext.Provider value={value}>
+      {children}
+      {/* Permanent Global Hidden YouTube Player Host - Never Unmounts across tab navigation */}
+      <div
+        aria-hidden="true"
+        className="fixed -top-[9999px] -left-[9999px] w-1 h-1 opacity-0 pointer-events-none overflow-hidden z-[-1]"
+        id="cozify-yt-host"
+      >
+        <div
+          ref={bindYTPlayerElement}
+          className="w-full h-full [&_iframe]:w-full [&_iframe]:h-full [&_iframe]:border-none"
+          id="cozify-yt-player-element"
+        />
+      </div>
+    </MusicContext.Provider>
   );
 }
 

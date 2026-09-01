@@ -1,5 +1,4 @@
 import { Card, Link, Typography } from "@heroui/react";
-import { SiGithub } from "@icons-pack/react-simple-icons";
 import { FolderGit2 } from "lucide-react";
 
 import { siteConfig } from "@/config/site";
@@ -64,8 +63,7 @@ export function AboutTab() {
               rel="noopener noreferrer"
               target="_blank"
             >
-              <SiGithub className="size-3.5" />
-              <span>@ZiedDev</span>
+              <span>ZiedDev</span>
             </Link>
           </div>
         </Card.Content>

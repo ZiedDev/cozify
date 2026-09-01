@@ -2,6 +2,7 @@ import React, {
   createContext,
   useContext,
   useState,
+  useEffect,
   useRef,
   useMemo,
   ReactNode,
@@ -34,6 +35,7 @@ interface BarChartContextValue {
   registerDataKey: (key: string) => void;
   tooltipContent: TooltipRenderFn | null;
   setTooltipContent: (fn: TooltipRenderFn | null) => void;
+  onItemClick?: (item: Record<string, any>, index: number) => void;
 }
 
 const BarChartContext = createContext<BarChartContextValue | null>(null);
@@ -71,6 +73,7 @@ export function BarChartRoot({
   ...props
 }: BarChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(500);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState<MousePosition | null>(
     null,
@@ -83,11 +86,38 @@ export function BarChartRoot({
     setTooltipContentState(() => fn);
   }, []);
 
+  // Measure exact real pixel width to prevent SVG aspect ratio text distortion
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.getBoundingClientRect().width;
+
+        if (w > 0) setContainerWidth(w);
+      }
+    };
+
+    updateWidth();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 0) {
+          setContainerWidth(entry.contentRect.width);
+        }
+      }
+    });
+
+    ro.observe(containerRef.current);
+
+    return () => ro.disconnect();
+  }, []);
+
   const margin = useMemo(
     () => ({
-      top: customMargin?.top ?? 12,
-      right: customMargin?.right ?? 12,
-      bottom: customMargin?.bottom ?? 24,
+      top: customMargin?.top ?? 14,
+      right: customMargin?.right ?? 10,
+      bottom: customMargin?.bottom ?? 28,
       left: customMargin?.left ?? 36,
     }),
     [customMargin],
@@ -119,17 +149,17 @@ export function BarChartRoot({
   }, [data, dataKeys]);
 
   const chartHeight = Math.max(10, height - margin.top - margin.bottom);
-  const chartWidth = 500; // standard SVG coordinate space viewBox width
-  const totalSvgWidth = chartWidth + margin.left + margin.right;
+  const chartWidth = Math.max(10, containerWidth - margin.left - margin.right);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || data.length === 0) return;
+
     const rect = containerRef.current.getBoundingClientRect();
     const relX = e.clientX - rect.left;
     const relY = e.clientY - rect.top;
 
-    const leftPx = (margin.left / totalSvgWidth) * rect.width;
-    const rightPx = rect.width - (margin.right / totalSvgWidth) * rect.width;
+    const leftPx = margin.left;
+    const rightPx = rect.width - margin.right;
     const innerWidth = Math.max(1, rightPx - leftPx);
 
     const clampedRelX = Math.max(leftPx, Math.min(rightPx, relX));
@@ -147,18 +177,11 @@ export function BarChartRoot({
     });
   };
 
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (hoveredIndex !== null && data[hoveredIndex]) {
-      onItemClick?.(data[hoveredIndex], hoveredIndex);
-    }
-    onClick?.(e);
-  };
-
   return (
     <BarChartContext.Provider
       value={{
         data,
-        width: typeof width === "number" ? width : 500,
+        width: typeof width === "number" ? width : containerWidth,
         height,
         margin,
         chartWidth,
@@ -172,40 +195,49 @@ export function BarChartRoot({
         registerDataKey,
         tooltipContent,
         setTooltipContent,
+        onItemClick,
       }}
     >
       <div
         ref={containerRef}
         aria-label="Interactive bar chart"
-        className={`bar-chart relative w-full select-none ${
-          onItemClick ? "cursor-pointer" : ""
-        } ${className}`}
-        role={onItemClick ? "region" : undefined}
+        className={`bar-chart relative w-full select-none touch-manipulation overflow-visible ${className}`}
+        role={onClick ? "button" : "region"}
         style={{ height }}
-        onClick={handleClick}
-        onKeyDown={(e) => {
-          if ((e.key === "Enter" || e.key === " ") && hoveredIndex !== null) {
-            handleClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+        tabIndex={onClick ? 0 : undefined}
+        onClick={onClick}
+        onKeyDown={
+          onClick
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  onClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+                }
+              }
+            : undefined
+        }
+        onMouseLeave={(e) => {
+          const related = e.relatedTarget as HTMLElement | null;
+
+          if (related && containerRef.current?.contains(related)) {
+            return;
           }
-        }}
-        onMouseLeave={() => {
           setHoveredIndex(null);
           setMousePosition(null);
         }}
         onMouseMove={handleMouseMove}
         {...props}
       >
+        {/* 1:1 Pixel-Accurate SVG: No Aspect Ratio Distortion or Squished Text */}
         <svg
-          className="w-full h-full overflow-visible"
-          preserveAspectRatio="none"
-          viewBox={`0 0 ${totalSvgWidth} ${height}`}
+          className="w-full h-full block overflow-visible"
+          viewBox={`0 0 ${containerWidth} ${height}`}
         >
           <g transform={`translate(${margin.left}, ${margin.top})`}>
             {children}
           </g>
         </svg>
 
-        {/* Floating Tooltip positioned relative to cursor */}
+        {/* Desktop Mouse Hover Tooltip (Only shown on desktop hover) */}
         <BarChartTooltipRenderer />
       </div>
     </BarChartContext.Provider>
@@ -241,7 +273,7 @@ export function BarChartGrid({
         key={i}
         className={className}
         strokeDasharray={strokeDasharray}
-        strokeWidth="1.25"
+        strokeWidth="1"
         x1="0"
         x2={chartWidth}
         y1={y}
@@ -262,8 +294,8 @@ export interface BarChartYAxisProps {
 
 export function BarChartYAxis({
   tickFormatter = (v) => `${v}`,
-  ticksCount = 4,
-  className = "fill-muted text-[10px]",
+  ticksCount = 3,
+  className = "fill-muted text-[11px] font-normal",
 }: BarChartYAxisProps) {
   const { chartHeight, maxValue } = useBarChartContext();
   const ticks = [];
@@ -300,7 +332,7 @@ export interface BarChartXAxisProps {
 export function BarChartXAxis({
   dataKey,
   tickFormatter = (v) => `${v}`,
-  className = "fill-muted text-[10px]",
+  className = "fill-muted text-[11px] font-normal",
 }: BarChartXAxisProps) {
   const { data, chartWidth, chartHeight, hoveredIndex } = useBarChartContext();
   const count = data.length;
@@ -355,10 +387,14 @@ export function BarChartBar({
 }: BarChartBarProps) {
   const {
     data,
+    margin,
     chartWidth,
     chartHeight,
     maxValue,
     hoveredIndex,
+    setHoveredIndex,
+    setMousePosition,
+    onItemClick,
     registerDataKey,
   } = useBarChartContext();
 
@@ -371,8 +407,8 @@ export function BarChartBar({
   if (count === 0) return null;
 
   const bandWidth = chartWidth / count;
-  const barPadding = Math.max(3, bandWidth * 0.22);
-  const barWidth = Math.max(2, bandWidth - barPadding * 2);
+  const barPadding = Math.max(2, bandWidth * 0.22);
+  const barWidth = Math.max(3, bandWidth - barPadding * 2);
 
   return (
     <g className="recharts-bar">
@@ -388,7 +424,39 @@ export function BarChartBar({
         const isHovered = hoveredIndex === idx;
 
         return (
-          <g key={idx}>
+          <g
+            key={idx}
+            className="cursor-pointer"
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              onItemClick?.(item, idx);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+                onItemClick?.(item, idx);
+              }
+            }}
+            onMouseEnter={() => {
+              setHoveredIndex(idx);
+              setMousePosition({
+                x: idx * bandWidth + bandWidth / 2 + margin.left,
+                y: Math.max(16, y),
+                percentX: ((idx + 0.5) / count) * 100,
+              });
+            }}
+          >
+            {/* Transparent Full-Height Hit Box for reliable touch/hover */}
+            <rect
+              className="fill-transparent"
+              height={chartHeight}
+              width={bandWidth}
+              x={idx * bandWidth}
+              y={0}
+            />
+
             {/* Subtle Hover Cursor Column */}
             {isHovered && (
               <rect
@@ -419,7 +487,7 @@ export function BarChartBar({
   );
 }
 
-// 5. Reference Line Component (e.g. 1h goal)
+// 5. Reference Line Component (e.g. Average line)
 export interface BarChartReferenceLineProps {
   y: number;
   label?: string;
@@ -444,7 +512,7 @@ export function BarChartReferenceLine({
       <line
         className={className}
         strokeDasharray={strokeDasharray}
-        strokeWidth="1.75"
+        strokeWidth="1.5"
         x1="0"
         x2={chartWidth}
         y1={yPos}
@@ -452,7 +520,7 @@ export function BarChartReferenceLine({
       />
       {label && (
         <text
-          className="fill-accent text-[10px] font-semibold tracking-wide"
+          className="fill-accent text-[11px] font-medium"
           dominantBaseline="auto"
           textAnchor="end"
           x={chartWidth - 4}
@@ -465,23 +533,24 @@ export function BarChartReferenceLine({
   );
 }
 
-// 6. Tooltip Component Definition and Renderer
+// 6. Tooltip Component Definition and Renderer (Desktop Mouse Only)
 export interface BarChartTooltipProps {
   content?: TooltipRenderFn;
 }
 
 export function BarChartTooltip({ content }: BarChartTooltipProps) {
   const { setTooltipContent } = useBarChartContext();
+  const contentRef = React.useRef(content);
+
+  contentRef.current = content;
 
   React.useEffect(() => {
-    if (content) {
-      setTooltipContent(content);
-    }
+    setTooltipContent((props) => contentRef.current?.(props));
 
     return () => {
       setTooltipContent(null);
     };
-  }, [content, setTooltipContent]);
+  }, [setTooltipContent]);
 
   return null;
 }
@@ -501,27 +570,31 @@ function BarChartTooltipRenderer() {
 
   const item = data[hoveredIndex];
 
-  // Prevent horizontal overflow at edges
-  let transformX = "-50%";
+  let leftStyle: string;
+  let transformX: string;
 
-  if (mousePosition.percentX < 25) {
+  if (mousePosition.percentX < 30) {
+    leftStyle = "8px";
     transformX = "0%";
-  } else if (mousePosition.percentX > 75) {
+  } else if (mousePosition.percentX > 70) {
+    leftStyle = "calc(100% - 8px)";
     transformX = "-100%";
+  } else {
+    leftStyle = `${mousePosition.percentX}%`;
+    transformX = "-50%";
   }
 
-  // Vertical placement: above cursor if space allows, otherwise below
   const isNearTop = mousePosition.y < 85;
   const topPos = isNearTop
     ? mousePosition.y + 14
-    : Math.max(0, mousePosition.y - 10);
+    : Math.max(0, mousePosition.y - 8);
   const transformY = isNearTop ? "0%" : "-100%";
 
   return (
     <div
-      className="absolute z-50 pointer-events-none transition-[left,top,transform] duration-75 ease-out"
+      className="absolute z-50 pointer-events-none transition-[left,top,transform] duration-75 ease-out max-w-[calc(100%-16px)] hidden sm:block"
       style={{
-        left: `${mousePosition.percentX}%`,
+        left: leftStyle,
         top: `${topPos}px`,
         transform: `translate(${transformX}, ${transformY})`,
       }}

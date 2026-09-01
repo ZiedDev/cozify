@@ -163,7 +163,7 @@ export function PlaylistPickerModal() {
                 return (
                   <div
                     key={item.id}
-                    className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 rounded-full border transition-[background-color,border-color,transform] duration-150 select-none ${
+                    className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 rounded-full border transition-[background-color,border-color,transform,box-shadow] duration-200 ease-out select-none hover:scale-[1.01] active:scale-[0.99] ${
                       isActive
                         ? "bg-accent/15 border-accent text-accent shadow-xs ring-1 ring-accent/30"
                         : "bg-surface-secondary/40 hover:bg-surface-secondary/80 border-separator/40 hover:border-separator/80 text-foreground"
@@ -193,18 +193,20 @@ export function PlaylistPickerModal() {
                       {/* Text details */}
                       <div className="flex flex-col min-w-0 flex-1">
                         {isEditing ? (
-                          <div
+                          <form
                             className="flex items-center gap-1"
-                            onClick={(e) => e.stopPropagation()}
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleSaveRename(item.id);
+                            }}
                           >
                             <input
-                              autoFocus
+                              aria-label="Edit playlist title"
                               className="w-full h-6 px-2 rounded-full bg-surface border border-accent text-xs text-foreground outline-none"
                               value={editTitleText}
                               onChange={(e) => setEditTitleText(e.target.value)}
                               onKeyDown={(e) => {
-                                if (e.key === "Enter")
-                                  handleSaveRename(item.id);
                                 if (e.key === "Escape") setEditingId(null);
                               }}
                             />
@@ -213,12 +215,12 @@ export function PlaylistPickerModal() {
                               aria-label="Save title"
                               className="size-6 rounded-full"
                               size="sm"
+                              type="submit"
                               variant="primary"
-                              onClick={() => handleSaveRename(item.id)}
                             >
                               <Check className="size-3" />
                             </Button>
-                          </div>
+                          </form>
                         ) : (
                           <Typography
                             truncate
@@ -337,7 +339,7 @@ export function PlaylistPickerModal() {
                         onPress={() => playPlaylist(item)}
                       >
                         {isActive && isPlaying ? (
-                          <Radio className="size-3 animate-pulse" />
+                          <Radio className="size-3" />
                         ) : (
                           <Play className="size-3 fill-current ml-0.5" />
                         )}

@@ -187,24 +187,23 @@ export function ActivityHeatmap({
     })}`;
   }, [visibleWeeks]);
 
+  const numWeeks = visibleWeeks.length;
+  const gridGapClass = viewMode === "12m" ? "gap-0.5" : "gap-1";
+
   return (
     <div className="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full select-none">
       {/* Header: Clean Modern Sans-Serif Typography & Segmented Pill Switcher */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex flex-col">
           <Typography
-            className="text-sm sm:text-base font-sans font-semibold tracking-tight text-foreground"
+            className="text-sm sm:text-base font-semibold tracking-tight text-foreground"
             type="h2"
             weight="bold"
           >
             {formatMinutesDisplay(visibleStats.focusMinutes)} of focus in{" "}
             {periodLabel}
           </Typography>
-          <Typography
-            className="text-[11px] font-sans font-normal mt-0.5"
-            color="muted"
-            type="body-xs"
-          >
+          <Typography className="text-xs mt-0.5" color="muted" type="body-xs">
             {dateRangeLabel} · {visibleStats.activeDays} active days (
             {visibleStats.consistency}% consistency)
           </Typography>
@@ -221,14 +220,14 @@ export function ActivityHeatmap({
               className="rounded-full bg-surface/80 p-0.5 sm:p-1 border-separator/30 text-xs"
             >
               <Tabs.Tab
-                className="h-6.5 sm:h-7 px-2.5 sm:px-3 whitespace-nowrap rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-colors"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 whitespace-nowrap rounded-full text-xs font-medium cursor-pointer transition-colors"
                 id="6m"
               >
                 6 Months
                 <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
               </Tabs.Tab>
               <Tabs.Tab
-                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-[11px] sm:text-xs font-medium cursor-pointer transition-colors"
+                className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full text-xs font-medium cursor-pointer transition-colors"
                 id="12m"
               >
                 1 Year
@@ -239,42 +238,45 @@ export function ActivityHeatmap({
         </Tabs>
       </div>
 
-      {/* Main Heatmap Grid Canvas */}
+      {/* Main Heatmap Grid Canvas (Pure decoupled Month Header + Uniform Day Grid) */}
       <div className="w-full overflow-hidden">
         <div
           ref={scrollRef}
           className="w-full overflow-x-auto scrollbar-thin pb-1"
         >
           <div
-            className={`grid gap-1 w-full select-none items-center ${
-              viewMode === "12m" ? "min-w-170" : "min-w-125"
+            className={`flex flex-col ${gridGapClass} w-full select-none ${
+              viewMode === "12m" ? "min-w-[500px]" : "min-w-[340px]"
             }`}
-            style={{
-              gridTemplateColumns: `auto repeat(${visibleWeeks.length}, minmax(0, 1fr))`,
-              gridTemplateRows: `auto repeat(7, minmax(0, 1fr))`,
-            }}
           >
-            {/* Top-left empty spacer */}
+            {/* Top Month Header Row */}
             <div
-              className="h-4 w-5 pointer-events-none"
-              style={{ gridRow: 1, gridColumn: 1 }}
-            />
-
-            {/* Month Header: Row 1, Columns 2..N */}
-            {monthHeaders.map((m) => (
-              <span
-                key={`${m.label}-${m.weekIndex}`}
-                className="text-[10px] font-sans text-muted/85 font-medium whitespace-nowrap pointer-events-none leading-none overflow-visible h-4 flex items-center"
+              className={`flex items-center ${gridGapClass} w-full h-4 mb-0.5`}
+            >
+              <div className="w-5 sm:w-6 shrink-0 pointer-events-none" />
+              <div
+                className={`grid ${gridGapClass} flex-1 w-full`}
                 style={{
-                  gridRow: 1,
-                  gridColumn: `${m.weekIndex + 2} / span 4`,
+                  gridTemplateColumns: `repeat(${numWeeks}, minmax(0, 1fr))`,
                 }}
               >
-                {m.label}
-              </span>
-            ))}
+                {visibleWeeks.map((_, weekIdx) => {
+                  const m = monthHeaders.find((h) => h.weekIndex === weekIdx);
 
-            {/* Day Labels Column: Rows 2..8, Column 1 */}
+                  return (
+                    <div key={weekIdx} className="relative w-full h-full">
+                      {m && (
+                        <span className="absolute top-0 left-0 text-[10px] text-muted/85 font-medium whitespace-nowrap leading-none pointer-events-none">
+                          {m.label}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 7 Days of the Week Rows (Sunday = 0 to Saturday = 6) */}
             {[
               { label: "Sun", show: false },
               { label: "Mon", show: true },
@@ -283,72 +285,75 @@ export function ActivityHeatmap({
               { label: "Thu", show: false },
               { label: "Fri", show: true },
               { label: "Sat", show: false },
-            ].map((day, idx) => (
-              <span
-                key={day.label}
-                className={`text-[9px] font-sans text-muted/70 font-medium pr-1 flex items-center justify-end leading-none pointer-events-none ${
-                  day.show ? "" : "opacity-0"
-                }`}
-                style={{
-                  gridRow: idx + 2,
-                  gridColumn: 1,
-                }}
+            ].map((dayMeta, dayIdx) => (
+              <div
+                key={dayMeta.label}
+                className={`flex items-center ${gridGapClass} w-full`}
               >
-                {day.label}
-              </span>
+                {/* Day Label on Left (Mon, Wed, Fri) */}
+                <span
+                  className={`w-5 sm:w-6 shrink-0 text-[9px] text-muted/70 font-medium text-right pr-1 leading-none select-none pointer-events-none ${
+                    dayMeta.show ? "" : "opacity-0"
+                  }`}
+                >
+                  {dayMeta.label}
+                </span>
+
+                {/* Week Cells for this specific Day */}
+                <div
+                  className={`grid ${gridGapClass} flex-1 w-full`}
+                  style={{
+                    gridTemplateColumns: `repeat(${numWeeks}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {visibleWeeks.map((week, weekIdx) => {
+                    const day = week[dayIdx];
+
+                    if (!day) {
+                      return (
+                        <div
+                          key={`empty-${weekIdx}-${dayIdx}`}
+                          className="w-full aspect-square rounded-[2px] opacity-0 pointer-events-none"
+                        />
+                      );
+                    }
+
+                    const isSelected = selectedDay?.dateStr === day.dateStr;
+                    const tooltip = day.isFuture
+                      ? `${day.fullDateLabel} (Upcoming)`
+                      : day.focusMinutes > 0
+                        ? `${formatMinutesDisplay(day.focusMinutes)} of focus on ${day.fullDateLabel}`
+                        : `No focus activity on ${day.fullDateLabel}`;
+
+                    return (
+                      <button
+                        key={day.dateStr}
+                        aria-label={tooltip}
+                        className={`w-full aspect-square rounded-[2px] sm:rounded-[3px] border transition-transform duration-75 hover:scale-125 ${
+                          day.isFuture ? "cursor-default" : "cursor-pointer"
+                        } ${getContributionColor(day, isSelected)}`}
+                        type="button"
+                        onClick={() => {
+                          if (!day.isFuture) {
+                            setSelectedDay(isSelected ? null : day);
+                          }
+                        }}
+                        onMouseEnter={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+
+                          setHoveredDay({
+                            day,
+                            x: rect.left + rect.width / 2,
+                            y: rect.top,
+                          });
+                        }}
+                        onMouseLeave={() => setHoveredDay(null)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
             ))}
-
-            {/* Heatmap Cells: Rows 2..8, Columns 2..N */}
-            {visibleWeeks.map((week, weekIdx) =>
-              week.map((day, dayIdx) => {
-                const row = dayIdx + 2;
-                const col = weekIdx + 2;
-
-                if (!day) {
-                  return (
-                    <div
-                      key={`${weekIdx}-${dayIdx}`}
-                      className="aspect-square w-full rounded-[2.5px] opacity-0 pointer-events-none"
-                      style={{ gridRow: row, gridColumn: col }}
-                    />
-                  );
-                }
-
-                const isSelected = selectedDay?.dateStr === day.dateStr;
-                const tooltip = day.isFuture
-                  ? `${day.fullDateLabel} (Upcoming)`
-                  : day.focusMinutes > 0
-                    ? `${formatMinutesDisplay(day.focusMinutes)} of focus on ${day.fullDateLabel}`
-                    : `No focus activity on ${day.fullDateLabel}`;
-
-                return (
-                  <button
-                    key={day.dateStr}
-                    aria-label={tooltip}
-                    className={`w-full aspect-square rounded-[2.5px] border transition-transform duration-75 hover:scale-125 ${
-                      day.isFuture ? "cursor-default" : "cursor-pointer"
-                    } ${getContributionColor(day, isSelected)}`}
-                    style={{ gridRow: row, gridColumn: col }}
-                    type="button"
-                    onClick={() => {
-                      if (!day.isFuture) {
-                        setSelectedDay(isSelected ? null : day);
-                      }
-                    }}
-                    onMouseEnter={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-
-                      setHoveredDay({
-                        day,
-                        x: rect.left + rect.width / 2,
-                        y: rect.top,
-                      });
-                    }}
-                    onMouseLeave={() => setHoveredDay(null)}
-                  />
-                );
-              }),
-            )}
           </div>
         </div>
       </div>
@@ -358,7 +363,7 @@ export function ActivityHeatmap({
         <div className="p-3.5 rounded-xl bg-surface-secondary/80 border border-separator/60 flex items-center justify-between gap-3 flex-wrap shadow-xs">
           <div className="flex items-center gap-3">
             <div className="size-10 rounded-xl bg-accent/15 border border-accent/30 flex flex-col items-center justify-center text-accent font-bold shrink-0">
-              <span className="text-[9px] uppercase leading-none font-sans">
+              <span className="text-[9px] uppercase leading-none">
                 {new Date(`${selectedDay.dateStr}T12:00:00`).toLocaleDateString(
                   "en-US",
                   {
@@ -366,15 +371,18 @@ export function ActivityHeatmap({
                   },
                 )}
               </span>
-              <span className="text-sm font-extrabold leading-tight font-sans">
+              <span className="text-sm font-extrabold leading-tight">
                 {new Date(`${selectedDay.dateStr}T12:00:00`).getDate()}
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold font-sans text-foreground">
+              <Typography
+                className="text-xs font-bold text-foreground"
+                type="body-xs"
+              >
                 {selectedDay.fullDateLabel}
-              </span>
-              <div className="flex items-center gap-3 text-[11px] font-sans text-muted mt-0.5">
+              </Typography>
+              <div className="flex items-center gap-3 text-xs text-muted mt-0.5">
                 <span>
                   Focus:{" "}
                   <strong className="text-foreground font-semibold">
@@ -399,16 +407,18 @@ export function ActivityHeatmap({
 
           <div className="flex items-center gap-2">
             <Button
-              className="h-7 px-3 rounded-full text-xs font-sans font-semibold bg-accent text-accent-foreground cursor-pointer shadow-2xs flex items-center gap-1"
+              className="h-7 px-3 rounded-full text-xs font-semibold bg-accent text-accent-foreground cursor-pointer shadow-2xs flex items-center gap-1"
               size="sm"
               variant="primary"
               onPress={() => onSelectDate?.(selectedDay.dateStr)}
             >
-              <Calendar className="size-5" />
+              <Calendar className="size-3.5" />
               <span>Filter Charts to this Day</span>
             </Button>
             <Button
-              className="size-7 p-0 rounded-full text-muted hover:text-foreground"
+              isIconOnly
+              aria-label="Close selection"
+              className="size-7 rounded-full text-muted hover:text-foreground"
               size="sm"
               variant="ghost"
               onPress={() => setSelectedDay(null)}
@@ -419,72 +429,76 @@ export function ActivityHeatmap({
         </div>
       )}
 
-      {/* Clean, Collision-Free Footer: Pagination on Left, Less/More Legend on Right */}
+      {/* Clean Footer: Pagination on Left, Less/More Legend on Right */}
       <div className="flex items-center justify-between gap-4 pt-2.5 border-t border-separator/30 flex-wrap">
         {/* Left Side: Earlier / Recent Pagination for active view mode */}
         {viewMode === "6m" ? (
           <div className="flex items-center gap-1.5">
             <Button
-              className="h-7 px-2.5 rounded-lg text-xs font-sans font-semibold cursor-pointer"
+              className="h-7 px-2.5 rounded-lg text-xs font-semibold cursor-pointer"
               isDisabled={page6m <= 1}
               size="sm"
               variant="secondary"
               onPress={() => setPage6m((p) => Math.max(1, p - 1))}
             >
-              <ArrowLeft />
+              <ArrowLeft className="size-3.5" />
               Earlier 6 Months
             </Button>
             <Button
-              className="h-7 px-2.5 rounded-lg text-xs font-sans font-semibold cursor-pointer"
+              className="h-7 px-2.5 rounded-lg text-xs font-semibold cursor-pointer"
               isDisabled={page6m >= total6mPages}
               size="sm"
               variant="secondary"
               onPress={() => setPage6m((p) => Math.min(total6mPages, p + 1))}
             >
               Recent 6 Months
-              <ArrowRight />
+              <ArrowRight className="size-3.5" />
             </Button>
           </div>
         ) : (
           <div className="flex items-center gap-1.5">
             <Button
-              className="h-7 px-2.5 rounded-lg text-xs font-sans font-semibold cursor-pointer"
+              className="h-7 px-2.5 rounded-lg text-xs font-semibold cursor-pointer"
               isDisabled={page12m <= 1}
               size="sm"
               variant="secondary"
               onPress={() => setPage12m((p) => Math.max(1, p - 1))}
             >
-              <ArrowLeft />
+              <ArrowLeft className="size-3.5" />
               Earlier Year
             </Button>
             <Button
-              className="h-7 px-2.5 rounded-lg text-xs font-sans font-semibold cursor-pointer"
+              className="h-7 px-2.5 rounded-lg text-xs font-semibold cursor-pointer"
               isDisabled={page12m >= total12mPages}
               size="sm"
               variant="secondary"
               onPress={() => setPage12m((p) => Math.min(total12mPages, p + 1))}
             >
               Recent Year
-              <ArrowRight />
+              <ArrowRight className="size-3.5" />
             </Button>
           </div>
         )}
 
         {/* Right Side: GitHub 5-Tier Intensity Legend */}
-        <div className="flex items-center gap-1.5 text-xs font-sans text-muted">
-          <span>Less</span>
+        <div className="flex items-center gap-1.5 text-xs text-muted">
+          <Typography color="muted" type="body-xs">
+            Less
+          </Typography>
           <div className="flex items-center gap-1">
-            <div className="size-2.5 rounded-sm bg-surface-secondary border border-separator/40" />
-            <div className="size-2.5 rounded-sm bg-emerald-800/60 dark:bg-emerald-900/60 border border-emerald-800/50" />
-            <div className="size-2.5 rounded-sm bg-emerald-600/80 border border-emerald-600" />
-            <div className="size-2.5 rounded-sm bg-emerald-500 border border-emerald-500" />
-            <div className="size-2.5 rounded-sm bg-emerald-400 border border-emerald-400" />
+            <div className="size-2.5 rounded-xs bg-surface-secondary border border-separator/40" />
+            <div className="size-2.5 rounded-xs bg-emerald-800/60 dark:bg-emerald-900/60 border border-emerald-800/50" />
+            <div className="size-2.5 rounded-xs bg-emerald-600/80 border border-emerald-600" />
+            <div className="size-2.5 rounded-xs bg-emerald-500 border border-emerald-500" />
+            <div className="size-2.5 rounded-xs bg-emerald-400 border border-emerald-400" />
           </div>
-          <span>More</span>
+          <Typography color="muted" type="body-xs">
+            More
+          </Typography>
         </div>
       </div>
 
-      {/* Floating Hover Tooltip (Zero DOM overhead in the grid) */}
+      {/* Floating Hover Tooltip */}
       {hoveredDay && (
         <div
           className="fixed z-50 pointer-events-none px-2.5 py-1.5 rounded-xl bg-surface border border-separator shadow-2xl text-xs -translate-x-1/2 -translate-y-full mb-2 animate-in fade-in zoom-in-95 duration-100 min-w-32"
@@ -494,33 +508,48 @@ export function ActivityHeatmap({
           }}
         >
           <div className="flex flex-col gap-1">
-            <span className="font-semibold text-foreground text-[11px]">
+            <Typography
+              className="text-foreground text-xs font-semibold"
+              type="body-xs"
+            >
               {hoveredDay.day.fullDateLabel}{" "}
               {hoveredDay.day.isFuture && "(Upcoming)"}
-            </span>
-            <div className="flex items-center justify-between text-[11px] pt-0.5 border-t border-separator/40">
-              <span className="text-muted">Focus:</span>
-              <span className="font-bold text-accent">
+            </Typography>
+            <div className="flex items-center justify-between text-xs pt-0.5 border-t border-separator/40">
+              <Typography color="muted" type="body-xs">
+                Focus:
+              </Typography>
+              <Typography className="font-bold text-accent" type="body-xs">
                 {hoveredDay.day.focusMinutes > 0
                   ? formatMinutesDisplay(hoveredDay.day.focusMinutes)
                   : "0m"}
-              </span>
+              </Typography>
             </div>
             {hoveredDay.day.cycleCount > 0 && (
-              <div className="flex items-center justify-between text-[10px] text-muted">
-                <span>Pomodoros:</span>
-                <span className="font-medium text-foreground">
+              <div className="flex items-center justify-between text-xs text-muted">
+                <Typography color="muted" type="body-xs">
+                  Pomodoros:
+                </Typography>
+                <Typography
+                  className="font-medium text-foreground"
+                  type="body-xs"
+                >
                   {hoveredDay.day.cycleCount}{" "}
                   {hoveredDay.day.cycleCount === 1 ? "cycle" : "cycles"}
-                </span>
+                </Typography>
               </div>
             )}
             {hoveredDay.day.taskCompletedCount > 0 && (
-              <div className="flex items-center justify-between text-[10px] text-emerald-400">
-                <span>Tasks done:</span>
-                <span className="font-medium">
+              <div className="flex items-center justify-between text-xs text-emerald-400">
+                <Typography className="text-emerald-400" type="body-xs">
+                  Tasks done:
+                </Typography>
+                <Typography
+                  className="font-medium text-emerald-400"
+                  type="body-xs"
+                >
                   {hoveredDay.day.taskCompletedCount}
-                </span>
+                </Typography>
               </div>
             )}
           </div>

@@ -42,37 +42,49 @@ export const PRESET_THEME_COLORS = [
 ];
 
 /**
- * Curated Preset Background Wallpapers
+ * Curated Preset Background Wallpapers (Optimized dimensions & compression for low memory)
  */
 export const PRESET_BACKGROUNDS: ThemeBackground[] = [
   {
     id: "tree",
     name: "Tree",
-    url: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=2560&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=75&w=1920&auto=format&fit=crop",
+    thumbnail:
+      "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=60&w=320&auto=format&fit=crop",
   },
   {
     id: "window",
-    name: "window",
-    url: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=80&w=2560&auto=format&fit=crop",
+    name: "Window",
+    url: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=75&w=1920&auto=format&fit=crop",
+    thumbnail:
+      "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=60&w=320&auto=format&fit=crop",
   },
   {
     id: "galaxy",
     name: "Galaxy",
-    url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=80&w=2560&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=75&w=1920&auto=format&fit=crop",
+    thumbnail:
+      "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=60&w=320&auto=format&fit=crop",
   },
   {
     id: "cafe",
     name: "Cafe",
-    url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=80&w=2560&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=75&w=1920&auto=format&fit=crop",
+    thumbnail:
+      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=60&w=320&auto=format&fit=crop",
   },
   {
     id: "forest",
     name: "Forest",
-    url: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=2560&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=75&w=1920&auto=format&fit=crop",
+    thumbnail:
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?q=60&w=320&auto=format&fit=crop",
   },
   {
     id: "sea",
     name: "Sea",
-    url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2560&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=75&w=1920&auto=format&fit=crop",
+    thumbnail:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=60&w=320&auto=format&fit=crop",
   },
 ];

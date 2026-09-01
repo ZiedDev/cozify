@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { Typography, Button, Drawer, TextField, InputGroup, ScrollShadow } from "@heroui/react";
+import {
+  Typography,
+  Button,
+  Drawer,
+  TextField,
+  InputGroup,
+  ScrollShadow,
+} from "@heroui/react";
 import {
   Settings,
   LayoutGrid,
@@ -21,7 +28,6 @@ import { SettingsModal } from "@/components/settings/settings-modal";
 import { SidebarTodoWidget } from "@/components/layout/sidebar-left";
 import { SidebarClock, SidebarTimer } from "@/components/layout/sidebar";
 import { useMusic } from "@/context/music-context";
-
 import { ThemePopover } from "@/components/theme/theme-popover";
 
 export function Navbar() {
@@ -91,14 +97,14 @@ export function Navbar() {
           <Button
             isIconOnly
             aria-label="Open Workspace Widgets"
-            className="flex min-[951px]:hidden size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 text-foreground transition-[background-color,border-color] duration-200 cursor-pointer shadow-2xs relative"
+            className="flex min-[951px]:hidden size-9 md:size-10 rounded-2xl bg-surface/80 border text-foreground duration-200 cursor-pointer shadow-2xs relative"
             size="md"
             variant="ghost"
             onClick={() => setIsDrawerOpen(true)}
           >
             <LayoutGrid className="size-4 md:size-5" />
             {(activeTodoCount > 0 || hasActiveSession) && (
-              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-accent ring-2 ring-background animate-pulse" />
+              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-accent ring-2 ring-background" />
             )}
           </Button>
 
@@ -134,7 +140,7 @@ export function Navbar() {
             </Drawer.Header>
 
             {/* 1. Sticky Top: Clock & Day Progress (Centered, bigger) */}
-            <div className="shrink-0 pt-2 pb-2.5 border-b border-separator/20 flex flex-col items-center justify-center w-full">
+            <div className="shrink-0 pt-2 pb-2.5 border-b border-separator/20 flex flex-col gap-4 items-center justify-center w-full">
               <SidebarClock align="center" />
               <SidebarTimer align="center" />
             </div>
@@ -155,15 +161,19 @@ export function Navbar() {
                         isBuffering
                           ? "bg-amber-400 animate-ping"
                           : isPlaying
-                            ? "bg-accent animate-pulse"
+                            ? "bg-accent"
                             : "bg-muted/50"
                       }`}
                     />
                     <Typography
-                      className="text-[10px] uppercase tracking-wider font-bold text-foreground"
+                      className="text-[10px] uppercase r font-bold text-foreground"
                       type="body-xs"
                     >
-                      {isBuffering ? "Loading..." : isPlaying ? "Now Playing" : "Paused"}
+                      {isBuffering
+                        ? "Loading..."
+                        : isPlaying
+                          ? "Now Playing"
+                          : "Paused"}
                     </Typography>
                   </div>
 
@@ -250,7 +260,9 @@ export function Navbar() {
                   <input
                     aria-label="Timeline scrubber"
                     className={`w-full h-1 rounded-full appearance-none outline-none ${
-                      isLive ? "pointer-events-none bg-accent" : "cursor-pointer"
+                      isLive
+                        ? "pointer-events-none bg-accent"
+                        : "cursor-pointer"
                     }`}
                     disabled={isLive || duration <= 0}
                     max={100}
@@ -279,7 +291,9 @@ export function Navbar() {
                     ) : (
                       <>
                         <span>{formatTime(currentTime)}</span>
-                        <span>{duration > 0 ? formatTime(duration) : "0:00"}</span>
+                        <span>
+                          {duration > 0 ? formatTime(duration) : "0:00"}
+                        </span>
                       </>
                     )}
                   </div>
@@ -405,9 +419,15 @@ export function Navbar() {
                 )}
 
                 {/* Stream URL Input Bar */}
-                <form className="flex items-center gap-1.5 pt-1" onSubmit={handleLoad}>
+                <form
+                  className="flex items-center gap-1.5 pt-1"
+                  onSubmit={handleLoad}
+                >
                   <TextField fullWidth aria-label="Audio stream link">
-                    <InputGroup fullWidth className="bg-surface border border-separator/40 rounded-xl h-8 text-xs">
+                    <InputGroup
+                      fullWidth
+                      className="bg-surface border border-separator/40 rounded-xl h-8 text-xs"
+                    >
                       <InputGroup.Input
                         className="text-xs"
                         placeholder="Paste Spotify or YouTube link..."

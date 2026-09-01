@@ -24,7 +24,12 @@ import {
   X,
 } from "lucide-react";
 
-import { TodoItem, TodoPriority, PRESET_TAGS } from "@/components/todo/types";
+import {
+  TodoItem,
+  TodoPriority,
+  PRESET_TAGS,
+  getTagIcon,
+} from "@/components/todo/types";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
 
 interface TasksLogModalProps {
@@ -208,7 +213,7 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
                 {/* Search Bar */}
                 <div className="flex flex-col gap-1.5 w-full">
                   <Typography
-                    className="text-[11px] uppercase tracking-wider"
+                    className="text-[11px] uppercase r"
                     color="muted"
                     type="body-xs"
                     weight="medium"
@@ -216,7 +221,10 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
                     Search
                   </Typography>
                   <TextField fullWidth aria-label="Search tasks log">
-                    <InputGroup fullWidth className="bg-surface border border-separator/40 rounded-xl h-8">
+                    <InputGroup
+                      fullWidth
+                      className="bg-surface border border-separator/40 rounded-xl h-8"
+                    >
                       <InputGroup.Prefix className="pl-2.5 pr-1 text-muted">
                         <Search className="size-3.5" />
                       </InputGroup.Prefix>
@@ -235,7 +243,7 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
                 {/* Summary Stats Breakdown */}
                 <div className="flex flex-col gap-2">
                   <Typography
-                    className="text-[11px] uppercase tracking-wider"
+                    className="text-[11px] uppercase r"
                     color="muted"
                     type="body-xs"
                     weight="medium"
@@ -455,11 +463,15 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
                           <div className="flex flex-col gap-2">
                             {/* Title */}
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                              <label
+                                className="text-[10px] uppercase r text-muted font-medium"
+                                htmlFor={`task-edit-title-${t.id}`}
+                              >
                                 Task Title
                               </label>
                               <input
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
+                                id={`task-edit-title-${t.id}`}
                                 value={editTitle}
                                 onChange={(e) => setEditTitle(e.target.value)}
                               />
@@ -468,9 +480,9 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
                             {/* Priority & Due Date */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <div className="flex flex-col gap-1">
-                                <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                                <span className="text-[10px] uppercase r text-muted font-medium">
                                   Priority
-                                </label>
+                                </span>
                                 <div className="flex items-center gap-1">
                                   {(
                                     [
@@ -497,11 +509,15 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
                               </div>
 
                               <div className="flex flex-col gap-1">
-                                <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                                <label
+                                  className="text-[10px] uppercase r text-muted font-medium"
+                                  htmlFor={`task-edit-due-${t.id}`}
+                                >
                                   Due Date
                                 </label>
                                 <input
                                   className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
+                                  id={`task-edit-due-${t.id}`}
                                   type="date"
                                   value={editDueDate}
                                   onChange={(e) =>
@@ -513,9 +529,9 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
 
                             {/* Tag */}
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                              <span className="text-[10px] uppercase r text-muted font-medium">
                                 Tag
-                              </label>
+                              </span>
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <button
                                   className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
@@ -528,30 +544,39 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
                                 >
                                   None
                                 </button>
-                                {PRESET_TAGS.map((tag) => (
-                                  <button
-                                    key={tag.id}
-                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
-                                      editTag === tag.id
-                                        ? "bg-accent/15 border-accent text-accent"
-                                        : "bg-surface-secondary border-separator/40 text-muted"
-                                    }`}
-                                    type="button"
-                                    onClick={() => setEditTag(tag.id)}
-                                  >
-                                    {tag.label}
-                                  </button>
-                                ))}
+                                {PRESET_TAGS.map((tag) => {
+                                  const TagIconComp = getTagIcon(tag.id);
+
+                                  return (
+                                    <button
+                                      key={tag.id}
+                                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
+                                        editTag === tag.id
+                                          ? `${tag.color} font-semibold ring-1 ring-accent/30`
+                                          : "bg-surface-secondary border-separator/40 text-muted hover:text-foreground"
+                                      }`}
+                                      type="button"
+                                      onClick={() => setEditTag(tag.id)}
+                                    >
+                                      <TagIconComp className="size-3 opacity-80" />
+                                      <span>{tag.label}</span>
+                                    </button>
+                                  );
+                                })}
                               </div>
                             </div>
 
                             {/* Notes */}
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                              <label
+                                className="text-[10px] uppercase r text-muted font-medium"
+                                htmlFor={`task-edit-notes-${t.id}`}
+                              >
                                 Notes
                               </label>
                               <textarea
                                 className="w-full p-2 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent resize-none"
+                                id={`task-edit-notes-${t.id}`}
                                 placeholder="Task description or notes..."
                                 rows={2}
                                 value={editNotes}

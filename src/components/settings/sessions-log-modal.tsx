@@ -29,6 +29,7 @@ import {
   SessionRecord,
 } from "@/services/storage";
 import { PRESET_TAGS } from "@/components/todo/types";
+import { getTagIcon } from "@/config/tags";
 import { formatMinutesDisplay } from "@/components/stats/logic/stats-calculator";
 
 interface SessionsLogModalProps {
@@ -228,7 +229,7 @@ export function SessionsLogModal({
                 {/* Search Bar with HeroUI InputGroup */}
                 <div className="flex flex-col gap-1.5 w-full">
                   <Typography
-                    className="text-[11px] uppercase tracking-wider"
+                    className="text-[11px] uppercase r"
                     color="muted"
                     type="body-xs"
                     weight="medium"
@@ -236,7 +237,10 @@ export function SessionsLogModal({
                     Search
                   </Typography>
                   <TextField fullWidth aria-label="Search focus sessions">
-                    <InputGroup fullWidth className="bg-surface border border-separator/40 rounded-xl h-8">
+                    <InputGroup
+                      fullWidth
+                      className="bg-surface border border-separator/40 rounded-xl h-8"
+                    >
                       <InputGroup.Prefix className="pl-2.5 pr-1 text-muted">
                         <Search className="size-3.5" />
                       </InputGroup.Prefix>
@@ -255,7 +259,7 @@ export function SessionsLogModal({
                 {/* Summary Stats Breakdown */}
                 <div className="flex flex-col gap-2">
                   <Typography
-                    className="text-[11px] uppercase tracking-wider"
+                    className="text-[11px] uppercase r"
                     color="muted"
                     type="body-xs"
                     weight="medium"
@@ -475,11 +479,15 @@ export function SessionsLogModal({
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             {/* Title */}
                             <div className="sm:col-span-1 flex flex-col gap-1">
-                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                              <label
+                                className="text-[10px] uppercase r text-muted font-medium"
+                                htmlFor={`session-edit-title-${s.id}`}
+                              >
                                 Title
                               </label>
                               <input
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
+                                id={`session-edit-title-${s.id}`}
                                 value={editTitle}
                                 onChange={(e) => setEditTitle(e.target.value)}
                               />
@@ -487,11 +495,15 @@ export function SessionsLogModal({
 
                             {/* Focus Minutes */}
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                              <label
+                                className="text-[10px] uppercase r text-muted font-medium"
+                                htmlFor={`session-edit-focus-${s.id}`}
+                              >
                                 Focus (Mins)
                               </label>
                               <input
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
+                                id={`session-edit-focus-${s.id}`}
                                 min={1}
                                 type="number"
                                 value={editFocusMinutes}
@@ -505,11 +517,15 @@ export function SessionsLogModal({
 
                             {/* Overtime Minutes */}
                             <div className="flex flex-col gap-1">
-                              <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                              <label
+                                className="text-[10px] uppercase r text-muted font-medium"
+                                htmlFor={`session-edit-ot-${s.id}`}
+                              >
                                 Overtime (Mins)
                               </label>
                               <input
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
+                                id={`session-edit-ot-${s.id}`}
                                 min={0}
                                 type="number"
                                 value={editOvertimeMinutes}
@@ -524,9 +540,9 @@ export function SessionsLogModal({
 
                           {/* Tag selector */}
                           <div className="flex flex-col gap-1">
-                            <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                            <span className="text-[10px] uppercase r text-muted font-medium">
                               Tag
-                            </label>
+                            </span>
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <button
                                 className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
@@ -539,30 +555,39 @@ export function SessionsLogModal({
                               >
                                 None
                               </button>
-                              {PRESET_TAGS.map((t) => (
-                                <button
-                                  key={t.id}
-                                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
-                                    editTag === t.id
-                                      ? "bg-accent/15 border-accent text-accent"
-                                      : "bg-surface-secondary border-separator/40 text-muted"
-                                  }`}
-                                  type="button"
-                                  onClick={() => setEditTag(t.id)}
-                                >
-                                  {t.label}
-                                </button>
-                              ))}
+                              {PRESET_TAGS.map((t) => {
+                                const TagIconComp = getTagIcon(t.id);
+
+                                return (
+                                  <button
+                                    key={t.id}
+                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
+                                      editTag === t.id
+                                        ? `${t.color} font-semibold ring-1 ring-accent/30`
+                                        : "bg-surface-secondary border-separator/40 text-muted hover:text-foreground"
+                                    }`}
+                                    type="button"
+                                    onClick={() => setEditTag(t.id)}
+                                  >
+                                    <TagIconComp className="size-3 opacity-80" />
+                                    <span>{t.label}</span>
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
 
                           {/* Notes */}
                           <div className="flex flex-col gap-1">
-                            <label className="text-[10px] uppercase tracking-wider text-muted font-medium">
+                            <label
+                              className="text-[10px] uppercase r text-muted font-medium"
+                              htmlFor={`session-edit-notes-${s.id}`}
+                            >
                               Notes
                             </label>
                             <textarea
                               className="w-full p-2 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent resize-none"
+                              id={`session-edit-notes-${s.id}`}
                               placeholder="Session notes or reflections..."
                               rows={2}
                               value={editNotes}
@@ -642,8 +667,8 @@ export function SessionsLogModal({
                               aria-label="Delete session (Hold Shift to skip confirmation)"
                               className={`size-7 rounded-xl transition-colors cursor-pointer ${
                                 confirmDeleteId === s.id
-                                    ? "text-danger bg-danger/15"
-                                    : "text-muted hover:text-danger hover:bg-danger/10"
+                                  ? "text-danger bg-danger/15"
+                                  : "text-muted hover:text-danger hover:bg-danger/10"
                               }`}
                               size="sm"
                               variant="ghost"

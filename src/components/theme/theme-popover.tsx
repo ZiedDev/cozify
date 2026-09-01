@@ -492,7 +492,7 @@ export function ThemePopover() {
                           backgroundColor: `oklch(${DEFAULT_LIGHTNESS}% ${DEFAULT_CHROMA} ${hue})`,
                         }}
                       />
-                      <span className="text-[11px] font-bold text-muted/80 tracking-wider uppercase">
+                      <span className="text-[11px] font-bold text-muted/80 r uppercase">
                         Theme Color
                       </span>
                     </div>
@@ -556,7 +556,7 @@ export function ThemePopover() {
                 {activeBackground && (
                   <>
                     <div className="flex items-center justify-between pt-2 pb-1 border-t border-b border-separator/40">
-                      <span className="text-[11px] font-bold text-muted/80 tracking-wider uppercase">
+                      <span className="text-[11px] font-bold text-muted/80 r uppercase">
                         Position & Scale
                       </span>
 
@@ -646,7 +646,7 @@ export function ThemePopover() {
                     </Slider>
 
                     <div className="pt-2 border-t border-separator/40 space-y-3">
-                      <span className="text-[11px] font-bold text-muted/80 tracking-wider uppercase block">
+                      <span className="text-[11px] font-bold text-muted/80 r uppercase block">
                         Dimming & Blur
                       </span>
 

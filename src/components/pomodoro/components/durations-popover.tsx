@@ -57,7 +57,7 @@ export function DurationsPopover({
         <Popover.Dialog className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">
             <Typography
-              className="tracking-wider uppercase text-xs"
+              className="r uppercase text-xs"
               color="muted"
               type="body-xs"
               weight="bold"

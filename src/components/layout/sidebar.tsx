@@ -26,7 +26,7 @@ export function SidebarClock({
       <div className="inline-flex items-baseline gap-1 md:gap-1.5 font-sans text-xl md:text-2xl lg:text-3xl font-medium text-foreground tabular-nums leading-none">
         <span>{time12}</span>
         <Typography
-          className="text-[10px] md:text-xs lg:text-sm font-normal uppercase"
+          className="text-xs md:text-sm font-normal uppercase"
           color="muted"
           type="body-xs"
         >
@@ -34,7 +34,7 @@ export function SidebarClock({
         </Typography>
       </div>
       <Typography
-        className="text-[11px] md:text-xs font-light mt-1 tracking-wide opacity-80"
+        className="text-xs md:text-sm font-light mt-1 opacity-80"
         color="muted"
         type="body-xs"
       >
@@ -61,7 +61,7 @@ export function SidebarClock({
             >
               {Math.round(dayPercent)}% of day completed
             </Typography>
-            <Typography className="text-[11px]" color="muted" type="body-xs">
+            <Typography className="text-xs" color="muted" type="body-xs">
               Ending in {hoursLeft}h {minutesLeft}m
             </Typography>
           </div>
@@ -115,11 +115,9 @@ export function SidebarTimer({
         </span>
       </div>
       <div className="flex items-center gap-1.5 mt-1">
-        {isRunning && (
-          <span className="size-1.5 rounded-full bg-accent animate-pulse" />
-        )}
+        {isRunning && <span className="size-1.5 rounded-full bg-accent" />}
         <Typography
-          className="text-[11px] md:text-xs font-light tracking-wide opacity-80"
+          className="text-xs md:text-sm font-light opacity-80"
           color="muted"
           type="body-xs"
         >
@@ -127,7 +125,7 @@ export function SidebarTimer({
         </Typography>
       </div>
       <Typography
-        className="text-[10px] md:text-[11px] font-normal mt-0.5 tracking-wide tabular-nums"
+        className="text-xs md:text-sm font-normal mt-0.5 tabular-nums"
         color="muted"
         type="body-xs"
       >
@@ -165,9 +163,8 @@ interface SidebarProps {
 
 export function Sidebar({ activeMode }: SidebarProps) {
   const { hasActiveSession } = useTimer();
-  const showClock = activeMode !== "home" && activeMode !== "stats";
-  const showTimer =
-    activeMode !== "pomodoro" && activeMode !== "stats" && hasActiveSession;
+  const showClock = activeMode !== "home";
+  const showTimer = activeMode !== "pomodoro" && hasActiveSession;
 
   return (
     <aside

@@ -12,7 +12,7 @@ export function SidebarTodoWidget({
   align?: "start" | "center";
 }) {
   const { todos, toggleTodo } = useTodos();
-  const [visibleCount, setVisibleCount] = useState(10);
+  const [visibleCount, setVisibleCount] = useState(15);
 
   const activeTodos = todos.filter((t) => !t.completed);
   const totalActive = activeTodos.length;
@@ -21,14 +21,14 @@ export function SidebarTodoWidget({
 
   return (
     <div
-      className={`flex flex-col gap-1.5 sm:gap-2 w-full ${
+      className={`flex flex-col gap-1.5 sm:gap-2 w-full h-full flex-1 min-h-0 ${
         align === "center" ? "max-w-xs items-center" : "max-w-full items-start"
       } pointer-events-auto`}
     >
       {/* Widget Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-separator/30 pb-1.5 px-0.5 w-full">
+      <div className="flex items-center justify-between gap-2 border-b border-separator/30 pb-1.5 px-0.5 w-full shrink-0">
         <Typography
-          className="text-[11px] md:text-xs text-foreground/90 tracking-wide uppercase"
+          className="text-xs md:text-sm text-foreground/90 uppercase"
           type="body-xs"
           weight="semibold"
         >
@@ -36,7 +36,7 @@ export function SidebarTodoWidget({
         </Typography>
         {totalActive > 0 && (
           <Typography
-            className="text-[9px] md:text-[10px] px-2 py-0.5 rounded-full bg-surface-secondary border border-separator/30"
+            className="text-xs px-2 py-0.5 rounded-full bg-surface-secondary border border-separator/30"
             color="muted"
             type="body-xs"
             weight="medium"
@@ -48,10 +48,10 @@ export function SidebarTodoWidget({
 
       {/* Mini Tasks List with ScrollShadow & Load More */}
       {totalActive === 0 ? (
-        <div className="flex items-center justify-center gap-2 py-2 px-2.5 rounded-xl bg-surface/40 border border-separator/30 text-muted w-full">
+        <div className="flex-1 flex items-center justify-center gap-2 py-4 px-2.5 rounded-xl bg-surface/40 border border-separator/30 text-muted w-full">
           <CheckCircle2 className="size-3.5 text-accent shrink-0" />
           <Typography
-            className="text-[11px] md:text-xs font-light"
+            className="text-xs md:text-sm font-light"
             color="muted"
             type="body-xs"
           >
@@ -59,15 +59,15 @@ export function SidebarTodoWidget({
           </Typography>
         </div>
       ) : (
-        <div className="flex flex-col gap-1.5 w-full">
-          <ScrollShadow className="max-h-64 sm:max-h-72 w-full flex flex-col gap-1.5 pr-0.5 overflow-y-auto no-scrollbar">
+        <div className="flex-1 min-h-0 flex flex-col gap-1.5 w-full">
+          <ScrollShadow className="flex-1 min-h-0 max-h-full w-full flex flex-col gap-1.5 pr-0.5 overflow-y-auto no-scrollbar">
             {displayedTodos.map((todo) => {
               const priorityConfig = PRIORITY_CONFIG[todo.priority || "none"];
 
               return (
                 <button
                   key={todo.id}
-                  className="group w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 shadow-2xs transition-[background-color,border-color] duration-150 cursor-pointer select-none text-left"
+                  className="group w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 shadow-2xs transition-[background-color,border-color] duration-150 cursor-pointer select-none text-left shrink-0"
                   title="Click to complete task"
                   type="button"
                   onClick={() => toggleTodo(todo.id)}
@@ -90,7 +90,7 @@ export function SidebarTodoWidget({
                   {/* Title */}
                   <Typography
                     truncate
-                    className="text-[11px] md:text-xs text-foreground/90 flex-1 min-w-0"
+                    className="text-xs md:text-sm text-foreground/90 flex-1 min-w-0"
                     type="body-xs"
                     weight="medium"
                   >
@@ -104,7 +104,7 @@ export function SidebarTodoWidget({
           {/* Load More Button */}
           {hasMore && (
             <button
-              className="w-full py-1.5 px-2 rounded-xl text-center text-[10px] md:text-[11px] font-medium text-accent hover:bg-accent/10 border border-accent/20 transition-[background-color,border-color] duration-200 cursor-pointer"
+              className="w-full py-1.5 px-2 rounded-xl text-center text-xs font-medium text-accent hover:bg-accent/10 border border-accent/20 transition-[background-color,border-color] duration-200 cursor-pointer shrink-0"
               type="button"
               onClick={() => setVisibleCount((prev) => prev + 10)}
             >
@@ -134,7 +134,7 @@ function LeftSidebarWidgetWrapper({
           : "grid-rows-[0fr] opacity-0 pointer-events-none"
       }`}
     >
-      <div className="overflow-hidden pb-4 sm:pb-6 w-full flex flex-col items-start">
+      <div className="overflow-hidden pb-4 sm:pb-6 w-full flex flex-col items-start max-h-[calc(100vh-14rem)]">
         {children}
       </div>
     </div>
@@ -146,8 +146,8 @@ interface SidebarLeftProps {
 }
 
 export function SidebarLeft({ activeMode }: SidebarLeftProps) {
-  // Show sidebar and widgets on desktop/tablet (> 950px) when not on To-Do or Stats tab
-  const showSidebar = activeMode !== "todo" && activeMode !== "stats";
+  // Show sidebar and widgets on desktop/tablet (> 950px) when not on To-Do tab
+  const showSidebar = activeMode !== "todo";
 
   if (!showSidebar) return null;
 

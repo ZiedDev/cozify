@@ -25,7 +25,7 @@ import { secondsToHms } from "../logic/time-utils";
 import { calculateCyclesDone } from "../logic/cycle-rules";
 
 import { useTimer } from "@/hooks/use-timer";
-import { PRESET_TAGS } from "@/components/todo/types";
+import { PRESET_TAGS, getTagIcon } from "@/config/tags";
 import {
   storageAdapter,
   STORAGE_KEYS,
@@ -210,20 +210,25 @@ export function SaveProgressModal({
                 >
                   None
                 </button>
-                {PRESET_TAGS.map((t) => (
-                  <button
-                    key={t.id}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                      tag === t.id
-                        ? "bg-accent/20 text-accent border-accent font-semibold"
-                        : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground"
-                    }`}
-                    type="button"
-                    onClick={() => setTag(t.id)}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+                {PRESET_TAGS.map((t) => {
+                  const TagIconComp = getTagIcon(t.id);
+
+                  return (
+                    <button
+                      key={t.id}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
+                        tag === t.id
+                          ? `${t.color} font-semibold ring-1 ring-accent/30`
+                          : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground hover:bg-surface-secondary"
+                      }`}
+                      type="button"
+                      onClick={() => setTag(t.id)}
+                    >
+                      <TagIconComp className="size-3.5 opacity-80" />
+                      <span>{t.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -236,7 +241,7 @@ export function SaveProgressModal({
               value={timeValue}
               onChange={setTimeValue}
             >
-              <Label>Total Focus Time</Label>
+              <Label>Focus Time</Label>
               <TimeField.Group>
                 <TimeField.Prefix>
                   <Clock className="size-4 text-muted" />

@@ -46,21 +46,21 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
     <div className="flex flex-col gap-3 p-4 sm:p-5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full select-none">
       {/* Top Row: Hero Focus Metric & Context */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-2 text-muted text-xs font-medium">
-            <Clock className="size-3.5 text-accent" />
-            <span>{getRangeLabel()}</span>
+            <Clock className="size-3.5 text-accent shrink-0" />
+            <span className="truncate">{getRangeLabel()}</span>
           </div>
-          <div className="flex items-baseline gap-2 mt-1">
+          <div className="flex items-baseline gap-2 mt-1 flex-wrap">
             <Typography
-              className="text-2xl sm:text-3xl font-serif tracking-tight text-foreground tabular-nums"
+              className="text-2xl sm:text-3xl font-serif tracking-tight text-foreground tabular-nums font-bold"
               type="h1"
               weight="bold"
             >
               {formatMinutesDisplay(stats.totalFocusMinutes)}
             </Typography>
             {stats.totalActiveDays > 0 && stats.totalFocusMinutes > 0 && (
-              <span className="text-xs text-muted font-normal">
+              <span className="text-xs text-muted font-normal whitespace-nowrap">
                 (avg{" "}
                 <strong className="text-foreground font-semibold">
                   {formatMinutesDisplay(
@@ -79,8 +79,8 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
         {/* Peak Rhythm Badge */}
         {stats.peakProductivePeriod &&
           stats.peakProductivePeriod !== "Flexible" && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/25 text-accent text-xs font-semibold">
-              <Zap className="size-3" />
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/25 text-accent text-xs font-semibold shrink-0">
+              <Zap className="size-3 shrink-0" />
               <span>Peak: {stats.peakProductivePeriod}</span>
             </div>
           )}
@@ -89,88 +89,88 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
       {/* Bottom Row: 4 Unified Metric Tiles */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 pt-2 border-t border-separator/30">
         {/* 1. Streak */}
-        <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20">
+        <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20 min-w-0">
           <div className="flex items-center gap-1.5 text-amber-400 mb-1">
-            <Flame className="size-3.5" />
+            <Flame className="size-3.5 shrink-0" />
             <Typography
-              className="text-[11px] text-foreground"
+              className="text-xs text-foreground truncate"
               type="body-xs"
               weight="semibold"
             >
               Streak
             </Typography>
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex flex-wrap items-baseline gap-1 min-w-0">
             <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
               {stats.currentStreakDays}d
             </span>
-            <span className="text-[10px] text-muted">
+            <span className="text-xs text-muted truncate">
               (best {stats.bestStreakDays}d)
             </span>
           </div>
         </div>
 
         {/* 2. Pomodoro Cycles */}
-        <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20">
+        <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20 min-w-0">
           <div className="flex items-center gap-1.5 text-purple-400 mb-1">
-            <Target className="size-3.5" />
+            <Target className="size-3.5 shrink-0" />
             <Typography
-              className="text-[11px] text-foreground"
+              className="text-xs text-foreground truncate"
               type="body-xs"
               weight="semibold"
             >
               Pomodoros
             </Typography>
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex flex-wrap items-baseline gap-1 min-w-0">
             <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
               {stats.totalCycles}
             </span>
-            <span className="text-[10px] text-muted">
+            <span className="text-xs text-muted truncate">
               ({stats.cycleCompletionRate}% hit)
             </span>
           </div>
         </div>
 
         {/* 3. Tasks Completed */}
-        <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20">
+        <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20 min-w-0">
           <div className="flex items-center gap-1.5 text-emerald-400 mb-1">
-            <CheckCircle2 className="size-3.5" />
+            <CheckCircle2 className="size-3.5 shrink-0" />
             <Typography
-              className="text-[11px] text-foreground"
+              className="text-xs text-foreground truncate"
               type="body-xs"
               weight="semibold"
             >
               Tasks Done
             </Typography>
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex flex-wrap items-baseline gap-1 min-w-0">
             <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
               {stats.tasksCompleted}
             </span>
-            <span className="text-[10px] text-muted">
+            <span className="text-xs text-muted truncate">
               /{stats.tasksTotal} ({stats.taskCompletionRate}%)
             </span>
           </div>
         </div>
 
         {/* 4. Total Sessions */}
-        <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20">
+        <div className="flex flex-col p-2.5 rounded-xl bg-surface-secondary/60 border border-separator/20 min-w-0">
           <div className="flex items-center gap-1.5 text-blue-400 mb-1">
-            <Clock className="size-3.5" />
+            <Clock className="size-3.5 shrink-0" />
             <Typography
-              className="text-[11px] text-foreground"
+              className="text-xs text-foreground truncate"
               type="body-xs"
               weight="semibold"
             >
               Sessions
             </Typography>
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex flex-wrap items-baseline gap-1 min-w-0">
             <span className="text-base sm:text-lg font-bold text-foreground tabular-nums">
               {stats.totalSessions}
             </span>
-            <span className="text-[10px] text-muted">
+            <span className="text-xs text-muted truncate">
               (~{stats.avgSessionMinutes}m avg)
             </span>
           </div>

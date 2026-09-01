@@ -1,17 +1,18 @@
-import React from "react";
-import { Button, Tooltip, Typography } from "@heroui/react";
+import React, { useState, useRef, useEffect } from "react";
+import { Button, Tooltip, Typography, TextArea } from "@heroui/react";
 import {
   Archive,
   Edit3,
   Calendar,
-  Tag,
   AlertCircle,
   Check,
   GripVertical,
   Trash2,
+  FileText,
+  Plus,
 } from "lucide-react";
 
-import { TodoItem, PRIORITY_CONFIG, PRESET_TAGS } from "../types";
+import { TodoItem, getIntegratedTagPriorityInfo } from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
 
@@ -37,10 +38,31 @@ export function TodoItemDetailed({
   onDragEnd,
   onDrop,
 }: TodoItemDetailedProps) {
-  const { toggleTodo, deleteTodo } = useTodos();
+  const { toggleTodo, deleteTodo, updateTodo } = useTodos();
 
-  const priorityConfig = PRIORITY_CONFIG[todo.priority || "none"];
-  const tagConfig = PRESET_TAGS.find((t) => t.id === todo.tag);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [noteDraft, setNoteDraft] = useState(todo.notes || "");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setNoteDraft(todo.notes || "");
+  }, [todo.notes]);
+
+  useEffect(() => {
+    if (isEditingNotes && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isEditingNotes]);
+
+  const handleSaveNotes = () => {
+    updateTodo(todo.id, { notes: noteDraft.trim() || undefined });
+    setIsEditingNotes(false);
+  };
+
+  const integratedMeta = getIntegratedTagPriorityInfo(
+    todo.tag,
+    todo.priority || "none",
+  );
 
   const todayStr = new Date().toISOString().split("T")[0];
   const isOverdue =
@@ -50,7 +72,7 @@ export function TodoItemDetailed({
   return (
     <div
       draggable
-      className={`group relative flex flex-col gap-2.5 p-3 md:p-3.5 rounded-2xl border transition-[background-color,border-color,opacity,transform] duration-150 select-none ${
+      className={`group relative flex flex-col gap-2 p-3 md:p-3.5 rounded-2xl border transition-[background-color,border-color,opacity,transform] duration-150 select-none ${
         isDragging
           ? "opacity-25 bg-transparent border-dashed border-accent/70 scale-[0.98] shadow-none"
           : todo.completed
@@ -62,7 +84,7 @@ export function TodoItemDetailed({
       onDragStart={(e) => onDragStart(e, todo.id)}
       onDrop={(e) => onDrop(e, todo.id)}
     >
-      {/* Top row: Drag Handle, Checkbox, Title/Notes, and Action Buttons */}
+      {/* 1. Top row: Drag Handle, Checkbox, Title, and Action Buttons */}
       <div className="flex items-start justify-between gap-2.5 w-full">
         {/* Drag Handle */}
         <div className="pt-0.5 shrink-0">
@@ -95,9 +117,9 @@ export function TodoItemDetailed({
           </button>
         </div>
 
-        {/* Title and Notes area (Clicking toggles task) */}
+        {/* Title area (Clicking toggles task) */}
         <div
-          className="flex flex-col gap-1 min-w-0 flex-1 cursor-pointer text-left"
+          className="flex flex-col gap-0.5 min-w-0 flex-1 cursor-pointer text-left"
           role="button"
           tabIndex={0}
           onClick={() => toggleTodo(todo.id)}
@@ -107,42 +129,17 @@ export function TodoItemDetailed({
             }
           }}
         >
-          <div className="flex items-center gap-2 flex-wrap">
-            <Typography
-              className={`text-sm md:text-base leading-snug wrap-break-word transition-colors ${
-                todo.completed
-                  ? "line-through text-muted"
-                  : "text-foreground font-medium"
-              }`}
-              type="body"
-              weight="medium"
-            >
-              {todo.title}
-            </Typography>
-
-            {/* Priority Badge */}
-            {todo.priority && todo.priority !== "none" && (
-              <span
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border shrink-0 ${priorityConfig.badgeClass}`}
-              >
-                <span
-                  className={`size-1.5 rounded-full ${priorityConfig.dotColor}`}
-                />
-                {priorityConfig.label}
-              </span>
-            )}
-          </div>
-
-          {/* Notes preview */}
-          {todo.notes && (
-            <Typography
-              className="text-xs opacity-80 line-clamp-2 font-light leading-relaxed"
-              color="muted"
-              type="body-xs"
-            >
-              {todo.notes}
-            </Typography>
-          )}
+          <Typography
+            className={`text-sm md:text-base leading-snug wrap-break-word transition-colors ${
+              todo.completed
+                ? "line-through text-muted"
+                : "text-foreground font-medium"
+            }`}
+            type="body"
+            weight="medium"
+          >
+            {todo.title}
+          </Typography>
         </div>
 
         {/* Action Buttons */}
@@ -206,46 +203,122 @@ export function TodoItemDetailed({
         </div>
       </div>
 
-      {/* Bottom Metadata Badges Row */}
-      {(todo.dueDate || todo.tag) && (
-        <div className="flex items-center gap-2 flex-wrap pt-1 text-xs border-t border-separator/20 pl-7">
-          {/* Due Date Badge */}
-          {todo.dueDate && (
-            <span
-              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium border ${
-                isOverdue
-                  ? "bg-danger/10 text-danger border-danger/30"
-                  : isDueToday
-                    ? "bg-accent/15 text-accent border-accent/40 font-semibold"
-                    : "bg-surface-secondary/50 text-muted/90 border-separator/30"
-              }`}
-            >
-              {isOverdue ? (
-                <AlertCircle className="size-3 text-danger" />
-              ) : (
-                <Calendar className="size-3 opacity-70" />
-              )}
-              <span>
-                {isDueToday
-                  ? "Today"
-                  : isOverdue
-                    ? `Overdue (${todo.dueDate})`
-                    : todo.dueDate}
+      {/* 2. New Dedicated Line: Tag & Priority Badge + Due Date Badge */}
+      <div className="flex items-center gap-2 flex-wrap pl-7 pt-0.5">
+        {/* Integrated Tag & Priority Badge on New Line */}
+        {(integratedMeta.hasTag || integratedMeta.hasPriority) && (
+          <Tooltip delay={200}>
+            <Tooltip.Trigger>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border shrink-0 transition-colors cursor-default ${integratedMeta.badgeClass}`}
+              >
+                <integratedMeta.Icon
+                  className={`size-4 shrink-0 ${integratedMeta.iconColor}`}
+                />
+                <span>{integratedMeta.label}</span>
               </span>
-            </span>
-          )}
+            </Tooltip.Trigger>
+            <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-foreground border border-separator shadow-lg">
+              {integratedMeta.tooltipText}
+            </Tooltip.Content>
+          </Tooltip>
+        )}
 
-          {/* Tag badge */}
-          {tagConfig && (
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border ${tagConfig.color}`}
-            >
-              <Tag className="size-2.5 opacity-70" />
-              {tagConfig.label}
+        {/* Due Date Badge on the same metadata line */}
+        {todo.dueDate && (
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${
+              isOverdue
+                ? "bg-danger/10 text-danger border-danger/30"
+                : isDueToday
+                  ? "bg-accent/15 text-accent border-accent/40 font-semibold"
+                  : "bg-surface-secondary/50 text-muted/90 border-separator/30"
+            }`}
+          >
+            {isOverdue ? (
+              <AlertCircle className="size-3.5 text-danger shrink-0" />
+            ) : (
+              <Calendar className="size-3.5 opacity-70 shrink-0" />
+            )}
+            <span>
+              {isDueToday
+                ? "Today"
+                : isOverdue
+                  ? `Overdue (${todo.dueDate})`
+                  : todo.dueDate}
             </span>
-          )}
-        </div>
-      )}
+          </span>
+        )}
+      </div>
+
+      {/* 3. Inline Notes Input / Preview Area */}
+      <div className="pl-7 pt-1">
+        {isEditingNotes ? (
+          <div className="flex flex-col gap-1.5 w-full bg-surface-secondary/40 p-2 rounded-xl border border-separator/40">
+            <TextArea
+              ref={textareaRef}
+              className="text-xs bg-transparent border-none placeholder:text-muted/50 focus:outline-none resize-none"
+              placeholder="Add notes for this task... (Press Esc or click away to save)"
+              rows={2}
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  handleSaveNotes();
+                } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  handleSaveNotes();
+                }
+              }}
+            />
+            <div className="flex items-center justify-end gap-1.5">
+              <Button
+                className="h-6 px-2 text-[11px] rounded-lg"
+                size="sm"
+                variant="ghost"
+                onPress={() => {
+                  setNoteDraft(todo.notes || "");
+                  setIsEditingNotes(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="h-6 px-2.5 text-[11px] rounded-lg bg-accent text-accent-foreground font-medium"
+                size="sm"
+                variant="primary"
+                onPress={handleSaveNotes}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        ) : todo.notes ? (
+          <div
+            className="flex items-start gap-1.5 text-xs text-muted/80 hover:text-foreground font-light leading-relaxed cursor-pointer group/notes py-0.5"
+            role="button"
+            tabIndex={0}
+            title="Click to edit notes"
+            onClick={() => setIsEditingNotes(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                setIsEditingNotes(true);
+              }
+            }}
+          >
+            <FileText className="size-3.5 opacity-50 shrink-0 mt-0.5" />
+            <span className="line-clamp-2">{todo.notes}</span>
+          </div>
+        ) : (
+          <button
+            className="inline-flex items-center gap-1 text-[11px] text-muted/50 hover:text-muted py-0.5 cursor-pointer transition-colors"
+            type="button"
+            onClick={() => setIsEditingNotes(true)}
+          >
+            <Plus className="size-3 opacity-70" />
+            <span>Add note...</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

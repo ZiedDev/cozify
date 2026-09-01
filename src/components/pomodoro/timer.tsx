@@ -225,7 +225,7 @@ export function Timer() {
 
       {/* Spacebar Shortcut Hint */}
       <Typography
-        className="text-[10px] sm:text-xs opacity-60 tracking-wider uppercase"
+        className="text-[10px] sm:text-xs opacity-60 r uppercase"
         color="muted"
         type="body-xs"
       >

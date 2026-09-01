@@ -5,12 +5,17 @@ import {
   Plus,
   Flag,
   Calendar as CalendarIcon,
-  Tag,
   X,
   ChevronDown,
 } from "lucide-react";
 
-import { TodoPriority, PRIORITY_CONFIG, PRESET_TAGS } from "../types";
+import {
+  TodoPriority,
+  PRIORITY_CONFIG,
+  PRESET_TAGS,
+  getTagIcon,
+  getIntegratedTagPriorityInfo,
+} from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
 
@@ -55,6 +60,8 @@ export function TodoInputBar() {
 
   const hasExtraConfig =
     priority !== "none" || Boolean(dueDate) || Boolean(tag) || Boolean(notes);
+
+  const integratedMeta = getIntegratedTagPriorityInfo(tag, priority);
 
   return (
     <form
@@ -245,18 +252,18 @@ export function TodoInputBar() {
             </Popover.Content>
           </Popover>
 
-          {/* Tag Popover */}
+          {/* Tag Popover with Integrated Icons */}
           <Popover>
             <Popover.Trigger>
               <button
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors cursor-pointer ${
                   tag
-                    ? "bg-accent/10 text-accent border-accent/30 font-semibold"
+                    ? integratedMeta.badgeClass
                     : "bg-surface-secondary/40 text-muted border-separator/30 hover:text-foreground hover:bg-surface-secondary/60"
                 }`}
                 type="button"
               >
-                <Tag className="size-3" />
+                <integratedMeta.Icon className="size-3" />
                 <span>
                   {tag
                     ? PRESET_TAGS.find((p) => p.id === tag)?.label || tag
@@ -285,25 +292,30 @@ export function TodoInputBar() {
               </button>
             </Popover.Trigger>
             <Popover.Content>
-              <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-32 z-50">
-                {PRESET_TAGS.map((t) => (
-                  <button
-                    key={t.id}
-                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                      tag === t.id
-                        ? "bg-accent/15 text-accent font-semibold"
-                        : "hover:bg-surface-secondary/60 text-foreground"
-                    }`}
-                    type="button"
-                    onClick={() => setTag(t.id)}
-                  >
-                    <span
-                      className={`px-1.5 py-0.5 rounded-md text-[10px] ${t.color}`}
+              <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">
+                {PRESET_TAGS.map((t) => {
+                  const TagIconComp = getTagIcon(t.id);
+
+                  return (
+                    <button
+                      key={t.id}
+                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                        tag === t.id
+                          ? "bg-accent/15 text-accent font-semibold"
+                          : "hover:bg-surface-secondary/60 text-foreground"
+                      }`}
+                      type="button"
+                      onClick={() => setTag(t.id)}
                     >
-                      {t.label}
-                    </span>
-                  </button>
-                ))}
+                      <TagIconComp className="size-3.5 opacity-80 shrink-0" />
+                      <span
+                        className={`px-1.5 py-0.5 rounded-md text-[10px] ${t.color}`}
+                      >
+                        {t.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </Popover.Dialog>
             </Popover.Content>
           </Popover>

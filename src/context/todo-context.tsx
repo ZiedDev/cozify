@@ -21,6 +21,7 @@ interface TodoContextType {
   viewMode: TodoViewMode;
   filter: TodoFilter;
   selectedTag: string | null;
+  selectedPriority: TodoPriority | "all" | null;
   searchQuery: string;
   stats: {
     total: number;
@@ -49,6 +50,7 @@ interface TodoContextType {
   setViewMode: (mode: TodoViewMode) => void;
   setFilter: (filter: TodoFilter) => void;
   setSelectedTag: (tag: string | null) => void;
+  setSelectedPriority: (priority: TodoPriority | "all" | null) => void;
   setSearchQuery: (q: string) => void;
 }
 
@@ -93,6 +95,9 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
     storageAdapter.getItem<TodoFilter>("cozify_todo_filter", "all"),
   );
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedPriority, setSelectedPriority] = useState<
+    TodoPriority | "all" | null
+  >(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const setFilter = useCallback((f: TodoFilter) => {
@@ -173,31 +178,44 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const deleteTodo = useCallback((id: string) => {
     setTodos((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, archived: true, archivedAt: Date.now() } : t,
+        t.id === id
+          ? {
+              ...t,
+              archived: true,
+              archivedAt: Date.now(),
+            }
+          : t,
       ),
     );
   }, []);
 
-  // Permanently delete task from storage
   const permanentlyDeleteTodo = useCallback((id: string) => {
     setTodos((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // Restore an archived task back to the active list
   const restoreTodo = useCallback((id: string) => {
     setTodos((prev) =>
       prev.map((t) =>
-        t.id === id ? { ...t, archived: false, archivedAt: undefined } : t,
+        t.id === id
+          ? {
+              ...t,
+              archived: false,
+              archivedAt: undefined,
+            }
+          : t,
       ),
     );
   }, []);
 
-  // Archive all completed tasks
   const clearCompleted = useCallback(() => {
     setTodos((prev) =>
       prev.map((t) =>
-        t.completed && !t.archived
-          ? { ...t, archived: true, archivedAt: Date.now() }
+        t.completed
+          ? {
+              ...t,
+              archived: true,
+              archivedAt: Date.now(),
+            }
           : t,
       ),
     );
@@ -206,23 +224,25 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
   const moveTodoToPosition = useCallback(
     (sourceId: string, targetId: string, position: "top" | "bottom") => {
       setTodos((prev) => {
-        const fromIndex = prev.findIndex((t) => t.id === sourceId);
-        const toIndex = prev.findIndex((t) => t.id === targetId);
+        const sourceIndex = prev.findIndex((t) => t.id === sourceId);
+        const targetIndex = prev.findIndex((t) => t.id === targetId);
 
-        if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex)
-          return prev;
+        if (sourceIndex === -1 || targetIndex === -1) return prev;
 
-        const newTodos = [...prev];
-        const [moved] = newTodos.splice(fromIndex, 1);
+        const updated = [...prev];
+        const [moved] = updated.splice(sourceIndex, 1);
 
-        let newTargetIndex = newTodos.findIndex((t) => t.id === targetId);
+        let insertIndex = targetIndex;
 
-        if (position === "bottom") {
-          newTargetIndex += 1;
+        if (sourceIndex < targetIndex) {
+          insertIndex = position === "bottom" ? targetIndex : targetIndex - 1;
+        } else {
+          insertIndex = position === "bottom" ? targetIndex + 1 : targetIndex;
         }
-        newTodos.splice(newTargetIndex, 0, moved);
 
-        return newTodos;
+        updated.splice(Math.max(0, insertIndex), 0, moved);
+
+        return updated;
       });
     },
     [],
@@ -230,18 +250,33 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
 
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
-  // Active unarchived todos
-  const activeTodos = useMemo(() => todos.filter((t) => !t.archived), [todos]);
+  // Active unarchived todos list
+  const activeTodos = useMemo(() => {
+    return todos.filter((t) => !t.archived);
+  }, [todos]);
 
-  // Filtered & Searched Todos
+  // Derived filtered todos list
   const filteredTodos = useMemo(() => {
     return activeTodos.filter((todo) => {
       // 1. Tag filter
-      if (selectedTag && todo.tag !== selectedTag) {
+      if (
+        selectedTag &&
+        selectedTag !== "all" &&
+        todo.tag?.toLowerCase() !== selectedTag.toLowerCase()
+      ) {
         return false;
       }
 
-      // 2. Search query
+      // 2. Priority filter
+      if (selectedPriority && selectedPriority !== "all") {
+        const taskPriority = todo.priority || "none";
+
+        if (taskPriority !== selectedPriority) {
+          return false;
+        }
+      }
+
+      // 3. Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesTitle = todo.title.toLowerCase().includes(q);
@@ -253,7 +288,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 3. Tab filter
+      // 4. Tab filter
       if (filter === "active") return !todo.completed;
       if (filter === "completed") return todo.completed;
       if (filter === "today") {
@@ -262,7 +297,14 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
 
       return true;
     });
-  }, [activeTodos, filter, selectedTag, searchQuery, todayStr]);
+  }, [
+    activeTodos,
+    filter,
+    selectedTag,
+    selectedPriority,
+    searchQuery,
+    todayStr,
+  ]);
 
   // Statistics on active unarchived todos
   const stats = useMemo(() => {
@@ -281,6 +323,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       viewMode,
       filter,
       selectedTag,
+      selectedPriority,
       searchQuery,
       stats,
       addTodo,
@@ -294,6 +337,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       setViewMode,
       setFilter,
       setSelectedTag,
+      setSelectedPriority,
       setSearchQuery,
     }),
     [
@@ -302,6 +346,7 @@ export function TodoProvider({ children }: { children: React.ReactNode }) {
       viewMode,
       filter,
       selectedTag,
+      selectedPriority,
       searchQuery,
       stats,
       addTodo,

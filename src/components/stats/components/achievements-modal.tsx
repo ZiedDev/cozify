@@ -305,7 +305,7 @@ export function AchievementsModal({
                               </Typography>
                               <div className="flex items-center gap-1.5 mt-0.5">
                                 <span
-                                  className={`text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.2 rounded-md border ${tierConfig.badgeClass}`}
+                                  className={`text-[9px] uppercase font-bold r px-1.5 py-0.2 rounded-md border ${tierConfig.badgeClass}`}
                                 >
                                   {tierConfig.label}
                                 </span>
