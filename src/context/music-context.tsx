@@ -81,6 +81,7 @@ export interface MusicContextValue {
     title?: string,
     author?: string,
     autoPlay?: boolean,
+    playlistId?: string | null,
   ) => boolean;
   playPlaylist: (playlist: Playlist) => void;
 
@@ -123,10 +124,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     () => initialSaved?.author || PRESET_PLAYLISTS[0].author,
   );
   const [posterUrl, setPosterUrl] = useState<string>(
-    () =>
-      initialSaved?.posterUrl ||
-      PRESET_PLAYLISTS[0].coverUrl ||
-      "https://img.youtube.com/vi/jfKfPfyJRdk/hqdefault.jpg",
+    () => initialSaved?.posterUrl || PRESET_PLAYLISTS[0].coverUrl || "",
   );
   const [isLive, setIsLive] = useState<boolean>(
     () => initialSaved?.isLive ?? true,
@@ -141,7 +139,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   );
   const [duration, setDuration] = useState<number>(0);
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(
-    () => initialSaved?.activePlaylistId || PRESET_PLAYLISTS[0].id,
+    () => initialSaved?.activePlaylistId || null,
   );
   const [tracklist, setTracklist] = useState<MusicTrack[]>(
     () => initialSaved?.tracklist || [],
@@ -800,6 +798,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       customTitle?: string,
       customAuthor?: string,
       autoPlay: boolean = false,
+      playlistId?: string | null,
     ): boolean => {
       const trimmed = url.trim();
       const parsed = parseAudioUrl(trimmed);
@@ -816,7 +815,21 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
       setActiveUrl(trimmed);
       setActivePlatform(parsed.platform);
-      setActivePlaylistId(null);
+
+      if (playlistId !== undefined) {
+        setActivePlaylistId(playlistId);
+      } else {
+        const matching = [...customPlaylists, ...PRESET_PLAYLISTS].find((p) => {
+          if (p.url === trimmed) return true;
+          if (parsed.videoId && p.url.includes(parsed.videoId)) return true;
+          if (parsed.id && p.url.includes(parsed.id)) return true;
+
+          return false;
+        });
+
+        setActivePlaylistId(matching ? matching.id : null);
+      }
+
       if (customTitle) setTitle(customTitle);
       if (customAuthor) setAuthor(customAuthor);
 
@@ -1005,7 +1018,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const playPlaylist = useCallback(
     (playlist: Playlist) => {
       setActivePlaylistId(playlist.id);
-      loadUrl(playlist.url, playlist.title, playlist.author, true);
+      loadUrl(playlist.url, playlist.title, playlist.author, true, playlist.id);
       if (playlist.coverUrl) setPosterUrl(playlist.coverUrl);
       if (playlist.isLive !== undefined) setIsLive(playlist.isLive);
     },
