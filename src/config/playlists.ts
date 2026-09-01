@@ -172,10 +172,17 @@ export async function fetchMediaDetails(url: string): Promise<{
     let targetOEmbedUrl = "";
 
     if (parsed.type === "playlist") {
+      const isMix = parsed.id.startsWith("RD") || parsed.id.startsWith("UL");
+
       if (parsed.videoId) {
         fallbackCover = `https://img.youtube.com/vi/${parsed.videoId}/hqdefault.jpg`;
       }
-      targetOEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/playlist?list=${parsed.id}&format=json`;
+
+      if (isMix && parsed.videoId) {
+        targetOEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${parsed.videoId}&format=json`;
+      } else {
+        targetOEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/playlist?list=${parsed.id}&format=json`;
+      }
     } else {
       const vidId = parsed.id;
 
@@ -199,9 +206,32 @@ export async function fetchMediaDetails(url: string): Promise<{
       }
     } catch {}
 
+    // Fallback if playlist OEMBED failed but videoId is available
+    if (parsed.type === "playlist" && parsed.videoId) {
+      try {
+        const videoOEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${parsed.videoId}&format=json`;
+        const res = await fetch(videoOEmbedUrl);
+
+        if (res.ok) {
+          const data = await res.json();
+
+          return {
+            title: data.title || "YouTube Mix",
+            author: data.author_name || "YouTube",
+            coverUrl: data.thumbnail_url || fallbackCover,
+            platform: "youtube",
+          };
+        }
+      } catch {}
+    }
+
     // 2. NoEmbed fallback for YouTube
     try {
-      const noEmbedUrl = `https://noembed.com/embed?url=${encodeURIComponent(parsed.originalUrl)}`;
+      const noEmbedUrl = `https://noembed.com/embed?url=${encodeURIComponent(
+        parsed.videoId
+          ? `https://www.youtube.com/watch?v=${parsed.videoId}`
+          : parsed.originalUrl,
+      )}`;
       const res = await fetch(noEmbedUrl);
 
       if (res.ok) {

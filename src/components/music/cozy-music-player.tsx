@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Button,
   Typography,
@@ -48,40 +48,57 @@ export function CozyMusicCard() {
     loadUrl,
     togglePicker,
     togglePosterPreview,
+    bindYTPlayerElement,
   } = useMusic();
 
   const [inputUrl, setInputUrl] = useState("");
   const [isTracklistOpen, setIsTracklistOpen] = useState(false);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubberVal, setScrubberVal] = useState(0);
+  const [videoAspectRatio, setVideoAspectRatio] = useState(16 / 9);
 
-  const videoPortalRef = useRef<HTMLDivElement>(null);
   const discRef = useRef<HTMLDivElement>(null);
   const metaRef = useRef<HTMLDivElement>(null);
   const rotationRef = useRef<number>(0);
   const velocityRef = useRef<{ speed: number }>({ speed: 0 });
   const speedTweenRef = useRef<gsap.core.Tween | null>(null);
 
-  // Seamlessly dock/undock global YouTube player iframe into the video portal without interrupting playback
-  useEffect(() => {
-    const ytElem = document.getElementById("cozify-yt-player-element");
-    const ytHost = document.getElementById("cozify-yt-host");
-    const portal = videoPortalRef.current;
+  // Dynamic aspect-ratio calculation for 1:1 media box fill & complete YouTube UI cloaking
+  const cropStyle = useMemo(() => {
+    if (videoAspectRatio >= 1) {
+      // Landscape video (16:9, 4:3, 21:9)
+      const baseHeight = 190;
+      const baseWidth = Math.round(
+        Math.max(120, baseHeight * (videoAspectRatio / 1.778) * 1.32),
+      );
 
-    if (!ytElem) return;
+      return {
+        width: `${baseWidth}%`,
+        height: `${baseHeight}%`,
+      };
+    } else {
+      // Portrait / Shorts video (9:16)
+      const baseWidth = 190;
+      const baseHeight = Math.round(
+        Math.max(120, baseWidth * (1.778 / videoAspectRatio)),
+      );
 
-    if (isPosterHidden && portal) {
-      portal.appendChild(ytElem);
-    } else if (ytHost && ytElem.parentElement !== ytHost) {
-      ytHost.appendChild(ytElem);
+      return {
+        width: `${baseWidth}%`,
+        height: `${baseHeight}%`,
+      };
     }
+  }, [videoAspectRatio]);
 
-    return () => {
-      if (ytHost && ytElem && ytElem.parentElement !== ytHost) {
-        ytHost.appendChild(ytElem);
-      }
-    };
-  }, [isPosterHidden]);
+  const handlePosterLoad = (
+    e: React.SyntheticEvent<HTMLImageElement, Event>,
+  ) => {
+    const img = e.currentTarget;
+
+    if (img.naturalWidth && img.naturalHeight) {
+      setVideoAspectRatio(img.naturalWidth / img.naturalHeight);
+    }
+  };
 
   // Sync scrubber with currentTime when not scrubbing
   useEffect(() => {
@@ -177,11 +194,7 @@ export function CozyMusicCard() {
             className="text-xs font-bold uppercase text-foreground"
             type="body-xs"
           >
-            {isBuffering
-              ? "Buffering..."
-              : isPlaying
-                ? "Now Playing"
-                : "Paused"}
+            {isBuffering ? "Loading..." : isPlaying ? "Now Playing" : "Paused"}
           </Typography>
         </div>
 
@@ -249,7 +262,7 @@ export function CozyMusicCard() {
             aria-label={
               isPosterHidden ? "Switch to vinyl mode" : "Switch to video mode"
             }
-            className={`relative size-48 sm:size-56 md:size-60 my-2 overflow-hidden ring-2 ring-white/15 transition-[border-radius,box-shadow] duration-400 ease-in-out cursor-pointer select-none text-left p-0 border-none outline-none focus-visible:ring-2 focus-visible:ring-accent group shrink-0 ${
+            className={`relative size-48 sm:size-56 md:size-60 my-2 overflow-hidden ring-2 ring-white/15 transition-[border-radius,box-shadow,transform] duration-400 ease-in-out hover:scale-[1.02] active:scale-[0.98] cursor-pointer select-none text-left p-0 border-none outline-none focus-visible:ring-2 focus-visible:ring-accent group shrink-0 ${
               isPosterHidden
                 ? "bg-black shadow-2xl"
                 : "bg-transparent shadow-xl"
@@ -265,18 +278,16 @@ export function CozyMusicCard() {
             type="button"
             onClick={togglePosterPreview}
           >
-            {/* 1. Square Center-Cropped Native YouTube Video Layer */}
+            {/* 1. Square Center-Cropped Native YouTube Video Layer with Zoom Crop */}
             <div
-              className={`absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden rounded-2xl bg-black pointer-events-none transition-[opacity,transform] duration-400 ease-in-out [&_iframe]:w-full [&_iframe]:h-full [&_iframe]:border-none [&_div]:w-full [&_div]:h-full ${
+              className={`video-crop-wrapper absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-[opacity,transform] duration-400 ease-in-out [&_iframe]:w-full [&_iframe]:h-full [&_iframe]:border-none [&_div]:w-full [&_div]:h-full ${
                 isPosterHidden
                   ? "scale-100 opacity-100 pointer-events-auto"
                   : "scale-95 opacity-0 pointer-events-none"
               }`}
+              style={cropStyle}
             >
-              <div
-                ref={videoPortalRef}
-                className="w-full h-full flex items-center justify-center overflow-hidden"
-              />
+              <div ref={bindYTPlayerElement} className="w-full h-full" />
             </div>
 
             {/* 2. Round Vinyl Disc Layer with Clean Scale, Blur & Brightness Transition */}
@@ -306,6 +317,7 @@ export function CozyMusicCard() {
                     posterUrl ||
                     "https://img.youtube.com/vi/jfKfPfyJRdk/hqdefault.jpg"
                   }
+                  onLoad={handlePosterLoad}
                 />
 
                 {/* Concentric Vinyl Texture & Grooves */}

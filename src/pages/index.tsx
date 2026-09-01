@@ -1,7 +1,6 @@
-import { useState, useRef, lazy, Suspense } from "react";
+import { useState, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-import { Spinner } from "@heroui/react";
 
 import DefaultLayout from "@/layouts/default";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -12,28 +11,9 @@ import { Timer } from "@/components/pomodoro/timer";
 import { MusicWidget } from "@/components/music/music-widget";
 import { PlaylistPickerModal } from "@/components/music/playlist-picker-modal";
 import { AppMode } from "@/config/modes";
-
-const TodoPage = lazy(() =>
-  import("@/components/todo/todo-page").then((m) => ({ default: m.TodoPage })),
-);
-const StatsPage = lazy(() =>
-  import("@/components/stats/stats-page").then((m) => ({
-    default: m.StatsPage,
-  })),
-);
-const MusicView = lazy(() =>
-  import("@/components/music/music-view").then((m) => ({
-    default: m.MusicView,
-  })),
-);
-
-function ViewFallback() {
-  return (
-    <div className="flex items-center justify-center w-full h-full min-h-48">
-      <Spinner className="text-accent" size="md" />
-    </div>
-  );
-}
+import { TodoPage } from "@/components/todo/todo-page";
+import { StatsPage } from "@/components/stats/stats-page";
+import { MusicView } from "@/components/music/music-view";
 
 export function IndexPage() {
   const [activeMode, setActiveMode] = useState<AppMode>("home");
@@ -84,56 +64,50 @@ export function IndexPage() {
         className="flex flex-col items-center justify-center flex-1 w-full h-full py-1 min-h-0 overflow-hidden"
       >
         <div className="w-full h-full flex flex-col items-center justify-center flex-1 min-h-0 overflow-hidden relative">
-          {activeMode === "home" && (
-            <div
-              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0"
-              data-mode-view="home"
-            >
-              <Clock />
-            </div>
-          )}
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 ${
+              activeMode === "home" ? "" : "hidden"
+            }`}
+            data-mode-view="home"
+          >
+            <Clock />
+          </div>
 
-          {activeMode === "pomodoro" && (
-            <div
-              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0"
-              data-mode-view="pomodoro"
-            >
-              <Timer />
-            </div>
-          )}
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 ${
+              activeMode === "pomodoro" ? "" : "hidden"
+            }`}
+            data-mode-view="pomodoro"
+          >
+            <Timer />
+          </div>
 
-          {activeMode === "todo" && (
-            <div
-              className="w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden"
-              data-mode-view="todo"
-            >
-              <Suspense fallback={<ViewFallback />}>
-                <TodoPage />
-              </Suspense>
-            </div>
-          )}
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden ${
+              activeMode === "todo" ? "" : "hidden"
+            }`}
+            data-mode-view="todo"
+          >
+            <TodoPage />
+          </div>
 
-          {activeMode === "stats" && (
-            <div
-              className="w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden"
-              data-mode-view="stats"
-            >
-              <Suspense fallback={<ViewFallback />}>
-                <StatsPage />
-              </Suspense>
-            </div>
-          )}
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden ${
+              activeMode === "stats" ? "" : "hidden"
+            }`}
+            data-mode-view="stats"
+          >
+            <StatsPage />
+          </div>
 
-          {activeMode === "music" && (
-            <div
-              className="w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden"
-              data-mode-view="music"
-            >
-              <Suspense fallback={<ViewFallback />}>
-                <MusicView />
-              </Suspense>
-            </div>
-          )}
+          <div
+            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden ${
+              activeMode === "music" ? "" : "hidden"
+            }`}
+            data-mode-view="music"
+          >
+            <MusicView />
+          </div>
         </div>
       </section>
     </DefaultLayout>

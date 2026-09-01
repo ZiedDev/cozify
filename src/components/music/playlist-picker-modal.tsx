@@ -10,7 +10,6 @@ import {
   Tooltip,
 } from "@heroui/react";
 import {
-  Music,
   Plus,
   Play,
   Trash2,
@@ -18,9 +17,10 @@ import {
   Check,
   ChevronUp,
   ChevronDown,
-  Radio,
   Link as LinkIcon,
   Loader2,
+  Disc3,
+  Radio,
 } from "lucide-react";
 
 import { useMusic } from "@/context/music-context";
@@ -30,9 +30,9 @@ export function PlaylistPickerModal() {
   const {
     isPickerOpen,
     setIsPickerOpen,
-    activeUrl,
     activePlaylistId,
     isPlaying,
+    isBuffering,
     customPlaylists,
     playPlaylist,
     addCustomPlaylist,
@@ -81,20 +81,18 @@ export function PlaylistPickerModal() {
       onOpenChange={(open) => !open && setIsPickerOpen(false)}
     >
       <Modal.Container size="lg">
-        <Modal.Dialog className="max-sm:mt-0! sm:max-w-180 md:max-w-195 w-full h-[80vh] sm:h-135 max-h-[85vh] flex flex-col overflow-hidden p-0 rounded-3xl border border-separator/50 bg-surface shadow-2xl">
+        <Modal.Dialog className="max-sm:mt-0! sm:max-w-190 md:max-w-205 w-full h-[82vh] sm:h-140 max-h-[85vh] flex flex-col overflow-hidden p-0 rounded-3xl border border-separator/50 bg-surface/95 backdrop-blur-2xl shadow-2xl">
           <Modal.CloseTrigger />
 
           {/* Modal Header */}
-          <Modal.Header className="px-5 sm:px-6 py-3.5 gap-2.5">
-            <Modal.Icon>
-              <Music className="size-5 text-accent" />
-            </Modal.Icon>
+          <Modal.Header className="px-5 sm:px-6 py-4 gap-3">
             <div className="flex flex-col">
-              <Modal.Heading className="text-base font-semibold">
-                Music & Playlists
+              <Modal.Heading className="flex gap-2 text-base font-bold tracking-tight">
+                <Disc3 className="size-5 text-accent animate-spin-slow" />
+                Playlists Vault
               </Modal.Heading>
-              <Typography className="text-[11px]" color="muted" type="body-xs">
-                Pick a stream or add your favorite Spotify / YouTube playlist
+              <Typography className="text-xs" color="muted" type="body-xs">
+                Your collection of records, lofi streams & albums
               </Typography>
             </div>
           </Modal.Header>
@@ -102,7 +100,7 @@ export function PlaylistPickerModal() {
           <Separator />
 
           {/* Add Custom Playlist Bar with Automated Metadata & Artwork Fetching */}
-          <div className="p-3 sm:px-6 bg-surface-secondary/30 border-b border-separator/20">
+          <div className="p-3 sm:px-6 bg-surface-secondary/20 border-b border-separator/20">
             <form
               className="flex items-center gap-2"
               onSubmit={handleAddPlaylist}
@@ -110,7 +108,7 @@ export function PlaylistPickerModal() {
               <TextField fullWidth aria-label="Playlist URL" className="flex-1">
                 <InputGroup
                   fullWidth
-                  className="bg-surface border border-separator/40 rounded-full h-8 text-xs"
+                  className="bg-surface/80 border border-separator/40 rounded-full h-8.5 text-xs focus-within:border-accent"
                 >
                   <InputGroup.Prefix className="pl-3 pr-1 text-muted">
                     <LinkIcon className="size-3.5" />
@@ -127,7 +125,7 @@ export function PlaylistPickerModal() {
               </TextField>
 
               <Button
-                className="h-8 px-4 rounded-full text-xs font-semibold shrink-0 cursor-pointer"
+                className="h-8.5 px-4 rounded-full text-xs font-semibold shrink-0 cursor-pointer shadow-xs"
                 isDisabled={!newUrl.trim() || isAdding}
                 size="sm"
                 type="submit"
@@ -141,60 +139,98 @@ export function PlaylistPickerModal() {
                 ) : (
                   <>
                     <Plus className="size-3.5 mr-1" />
-                    Add
+                    Add Record
                   </>
                 )}
               </Button>
             </form>
           </div>
 
-          {/* Modal Body: Sleek Grid of Pill-styled Playlists */}
+          {/* Modal Body: Tactile Vinyl Record Sleeves Grid */}
           <ScrollShadow
             className="flex-1 min-h-0 h-full overflow-y-auto p-4 sm:p-5 no-scrollbar"
             orientation="vertical"
             size={20}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {allPlaylists.map((item) => {
-                const isActive =
-                  activePlaylistId === item.id || activeUrl === item.url;
+                const isActive = activePlaylistId === item.id;
                 const isEditing = editingId === item.id;
 
                 return (
                   <div
                     key={item.id}
-                    className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 rounded-full border transition-[background-color,border-color,transform,box-shadow] duration-200 ease-out select-none hover:scale-[1.01] active:scale-[0.99] ${
+                    className={`group relative flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 ease-out select-none hover:shadow-md ${
                       isActive
-                        ? "bg-accent/15 border-accent text-accent shadow-xs ring-1 ring-accent/30"
-                        : "bg-surface-secondary/40 hover:bg-surface-secondary/80 border-separator/40 hover:border-separator/80 text-foreground"
+                        ? "bg-accent/10 border-accent text-accent shadow-xs ring-1 ring-accent/30"
+                        : "bg-surface-secondary/30 hover:bg-surface-secondary/70 border-separator/40 hover:border-separator/70 text-foreground"
                     }`}
                   >
-                    {/* Left side: Artwork circle + Title/Author */}
+                    {/* Left: Vinyl Record Jacket + Sliding Vinyl Disc */}
                     <button
-                      className="flex items-center gap-2.5 min-w-0 flex-1 text-left cursor-pointer outline-none"
+                      className="flex items-center gap-6 min-w-0 flex-1 text-left cursor-pointer outline-none"
                       type="button"
                       onClick={() => playPlaylist(item)}
                     >
-                      {/* Circular Thumbnail */}
-                      <div className="size-8 rounded-full overflow-hidden bg-black shrink-0 relative border border-separator/40 shadow-xs">
-                        {item.coverUrl ? (
-                          <img
-                            alt={item.title}
-                            className="w-full h-full object-cover"
-                            src={item.coverUrl}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-surface text-muted">
-                            <Music className="size-4" />
+                      {/* Vinyl Sleeve + Disc Combo */}
+                      <div className="relative size-13 shrink-0 flex items-center">
+                        {/* Vinyl Disc peaking out */}
+                        <div
+                          className={`absolute left-3 size-12 rounded-full bg-[#111] border border-white/20 shadow-md flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${
+                            isActive && (isPlaying || isBuffering)
+                              ? "translate-x-3.5 ring-2 ring-accent/60"
+                              : "translate-x-0.5 group-hover:translate-x-3 group-hover:rotate-12"
+                          }`}
+                          style={{
+                            WebkitMaskImage:
+                              "radial-gradient(circle at center, transparent 4px, black 5px)",
+                            maskImage:
+                              "radial-gradient(circle at center, transparent 4px, black 5px)",
+                          }}
+                        >
+                          {/* Concentric Grooves */}
+                          <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_center,transparent_20%,rgba(0,0,0,0.6)_40%,transparent_60%,rgba(0,0,0,0.7)_80%,transparent_100%)] pointer-events-none" />
+
+                          {/* Center Artwork Label */}
+                          <div className="size-4.5 rounded-full overflow-hidden border border-white/40 shadow-inner">
+                            {item.coverUrl ? (
+                              <img
+                                alt=""
+                                className={`w-full h-full object-cover ${
+                                  isActive && isPlaying ? "animate-spin" : ""
+                                }`}
+                                src={item.coverUrl}
+                                style={{ animationDuration: "3s" }}
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-accent" />
+                            )}
                           </div>
-                        )}
+                        </div>
+
+                        {/* Front Vinyl Jacket Sleeve */}
+                        <div className="relative z-10 size-12 rounded-xl overflow-hidden border border-separator/40 bg-surface shadow-md shrink-0 group-hover:shadow-lg transition-shadow">
+                          {item.coverUrl ? (
+                            <img
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                              src={item.coverUrl}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-surface-secondary text-muted">
+                              <Radio className="size-5 text-accent" />
+                            </div>
+                          )}
+                          {/* Glossy Jacket overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-tr from-black/30 via-transparent to-white/20 pointer-events-none" />
+                        </div>
                       </div>
 
                       {/* Text details */}
                       <div className="flex flex-col min-w-0 flex-1">
                         {isEditing ? (
                           <form
-                            className="flex items-center gap-1"
+                            className="flex items-center gap-1.5"
                             onSubmit={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -235,23 +271,29 @@ export function PlaylistPickerModal() {
                           </Typography>
                         )}
 
-                        <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="flex items-center gap-1.5 mt-1">
                           <Typography
                             truncate
-                            className="text-[10px] text-muted leading-tight"
+                            className="text-xs text-muted leading-tight"
                             type="body-xs"
                           >
                             {item.author}
                           </Typography>
-                          <span className="text-[9px] text-muted/60">•</span>
-                          <span className="text-[9px] text-muted font-medium uppercase">
+                          <span className="text-xs text-muted/60">•</span>
+                          <span
+                            className={`text-xs font-semibold uppercase ${
+                              item.platform === "spotify"
+                                ? "text-[#1db954]"
+                                : "text-[#ff4e4e]"
+                            }`}
+                          >
                             {item.platform}
                           </span>
                         </div>
                       </div>
                     </button>
 
-                    {/* Right side: Quick Actions + Play Pill */}
+                    {/* Right side: Quick Actions + Play / Active Pill */}
                     <div className="flex items-center gap-1 shrink-0">
                       {/* Custom playlist options */}
                       {item.isCustom && (
@@ -312,7 +354,7 @@ export function PlaylistPickerModal() {
 
                           <button
                             aria-label="Delete"
-                            className="p-1 rounded-full text-muted hover:text-danger hover:bg-danger/10 cursor-pointer"
+                            className="p-1 rounded-full text-muted hover:text-danger hover:bg-surface cursor-pointer"
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
@@ -325,25 +367,42 @@ export function PlaylistPickerModal() {
                         </div>
                       )}
 
-                      {/* Play Action Button */}
-                      <Button
-                        isIconOnly
-                        aria-label={isActive && isPlaying ? "Playing" : "Play"}
-                        className={`size-7 rounded-full cursor-pointer ${
-                          isActive
-                            ? "bg-accent text-accent-foreground shadow-xs"
-                            : "bg-surface text-foreground hover:bg-accent/20 hover:text-accent border border-separator/40"
-                        }`}
-                        size="sm"
-                        variant={isActive ? "primary" : "secondary"}
-                        onPress={() => playPlaylist(item)}
-                      >
-                        {isActive && isPlaying ? (
-                          <Radio className="size-3" />
-                        ) : (
+                      {/* Play Status Pill */}
+                      {isActive && (isPlaying || isBuffering) ? (
+                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent text-accent-foreground text-xs font-semibold shadow-xs">
+                          {isBuffering ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <div className="flex items-end gap-0.5 h-2.5">
+                              <span className="w-0.5 h-full bg-current rounded-full animate-bounce" />
+                              <span
+                                className="w-0.5 h-2/3 bg-current rounded-full animate-bounce"
+                                style={{ animationDelay: "150ms" }}
+                              />
+                              <span
+                                className="w-0.5 h-4/5 bg-current rounded-full animate-bounce"
+                                style={{ animationDelay: "300ms" }}
+                              />
+                            </div>
+                          )}
+                          <span>{isBuffering ? "Loading" : "Playing"}</span>
+                        </div>
+                      ) : (
+                        <Button
+                          isIconOnly
+                          aria-label={`Play ${item.title}`}
+                          className={`size-7 rounded-full cursor-pointer transition-transform duration-150 ${
+                            isActive
+                              ? "bg-accent/20 text-accent ring-1 ring-accent"
+                              : "bg-surface text-muted hover:text-foreground border border-separator/40 hover:scale-105"
+                          }`}
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => playPlaylist(item)}
+                        >
                           <Play className="size-3 fill-current ml-0.5" />
-                        )}
-                      </Button>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
