@@ -576,6 +576,7 @@ export function ThemePopover() {
                       className="w-full"
                       maxValue={200}
                       minValue={100}
+                      step={0.5}
                       value={zoom}
                       onChange={(val) =>
                         setZoom(typeof val === "number" ? val : val[0])
@@ -586,7 +587,9 @@ export function ThemePopover() {
                           Zoom / Scale
                         </Label>
                         <Slider.Output className="font-semibold text-foreground text-[10px]">
-                          {({ state }) => `${state.values[0]}%`}
+                          {({ state }) =>
+                            `${Math.round(state.values[0] - 100)}%`
+                          }
                         </Slider.Output>
                       </div>
                       <Slider.Track>
@@ -681,8 +684,9 @@ export function ThemePopover() {
                       <Slider
                         aria-label="Wallpaper Soft Blur"
                         className="w-full"
-                        maxValue={15}
+                        maxValue={20}
                         minValue={0}
+                        step={0.1}
                         value={blur}
                         onChange={(val) =>
                           setBlur(typeof val === "number" ? val : val[0])
@@ -693,7 +697,9 @@ export function ThemePopover() {
                             Soft Blur
                           </Label>
                           <Slider.Output className="font-semibold text-foreground text-[10px]">
-                            {({ state }) => `${state.values[0]}px`}
+                            {({ state }) =>
+                              `${Math.round((state.values[0] / 20) * 100)}%`
+                            }
                           </Slider.Output>
                         </div>
                         <Slider.Track>

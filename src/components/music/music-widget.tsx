@@ -5,6 +5,7 @@ import {
   TextField,
   InputGroup,
   ScrollShadow,
+  Slider,
 } from "@heroui/react";
 import {
   Play,
@@ -58,15 +59,11 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
 
   const [inputUrl, setInputUrl] = useState("");
   const [isDrawerActive, setIsDrawerActive] = useState(false);
-  const [isScrubbing, setIsScrubbing] = useState(false);
-  const [scrubberVal, setScrubberVal] = useState(0);
 
-  // Sync scrubber with currentTime when not scrubbing
-  useEffect(() => {
-    if (!isScrubbing && duration > 0) {
-      setScrubberVal((currentTime / duration) * 100);
-    }
-  }, [currentTime, duration, isScrubbing]);
+  const scrubberPercentage =
+    duration > 0
+      ? Math.min(100, Math.max(0, (currentTime / duration) * 100))
+      : 0;
 
   // Auto-close tracklist drawer if tracklist becomes empty
   useEffect(() => {
@@ -341,44 +338,43 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
                 </div>
               </div>
 
-              {/* Timeline Scrubber */}
+              {/* Timeline Scrubber (HeroUI Slider) */}
               <div className="flex flex-col gap-1 my-1">
-                <input
-                  aria-label="Timeline scrubber"
-                  className={`w-full h-1.5 rounded-full appearance-none outline-none transition-opacity ${
-                    isLive ? "pointer-events-none bg-accent" : "cursor-pointer"
-                  }`}
-                  disabled={isLive || duration <= 0}
-                  max={100}
-                  min={0}
-                  step="0.1"
-                  style={{
-                    background:
-                      !isLive && duration > 0
-                        ? `linear-gradient(to right, var(--accent) ${scrubberVal}%, var(--separator) ${scrubberVal}%)`
-                        : undefined,
-                    accentColor: "var(--accent)",
-                  }}
-                  type="range"
-                  value={isLive ? 100 : scrubberVal}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
+                {isLive ? (
+                  <Slider
+                    aria-label="Live stream progress"
+                    className="w-full pointer-events-none"
+                    maxValue={100}
+                    minValue={0}
+                    value={100}
+                  >
+                    <Slider.Track>
+                      <Slider.Fill />
+                    </Slider.Track>
+                  </Slider>
+                ) : (
+                  <Slider
+                    aria-label="Timeline scrubber"
+                    className="w-full"
+                    isDisabled={duration <= 0}
+                    maxValue={100}
+                    minValue={0}
+                    step={0.1}
+                    value={scrubberPercentage}
+                    onChange={(val) => {
+                      const num = typeof val === "number" ? val : val[0];
 
-                    setScrubberVal(val);
-                    if (duration > 0) {
-                      seekTo((val / 100) * duration, true);
-                    }
-                  }}
-                  onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                    const val = Number((e.target as HTMLInputElement).value);
-
-                    setScrubberVal(val);
-                  }}
-                  onMouseDown={() => setIsScrubbing(true)}
-                  onMouseUp={() => setIsScrubbing(false)}
-                  onTouchEnd={() => setIsScrubbing(false)}
-                  onTouchStart={() => setIsScrubbing(true)}
-                />
+                      if (duration > 0) {
+                        seekTo((num / 100) * duration, true);
+                      }
+                    }}
+                  >
+                    <Slider.Track>
+                      <Slider.Fill />
+                      <Slider.Thumb />
+                    </Slider.Track>
+                  </Slider>
+                )}
 
                 <div className="flex items-center justify-between text-[10px] text-muted tabular-nums">
                   {isLive ? (
@@ -408,7 +404,12 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
                   {hasMultipleTracks && (
                     <button
                       aria-label="Previous track"
-                      className="p-1 rounded-full text-muted hover:text-foreground transition-colors duration-150 cursor-pointer"
+                      className={`p-1 rounded-full transition-colors duration-150 ${
+                        currentTrackIndex <= 0
+                          ? "opacity-30 cursor-not-allowed text-muted"
+                          : "text-muted hover:text-foreground cursor-pointer"
+                      }`}
+                      disabled={currentTrackIndex <= 0}
                       type="button"
                       onClick={prevTrack}
                     >
@@ -419,16 +420,16 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
                   {/* 32x32 Play/Pause circle button */}
                   <button
                     aria-label={isPlaying ? "Pause" : "Play"}
-                    className="size-8 rounded-full bg-foreground text-background flex items-center justify-center hover:opacity-90 active:scale-95 transition-opacity duration-150 cursor-pointer shadow-md"
+                    className="size-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center hover:bg-accent/90 active:scale-95 transition-all duration-150 cursor-pointer shadow-md"
                     type="button"
                     onClick={togglePlay}
                   >
                     {isBuffering ? (
-                      <Loader2 className="size-3.5 animate-spin text-background" />
+                      <Loader2 className="size-3.5 animate-spin" />
                     ) : isPlaying ? (
                       <Pause className="size-3.5 fill-current" />
                     ) : (
-                      <Play className="size-3.5 fill-current ml-0.5" />
+                      <Play className="size-3.5 fill-current" />
                     )}
                   </button>
 
@@ -436,7 +437,12 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
                   {hasMultipleTracks && (
                     <button
                       aria-label="Next track"
-                      className="p-1 rounded-full text-muted hover:text-foreground transition-colors duration-150 cursor-pointer"
+                      className={`p-1 rounded-full transition-colors duration-150 ${
+                        currentTrackIndex >= tracklist.length - 1
+                          ? "opacity-30 cursor-not-allowed text-muted"
+                          : "text-muted hover:text-foreground cursor-pointer"
+                      }`}
+                      disabled={currentTrackIndex >= tracklist.length - 1}
                       type="button"
                       onClick={nextTrack}
                     >
@@ -478,19 +484,23 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
                         <Volume2 className="size-3" />
                       )}
                     </button>
-                    <input
+                    <Slider
                       aria-label="Volume slider"
-                      className="w-full h-1.5 rounded-full appearance-none cursor-pointer outline-none"
-                      max={100}
-                      min={0}
-                      style={{
-                        background: `linear-gradient(to right, var(--accent) ${volume}%, var(--separator) ${volume}%)`,
-                        accentColor: "var(--accent)",
-                      }}
-                      type="range"
+                      className="w-full"
+                      maxValue={100}
+                      minValue={0}
                       value={volume}
-                      onChange={(e) => setVolume(Number(e.target.value))}
-                    />
+                      onChange={(val) => {
+                        const num = typeof val === "number" ? val : val[0];
+
+                        setVolume(num);
+                      }}
+                    >
+                      <Slider.Track>
+                        <Slider.Fill />
+                        <Slider.Thumb />
+                      </Slider.Track>
+                    </Slider>
                   </div>
                 </div>
               </div>

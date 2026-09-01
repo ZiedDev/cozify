@@ -6,28 +6,24 @@ export function BackgroundView() {
 
   if (!activeBackground) return null;
 
-  // Base scale with zoom factor (minimum 1.15 to ensure smooth pan headroom)
-  const effectiveScale = (zoom / 100) * 1.15;
-
-  // Maximum pan percentage so the image edge mathematically caps at the viewport boundary
-  const maxShift = ((effectiveScale - 1) / (2 * effectiveScale)) * 100;
-
-  // Pan offsets strictly bounded within [-maxShift, +maxShift]
-  const panX = ((positionX - 50) / 50) * maxShift;
-  const panY = ((positionY - 50) / 50) * maxShift;
+  // Invert shift direction so sliders intuitively pan the image view
+  const posX = 100 - (positionX ?? 50);
+  const posY = 100 - (positionY ?? 50);
+  const zoomScale = Math.max(1, (zoom ?? 100) / 100);
 
   return (
     <div
       aria-hidden="true"
       className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
     >
-      {/* High Performance Background Image with bounded pan, shift & zoom */}
+      {/* Dynamic Responsive Wallpaper with Inverted Position (X, Y) & Smooth Blur */}
       <div
-        className="absolute inset-0 bg-cover bg-center transition-[transform,filter] duration-300 ease-out"
+        className="absolute inset-0 bg-cover transition-[background-position,transform,filter] duration-150 ease-out"
         style={{
           backgroundImage: `url(${activeBackground.url})`,
-          transform: `scale(${effectiveScale}) translate3d(${panX}%, ${panY}%, 0)`,
-          transformOrigin: "center center",
+          backgroundPosition: `${posX}% ${posY}%`,
+          transform: `scale(${zoomScale})`,
+          transformOrigin: `${posX}% ${posY}%`,
           filter: blur > 0 ? `blur(${blur}px)` : "none",
         }}
       />

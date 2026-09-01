@@ -318,17 +318,17 @@ export function Navbar() {
                     <Button
                       isIconOnly
                       aria-label={isPlaying ? "Pause" : "Play"}
-                      className="size-8 rounded-full bg-foreground text-background"
+                      className="size-8 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 cursor-pointer shadow-xs"
                       size="sm"
                       variant="primary"
                       onClick={togglePlay}
                     >
                       {isBuffering ? (
-                        <Loader2 className="size-3.5 animate-spin text-background" />
+                        <Loader2 className="size-3.5 animate-spin" />
                       ) : isPlaying ? (
                         <Pause className="size-3.5 fill-current" />
                       ) : (
-                        <Play className="size-3.5 fill-current ml-0.5" />
+                        <Play className="size-3.5 fill-current" />
                       )}
                     </Button>
 
@@ -336,7 +336,12 @@ export function Navbar() {
                       <Button
                         isIconOnly
                         aria-label="Next track"
-                        className="size-7 rounded-full text-muted hover:text-foreground"
+                        className={`size-7 rounded-full transition-colors duration-150 ${
+                          currentTrackIndex >= tracklist.length - 1
+                            ? "opacity-30 cursor-not-allowed text-muted"
+                            : "text-muted hover:text-foreground cursor-pointer"
+                        }`}
+                        isDisabled={currentTrackIndex >= tracklist.length - 1}
                         size="sm"
                         variant="ghost"
                         onClick={nextTrack}

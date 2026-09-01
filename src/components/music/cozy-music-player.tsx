@@ -5,6 +5,7 @@ import {
   TextField,
   InputGroup,
   ScrollShadow,
+  Slider,
 } from "@heroui/react";
 import {
   Play,
@@ -53,8 +54,6 @@ export function CozyMusicCard() {
 
   const [inputUrl, setInputUrl] = useState("");
   const [isTracklistOpen, setIsTracklistOpen] = useState(false);
-  const [isScrubbing, setIsScrubbing] = useState(false);
-  const [scrubberVal, setScrubberVal] = useState(0);
   const [videoAspectRatio, setVideoAspectRatio] = useState(16 / 9);
 
   const discRef = useRef<HTMLDivElement>(null);
@@ -100,23 +99,27 @@ export function CozyMusicCard() {
     }
   };
 
-  // Sync scrubber with currentTime when not scrubbing
-  useEffect(() => {
-    if (!isScrubbing && duration > 0) {
-      setScrubberVal((currentTime / duration) * 100);
-    }
-  }, [currentTime, duration, isScrubbing]);
+  const scrubberPercentage =
+    duration > 0
+      ? Math.min(100, Math.max(0, (currentTime / duration) * 100))
+      : 0;
 
-  // Physics-based Vinyl turntable animation via GSAP ticker
+  // Physics-based Vinyl turntable animation via GSAP ticker with GPU force3D
   useEffect(() => {
     const tickerCallback = (_time: number, deltaTime: number) => {
       if (!discRef.current) return;
-      const dt = deltaTime / 1000;
+      // Clamp dt to avoid frame drop glitches on tab switch or momentary lag
+      const dt = Math.min(deltaTime / 1000, 0.05);
 
-      if (velocityRef.current.speed > 0.001) {
-        rotationRef.current =
-          (rotationRef.current + velocityRef.current.speed * 45 * dt) % 360;
-        gsap.set(discRef.current, { rotation: rotationRef.current });
+      if (velocityRef.current.speed > 0.0001) {
+        rotationRef.current -= velocityRef.current.speed * 45 * dt;
+        if (rotationRef.current < 0) {
+          rotationRef.current = (rotationRef.current % 360) + 360;
+        }
+        gsap.set(discRef.current, {
+          rotation: rotationRef.current,
+          force3D: true,
+        });
       }
     };
 
@@ -201,7 +204,7 @@ export function CozyMusicCard() {
         <div className="flex items-center gap-2 shrink-0">
           {/* Dynamic Clickable Platform Badge with 'Open in' */}
           <a
-            className={`inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1 rounded-full text-xs font-semibold border transition-colors duration-150 ${
+            className={`inline-flex items-center gap-2 h-8 px-3 rounded-full text-xs font-semibold border transition-colors duration-150 ${
               isSpotify
                 ? "text-[#1db954] bg-[#1db954]/10 border-[#1db954]/25 hover:bg-[#1db954]/20"
                 : "text-[#ff4e4e] bg-[#ff0000]/10 border-[#ff0000]/25 hover:bg-[#ff0000]/20"
@@ -212,17 +215,11 @@ export function CozyMusicCard() {
             title={isSpotify ? "Open in Spotify" : "Open in YouTube"}
           >
             {isSpotify ? (
-              <svg
-                className="size-3.5 fill-current shrink-0"
-                viewBox="0 0 24 24"
-              >
+              <svg className="size-5 fill-current shrink-0" viewBox="0 0 24 24">
                 <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.495 17.306c-.215.352-.676.463-1.028.247-2.816-1.72-6.36-2.109-10.536-1.155-.403.093-.804-.158-.897-.562-.093-.403.158-.804.562-.897 4.571-1.045 8.492-.596 11.652 1.339.352.216.463.676.247 1.028zm1.467-3.262c-.27.44-.848.578-1.288.308-3.224-1.982-8.14-2.557-11.954-1.399-.497.151-1.025-.133-1.176-.63-.151-.497.133-1.025.63-1.176 4.364-1.324 9.791-.682 13.48 1.589.44.27.578.848.308 1.288zm.126-3.41c-3.867-2.296-10.248-2.508-13.941-1.387-.593.18-1.22-.164-1.4-.757-.18-.593.164-1.22.757-1.4 4.248-1.29 11.294-1.037 15.741 1.603.533.316.707 1.01.391 1.543-.316.533-1.01.707-1.543.391z" />
               </svg>
             ) : (
-              <svg
-                className="size-3.5 fill-current shrink-0"
-                viewBox="0 0 24 24"
-              >
+              <svg className="size-5 fill-current shrink-0" viewBox="0 0 24 24">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
               </svg>
             )}
@@ -233,12 +230,12 @@ export function CozyMusicCard() {
 
           {/* Button with Playlists text */}
           <Button
-            className="h-7 px-3 rounded-full text-xs font-medium flex items-center gap-1.5 text-muted hover:text-foreground border border-separator/40 hover:border-separator/80 bg-surface/60 cursor-pointer transition-colors duration-150"
+            className="h-8 px-3.5 rounded-full text-xs font-medium flex items-center gap-2 text-foreground hover:bg-surface-secondary border border-separator/60 hover:border-separator/90 bg-surface cursor-pointer transition-colors duration-150 shadow-xs"
             size="sm"
             variant="secondary"
             onClick={togglePicker}
           >
-            <Disc3 className="size-3.5 text-accent" />
+            <Disc3 className="size-5 text-accent shrink-0" />
             <span>Playlists</span>
           </Button>
         </div>
@@ -301,7 +298,7 @@ export function CozyMusicCard() {
               {/* Vinyl Grooves & Image with GSAP Controlled Velocity Spin & Transparent Center Hole Mask */}
               <div
                 ref={discRef}
-                className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative shadow-inner"
+                className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative shadow-inner will-change-transform [transform:translateZ(0)]"
                 style={{
                   WebkitMaskImage:
                     "radial-gradient(circle at center, transparent 16px, black 17px)",
@@ -355,45 +352,42 @@ export function CozyMusicCard() {
             </Typography>
           </div>
 
-          {/* Cozy Scrubber Timeline (Knob-less when Live) */}
-          <div className="w-full flex flex-col gap-1 px-2">
+          {/* Timeline & Scrubber (HeroUI Slider) */}
+          <div className="w-full flex flex-col gap-1 px-1">
             {isLive ? (
-              <div className="w-full h-1.5 rounded-full bg-accent/80 shadow-[0_0_8px_var(--accent)]" />
+              <Slider
+                aria-label="Live stream progress"
+                className="w-full pointer-events-none"
+                maxValue={100}
+                minValue={0}
+                value={100}
+              >
+                <Slider.Track>
+                  <Slider.Fill />
+                </Slider.Track>
+              </Slider>
             ) : (
-              <input
+              <Slider
                 aria-label="Timeline scrubber"
-                className="w-full h-1.5 rounded-full appearance-none cursor-pointer outline-none transition-opacity"
-                disabled={duration <= 0}
-                max={100}
-                min={0}
-                step="0.1"
-                style={{
-                  background:
-                    duration > 0
-                      ? `linear-gradient(to right, var(--accent) ${scrubberVal}%, var(--separator) ${scrubberVal}%)`
-                      : undefined,
-                  accentColor: "var(--accent)",
-                }}
-                type="range"
-                value={scrubberVal}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
+                className="w-full"
+                isDisabled={duration <= 0}
+                maxValue={100}
+                minValue={0}
+                step={0.1}
+                value={scrubberPercentage}
+                onChange={(val) => {
+                  const num = typeof val === "number" ? val : val[0];
 
-                  setScrubberVal(val);
                   if (duration > 0) {
-                    seekTo((val / 100) * duration, true);
+                    seekTo((num / 100) * duration, true);
                   }
                 }}
-                onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                  const val = Number((e.target as HTMLInputElement).value);
-
-                  setScrubberVal(val);
-                }}
-                onMouseDown={() => setIsScrubbing(true)}
-                onMouseUp={() => setIsScrubbing(false)}
-                onTouchEnd={() => setIsScrubbing(false)}
-                onTouchStart={() => setIsScrubbing(true)}
-              />
+              >
+                <Slider.Track>
+                  <Slider.Fill />
+                  <Slider.Thumb />
+                </Slider.Track>
+              </Slider>
             )}
 
             <div className="flex items-center justify-between text-xs text-muted tabular-nums">
@@ -415,18 +409,17 @@ export function CozyMusicCard() {
           </div>
 
           {/* Controls Row: Left (Queue Toggle), Center (Play/Pause/Skip), Right (Volume) */}
-          <div className="w-full flex items-center justify-between px-1 pt-1">
+          <div className="flex items-center justify-between px-1 pt-1 w-full">
             {/* Left: Playlist Viewer Button (Disabled when no playlist tracks) */}
-            <div className="flex items-center justify-start w-24">
+            <div className="flex items-center justify-start w-32">
               <Button
-                isIconOnly
-                aria-label="Toggle tracklist"
-                className={`size-8 rounded-full transition-colors duration-150 ${
+                aria-label="Toggle tracklist queue"
+                className={`h-8 px-3 rounded-full text-xs font-medium flex items-center gap-2 transition-colors duration-150 shadow-xs ${
                   !hasMultipleTracks
-                    ? "opacity-35 cursor-not-allowed border border-separator/20"
+                    ? "opacity-35 border border-separator/30 bg-surface text-muted cursor-not-allowed"
                     : isTracklistOpen
-                      ? "text-accent bg-accent/15 border border-accent/30 cursor-pointer"
-                      : "text-muted hover:text-foreground hover:bg-surface border border-separator/40 cursor-pointer"
+                      ? "text-accent bg-accent/15 border border-accent/40 cursor-pointer"
+                      : "text-foreground hover:bg-surface-secondary border border-separator/60 hover:border-separator/90 bg-surface cursor-pointer"
                 }`}
                 isDisabled={!hasMultipleTracks}
                 size="sm"
@@ -435,7 +428,13 @@ export function CozyMusicCard() {
                   hasMultipleTracks && setIsTracklistOpen((prev) => !prev)
                 }
               >
-                <ListMusic className="size-4" />
+                <ListMusic className="size-5 text-accent shrink-0" />
+                <span>Queue</span>
+                {hasMultipleTracks && (
+                  <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-surface-secondary border border-separator/40 text-muted font-semibold tabular-nums">
+                    {tracklist.length}
+                  </span>
+                )}
               </Button>
             </div>
 
@@ -445,7 +444,12 @@ export function CozyMusicCard() {
                 <Button
                   isIconOnly
                   aria-label="Previous track"
-                  className="size-8 rounded-full text-muted hover:text-foreground cursor-pointer transition-colors duration-150"
+                  className={`size-8 rounded-full transition-colors duration-150 ${
+                    currentTrackIndex <= 0
+                      ? "opacity-30 cursor-not-allowed text-muted"
+                      : "text-muted hover:text-foreground cursor-pointer"
+                  }`}
+                  isDisabled={currentTrackIndex <= 0}
                   size="sm"
                   variant="ghost"
                   onClick={prevTrack}
@@ -457,17 +461,17 @@ export function CozyMusicCard() {
               <Button
                 isIconOnly
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="size-11 rounded-full bg-foreground text-background shadow-lg hover:opacity-90 active:scale-95 transition-opacity duration-150 cursor-pointer"
+                className="size-11 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90 active:scale-95 transition-all duration-150 cursor-pointer"
                 size="md"
                 variant="primary"
                 onClick={togglePlay}
               >
                 {isBuffering ? (
-                  <Loader2 className="size-4 animate-spin text-background" />
+                  <Loader2 className="size-4 animate-spin" />
                 ) : isPlaying ? (
                   <Pause className="size-4 fill-current" />
                 ) : (
-                  <Play className="size-4 fill-current ml-0.5" />
+                  <Play className="size-4 fill-current" />
                 )}
               </Button>
 
@@ -475,7 +479,12 @@ export function CozyMusicCard() {
                 <Button
                   isIconOnly
                   aria-label="Next track"
-                  className="size-8 rounded-full text-muted hover:text-foreground cursor-pointer transition-colors duration-150"
+                  className={`size-8 rounded-full transition-colors duration-150 ${
+                    currentTrackIndex >= tracklist.length - 1
+                      ? "opacity-30 cursor-not-allowed text-muted"
+                      : "text-muted hover:text-foreground cursor-pointer"
+                  }`}
+                  isDisabled={currentTrackIndex >= tracklist.length - 1}
                   size="sm"
                   variant="ghost"
                   onClick={nextTrack}
@@ -485,8 +494,8 @@ export function CozyMusicCard() {
               )}
             </div>
 
-            {/* Right: Volume Control */}
-            <div className="flex items-center justify-end gap-1.5 w-24">
+            {/* Right: Volume Control (HeroUI Slider) */}
+            <div className="flex items-center justify-end gap-1.5 w-32">
               <button
                 aria-label="Mute toggle"
                 className="text-muted hover:text-foreground cursor-pointer shrink-0 transition-colors duration-150"
@@ -494,24 +503,28 @@ export function CozyMusicCard() {
                 onClick={() => setVolume(volume > 0 ? 0 : 80)}
               >
                 {volume === 0 ? (
-                  <VolumeX className="size-3.5" />
+                  <VolumeX className="size-5" />
                 ) : (
-                  <Volume2 className="size-3.5" />
+                  <Volume2 className="size-5" />
                 )}
               </button>
-              <input
+              <Slider
                 aria-label="Volume slider"
-                className="w-16 h-1.5 rounded-full appearance-none cursor-pointer outline-none"
-                max={100}
-                min={0}
-                style={{
-                  background: `linear-gradient(to right, var(--accent) ${volume}%, var(--separator) ${volume}%)`,
-                  accentColor: "var(--accent)",
-                }}
-                type="range"
+                className="w-32"
+                maxValue={100}
+                minValue={0}
                 value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
-              />
+                onChange={(val) => {
+                  const num = typeof val === "number" ? val : val[0];
+
+                  setVolume(num);
+                }}
+              >
+                <Slider.Track>
+                  <Slider.Fill />
+                  <Slider.Thumb />
+                </Slider.Track>
+              </Slider>
             </div>
           </div>
 
@@ -551,7 +564,7 @@ export function CozyMusicCard() {
         <TextField fullWidth aria-label="Audio stream link">
           <InputGroup
             fullWidth
-            className="bg-surface/50 backdrop-blur-md border border-separator/40 rounded-xl h-8 text-xs"
+            className="bg-surface border border-separator/60 rounded-xl h-8 text-xs"
           >
             <InputGroup.Input
               className="text-xs"
@@ -562,13 +575,13 @@ export function CozyMusicCard() {
           </InputGroup>
         </TextField>
         <Button
-          className="h-8 px-3 rounded-xl text-xs font-semibold"
+          className="h-8 px-3 rounded-xl text-xs font-semibold bg-accent text-accent-foreground cursor-pointer shadow-xs"
           isDisabled={!inputUrl.trim()}
           size="sm"
           type="submit"
           variant="primary"
         >
-          Load
+          Play
         </Button>
       </form>
     </div>

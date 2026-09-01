@@ -200,7 +200,10 @@ export function PlaylistPickerModal() {
                                   isActive && isPlaying ? "animate-spin" : ""
                                 }`}
                                 src={item.coverUrl}
-                                style={{ animationDuration: "3s" }}
+                                style={{
+                                  animationDuration: "3s",
+                                  animationDirection: "reverse",
+                                }}
                               />
                             ) : (
                               <div className="w-full h-full bg-accent" />
@@ -400,7 +403,7 @@ export function PlaylistPickerModal() {
                           variant="ghost"
                           onClick={() => playPlaylist(item)}
                         >
-                          <Play className="size-3 fill-current ml-0.5" />
+                          <Play className="size-3 fill-current" />
                         </Button>
                       )}
                     </div>

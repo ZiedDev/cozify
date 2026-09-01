@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { Tabs, Typography, Button } from "@heroui/react";
 import { ArrowLeft, ArrowRight, Calendar, X } from "lucide-react";
 
@@ -33,11 +34,11 @@ export function ActivityHeatmap({
     y: number;
   } | null>(null);
 
-  // 6M mode = 26 weeks per page
+  // 6M mode = 26 weeks per page (H1: Jan-Jun, H2: Jul-Dec)
   const total6mPages = Math.max(1, Math.ceil(weeks.length / 26));
   const [page6m, setPage6m] = useState<number>(total6mPages);
 
-  // 12M mode = 52 weeks per page
+  // 12M mode = 52 weeks per page (Jan 1st - Dec 31st)
   const total12mPages = Math.max(1, Math.ceil(weeks.length / 52));
   const [page12m, setPage12m] = useState<number>(total12mPages);
 
@@ -49,7 +50,7 @@ export function ActivityHeatmap({
     setPage12m(total12mPages);
   }, [total12mPages]);
 
-  // Sliced weeks based on active view mode and current page
+  // Sliced weeks strictly starting at the beginning of the year / semester
   const visibleWeeks = useMemo(() => {
     if (viewMode === "6m") {
       const start = (page6m - 1) * 26;
@@ -498,63 +499,76 @@ export function ActivityHeatmap({
         </div>
       </div>
 
-      {/* Floating Hover Tooltip */}
-      {hoveredDay && (
-        <div
-          className="fixed z-50 pointer-events-none px-2.5 py-1.5 rounded-xl bg-surface border border-separator shadow-2xl text-xs -translate-x-1/2 -translate-y-full mb-2 animate-in fade-in zoom-in-95 duration-100 min-w-32"
-          style={{
-            left: hoveredDay.x,
-            top: hoveredDay.y - 6,
-          }}
-        >
-          <div className="flex flex-col gap-1">
-            <Typography
-              className="text-foreground text-xs font-semibold"
-              type="body-xs"
-            >
-              {hoveredDay.day.fullDateLabel}{" "}
-              {hoveredDay.day.isFuture && "(Upcoming)"}
-            </Typography>
-            <div className="flex items-center justify-between text-xs pt-0.5 border-t border-separator/40">
-              <Typography color="muted" type="body-xs">
-                Focus:
+      {/* Floating Hover Tooltip via Portal */}
+      {hoveredDay &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className={`fixed z-9999 pointer-events-none px-2.5 py-1.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator shadow-2xl text-xs -translate-x-1/2 min-w-36 animate-in fade-in zoom-in-95 duration-100 ${
+              hoveredDay.y < 120
+                ? "translate-y-2 mt-1"
+                : "-translate-y-full -mt-2"
+            }`}
+            style={{
+              left: Math.max(
+                80,
+                Math.min(
+                  typeof window !== "undefined" ? window.innerWidth - 80 : 999,
+                  hoveredDay.x,
+                ),
+              ),
+              top: hoveredDay.y < 120 ? hoveredDay.y + 16 : hoveredDay.y,
+            }}
+          >
+            <div className="flex flex-col gap-1">
+              <Typography
+                className="text-foreground text-xs font-semibold"
+                type="body-xs"
+              >
+                {hoveredDay.day.fullDateLabel}{" "}
+                {hoveredDay.day.isFuture && "(Upcoming)"}
               </Typography>
-              <Typography className="font-bold text-accent" type="body-xs">
-                {hoveredDay.day.focusMinutes > 0
-                  ? formatMinutesDisplay(hoveredDay.day.focusMinutes)
-                  : "0m"}
-              </Typography>
-            </div>
-            {hoveredDay.day.cycleCount > 0 && (
-              <div className="flex items-center justify-between text-xs text-muted">
+              <div className="flex items-center justify-between text-xs pt-0.5 border-t border-separator/40">
                 <Typography color="muted" type="body-xs">
-                  Pomodoros:
+                  Focus:
                 </Typography>
-                <Typography
-                  className="font-medium text-foreground"
-                  type="body-xs"
-                >
-                  {hoveredDay.day.cycleCount}{" "}
-                  {hoveredDay.day.cycleCount === 1 ? "cycle" : "cycles"}
+                <Typography className="font-bold text-accent" type="body-xs">
+                  {hoveredDay.day.focusMinutes > 0
+                    ? formatMinutesDisplay(hoveredDay.day.focusMinutes)
+                    : "0m"}
                 </Typography>
               </div>
-            )}
-            {hoveredDay.day.taskCompletedCount > 0 && (
-              <div className="flex items-center justify-between text-xs text-emerald-400">
-                <Typography className="text-emerald-400" type="body-xs">
-                  Tasks done:
-                </Typography>
-                <Typography
-                  className="font-medium text-emerald-400"
-                  type="body-xs"
-                >
-                  {hoveredDay.day.taskCompletedCount}
-                </Typography>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              {hoveredDay.day.cycleCount > 0 && (
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <Typography color="muted" type="body-xs">
+                    Pomodoros:
+                  </Typography>
+                  <Typography
+                    className="font-medium text-foreground"
+                    type="body-xs"
+                  >
+                    {hoveredDay.day.cycleCount}{" "}
+                    {hoveredDay.day.cycleCount === 1 ? "cycle" : "cycles"}
+                  </Typography>
+                </div>
+              )}
+              {hoveredDay.day.taskCompletedCount > 0 && (
+                <div className="flex items-center justify-between text-xs text-emerald-400">
+                  <Typography className="text-emerald-400" type="body-xs">
+                    Tasks done:
+                  </Typography>
+                  <Typography
+                    className="font-medium text-emerald-400"
+                    type="body-xs"
+                  >
+                    {hoveredDay.day.taskCompletedCount}
+                  </Typography>
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

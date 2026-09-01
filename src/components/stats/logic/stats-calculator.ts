@@ -869,7 +869,7 @@ export function calculateHeatmapData(
 } {
   const now = new Date();
   const currentYear = now.getFullYear();
-  let startYear = currentYear - 1; // Default to at least 2 calendar years
+  let earliestYear = currentYear;
   const rangeTitle = "Year-Round Consistency & Focus Momentum";
 
   const sessionMap = new Map<
@@ -880,6 +880,9 @@ export function calculateHeatmapData(
 
   for (let i = 0; i < sessions.length; i++) {
     const s = sessions[i];
+    const mins =
+      (Number(s.focusMinutes) || 0) + (Number(s.overtimeMinutes) || 0);
+    const cycles = Number(s.cyclesCompleted ?? s.sprintsCompleted) || 0;
     const d = new Date(s.createdAt);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const curr = sessionMap.get(dateStr) || {
@@ -888,17 +891,16 @@ export function calculateHeatmapData(
       count: 0,
     };
 
-    curr.minutes +=
-      (Number(s.focusMinutes) || 0) + (Number(s.overtimeMinutes) || 0);
-    curr.cycles += Number(s.cyclesCompleted ?? s.sprintsCompleted) || 0;
+    curr.minutes += mins;
+    curr.cycles += cycles;
     curr.count += 1;
     sessionMap.set(dateStr, curr);
 
-    if (s.createdAt) {
+    if (mins > 0 || cycles > 0) {
       const yr = d.getFullYear();
 
-      if (yr < startYear) {
-        startYear = yr;
+      if (yr < earliestYear) {
+        earliestYear = yr;
       }
     }
   }
@@ -911,8 +913,16 @@ export function calculateHeatmapData(
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
       todoMap.set(dateStr, (todoMap.get(dateStr) || 0) + 1);
+
+      const yr = d.getFullYear();
+
+      if (yr < earliestYear) {
+        earliestYear = yr;
+      }
     }
   }
+
+  const startYear = Math.min(currentYear, earliestYear);
 
   const todayEndTimestamp = new Date(
     now.getFullYear(),
