@@ -179,9 +179,9 @@ export function CozyMusicCard() {
   const isSpotify = activePlatform === "spotify";
 
   return (
-    <div className="w-full max-w-lg md:max-w-xl mx-auto flex flex-col items-center gap-3.5 select-none relative">
+    <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto flex flex-col items-center gap-2 sm:gap-2.5 md:gap-3 select-none relative">
       {/* Top Header: Platform Indicator, Status, Actions */}
-      <div className="w-full flex items-center justify-between pb-1 px-1">
+      <div className="w-full flex items-center justify-between pb-0.5 px-1">
         <div className="flex items-center gap-2 min-w-0">
           <span
             className={`size-2.5 rounded-full shrink-0 transition-colors duration-300 ${
@@ -204,7 +204,7 @@ export function CozyMusicCard() {
         <div className="flex items-center gap-2 shrink-0">
           {/* Dynamic Clickable Platform Badge with 'Open in' */}
           <a
-            className={`inline-flex items-center gap-2 h-8 px-3 rounded-full text-xs font-semibold border transition-colors duration-150 ${
+            className={`inline-flex items-center gap-1.5 h-7.5 sm:h-8 px-2.5 sm:px-3 rounded-full text-xs font-semibold border transition-colors duration-150 ${
               isSpotify
                 ? "text-[#1db954] bg-[#1db954]/10 border-[#1db954]/25 hover:bg-[#1db954]/20"
                 : "text-[#ff4e4e] bg-[#ff0000]/10 border-[#ff0000]/25 hover:bg-[#ff0000]/20"
@@ -215,11 +215,11 @@ export function CozyMusicCard() {
             title={isSpotify ? "Open in Spotify" : "Open in YouTube"}
           >
             {isSpotify ? (
-              <svg className="size-5 fill-current shrink-0" viewBox="0 0 24 24">
+              <svg className="size-4 sm:size-4.5 fill-current shrink-0" viewBox="0 0 24 24">
                 <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.495 17.306c-.215.352-.676.463-1.028.247-2.816-1.72-6.36-2.109-10.536-1.155-.403.093-.804-.158-.897-.562-.093-.403.158-.804.562-.897 4.571-1.045 8.492-.596 11.652 1.339.352.216.463.676.247 1.028zm1.467-3.262c-.27.44-.848.578-1.288.308-3.224-1.982-8.14-2.557-11.954-1.399-.497.151-1.025-.133-1.176-.63-.151-.497.133-1.025.63-1.176 4.364-1.324 9.791-.682 13.48 1.589.44.27.578.848.308 1.288zm.126-3.41c-3.867-2.296-10.248-2.508-13.941-1.387-.593.18-1.22-.164-1.4-.757-.18-.593.164-1.22.757-1.4 4.248-1.29 11.294-1.037 15.741 1.603.533.316.707 1.01.391 1.543-.316.533-1.01.707-1.543.391z" />
               </svg>
             ) : (
-              <svg className="size-5 fill-current shrink-0" viewBox="0 0 24 24">
+              <svg className="size-4 sm:size-4.5 fill-current shrink-0" viewBox="0 0 24 24">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
               </svg>
             )}
@@ -230,12 +230,12 @@ export function CozyMusicCard() {
 
           {/* Button with Playlists text */}
           <Button
-            className="h-8 px-3.5 rounded-full text-xs font-medium flex items-center gap-2 text-foreground hover:bg-surface-secondary border border-separator/60 hover:border-separator/90 bg-surface cursor-pointer transition-colors duration-150 shadow-xs"
+            className="h-7.5 sm:h-8 px-3 rounded-full text-xs font-medium flex items-center gap-1.5 text-foreground hover:bg-surface-secondary border border-separator/60 hover:border-separator/90 bg-surface cursor-pointer transition-colors duration-150 shadow-xs"
             size="sm"
             variant="secondary"
             onClick={togglePicker}
           >
-            <Disc3 className="size-5 text-accent shrink-0" />
+            <Disc3 className="size-4.5 text-accent shrink-0" />
             <span>Playlists</span>
           </Button>
         </div>
@@ -243,7 +243,7 @@ export function CozyMusicCard() {
 
       {/* Spotify Mode: Only the Spotify Player in the middle without fancy controls */}
       {isSpotify && spotifyEmbedUrl ? (
-        <div className="w-full h-88 sm:h-96 rounded-2xl overflow-hidden border border-separator/40 bg-surface-secondary/60 shadow-xl my-1">
+        <div className="w-full h-72 sm:h-80 md:h-84 rounded-2xl overflow-hidden border border-separator/40 bg-surface-secondary/60 shadow-xl my-0.5">
           <iframe
             allow="encrypted-media; fullscreen; picture-in-picture"
             className="w-full h-full border-none block"
@@ -259,13 +259,13 @@ export function CozyMusicCard() {
             aria-label={
               isPosterHidden ? "Switch to vinyl mode" : "Switch to video mode"
             }
-            className={`relative size-48 sm:size-56 md:size-60 my-2 overflow-hidden ring-2 ring-white/15 transition-[border-radius,box-shadow,transform,scale] duration-400 ease-in-out hover:scale-[1.02] active:scale-[0.98] cursor-pointer select-none text-left p-0 border-none outline-none focus-visible:ring-2 focus-visible:ring-accent group shrink-0 ${
+            className={`relative size-36 sm:size-44 md:size-48 lg:size-52 my-0.5 sm:my-1 overflow-hidden ring-2 ring-white/15 transition-[border-radius,box-shadow,transform,scale] duration-400 ease-in-out hover:scale-[1.02] active:scale-[0.98] cursor-pointer select-none text-left p-0 border-none outline-none focus-visible:ring-2 focus-visible:ring-accent group shrink-0 ${
               isPosterHidden
                 ? "bg-black shadow-2xl"
                 : "bg-transparent shadow-xl"
             }`}
             style={{
-              borderRadius: isPosterHidden ? "1.5rem" : "50%",
+              borderRadius: isPosterHidden ? "1.25rem" : "50%",
             }}
             title={
               isPosterHidden
@@ -301,9 +301,9 @@ export function CozyMusicCard() {
                 className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative shadow-inner will-change-transform [transform:translateZ(0)]"
                 style={{
                   WebkitMaskImage:
-                    "radial-gradient(circle at center, transparent 16px, black 17px)",
+                    "radial-gradient(circle at center, transparent 14px, black 15px)",
                   maskImage:
-                    "radial-gradient(circle at center, transparent 16px, black 17px)",
+                    "radial-gradient(circle at center, transparent 14px, black 15px)",
                 }}
               >
                 {/* Embedded Full Poster Artwork filling the disc grooves */}
@@ -325,8 +325,8 @@ export function CozyMusicCard() {
               </div>
 
               {/* Central Spindle Hole with metallic rim and 100% transparent cutout */}
-              <div className="absolute size-8 rounded-full border-2 border-white/40 shadow-inner flex items-center justify-center pointer-events-none bg-transparent">
-                <div className="size-4 rounded-full border border-white/25 bg-transparent" />
+              <div className="absolute size-7 rounded-full border-2 border-white/40 shadow-inner flex items-center justify-center pointer-events-none bg-transparent">
+                <div className="size-3.5 rounded-full border border-white/25 bg-transparent" />
               </div>
             </div>
           </button>
@@ -338,14 +338,14 @@ export function CozyMusicCard() {
           >
             <Typography
               truncate
-              className="w-full text-base sm:text-lg font-bold text-foreground text-center"
+              className="w-full text-sm sm:text-base font-bold text-foreground text-center leading-snug"
               type="h4"
             >
               {title}
             </Typography>
             <Typography
               truncate
-              className="w-full text-xs sm:text-sm text-muted mt-0.5 text-center  "
+              className="w-full text-[11px] sm:text-xs text-muted mt-0.5 text-center leading-tight"
               type="body-xs"
             >
               {author}
@@ -353,7 +353,7 @@ export function CozyMusicCard() {
           </div>
 
           {/* Timeline & Scrubber (HeroUI Slider) */}
-          <div className="w-full flex flex-col gap-1 px-1">
+          <div className="w-full flex flex-col gap-0.5 px-1">
             {isLive ? (
               <Slider
                 aria-label="Live stream progress"
@@ -390,7 +390,7 @@ export function CozyMusicCard() {
               </Slider>
             )}
 
-            <div className="flex items-center justify-between text-xs text-muted tabular-nums">
+            <div className="flex items-center justify-between text-[11px] sm:text-xs text-muted tabular-nums">
               {isLive ? (
                 <>
                   <span style={{ visibility: "hidden" }}>0:00</span>
@@ -409,12 +409,12 @@ export function CozyMusicCard() {
           </div>
 
           {/* Controls Row: Left (Queue Toggle), Center (Play/Pause/Skip), Right (Volume) */}
-          <div className="flex items-center justify-between px-1 pt-1 w-full">
+          <div className="flex items-center justify-between px-1 w-full">
             {/* Left: Playlist Viewer Button (Disabled when no playlist tracks) */}
-            <div className="flex items-center justify-start w-32">
+            <div className="flex items-center justify-start w-28 sm:w-32">
               <Button
                 aria-label="Toggle tracklist queue"
-                className={`h-8 px-3 rounded-full text-xs font-medium flex items-center gap-2 transition-colors duration-150 shadow-xs ${
+                className={`h-7.5 sm:h-8 px-2.5 sm:px-3 rounded-full text-xs font-medium flex items-center gap-1.5 transition-colors duration-150 shadow-xs ${
                   !hasMultipleTracks
                     ? "opacity-35 border border-separator/30 bg-surface text-muted cursor-not-allowed"
                     : isTracklistOpen
@@ -428,10 +428,10 @@ export function CozyMusicCard() {
                   hasMultipleTracks && setIsTracklistOpen((prev) => !prev)
                 }
               >
-                <ListMusic className="size-5 text-accent shrink-0" />
+                <ListMusic className="size-4 sm:size-4.5 text-accent shrink-0" />
                 <span>Queue</span>
                 {hasMultipleTracks && (
-                  <span className="text-[11px] px-1.5 py-0.2 rounded-full bg-surface-secondary border border-separator/40 text-muted font-semibold tabular-nums">
+                  <span className="text-[10px] sm:text-[11px] px-1.5 py-0.2 rounded-full bg-surface-secondary border border-separator/40 text-muted font-semibold tabular-nums">
                     {tracklist.length}
                   </span>
                 )}
@@ -439,12 +439,12 @@ export function CozyMusicCard() {
             </div>
 
             {/* Center: Playback Controls (Previous, Big Play/Pause, Next) */}
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2">
               {hasMultipleTracks && (
                 <Button
                   isIconOnly
                   aria-label="Previous track"
-                  className={`size-8 rounded-full transition-colors duration-150 ${
+                  className={`size-7 sm:size-8 rounded-full transition-colors duration-150 ${
                     currentTrackIndex <= 0
                       ? "opacity-30 cursor-not-allowed text-muted"
                       : "text-muted hover:text-foreground cursor-pointer"
@@ -454,24 +454,24 @@ export function CozyMusicCard() {
                   variant="ghost"
                   onClick={prevTrack}
                 >
-                  <SkipBack className="size-4 fill-current" />
+                  <SkipBack className="size-3.5 sm:size-4 fill-current" />
                 </Button>
               )}
 
               <Button
                 isIconOnly
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="size-11 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90 active:scale-95 transition-all duration-150 cursor-pointer"
+                className="size-9 sm:size-10 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90 active:scale-95 transition-all duration-150 cursor-pointer"
                 size="md"
                 variant="primary"
                 onClick={togglePlay}
               >
                 {isBuffering ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <Loader2 className="size-3.5 sm:size-4 animate-spin" />
                 ) : isPlaying ? (
-                  <Pause className="size-4 fill-current" />
+                  <Pause className="size-3.5 sm:size-4 fill-current" />
                 ) : (
-                  <Play className="size-4 fill-current" />
+                  <Play className="size-3.5 sm:size-4 fill-current" />
                 )}
               </Button>
 
@@ -479,7 +479,7 @@ export function CozyMusicCard() {
                 <Button
                   isIconOnly
                   aria-label="Next track"
-                  className={`size-8 rounded-full transition-colors duration-150 ${
+                  className={`size-7 sm:size-8 rounded-full transition-colors duration-150 ${
                     currentTrackIndex >= tracklist.length - 1
                       ? "opacity-30 cursor-not-allowed text-muted"
                       : "text-muted hover:text-foreground cursor-pointer"
@@ -489,13 +489,13 @@ export function CozyMusicCard() {
                   variant="ghost"
                   onClick={nextTrack}
                 >
-                  <SkipForward className="size-4 fill-current" />
+                  <SkipForward className="size-3.5 sm:size-4 fill-current" />
                 </Button>
               )}
             </div>
 
             {/* Right: Volume Control (HeroUI Slider) */}
-            <div className="flex items-center justify-end gap-1.5 w-32">
+            <div className="flex items-center justify-end gap-1.5 w-28 sm:w-32">
               <button
                 aria-label="Mute toggle"
                 className="text-muted hover:text-foreground cursor-pointer shrink-0 transition-colors duration-150"
@@ -503,14 +503,14 @@ export function CozyMusicCard() {
                 onClick={() => setVolume(volume > 0 ? 0 : 80)}
               >
                 {volume === 0 ? (
-                  <VolumeX className="size-5" />
+                  <VolumeX className="size-4 sm:size-4.5" />
                 ) : (
-                  <Volume2 className="size-5" />
+                  <Volume2 className="size-4 sm:size-4.5" />
                 )}
               </button>
               <Slider
                 aria-label="Volume slider"
-                className="w-32"
+                className="w-20 sm:w-24 md:w-28"
                 maxValue={100}
                 minValue={0}
                 value={volume}
@@ -530,12 +530,12 @@ export function CozyMusicCard() {
 
           {/* Expandable Tracklist with ScrollShadow */}
           {isTracklistOpen && (
-            <ScrollShadow className="w-full max-h-28 p-1.5 rounded-2xl bg-black/40 border border-white/5 flex flex-col gap-0.5 text-xs mt-1 overflow-y-auto no-scrollbar">
+            <ScrollShadow className="w-full max-h-24 sm:max-h-28 p-1.5 rounded-2xl bg-black/40 border border-white/5 flex flex-col gap-0.5 text-xs overflow-y-auto no-scrollbar">
               {tracklist.length > 0 ? (
                 tracklist.map((track, idx) => (
                   <button
                     key={track.id + idx}
-                    className={`flex items-center justify-between p-1.5 rounded-lg text-left cursor-pointer transition-colors duration-150 ${
+                    className={`flex items-center justify-between p-1.5 sm:p-2 rounded-xl text-left cursor-pointer transition-colors duration-150 ${
                       idx === currentTrackIndex
                         ? "bg-accent/20 text-accent font-semibold"
                         : "text-foreground hover:bg-surface"
@@ -543,7 +543,25 @@ export function CozyMusicCard() {
                     type="button"
                     onClick={() => playTrackAt(idx)}
                   >
-                    <span className="truncate">{track.title}</span>
+                    <div className="flex items-center gap-2.5 truncate">
+                      <span
+                        className={`text-[10px] sm:text-[11px] w-4 text-center tabular-nums shrink-0 ${
+                          idx === currentTrackIndex
+                            ? "text-accent font-bold"
+                            : "text-muted"
+                        }`}
+                      >
+                        {idx + 1}
+                      </span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="truncate">{track.title}</span>
+                        {track.author && (
+                          <span className="text-[10px] text-muted truncate">
+                            {track.author}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </button>
                 ))
               ) : (
@@ -558,13 +576,13 @@ export function CozyMusicCard() {
 
       {/* Stream URL Input Bar */}
       <form
-        className="w-full flex items-center gap-1.5 pt-1 px-1"
+        className="w-full flex items-center gap-1.5 px-1"
         onSubmit={handleLoad}
       >
         <TextField fullWidth aria-label="Audio stream link">
           <InputGroup
             fullWidth
-            className="bg-surface border border-separator/60 rounded-xl h-8 text-xs"
+            className="bg-surface border border-separator/60 rounded-xl h-7.5 sm:h-8 text-xs"
           >
             <InputGroup.Input
               className="text-xs"
@@ -575,7 +593,7 @@ export function CozyMusicCard() {
           </InputGroup>
         </TextField>
         <Button
-          className="h-8 px-3 rounded-xl text-xs font-semibold bg-accent text-accent-foreground cursor-pointer shadow-xs"
+          className="h-7.5 sm:h-8 px-3 rounded-xl text-xs font-semibold bg-accent text-accent-foreground cursor-pointer shadow-xs"
           isDisabled={!inputUrl.trim()}
           size="sm"
           type="submit"

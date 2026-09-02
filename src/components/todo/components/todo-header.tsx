@@ -1,14 +1,9 @@
-import type { Key } from "@heroui/react";
-
 import { useMemo } from "react";
 import {
   SearchField,
   Tabs,
   Typography,
-  Autocomplete,
-  ListBox,
-  EmptyState,
-  useFilter,
+  Popover,
 } from "@heroui/react";
 import {
   LayoutList,
@@ -45,8 +40,6 @@ export function TodoHeader() {
     setSelectedPriority,
     stats,
   } = useTodos();
-
-  const { contains } = useFilter({ sensitivity: "base" });
 
   // Gather unique tags from presets + existing active tasks
   const tagOptions = useMemo(() => {
@@ -256,144 +249,122 @@ export function TodoHeader() {
           </Tabs>
         </div>
 
-        {/* Right Filter Autocomplete Controls: Tags & Priority */}
+        {/* Right Filter Popovers: Tags & Priority */}
         <div className="flex items-center gap-1.5 md:gap-2 ml-auto shrink-0">
-          {/* 1. HeroUI Autocomplete for Tag Filtering */}
-          <Autocomplete
-            className="w-24 xs:w-28 sm:w-32"
-            placeholder="Tags"
-            selectionMode="single"
-            value={selectedTag as Key | null}
-            onChange={(val) => setSelectedTag(val ? String(val) : null)}
-          >
-            <Autocomplete.Trigger
-              className={`h-6.5 md:h-7 px-2 md:px-2.5 rounded-full text-[11px] md:text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
-                selectedTag
-                  ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
-                  : "bg-surface/80 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"
-              }`}
-            >
-              <ActiveTagIcon className="size-3 shrink-0 opacity-80" />
-              <Autocomplete.Value>
-                {({ isPlaceholder }: any) =>
-                  isPlaceholder || !selectedTag
-                    ? "Tags"
-                    : activeTagMeta?.label || selectedTag
-                }
-              </Autocomplete.Value>
-              <Autocomplete.ClearButton />
-              <Autocomplete.Indicator />
-            </Autocomplete.Trigger>
-
-            <Autocomplete.Popover className="z-50 min-w-44 p-1 rounded-2xl bg-surface border border-separator shadow-xl">
-              <Autocomplete.Filter filter={contains}>
-                <SearchField name="searchTag" variant="secondary">
-                  <SearchField.Group className="h-7 text-xs px-2 rounded-xl bg-surface-secondary/70">
-                    <SearchField.SearchIcon className="size-3 text-muted" />
-                    <SearchField.Input
-                      className="text-xs"
-                      placeholder="Search tags..."
-                    />
-                    <SearchField.ClearButton className="size-3.5" />
-                  </SearchField.Group>
-                </SearchField>
-                <ListBox
-                  aria-label="Filter by tag"
-                  className="max-h-52 overflow-y-auto p-1"
-                  renderEmptyState={() => (
-                    <EmptyState className="p-3 text-center text-xs text-muted">
-                      No tags found
-                    </EmptyState>
-                  )}
+          {/* 1. Popover for Tag Filtering */}
+          <Popover>
+            <Popover.Trigger>
+              <button
+                className={`h-6.5 md:h-7 px-2.5 md:px-3 rounded-full text-[11px] md:text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  selectedTag
+                    ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
+                    : "bg-surface/80 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"
+                }`}
+                type="button"
+              >
+                <ActiveTagIcon className="size-3 shrink-0 opacity-80" />
+                <span>{activeTagMeta?.label || selectedTag || "Tags"}</span>
+              </button>
+            </Popover.Trigger>
+            <Popover.Content>
+              <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">
+                <button
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                    !selectedTag
+                      ? "bg-accent/15 text-accent font-semibold"
+                      : "hover:bg-surface-secondary/60 text-foreground"
+                  }`}
+                  type="button"
+                  onClick={() => setSelectedTag(null)}
                 >
-                  {tagOptions.map((item) => (
-                    <ListBox.Item
-                      key={item.id}
-                      id={item.id}
-                      textValue={item.name}
-                    >
-                      <div className="flex items-center gap-2">
-                        <item.icon className="size-3.5 shrink-0 opacity-80" />
-                        <span>{item.name}</span>
-                      </div>
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Autocomplete.Filter>
-            </Autocomplete.Popover>
-          </Autocomplete>
+                  <TagIcon className="size-3.5 opacity-80 shrink-0 text-muted" />
+                  <span>All Tags</span>
+                </button>
+                {tagOptions.map((item) => {
+                  const isSelected =
+                    selectedTag?.toLowerCase() === item.id.toLowerCase();
 
-          {/* 2. HeroUI Autocomplete for Priority Filtering */}
-          <Autocomplete
-            className="w-24 xs:w-28 sm:w-32"
-            placeholder="Priority"
-            selectionMode="single"
-            value={selectedPriority as Key | null}
-            onChange={(val) =>
-              setSelectedPriority(val ? (String(val) as TodoPriority) : null)
-            }
-          >
-            <Autocomplete.Trigger
-              className={`h-6.5 md:h-7 px-2 md:px-2.5 rounded-full text-[11px] md:text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
-                selectedPriority && selectedPriority !== "all"
-                  ? `${PRIORITY_THEMES[selectedPriority]?.badgeClass || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
-                  : "bg-surface/80 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"
-              }`}
-            >
-              <Flag className="size-3 shrink-0 opacity-80" />
-              <Autocomplete.Value>
-                {({ isPlaceholder }: any) =>
-                  isPlaceholder ||
-                  !selectedPriority ||
-                  selectedPriority === "all"
+                  return (
+                    <button
+                      key={item.id}
+                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-accent/15 text-accent font-semibold"
+                          : "hover:bg-surface-secondary/60 text-foreground"
+                      }`}
+                      type="button"
+                      onClick={() =>
+                        setSelectedTag(isSelected ? null : item.id)
+                      }
+                    >
+                      <item.icon className="size-3.5 opacity-80 shrink-0" />
+                      <span>{item.name}</span>
+                    </button>
+                  );
+                })}
+              </Popover.Dialog>
+            </Popover.Content>
+          </Popover>
+
+          {/* 2. Popover for Priority Filtering */}
+          <Popover>
+            <Popover.Trigger>
+              <button
+                className={`h-6.5 md:h-7 px-2.5 md:px-3 rounded-full text-[11px] md:text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                  selectedPriority && selectedPriority !== "all"
+                    ? `${PRIORITY_THEMES[selectedPriority]?.badgeClass || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
+                    : "bg-surface/80 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"
+                }`}
+                type="button"
+              >
+                <Flag className="size-3 shrink-0 opacity-80" />
+                <span>
+                  {!selectedPriority || selectedPriority === "all"
                     ? "Priority"
-                    : PRIORITY_THEMES[selectedPriority]?.label.split(" ")[0] ||
-                      "Priority"
-                }
-              </Autocomplete.Value>
-              <Autocomplete.ClearButton />
-              <Autocomplete.Indicator />
-            </Autocomplete.Trigger>
-
-            <Autocomplete.Popover className="z-50 min-w-44 p-1 rounded-2xl bg-surface border border-separator shadow-xl">
-              <Autocomplete.Filter filter={contains}>
-                <SearchField name="searchPriority" variant="secondary">
-                  <SearchField.Group className="h-7 text-xs px-2 rounded-xl bg-surface-secondary/70">
-                    <SearchField.SearchIcon className="size-3 text-muted" />
-                    <SearchField.Input
-                      className="text-xs"
-                      placeholder="Search priorities..."
-                    />
-                    <SearchField.ClearButton className="size-3.5" />
-                  </SearchField.Group>
-                </SearchField>
-                <ListBox
-                  aria-label="Filter by priority"
-                  className="max-h-52 overflow-y-auto p-1"
-                  renderEmptyState={() => (
-                    <EmptyState className="p-3 text-center text-xs text-muted">
-                      No priorities found
-                    </EmptyState>
-                  )}
+                    : PRIORITY_THEMES[selectedPriority]?.label || "Priority"}
+                </span>
+              </button>
+            </Popover.Trigger>
+            <Popover.Content>
+              <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">
+                <button
+                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                    !selectedPriority || selectedPriority === "all"
+                      ? "bg-accent/15 text-accent font-semibold"
+                      : "hover:bg-surface-secondary/60 text-foreground"
+                  }`}
+                  type="button"
+                  onClick={() => setSelectedPriority(null)}
                 >
-                  {priorityOptions.map((item) => (
-                    <ListBox.Item
+                  <Flag className="size-3.5 opacity-80 shrink-0 text-muted" />
+                  <span>All Priorities</span>
+                </button>
+                {priorityOptions.map((item) => {
+                  const isSelected = selectedPriority === item.id;
+
+                  return (
+                    <button
                       key={item.id}
-                      id={item.id}
-                      textValue={item.name}
+                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-accent/15 text-accent font-semibold"
+                          : "hover:bg-surface-secondary/60 text-foreground"
+                      }`}
+                      type="button"
+                      onClick={() =>
+                        setSelectedPriority(
+                          isSelected ? null : (item.id as TodoPriority),
+                        )
+                      }
                     >
-                      <div className="flex items-center gap-2">
-                        <span className={`size-2 rounded-full ${item.dot}`} />
-                        <span className={item.color}>{item.name}</span>
-                      </div>
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  ))}
-                </ListBox>
-              </Autocomplete.Filter>
-            </Autocomplete.Popover>
-          </Autocomplete>
+                      <span className={`size-2 rounded-full ${item.dot}`} />
+                      <span className={item.color}>{item.name}</span>
+                    </button>
+                  );
+                })}
+              </Popover.Dialog>
+            </Popover.Content>
+          </Popover>
         </div>
       </div>
     </div>

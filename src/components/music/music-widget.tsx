@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Button,
   Typography,
@@ -59,6 +59,21 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
 
   const [inputUrl, setInputUrl] = useState("");
   const [isDrawerActive, setIsDrawerActive] = useState(false);
+  const widgetRef = useRef<HTMLDivElement>(null);
+
+  // Click outside to smoothly close audio deck
+  useEffect(() => {
+    if (!isDeckOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (widgetRef.current && !widgetRef.current.contains(e.target as Node)) {
+        setIsDeckOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDeckOpen, setIsDeckOpen]);
 
   const scrubberPercentage =
     duration > 0
@@ -87,6 +102,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
 
   return (
     <div
+      ref={widgetRef}
       className={`hidden ${
         !isHidden ? "min-[951px]:flex" : ""
       } fixed bottom-4 sm:bottom-6 left-4 md:left-6 lg:left-8 xl:left-12 z-40 select-none pointer-events-none`}
@@ -94,7 +110,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
       <div className="relative">
         {/* 1. Minimized Floating Miniplayer Pill (Exact dock matching styling, color, height, and padding) */}
         <div
-          className={`rounded-full bg-surface/95 border border-separator/40 shadow-lg p-1 origin-bottom-left transition-[transform,opacity] duration-300 ease-out ${
+          className={`rounded-full bg-surface/95 border border-separator/40 shadow-lg p-1 origin-bottom-left transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
             !isDeckOpen
               ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
               : "opacity-0 scale-90 translate-y-2 pointer-events-none absolute bottom-0 left-0"
@@ -147,10 +163,10 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
 
         {/* 2. Expanded Floating Audio Deck (Smoothly expands from origin-bottom-left) */}
         <div
-          className={`absolute bottom-0 left-0 w-[92vw] sm:w-105 p-3.5 rounded-3xl bg-surface/95 backdrop-blur-2xl border border-separator/70 shadow-2xl flex flex-col gap-2.5 origin-bottom-left transition-[transform,opacity] duration-300 ease-out z-50 overflow-hidden ${
+          className={`absolute bottom-0 left-0 w-[92vw] sm:w-105 p-3.5 rounded-3xl bg-surface/95 backdrop-blur-2xl border border-separator/70 shadow-2xl flex flex-col gap-2.5 origin-bottom-left transition-all duration-350 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform z-50 overflow-hidden ${
             isDeckOpen
               ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 scale-90 translate-y-3 pointer-events-none"
+              : "opacity-0 scale-95 translate-y-3 pointer-events-none"
           }`}
         >
           {/* Top Header: Title, Clickable Platform Badge, Actions */}

@@ -111,11 +111,16 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const defaultUrl = PRESET_PLAYLISTS[0].url;
+  const initialMedia = useMemo(() => {
+    return parseAudioUrl(initialSaved?.activeUrl || defaultUrl);
+  }, [initialSaved, defaultUrl]);
+
   const [activeUrl, setActiveUrl] = useState<string>(
     () => initialSaved?.activeUrl || PRESET_PLAYLISTS[0].url,
   );
   const [activePlatform, setActivePlatform] = useState<MusicPlatform>(
-    () => initialSaved?.activePlatform || "youtube",
+    () => initialSaved?.activePlatform || initialMedia?.platform || "youtube",
   );
   const [title, setTitle] = useState<string>(
     () => initialSaved?.title || PRESET_PLAYLISTS[0].title,
@@ -127,7 +132,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     () => initialSaved?.posterUrl || PRESET_PLAYLISTS[0].coverUrl || "",
   );
   const [isLive, setIsLive] = useState<boolean>(
-    () => initialSaved?.isLive ?? true,
+    () => initialSaved?.isLive ?? false,
   );
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
@@ -139,7 +144,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   );
   const [duration, setDuration] = useState<number>(0);
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(
-    () => initialSaved?.activePlaylistId || null,
+    () => initialSaved?.activePlaylistId ?? PRESET_PLAYLISTS[0].id,
   );
   const [tracklist, setTracklist] = useState<MusicTrack[]>(
     () => initialSaved?.tracklist || [],
@@ -154,7 +159,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
     return parsed?.type === "video"
       ? parsed.id
-      : parsed?.videoId || "jfKfPfyJRdk";
+      : parsed?.videoId || "rFZHOHl-L8A";
   });
   const [isPosterHidden, setIsPosterHidden] = useState<boolean>(false);
 
@@ -174,8 +179,20 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const pendingActionRef = useRef<(() => void) | null>(null);
   const lastKnownVideoIdRef = useRef<string>("");
   const currentVideoIdsRef = useRef<string[]>([]);
-  const mediaTypeRef = useRef<"video" | "playlist" | "spotify">("video");
-  const targetFirstVideoIdRef = useRef<string>("");
+  const mediaTypeRef = useRef<"video" | "playlist" | "spotify">(
+    initialMedia?.platform === "spotify"
+      ? "spotify"
+      : initialMedia?.type === "playlist"
+        ? "playlist"
+        : "video",
+  );
+  const targetFirstVideoIdRef = useRef<string>(
+    initialMedia?.platform === "youtube"
+      ? initialMedia.type === "playlist"
+        ? initialMedia.videoId || ""
+        : initialMedia.id
+      : "",
+  );
   const trackMetaCacheRef = useRef<
     Map<string, { title: string; author: string }>
   >(new Map());
@@ -358,6 +375,19 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     (videoIds: string[]) => {
       if (mediaTypeRef.current !== "playlist") return;
       if (!videoIds || videoIds.length === 0) return;
+
+      const idsKey = videoIds.join(",");
+      const prevIdsKey = currentVideoIdsRef.current.join(",");
+
+      // Avoid re-fetching and overwriting resolved track titles if same playlist
+      if (
+        idsKey === prevIdsKey &&
+        tracklist.length === videoIds.length &&
+        tracklist.some((t) => !t.title.startsWith("Track "))
+      ) {
+        return;
+      }
+
       currentVideoIdsRef.current = videoIds;
 
       const initialTracks: MusicTrack[] = videoIds.map((id, idx) => {
@@ -377,6 +407,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
       const processBatches = async () => {
         while (currentOffset < videoIds.length) {
+          if (currentVideoIdsRef.current.join(",") !== idsKey) return;
+
           const chunk = videoIds.slice(
             currentOffset,
             currentOffset + batchSize,
@@ -388,6 +420,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
           const results = await Promise.all(
             chunk.map((vidId) => fetchSingleTrackMeta(vidId)),
           );
+
+          if (currentVideoIdsRef.current.join(",") !== idsKey) return;
 
           setTracklist((prev) =>
             prev.map((t, i) => {
@@ -417,7 +451,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
       processBatches();
     },
-    [fetchSingleTrackMeta],
+    [fetchSingleTrackMeta, tracklist],
   );
 
   // Sync track metadata from active player instance
@@ -446,13 +480,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
         } else {
           fetchMetadata(currentVidId);
         }
+      }
 
-        if (typeof playerRef.current.getPlaylistIndex === "function") {
-          const idx = playerRef.current.getPlaylistIndex();
+      if (typeof playerRef.current.getPlaylistIndex === "function") {
+        const idx = playerRef.current.getPlaylistIndex();
 
-          if (idx !== -1) {
-            setCurrentTrackIndex(idx);
-          }
+        if (idx !== -1) {
+          setCurrentTrackIndex(idx);
         }
       }
 
@@ -513,7 +547,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
 
       const ytData = parseYouTubeUrl(activeUrl);
       const initialVid =
-        ytData?.type === "video" ? ytData.id : ytData?.videoId || "jfKfPfyJRdk";
+        ytData?.type === "video" ? ytData.id : ytData?.videoId || "rFZHOHl-L8A";
 
       try {
         playerRef.current = new window.YT.Player(ytContainerRef.current, {
@@ -547,6 +581,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 pendingActionRef.current = null;
                 action();
               } else if (ytData?.type === "playlist") {
+                mediaTypeRef.current = "playlist";
+                targetFirstVideoIdRef.current = ytData.videoId || "";
                 const targetIdx =
                   initialSaved?.currentTrackIndex ?? ytData.index ?? 0;
                 const cueOpts: any = {
@@ -579,6 +615,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                   }
                 }, 250);
               } else if (initialVid) {
+                mediaTypeRef.current = "video";
+                targetFirstVideoIdRef.current = "";
                 fetchMetadata(initialVid);
               }
             },
@@ -867,6 +905,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
               suggestedQuality: "small",
             };
 
+            if (
+              !parsed.id.startsWith("RD") &&
+              !parsed.id.startsWith("UL")
+            ) {
+              playlistOpts.listType = "playlist";
+            }
+
             try {
               if (autoPlay) {
                 isPlayingRef.current = true;
@@ -881,29 +926,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                   playerRef.current.cuePlaylist(playlistOpts);
                   playerRef.current.playVideo?.();
                 }
-
-                // Fallback check for mix playlists if stream decoding hangs
-                setTimeout(() => {
-                  if (!playerRef.current || mediaTypeRef.current !== "playlist")
-                    return;
-                  try {
-                    const state = playerRef.current.getPlayerState?.();
-
-                    if (state === -1 || state === 5) {
-                      if (
-                        parsed.videoId &&
-                        typeof playerRef.current.loadVideoById === "function"
-                      ) {
-                        playerRef.current.loadVideoById({
-                          videoId: parsed.videoId,
-                          suggestedQuality: "small",
-                        });
-                      } else {
-                        playerRef.current.playVideo?.();
-                      }
-                    }
-                  } catch {}
-                }, 400);
               } else if (typeof playerRef.current.cuePlaylist === "function") {
                 playerRef.current.cuePlaylist(playlistOpts);
               }
@@ -921,12 +943,11 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
               const list = playerRef.current?.getPlaylist?.();
 
               if (list && Array.isArray(list) && list.length > 0) {
-                // If parsed has a known starting videoId, verify it is in the list, or poll at least 2 ticks
                 const hasTarget = targetFirstVideoIdRef.current
                   ? list.includes(targetFirstVideoIdRef.current)
                   : true;
 
-                if (hasTarget || attempts >= 3) {
+                if (hasTarget || attempts >= 8) {
                   populatePlaylistTracks(list);
                   const activeIdx =
                     typeof playerRef.current.getPlaylistIndex === "function"
