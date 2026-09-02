@@ -20,6 +20,7 @@ export interface ThemeConfig {
 export const DEFAULT_HUE = 291;
 export const DEFAULT_CHROMA = 0.1;
 export const DEFAULT_LIGHTNESS = 71;
+export const DEFAULT_SATURATION = 50;
 
 export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   activeBackgroundId: null, // default clean backdrop

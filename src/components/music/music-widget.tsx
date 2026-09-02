@@ -117,12 +117,12 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
           }`}
         >
           <button
-            className="flex items-center gap-1.5 min-[701px]:gap-2 rounded-full px-3 min-[701px]:px-5 py-2 min-[701px]:py-2.5 text-xs min-[701px]:text-sm md:text-base font-medium whitespace-nowrap text-foreground cursor-pointer transition-opacity duration-150 hover:opacity-85 active:opacity-75 max-w-37.5 min-[1260px]:max-w-52.5"
+            className="flex items-center gap-1.5 min-[701px]:gap-2 rounded-full h-8 px-3 min-[701px]:px-5 text-xs min-[701px]:text-sm md:text-base font-medium whitespace-nowrap text-foreground cursor-pointer transition-[opacity,transform,scale] duration-200 hover:opacity-90 active:scale-95 max-w-37.5 min-[1260px]:max-w-52.5"
             title="Open Audio Deck"
             type="button"
             onClick={() => setIsDeckOpen(true)}
           >
-            {/* Direct Music/Loading Icon without circular wrapper */}
+            {/* Direct Music/Loading Icon */}
             {isBuffering ? (
               <Loader2 className="size-4 min-[701px]:size-4.5 animate-spin text-accent shrink-0" />
             ) : (
@@ -130,12 +130,20 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
             )}
 
             {/* Wide Screens (> 1260px): Full Song Title */}
-            <span className="hidden min-[1260px]:inline truncate font-medium flex-1 text-left">
+            <Typography
+              className="hidden min-[1260px]:inline truncate font-medium flex-1 text-left"
+              type="body-sm"
+              weight="medium"
+            >
               {title}
-            </span>
+            </Typography>
 
             {/* Overlap / Narrow Screens (<= 1260px): Shortened Status */}
-            <span className="inline min-[1260px]:hidden font-medium text-muted capitalize truncate">
+            <Typography
+              className="inline min-[1260px]:hidden font-medium text-muted capitalize truncate"
+              type="body-sm"
+              weight="medium"
+            >
               {activePlatform === "spotify"
                 ? "Spotify"
                 : isBuffering
@@ -143,7 +151,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
                   : isPlaying
                     ? "Playing"
                     : "Paused"}
-            </span>
+            </Typography>
 
             {isPlaying && (
               <div className="flex items-end gap-0.5 h-3 min-[701px]:h-3.5 shrink-0">

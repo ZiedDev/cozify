@@ -38,6 +38,7 @@ import {
   DEFAULT_HUE,
   DEFAULT_CHROMA,
   DEFAULT_LIGHTNESS,
+  DEFAULT_SATURATION,
 } from "@/config/themes";
 
 export function ThemePopover() {
@@ -71,9 +72,13 @@ export function ThemePopover() {
 
   const currentColor = useMemo(() => {
     try {
-      return parseColor(`hsl(${hue}, 100%, 50%)`);
+      return parseColor(
+        `hsl(${hue}, ${DEFAULT_SATURATION}%, ${DEFAULT_LIGHTNESS}%)`,
+      );
     } catch {
-      return parseColor("hsl(291, 100%, 50%)");
+      return parseColor(
+        `hsl(${DEFAULT_HUE}, ${DEFAULT_SATURATION}%, ${DEFAULT_LIGHTNESS}%)`,
+      );
     }
   }, [hue]);
 
@@ -123,7 +128,7 @@ export function ThemePopover() {
       </Popover.Trigger>
 
       <Popover.Content
-        className="w-90 sm:w-105 p-4 rounded-3xl bg-surface/95 backdrop-blur-2xl border border-separator/80 shadow-2xl z-90"
+        className="w-90 sm:w-105 rounded-3xl bg-surface/95 backdrop-blur-2xl border border-separator/80 shadow-2xl z-90"
         placement="bottom start"
       >
         <Popover.Dialog className="space-y-3.5 outline-none">
@@ -480,195 +485,139 @@ export function ThemePopover() {
             </Tabs.Panel>
 
             {/* Tab 2: Fine Tuning & HeroUI ColorSlider */}
-            <Tabs.Panel className="space-y-3 pt-2" id="adjust">
-              <div className="p-3 bg-surface-secondary/50 rounded-2xl border border-separator/60 space-y-3.5">
-                {/* Theme Color Section with HeroUI ColorSlider */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between pb-1 border-b border-separator/40">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className="size-3 rounded-full shadow-xs border border-white/20"
-                        style={{
-                          backgroundColor: `oklch(${DEFAULT_LIGHTNESS}% ${DEFAULT_CHROMA} ${hue})`,
-                        }}
-                      />
-                      <span className="text-[11px] font-bold text-muted/80 r uppercase">
-                        Theme Color
-                      </span>
-                    </div>
-
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onPress={() => setAppThemeColor(DEFAULT_HUE)}
-                    >
-                      <RotateCcw className="size-3" />
-                      Default
-                    </Button>
-                  </div>
-
-                  {/* HeroUI ColorSlider */}
-                  <ColorSlider
-                    aria-label="App Theme Hue"
-                    channel="hue"
-                    value={currentColor}
-                    onChange={handleColorChange}
-                  >
-                    <div className="flex items-center justify-between text-[11px] mb-1.5">
-                      <Label className="text-muted font-medium">Hue</Label>
-                      <ColorSlider.Output />
-                    </div>
-                    <ColorSlider.Track>
-                      <ColorSlider.Thumb />
-                    </ColorSlider.Track>
-                  </ColorSlider>
-
-                  {/* Preset Quick Vibe Pills */}
-                  <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                    {PRESET_THEME_COLORS.map((preset) => {
-                      const isSelected = hue === preset.hue;
-
-                      return (
-                        <button
-                          key={preset.name}
-                          className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-[background-color,border-color,color,transform] border flex items-center gap-1 cursor-pointer ${
-                            isSelected
-                              ? "bg-surface text-foreground border-accent shadow-xs scale-105"
-                              : "bg-surface-secondary/70 text-muted border-separator/60 hover:text-foreground hover:border-muted hover:scale-102"
-                          }`}
-                          type="button"
-                          onClick={() => setAppThemeColor(preset.hue)}
-                        >
-                          <span
-                            className="size-2 rounded-full shadow-2xs"
-                            style={{
-                              backgroundColor: `oklch(${DEFAULT_LIGHTNESS}% ${DEFAULT_CHROMA} ${preset.hue})`,
-                            }}
-                          />
-                          <span>{preset.name.split(" ")[0]}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Background Position & Scale (if wallpaper active) */}
-                {activeBackground && (
-                  <>
-                    <div className="flex items-center justify-between pt-2 pb-1 border-t border-b border-separator/40">
-                      <span className="text-[11px] font-bold text-muted/80 r uppercase">
-                        Position & Scale
-                      </span>
+            <Tabs.Panel className="pt-2" id="adjust">
+              <ScrollShadow className="max-h-90 overflow-y-auto px-1" size={20}>
+                <div className="p-3 bg-surface-secondary/50 rounded-2xl border border-separator/60 space-y-3.5">
+                  {/* Theme Color Section with HeroUI ColorSlider */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between pb-1 border-b border-separator/40">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className="size-3 rounded-full shadow-xs border border-white/20"
+                          style={{
+                            backgroundColor: `oklch(${DEFAULT_LIGHTNESS}% ${DEFAULT_CHROMA} ${hue})`,
+                          }}
+                        />
+                        <span className="text-[11px] font-bold text-muted/80 uppercase">
+                          Theme Color
+                        </span>
+                      </div>
 
                       <Button
                         size="sm"
                         variant="ghost"
-                        onPress={handleRecenter}
+                        onPress={() => setAppThemeColor(DEFAULT_HUE)}
                       >
-                        <Move className="size-3" />
-                        Re-center
+                        <RotateCcw className="size-3" />
+                        Default
                       </Button>
                     </div>
 
-                    {/* Wallpaper Zoom Slider */}
-                    <Slider
-                      aria-label="Wallpaper Zoom / Scale"
-                      className="w-full"
-                      maxValue={200}
-                      minValue={100}
-                      step={0.5}
-                      value={zoom}
-                      onChange={(val) =>
-                        setZoom(typeof val === "number" ? val : val[0])
-                      }
+                    {/* HeroUI ColorSlider */}
+                    <ColorSlider
+                      aria-label="App Theme Hue"
+                      channel="hue"
+                      value={currentColor}
+                      onChange={handleColorChange}
                     >
-                      <div className="flex items-center justify-between text-[11px] mb-1">
-                        <Label className="text-muted font-medium">
-                          Zoom / Scale
-                        </Label>
-                        <Slider.Output className="font-semibold text-foreground text-[10px]">
-                          {({ state }) =>
-                            `${Math.round(state.values[0] - 100)}%`
-                          }
-                        </Slider.Output>
+                      <div className="flex items-center justify-between text-[11px] mb-1.5">
+                        <Label className="text-muted font-medium">Hue</Label>
+                        <ColorSlider.Output />
                       </div>
-                      <Slider.Track>
-                        <Slider.Fill />
-                        <Slider.Thumb />
-                      </Slider.Track>
-                    </Slider>
+                      <ColorSlider.Track>
+                        <ColorSlider.Thumb />
+                      </ColorSlider.Track>
+                    </ColorSlider>
 
-                    {/* Horizontal Shift Slider (X) */}
-                    <Slider
-                      aria-label="Wallpaper Horizontal Shift"
-                      className="w-full"
-                      maxValue={100}
-                      minValue={0}
-                      value={positionX}
-                      onChange={(val) =>
-                        setPositionX(typeof val === "number" ? val : val[0])
-                      }
-                    >
-                      <div className="flex items-center justify-between text-[11px] mb-1">
-                        <Label className="text-muted font-medium">
-                          Horizontal Shift (X)
-                        </Label>
-                        <Slider.Output className="font-semibold text-foreground text-[10px]">
-                          {({ state }) => `${state.values[0]}%`}
-                        </Slider.Output>
+                    {/* Preset Quick Vibe Pills */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      {PRESET_THEME_COLORS.map((preset) => {
+                        const isSelected = hue === preset.hue;
+
+                        return (
+                          <button
+                            key={preset.name}
+                            className={`px-2 py-1 rounded-lg text-[10px] font-medium transition-[background-color,border-color,color,transform] border flex items-center gap-1 cursor-pointer ${
+                              isSelected
+                                ? "bg-surface text-foreground border-accent shadow-xs scale-105"
+                                : "bg-surface-secondary/70 text-muted border-separator/60 hover:text-foreground hover:border-muted hover:scale-102"
+                            }`}
+                            type="button"
+                            onClick={() => setAppThemeColor(preset.hue)}
+                          >
+                            <span
+                              className="size-2 rounded-full shadow-2xs"
+                              style={{
+                                backgroundColor: `oklch(${DEFAULT_LIGHTNESS}% ${DEFAULT_CHROMA} ${preset.hue})`,
+                              }}
+                            />
+                            <span>{preset.name.split(" ")[0]}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Background Position & Scale (if wallpaper active) */}
+                  {activeBackground && (
+                    <>
+                      <div className="flex items-center justify-between pt-2 pb-1 border-t border-b border-separator/40">
+                        <span className="text-[11px] font-bold text-muted/80 uppercase">
+                          Position & Scale
+                        </span>
+
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onPress={handleRecenter}
+                        >
+                          <Move className="size-3" />
+                          Re-center
+                        </Button>
                       </div>
-                      <Slider.Track>
-                        <Slider.Fill />
-                        <Slider.Thumb />
-                      </Slider.Track>
-                    </Slider>
 
-                    {/* Vertical Shift Slider (Y) */}
-                    <Slider
-                      aria-label="Wallpaper Vertical Shift"
-                      className="w-full"
-                      maxValue={100}
-                      minValue={0}
-                      value={positionY}
-                      onChange={(val) =>
-                        setPositionY(typeof val === "number" ? val : val[0])
-                      }
-                    >
-                      <div className="flex items-center justify-between text-[11px] mb-1">
-                        <Label className="text-muted font-medium">
-                          Vertical Shift (Y)
-                        </Label>
-                        <Slider.Output className="font-semibold text-foreground text-[10px]">
-                          {({ state }) => `${state.values[0]}%`}
-                        </Slider.Output>
-                      </div>
-                      <Slider.Track>
-                        <Slider.Fill />
-                        <Slider.Thumb />
-                      </Slider.Track>
-                    </Slider>
-
-                    <div className="pt-2 border-t border-separator/40 space-y-3">
-                      <span className="text-[11px] font-bold text-muted/80 r uppercase block">
-                        Dimming & Blur
-                      </span>
-
-                      {/* Dimming Slider */}
+                      {/* Wallpaper Zoom Slider */}
                       <Slider
-                        aria-label="Wallpaper Dimming"
+                        aria-label="Wallpaper Zoom / Scale"
                         className="w-full"
-                        maxValue={85}
-                        minValue={10}
-                        value={overlayOpacity}
+                        maxValue={200}
+                        minValue={100}
+                        step={0.5}
+                        value={zoom}
                         onChange={(val) =>
-                          setOverlayOpacity(
-                            typeof val === "number" ? val : val[0],
-                          )
+                          setZoom(typeof val === "number" ? val : val[0])
                         }
                       >
                         <div className="flex items-center justify-between text-[11px] mb-1">
                           <Label className="text-muted font-medium">
-                            Wallpaper Dimming
+                            Zoom / Scale
+                          </Label>
+                          <Slider.Output className="font-semibold text-foreground text-[10px]">
+                            {({ state }) =>
+                              `${Math.round(state.values[0] - 100)}%`
+                            }
+                          </Slider.Output>
+                        </div>
+                        <Slider.Track>
+                          <Slider.Fill />
+                          <Slider.Thumb />
+                        </Slider.Track>
+                      </Slider>
+
+                      {/* Horizontal Shift Slider (X) */}
+                      <Slider
+                        aria-label="Wallpaper Horizontal Shift"
+                        className="w-full"
+                        maxValue={100}
+                        minValue={0}
+                        value={positionX}
+                        onChange={(val) =>
+                          setPositionX(typeof val === "number" ? val : val[0])
+                        }
+                      >
+                        <div className="flex items-center justify-between text-[11px] mb-1">
+                          <Label className="text-muted font-medium">
+                            Horizontal Shift (X)
                           </Label>
                           <Slider.Output className="font-semibold text-foreground text-[10px]">
                             {({ state }) => `${state.values[0]}%`}
@@ -680,26 +629,23 @@ export function ThemePopover() {
                         </Slider.Track>
                       </Slider>
 
-                      {/* Soft Blur Slider */}
+                      {/* Vertical Shift Slider (Y) */}
                       <Slider
-                        aria-label="Wallpaper Soft Blur"
+                        aria-label="Wallpaper Vertical Shift"
                         className="w-full"
-                        maxValue={20}
+                        maxValue={100}
                         minValue={0}
-                        step={0.1}
-                        value={blur}
+                        value={positionY}
                         onChange={(val) =>
-                          setBlur(typeof val === "number" ? val : val[0])
+                          setPositionY(typeof val === "number" ? val : val[0])
                         }
                       >
                         <div className="flex items-center justify-between text-[11px] mb-1">
                           <Label className="text-muted font-medium">
-                            Soft Blur
+                            Vertical Shift (Y)
                           </Label>
                           <Slider.Output className="font-semibold text-foreground text-[10px]">
-                            {({ state }) =>
-                              `${Math.round((state.values[0] / 20) * 100)}%`
-                            }
+                            {({ state }) => `${state.values[0]}%`}
                           </Slider.Output>
                         </div>
                         <Slider.Track>
@@ -707,10 +653,71 @@ export function ThemePopover() {
                           <Slider.Thumb />
                         </Slider.Track>
                       </Slider>
-                    </div>
-                  </>
-                )}
-              </div>
+
+                      <div className="pt-2 border-t border-separator/40 space-y-3">
+                        <span className="text-[11px] font-bold text-muted/80 uppercase block">
+                          Dimming & Blur
+                        </span>
+
+                        {/* Dimming Slider */}
+                        <Slider
+                          aria-label="Wallpaper Dimming"
+                          className="w-full"
+                          maxValue={85}
+                          minValue={10}
+                          value={overlayOpacity}
+                          onChange={(val) =>
+                            setOverlayOpacity(
+                              typeof val === "number" ? val : val[0],
+                            )
+                          }
+                        >
+                          <div className="flex items-center justify-between text-[11px] mb-1">
+                            <Label className="text-muted font-medium">
+                              Wallpaper Dimming
+                            </Label>
+                            <Slider.Output className="font-semibold text-foreground text-[10px]">
+                              {({ state }) => `${state.values[0]}%`}
+                            </Slider.Output>
+                          </div>
+                          <Slider.Track>
+                            <Slider.Fill />
+                            <Slider.Thumb />
+                          </Slider.Track>
+                        </Slider>
+
+                        {/* Soft Blur Slider */}
+                        <Slider
+                          aria-label="Wallpaper Soft Blur"
+                          className="w-full"
+                          maxValue={20}
+                          minValue={0}
+                          step={0.1}
+                          value={blur}
+                          onChange={(val) =>
+                            setBlur(typeof val === "number" ? val : val[0])
+                          }
+                        >
+                          <div className="flex items-center justify-between text-[11px] mb-1">
+                            <Label className="text-muted font-medium">
+                              Soft Blur
+                            </Label>
+                            <Slider.Output className="font-semibold text-foreground text-[10px]">
+                              {({ state }) =>
+                                `${Math.round((state.values[0] / 20) * 100)}%`
+                              }
+                            </Slider.Output>
+                          </div>
+                          <Slider.Track>
+                            <Slider.Fill />
+                            <Slider.Thumb />
+                          </Slider.Track>
+                        </Slider>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </ScrollShadow>
             </Tabs.Panel>
           </Tabs>
         </Popover.Dialog>
