@@ -65,7 +65,7 @@ export function Navbar() {
   const handleLoad = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputUrl.trim()) return;
-    const success = loadUrl(inputUrl.trim());
+    const success = loadUrl(inputUrl.trim(), undefined, undefined, true);
 
     if (success) setInputUrl("");
   };

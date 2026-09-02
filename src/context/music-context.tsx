@@ -654,9 +654,28 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                 setIsBuffering(false);
               } else if (event.data === window.YT.PlayerState.CUED) {
                 setIsBuffering(false);
+                if (isPlayingRef.current) {
+                  try {
+                    event.target?.unMute?.();
+                    event.target?.playVideo?.();
+                  } catch {}
+                } else {
+                  setIsPlaying(false);
+                }
+              } else if (event.data === -1) {
+                // UNSTARTED
+                if (isPlayingRef.current) {
+                  setIsBuffering(true);
+                  try {
+                    event.target?.unMute?.();
+                    event.target?.playVideo?.();
+                  } catch {}
+                }
               }
             },
             onError: () => {
+              isPlayingRef.current = false;
+              setIsPlaying(false);
               setIsBuffering(false);
             },
           },
@@ -835,7 +854,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       url: string,
       customTitle?: string,
       customAuthor?: string,
-      autoPlay: boolean = false,
+      autoPlay: boolean = true,
       playlistId?: string | null,
     ): boolean => {
       const trimmed = url.trim();
@@ -915,8 +934,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             try {
               if (autoPlay) {
                 isPlayingRef.current = true;
-                setIsPlaying(true);
                 setIsBuffering(true);
+                setIsPlaying(false);
 
                 if (typeof playerRef.current.loadPlaylist === "function") {
                   playerRef.current.loadPlaylist(playlistOpts);
@@ -924,9 +943,17 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                   typeof playerRef.current.cuePlaylist === "function"
                 ) {
                   playerRef.current.cuePlaylist(playlistOpts);
-                  playerRef.current.playVideo?.();
                 }
+                setTimeout(() => {
+                  try {
+                    playerRef.current?.unMute?.();
+                    playerRef.current?.playVideo?.();
+                  } catch {}
+                }, 50);
               } else if (typeof playerRef.current.cuePlaylist === "function") {
+                isPlayingRef.current = false;
+                setIsPlaying(false);
+                setIsBuffering(false);
                 playerRef.current.cuePlaylist(playlistOpts);
               }
             } catch {}
@@ -973,8 +1000,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
               try {
                 if (autoPlay) {
                   isPlayingRef.current = true;
-                  setIsPlaying(true);
                   setIsBuffering(true);
+                  setIsPlaying(false);
                   if (typeof playerRef.current.loadVideoById === "function") {
                     playerRef.current.loadVideoById({
                       videoId: parsed.id,
@@ -987,11 +1014,19 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
                       videoId: parsed.id,
                       suggestedQuality: "small",
                     });
-                    playerRef.current.playVideo?.();
                   }
+                  setTimeout(() => {
+                    try {
+                      playerRef.current?.unMute?.();
+                      playerRef.current?.playVideo?.();
+                    } catch {}
+                  }, 50);
                 } else if (
                   typeof playerRef.current.cueVideoById === "function"
                 ) {
+                  isPlayingRef.current = false;
+                  setIsPlaying(false);
+                  setIsBuffering(false);
                   playerRef.current.cueVideoById({
                     videoId: parsed.id,
                     suggestedQuality: "small",
@@ -1017,7 +1052,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
             playerRef.current.pauseVideo();
           } catch {}
         }
-        setIsPlaying(false);
+        isPlayingRef.current = autoPlay;
+        setIsPlaying(autoPlay);
+        setIsBuffering(false);
       }
 
       toast("Music Loaded 🎧", {

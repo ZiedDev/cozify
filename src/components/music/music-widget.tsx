@@ -24,6 +24,7 @@ import {
 import { useMusic } from "@/context/music-context";
 import { AppMode } from "@/config/modes";
 import { formatTime } from "@/config/playlists";
+import { MarqueeTitle } from "./marquee-title";
 
 interface MusicWidgetProps {
   activeMode?: AppMode;
@@ -90,7 +91,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
   const handleLoad = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputUrl.trim()) return;
-    const success = loadUrl(inputUrl.trim());
+    const success = loadUrl(inputUrl.trim(), undefined, undefined, true);
 
     if (success) setInputUrl("");
   };
@@ -129,14 +130,14 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
               <Music className="size-4 min-[701px]:size-4.5 text-accent shrink-0" />
             )}
 
-            {/* Wide Screens (> 1260px): Full Song Title */}
-            <Typography
-              className="hidden min-[1260px]:inline truncate font-medium flex-1 text-left"
-              type="body-sm"
-              weight="medium"
-            >
-              {title}
-            </Typography>
+            {/* Wide Screens (> 1260px): Full Song Title with Auto-Scroll */}
+            <div className="hidden min-[1260px]:flex flex-1 min-w-0 overflow-hidden text-left">
+              <MarqueeTitle
+                className="text-xs min-[701px]:text-sm font-medium text-foreground"
+                isPlaying={isPlaying}
+                text={title}
+              />
+            </div>
 
             {/* Overlap / Narrow Screens (<= 1260px): Shortened Status */}
             <Typography
@@ -304,14 +305,12 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
             <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
               {/* Title, Artist, and 4-Bar Equalizer Animation */}
               <div className="flex items-start justify-between gap-1.5 min-w-0">
-                <div className="min-w-0 flex flex-col flex-1">
-                  <Typography
-                    truncate
+                <div className="min-w-0 flex flex-col flex-1 overflow-hidden">
+                  <MarqueeTitle
                     className="text-xs sm:text-sm font-bold text-foreground leading-tight"
-                    type="body-sm"
-                  >
-                    {title}
-                  </Typography>
+                    isPlaying={isPlaying}
+                    text={title}
+                  />
                   <Typography
                     truncate
                     className="text-[11px] text-muted mt-0.5"

@@ -22,6 +22,7 @@ import gsap from "gsap";
 
 import { useMusic } from "@/context/music-context";
 import { formatTime } from "@/config/playlists";
+import { MarqueeTitle } from "./marquee-title";
 
 export function CozyMusicCard() {
   const {
@@ -170,7 +171,7 @@ export function CozyMusicCard() {
   const handleLoad = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputUrl.trim()) return;
-    const success = loadUrl(inputUrl.trim());
+    const success = loadUrl(inputUrl.trim(), undefined, undefined, true);
 
     if (success) setInputUrl("");
   };
@@ -334,15 +335,14 @@ export function CozyMusicCard() {
           {/* Track Info (Title & Artist) */}
           <div
             ref={metaRef}
-            className="w-full flex flex-col items-center text-center min-w-0 px-3"
+            className="w-full flex flex-col items-center text-center min-w-0 px-3 overflow-hidden"
           >
-            <Typography
-              truncate
-              className="w-full text-sm sm:text-base font-bold text-foreground text-center leading-snug"
-              type="h4"
-            >
-              {title}
-            </Typography>
+            <MarqueeTitle
+              align="center"
+              className="text-sm sm:text-base font-bold text-foreground text-center leading-snug"
+              isPlaying={isPlaying}
+              text={title || "Now Playing"}
+            />
             <Typography
               truncate
               className="w-full text-[11px] sm:text-xs text-muted mt-0.5 text-center leading-tight"
