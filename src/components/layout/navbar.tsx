@@ -57,6 +57,7 @@ export function Navbar() {
     nextTrack,
     seekTo,
     setVolume,
+    toggleMute,
     playTrackAt,
     loadUrl,
     setIsPickerOpen,
@@ -128,7 +129,7 @@ export function Navbar() {
       {/* Settings Modal */}
       <SettingsModal isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
 
-      {/* Mobile Glance Drawer (HeroUI Drawer) */}
+      {/* Mobile Glance Drawer */}
       <Drawer.Backdrop isOpen={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <Drawer.Content placement="right">
           <Drawer.Dialog className="h-full max-h-dvh flex flex-col justify-between p-4 sm:p-5 max-w-xs sm:max-w-sm w-full bg-surface/98 backdrop-blur-xl border-l border-separator shadow-2xl overflow-hidden">
@@ -372,7 +373,7 @@ export function Navbar() {
                         aria-label="Mute toggle"
                         className="text-muted hover:text-foreground cursor-pointer shrink-0"
                         type="button"
-                        onClick={() => setVolume(volume > 0 ? 0 : 80)}
+                        onClick={toggleMute}
                       >
                         {volume === 0 ? (
                           <VolumeX className="size-3" />

@@ -51,6 +51,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
     togglePlay,
     seekTo,
     setVolume,
+    toggleMute,
     nextTrack,
     prevTrack,
     playTrackAt,
@@ -361,7 +362,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
                 </div>
               </div>
 
-              {/* Timeline Scrubber (HeroUI Slider) */}
+              {/* Timeline Scrubber */}
               <div className="flex flex-col gap-1 my-1">
                 {isLive ? (
                   <Slider
@@ -499,7 +500,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
                       aria-label="Mute toggle"
                       className="text-muted hover:text-foreground cursor-pointer shrink-0 transition-colors duration-150"
                       type="button"
-                      onClick={() => setVolume(volume > 0 ? 0 : 80)}
+                      onClick={toggleMute}
                     >
                       {volume === 0 ? (
                         <VolumeX className="size-3" />

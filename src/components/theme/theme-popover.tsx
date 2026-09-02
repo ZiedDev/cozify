@@ -484,11 +484,11 @@ export function ThemePopover() {
               </div>
             </Tabs.Panel>
 
-            {/* Tab 2: Fine Tuning & HeroUI ColorSlider */}
+            {/* Tab 2: Fine Tuning & ColorSlider */}
             <Tabs.Panel className="pt-2" id="adjust">
               <ScrollShadow className="max-h-90 overflow-y-auto px-1" size={20}>
                 <div className="p-3 bg-surface-secondary/50 rounded-2xl border border-separator/60 space-y-3.5">
-                  {/* Theme Color Section with HeroUI ColorSlider */}
+                  {/* Theme Color Section */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between pb-1 border-b border-separator/40">
                       <div className="flex items-center gap-1.5">
@@ -513,7 +513,7 @@ export function ThemePopover() {
                       </Button>
                     </div>
 
-                    {/* HeroUI ColorSlider */}
+                    {/* ColorSlider */}
                     <ColorSlider
                       aria-label="App Theme Hue"
                       channel="hue"

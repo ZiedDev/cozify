@@ -23,6 +23,17 @@ import { storageAdapter } from "@/services/storage";
 const MUSIC_STORAGE_KEY = "cozify_music_state";
 const CUSTOM_PLAYLISTS_STORAGE_KEY = "cozify_custom_playlists";
 
+/**
+ * Maps a linear UI slider value (0..100) to actual player volume (0..100)
+ * using a quadratic perceptual loudness curve. This gives a natural response
+ * across the entire slider range instead of being too loud at low percentages.
+ */
+export const toActualVolume = (sliderVal: number): number => {
+  if (sliderVal <= 0) return 0;
+  if (sliderVal >= 100) return 100;
+  return Math.round(100 * Math.pow(sliderVal / 100, 2));
+};
+
 export interface SavedMusicState {
   activeUrl: string;
   activePlatform: MusicPlatform;
@@ -71,6 +82,7 @@ export interface MusicContextValue {
   togglePlay: () => void;
   seekTo: (seconds: number, shouldContinuePlaying?: boolean) => void;
   setVolume: (vol: number) => void;
+  toggleMute: () => void;
 
   nextTrack: () => void;
   prevTrack: () => void;
@@ -138,6 +150,9 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [isBuffering, setIsBuffering] = useState<boolean>(false);
   const [volume, setVolumeState] = useState<number>(
     () => initialSaved?.volume ?? 80,
+  );
+  const lastNonZeroVolumeRef = useRef<number>(
+    initialSaved?.volume && initialSaved.volume > 0 ? initialSaved.volume : 80,
   );
   const [currentTime, setCurrentTime] = useState<number>(
     () => initialSaved?.currentTime || 0,
@@ -567,7 +582,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
               isReadyRef.current = true;
               setIsReady(true);
               try {
-                event.target.setVolume(volume);
+                event.target.setVolume(toActualVolume(volume));
                 if (event.target.setPlaybackQuality) {
                   event.target.setPlaybackQuality("small");
                 }
@@ -803,15 +818,31 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     (vol: number) => {
       const clamped = Math.max(0, Math.min(100, vol));
 
+      if (clamped > 0) {
+        lastNonZeroVolumeRef.current = clamped;
+      }
+
       setVolumeState(clamped);
       if (isPlayerAttached() && playerRef.current?.setVolume) {
         try {
-          playerRef.current.setVolume(clamped);
+          playerRef.current.setVolume(toActualVolume(clamped));
         } catch {}
       }
     },
     [isPlayerAttached],
   );
+
+  const toggleMute = useCallback(() => {
+    if (volume > 0) {
+      lastNonZeroVolumeRef.current = volume;
+      setVolume(0);
+    } else {
+      const restore =
+        lastNonZeroVolumeRef.current > 0 ? lastNonZeroVolumeRef.current : 80;
+
+      setVolume(restore);
+    }
+  }, [volume, setVolume]);
 
   const nextTrack = useCallback(() => {
     if (tracklist.length <= 1) return;
@@ -1209,6 +1240,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       togglePlay,
       seekTo,
       setVolume,
+      toggleMute,
       nextTrack,
       prevTrack,
       playTrackAt,
@@ -1252,6 +1284,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       togglePlay,
       seekTo,
       setVolume,
+      toggleMute,
       nextTrack,
       prevTrack,
       playTrackAt,

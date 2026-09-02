@@ -232,7 +232,7 @@ export function SaveProgressModal({
               </div>
             </div>
 
-            {/* Total Focus Time using HeroUI TimeField with hh:mm:ss editing */}
+            {/* Total Focus Time TimeField with hh:mm:ss editing */}
             <TimeField
               fullWidth
               granularity="second"

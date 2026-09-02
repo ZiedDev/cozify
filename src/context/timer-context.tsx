@@ -476,7 +476,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
-      // Trigger HeroUI persistent Toast on cycle finish
+      // Trigger Toast on cycle finish
       if (remaining <= 0 && !hasTriggeredToastRef.current) {
         hasTriggeredToastRef.current = true;
 

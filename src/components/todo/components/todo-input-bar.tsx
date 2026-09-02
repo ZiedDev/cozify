@@ -260,7 +260,6 @@ export function TodoInputBar() {
                   )}
                 </div>
 
-                {/* HeroUI Calendar Direct Render */}
                 <Calendar
                   aria-label="Pick due date"
                   className="p-0 bg-transparent w-full"

@@ -126,7 +126,6 @@ export function TodoHeader() {
 
         {/* Right Controls: Search + View Switcher */}
         <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
-          {/* HeroUI SearchField */}
           <SearchField
             aria-label="Search tasks"
             className="w-28 xs:w-36 md:w-44"
@@ -203,7 +202,7 @@ export function TodoHeader() {
         </div>
       </div>
 
-      {/* Bottom row: Filter Tabs + HeroUI Autocomplete Filter Pickers */}
+      {/* Bottom row: Filter Tabs + Autocomplete Filter Pickers */}
       <div className="flex items-center justify-between gap-2 md:gap-3 w-full flex-wrap sm:flex-nowrap border-b border-separator/30 pb-2">
         {/* Filter Tabs */}
         <div className="shrink-0">

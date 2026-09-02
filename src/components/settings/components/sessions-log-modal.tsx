@@ -226,7 +226,7 @@ export function SessionsLogModal({
             {/* Left Sidebar: Search & Summary Stats */}
             <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-separator/40 p-3 sm:p-4 bg-surface-secondary/40 shrink-0 flex flex-col gap-3">
               <div className="flex flex-col gap-3">
-                {/* Search Bar with HeroUI InputGroup */}
+                {/* Search Bar InputGroup */}
                 <div className="flex flex-col gap-1.5 w-full">
                   <Typography
                     className="text-[11px] uppercase r"

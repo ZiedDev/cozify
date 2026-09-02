@@ -138,7 +138,7 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
               </div>
             </div>
 
-            {/* Due Date with Quick Shortcuts + Default HeroUI DatePicker */}
+            {/* Due Date with Quick Shortcuts */}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-1.5">
@@ -182,7 +182,6 @@ export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
                   </button>
                 </div>
 
-                {/* Default HeroUI DatePicker Component */}
                 <DatePicker
                   className="w-full"
                   name="editDueDate"

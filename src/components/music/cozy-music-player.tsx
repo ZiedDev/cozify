@@ -44,6 +44,7 @@ export function CozyMusicCard() {
     togglePlay,
     seekTo,
     setVolume,
+    toggleMute,
     nextTrack,
     prevTrack,
     playTrackAt,
@@ -352,7 +353,7 @@ export function CozyMusicCard() {
             </Typography>
           </div>
 
-          {/* Timeline & Scrubber (HeroUI Slider) */}
+          {/* Timeline & Scrubber */}
           <div className="w-full flex flex-col gap-0.5 px-1">
             {isLive ? (
               <Slider
@@ -494,13 +495,13 @@ export function CozyMusicCard() {
               )}
             </div>
 
-            {/* Right: Volume Control (HeroUI Slider) */}
+            {/* Right: Volume Control */}
             <div className="flex items-center justify-end gap-1.5 w-28 sm:w-32">
               <button
                 aria-label="Mute toggle"
                 className="text-muted hover:text-foreground cursor-pointer shrink-0 transition-colors duration-150"
                 type="button"
-                onClick={() => setVolume(volume > 0 ? 0 : 80)}
+                onClick={toggleMute}
               >
                 {volume === 0 ? (
                   <VolumeX className="size-4 sm:size-4.5" />
