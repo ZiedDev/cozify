@@ -11,11 +11,7 @@ import {
 } from "../types";
 
 import { SessionRecord } from "@/services/storage";
-import {
-  TodoItem,
-  PRESET_TAGS,
-  PRIORITY_CONFIG,
-} from "@/components/todo/types";
+import { TodoItem, PRESET_TAGS, PRIORITY_CONFIG } from "@/menus/todo/types";
 
 const MONTH_NAMES = [
   "Jan",

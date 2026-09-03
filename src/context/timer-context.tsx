@@ -21,26 +21,26 @@ import {
   TimerContextValue,
   PersistedTimerState,
   CycleState,
-} from "@/components/pomodoro/types";
+} from "@/menus/pomodoro/types";
 import {
   formatTimerDisplay,
   calculateAddedTime,
-} from "@/components/pomodoro/logic/time-utils";
+} from "@/menus/pomodoro/logic/time-utils";
 import {
   calculateNextCycle,
   determinePreferredBreak,
   clampTargetCycles,
   countCompletedCycles,
   getNextFocusCycleAfterBreak,
-} from "@/components/pomodoro/logic/cycle-rules";
+} from "@/menus/pomodoro/logic/cycle-rules";
 import {
   deriveTimerStatus,
   hasCustomSettings,
   calculateTotalFocusSeconds,
   calculateTotalOvertimeSeconds,
-} from "@/components/pomodoro/logic/timer-state-helpers";
+} from "@/menus/pomodoro/logic/timer-state-helpers";
 
-export type { TimerContextValue } from "@/components/pomodoro/types";
+export type { TimerContextValue } from "@/menus/pomodoro/types";
 
 export const TimerContext = createContext<TimerContextValue | null>(null);
 

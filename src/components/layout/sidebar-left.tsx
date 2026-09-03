@@ -3,7 +3,7 @@ import { Typography, ScrollShadow } from "@heroui/react";
 import { Check, CheckCircle2 } from "lucide-react";
 
 import { useTodos } from "@/hooks/use-todos";
-import { PRIORITY_CONFIG } from "@/components/todo/types";
+import { PRIORITY_CONFIG } from "@/menus/todo/types";
 import { AppMode } from "@/config/modes";
 
 export function SidebarTodoWidget({

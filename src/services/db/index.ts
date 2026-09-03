@@ -7,7 +7,7 @@ import { cacheManager } from "./cache-layer";
 import { syncEngine } from "./sync-engine";
 import { SessionRecord, AppSettings } from "./types";
 
-import { TodoItem } from "@/components/todo/types";
+import { TodoItem } from "@/menus/todo/types";
 import { ThemeConfig } from "@/config/themes";
 
 /**

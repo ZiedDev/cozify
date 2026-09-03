@@ -1,4 +1,4 @@
-import { CozyMusicCard } from "@/components/music/cozy-music-player";
+import { CozyMusicCard } from "./cozy-music-player";
 
 export function MusicView() {
   return (

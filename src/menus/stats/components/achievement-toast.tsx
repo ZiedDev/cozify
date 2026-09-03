@@ -10,8 +10,8 @@ import {
 } from "@heroui/react";
 import { Trophy, Star } from "lucide-react";
 
-import { Milestone } from "@/components/stats/types";
-import { TIER_CONFIG } from "@/components/stats/achievements/types";
+import { Milestone } from "@/menus/stats/types";
+import { TIER_CONFIG } from "@/menus/stats/achievements/types";
 
 export interface AchievementToastContentValue {
   milestone: Milestone;

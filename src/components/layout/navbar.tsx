@@ -24,7 +24,7 @@ import {
 
 import { useTodos } from "@/hooks/use-todos";
 import { useTimer } from "@/hooks/use-timer";
-import { SettingsModal } from "@/components/settings/settings-modal";
+import { SettingsModal } from "@/menus/settings/settings-modal";
 import { SidebarTodoWidget } from "@/components/layout/sidebar-left";
 import { SidebarClock, SidebarTimer } from "@/components/layout/sidebar";
 import { useMusic } from "@/context/music-context";

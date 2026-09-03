@@ -13,7 +13,7 @@ import {
   TodoPriority,
   TodoFilter,
   TodoViewMode,
-} from "@/components/todo/types";
+} from "@/menus/todo/types";
 import { storageAdapter, STORAGE_KEYS, AppSettings } from "@/services/storage";
 
 interface TodoContextType {

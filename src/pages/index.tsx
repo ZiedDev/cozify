@@ -6,14 +6,14 @@ import DefaultLayout from "@/layouts/default";
 import { Sidebar } from "@/components/layout/sidebar";
 import { SidebarLeft } from "@/components/layout/sidebar-left";
 import { Dock } from "@/components/layout/dock";
-import { Clock } from "@/components/home/clock";
-import { Timer } from "@/components/pomodoro/timer";
+import { Clock } from "@/menus/home/clock";
+import { Timer } from "@/menus/pomodoro/timer";
 import { MusicWidget } from "@/components/music/music-widget";
 import { PlaylistPickerModal } from "@/components/music/playlist-picker-modal";
 import { AppMode } from "@/config/modes";
-import { TodoPage } from "@/components/todo/todo-page";
-import { StatsPage } from "@/components/stats/stats-page";
-import { MusicView } from "@/components/music/music-view";
+import { TodoPage } from "@/menus/todo/todo-page";
+import { StatsPage } from "@/menus/stats/stats-page";
+import { MusicView } from "@/menus/music/music-view";
 
 export function IndexPage() {
   const [activeMode, setActiveMode] = useState<AppMode>("home");

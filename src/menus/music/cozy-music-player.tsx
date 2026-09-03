@@ -27,8 +27,7 @@ import {
 } from "lucide-react";
 import gsap from "gsap";
 
-import { MarqueeTitle } from "./marquee-title";
-
+import { MarqueeTitle } from "@/components/music/marquee-title";
 import { useMusic } from "@/context/music-context";
 import { formatTime } from "@/config/playlists";
 

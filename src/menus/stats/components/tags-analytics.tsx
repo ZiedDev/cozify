@@ -6,7 +6,7 @@ import { TagStat, OverallStats } from "../types";
 import { formatMinutesDisplay } from "../logic/stats-calculator";
 
 import { getTagInfo, getTagIcon } from "@/config/tags";
-import { TodoItem } from "@/components/todo/types";
+import { TodoItem } from "@/menus/todo/types";
 
 interface TagsAnalyticsProps {
   tagStats: TagStat[];

@@ -10,13 +10,13 @@ import {
   TagStat,
   PriorityStat,
   Milestone,
-} from "@/components/stats/types";
+} from "@/menus/stats/types";
 import {
   storageAdapter,
   STORAGE_KEYS,
   SessionRecord,
 } from "@/services/storage";
-import { TodoItem } from "@/components/todo/types";
+import { TodoItem } from "@/menus/todo/types";
 import {
   filterSessionsByRange,
   filterTodosByRange,
@@ -28,7 +28,7 @@ import {
   calculatePriorityStats,
   calculateMilestones,
   formatMinutesDisplay,
-} from "@/components/stats/logic/stats-calculator";
+} from "@/menus/stats/logic/stats-calculator";
 
 export interface UseStatsReturn {
   sessions: SessionRecord[];

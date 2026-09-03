@@ -1,5 +1,5 @@
 import { ThemeConfig } from "@/config/themes";
-import { TodoItem } from "@/components/todo/types";
+import { TodoItem } from "@/menus/todo/types";
 
 export interface SessionRecord {
   id: string;

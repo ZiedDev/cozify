@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 
-import { showAchievementToast } from "@/components/stats/components/achievement-toast";
+import { showAchievementToast } from "@/menus/stats/components/achievement-toast";
 import {
   calculateMilestones,
   calculateOverallStats,
-} from "@/components/stats/logic/stats-calculator";
-import { TodoItem } from "@/components/todo/types";
+} from "@/menus/stats/logic/stats-calculator";
+import { TodoItem } from "@/menus/todo/types";
 import {
   SessionRecord,
   STORAGE_KEYS,
