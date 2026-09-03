@@ -214,13 +214,6 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
                     </span>
                   </div>
                 )}
-
-                {!isHourly && onSelectRange && item.dateRange && (
-                  <div className="flex items-center gap-1 text-xs text-accent/90 font-medium pt-1 border-t border-separator/30">
-                    <Filter className="size-3 shrink-0" />
-                    <span>Click to inspect & filter</span>
-                  </div>
-                )}
               </div>
             )}
           />
