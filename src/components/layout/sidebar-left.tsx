@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { Typography, ScrollShadow } from "@heroui/react";
 import { Check, CheckCircle2 } from "lucide-react";
 
@@ -119,7 +119,7 @@ export function SidebarTodoWidget({
 
 interface LeftSidebarWidgetWrapperProps {
   show: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function LeftSidebarWidgetWrapper({

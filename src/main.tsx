@@ -1,4 +1,4 @@
-import React from "react";
+import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 
 import { ThemeProvider } from "@/context/theme-context";
@@ -9,7 +9,7 @@ import IndexPage from "@/pages/index";
 import "@/styles/globals.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
+  <StrictMode>
     <ThemeProvider>
       <TimerProvider>
         <TodoProvider>
@@ -19,5 +19,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         </TodoProvider>
       </TimerProvider>
     </ThemeProvider>
-  </React.StrictMode>,
+  </StrictMode>,
 );

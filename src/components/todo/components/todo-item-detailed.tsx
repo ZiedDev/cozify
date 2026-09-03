@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, DragEvent } from "react";
 import { Button, Tooltip, Typography, TextArea } from "@heroui/react";
 import {
   Archive,
@@ -22,10 +22,10 @@ export interface TodoItemDetailedProps {
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
   onDelete: (todo: TodoItem) => void;
-  onDragStart: (e: React.DragEvent, id: string) => void;
-  onDragOver: (e: React.DragEvent, id: string) => void;
+  onDragStart: (e: DragEvent, id: string) => void;
+  onDragOver: (e: DragEvent, id: string) => void;
   onDragEnd: () => void;
-  onDrop: (e: React.DragEvent, id: string) => void;
+  onDrop: (e: DragEvent, id: string) => void;
 }
 
 export function TodoItemDetailed({

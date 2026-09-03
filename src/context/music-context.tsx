@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -6,6 +6,7 @@ import React, {
   useRef,
   useCallback,
   useMemo,
+  ReactNode,
 } from "react";
 import { toast } from "@heroui/react";
 
@@ -31,6 +32,7 @@ const CUSTOM_PLAYLISTS_STORAGE_KEY = "cozify_custom_playlists";
 export const toActualVolume = (sliderVal: number): number => {
   if (sliderVal <= 0) return 0;
   if (sliderVal >= 100) return 100;
+
   return Math.round(100 * Math.pow(sliderVal / 100, 2));
 };
 
@@ -114,7 +116,7 @@ declare global {
   }
 }
 
-export function MusicProvider({ children }: { children: React.ReactNode }) {
+export function MusicProvider({ children }: { children: ReactNode }) {
   // Synchronously hydrate initial saved state
   const initialSaved = useMemo(() => {
     return storageAdapter.getItem<SavedMusicState | null>(
@@ -955,10 +957,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
               suggestedQuality: "small",
             };
 
-            if (
-              !parsed.id.startsWith("RD") &&
-              !parsed.id.startsWith("UL")
-            ) {
+            if (!parsed.id.startsWith("RD") && !parsed.id.startsWith("UL")) {
               playlistOpts.listType = "playlist";
             }
 

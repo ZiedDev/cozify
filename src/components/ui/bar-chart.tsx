@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
@@ -6,6 +6,9 @@ import React, {
   useRef,
   useMemo,
   ReactNode,
+  HTMLAttributes,
+  useCallback,
+  MouseEvent,
 } from "react";
 
 interface MousePosition {
@@ -17,7 +20,7 @@ interface MousePosition {
 type TooltipRenderFn = (props: {
   item: Record<string, any>;
   index: number;
-}) => React.ReactNode;
+}) => ReactNode;
 
 interface BarChartContextValue {
   data: Record<string, any>[];
@@ -52,7 +55,7 @@ function useBarChartContext() {
   return ctx;
 }
 
-export interface BarChartProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface BarChartProps extends HTMLAttributes<HTMLDivElement> {
   data: Record<string, any>[];
   height?: number;
   width?: number | string;
@@ -82,7 +85,7 @@ export function BarChartRoot({
   const [tooltipContent, setTooltipContentState] =
     useState<TooltipRenderFn | null>(null);
 
-  const setTooltipContent = React.useCallback((fn: TooltipRenderFn | null) => {
+  const setTooltipContent = useCallback((fn: TooltipRenderFn | null) => {
     setTooltipContentState(() => fn);
   }, []);
 
@@ -151,7 +154,7 @@ export function BarChartRoot({
   const chartHeight = Math.max(10, height - margin.top - margin.bottom);
   const chartWidth = Math.max(10, containerWidth - margin.left - margin.right);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (e: MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current || data.length === 0) return;
 
     const rect = containerRef.current.getBoundingClientRect();
@@ -210,7 +213,7 @@ export function BarChartRoot({
           onClick
             ? (e) => {
                 if (e.key === "Enter" || e.key === " ") {
-                  onClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+                  onClick(e as unknown as MouseEvent<HTMLDivElement>);
                 }
               }
             : undefined
@@ -398,7 +401,7 @@ export function BarChartBar({
     registerDataKey,
   } = useBarChartContext();
 
-  React.useEffect(() => {
+  useEffect(() => {
     registerDataKey(dataKey);
   }, [dataKey]);
 
@@ -540,11 +543,11 @@ export interface BarChartTooltipProps {
 
 export function BarChartTooltip({ content }: BarChartTooltipProps) {
   const { setTooltipContent } = useBarChartContext();
-  const contentRef = React.useRef(content);
+  const contentRef = useRef(content);
 
   contentRef.current = content;
 
-  React.useEffect(() => {
+  useEffect(() => {
     setTooltipContent((props) => contentRef.current?.(props));
 
     return () => {

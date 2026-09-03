@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, Key } from "react";
 import {
   Tabs,
   Button,
@@ -128,7 +128,7 @@ export function StatsHeader({
     }
   };
 
-  const handleSelectionChange = (key: React.Key | null) => {
+  const handleSelectionChange = (key: Key | null) => {
     if (!key) return;
     const filter = key as TimeRangeFilter;
 

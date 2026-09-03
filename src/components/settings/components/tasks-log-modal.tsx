@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, MouseEvent } from "react";
 import {
   Modal,
   TextField,
@@ -81,7 +81,7 @@ export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
   };
 
-  const triggerDelete = (id: string, e?: React.MouseEvent) => {
+  const triggerDelete = (id: string, e?: MouseEvent) => {
     if (e?.shiftKey) {
       handlePermanentDelete(id);
     } else {

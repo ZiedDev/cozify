@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, SubmitEvent } from "react";
 import {
   Modal,
   Button,
@@ -50,7 +50,7 @@ export function PlaylistPickerModal() {
     return [...customPlaylists, ...PRESET_PLAYLISTS];
   }, [customPlaylists]);
 
-  const handleAddPlaylist = async (e?: React.FormEvent) => {
+  const handleAddPlaylist = async (e?: SubmitEvent) => {
     if (e) e.preventDefault();
     if (!newUrl.trim() || isAdding) return;
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, ChangeEvent } from "react";
 import { Button, Card, Typography, Modal, toast } from "@heroui/react";
 import {
   Download,
@@ -58,7 +58,7 @@ export function DataTab({ onOpenSessionsLog, onOpenTasksLog }: DataTabProps) {
     }
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (!file) return;

@@ -1,9 +1,11 @@
-import React, {
+import {
   createContext,
   useState,
   useEffect,
   useCallback,
   useMemo,
+  ReactNode,
+  useContext,
 } from "react";
 import { toast } from "@heroui/react";
 
@@ -53,7 +55,7 @@ export interface ThemeContextValue {
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<ThemeConfig>(() => {
     const saved = storageAdapter.getItem<SparseThemeConfig | null>(
       STORAGE_KEYS.THEME_CONFIG,
@@ -330,7 +332,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTheme(): ThemeContextValue {
-  const context = React.useContext(ThemeContext);
+  const context = useContext(ThemeContext);
 
   if (!context) {
     throw new Error("useTheme must be used within a ThemeProvider");

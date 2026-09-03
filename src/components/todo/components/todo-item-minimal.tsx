@@ -1,4 +1,4 @@
-import React from "react";
+import { DragEvent } from "react";
 import { Button, Tooltip, Typography } from "@heroui/react";
 import {
   Archive,
@@ -19,10 +19,10 @@ export interface TodoItemMinimalProps {
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
   onDelete: (todo: TodoItem) => void;
-  onDragStart: (e: React.DragEvent, id: string) => void;
-  onDragOver: (e: React.DragEvent, id: string) => void;
+  onDragStart: (e: DragEvent, id: string) => void;
+  onDragOver: (e: DragEvent, id: string) => void;
   onDragEnd: () => void;
-  onDrop: (e: React.DragEvent, id: string) => void;
+  onDrop: (e: DragEvent, id: string) => void;
 }
 
 export function TodoItemMinimal({

@@ -1,10 +1,11 @@
-import React, {
+import {
   createContext,
   useContext,
   useState,
   useEffect,
   useCallback,
   useMemo,
+  ReactNode,
 } from "react";
 
 import {
@@ -77,7 +78,7 @@ const DEFAULT_TODOS: TodoItem[] = [
   },
 ];
 
-export function TodoProvider({ children }: { children: React.ReactNode }) {
+export function TodoProvider({ children }: { children: ReactNode }) {
   const [todos, setTodos] = useState<TodoItem[]>(() =>
     storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, DEFAULT_TODOS),
   );

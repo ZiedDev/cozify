@@ -88,7 +88,7 @@ export const TIER_CONFIG: Record<AchievementTier, TierStyleConfig> = {
       "text-fuchsia-500 dark:text-fuchsia-300 bg-fuchsia-500/15 border-fuchsia-400/40",
     borderHighlight:
       "border-fuchsia-400/90 shadow-[0_0_20px_rgba(217,70,239,0.35)]",
-    progressFill: "bg-gradient-to-r from-fuchsia-500 to-purple-500",
+    progressFill: "bg-linear-to-r from-fuchsia-500 to-purple-500",
     glowColor: "rgba(217, 70, 239, 0.35)",
   },
 };

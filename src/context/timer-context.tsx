@@ -1,10 +1,12 @@
-import React, {
+import {
   createContext,
   useState,
   useEffect,
   useRef,
   useCallback,
   useMemo,
+  ReactNode,
+  useContext,
 } from "react";
 import { toast } from "@heroui/react";
 
@@ -42,7 +44,7 @@ export type { TimerContextValue } from "@/components/pomodoro/types";
 
 export const TimerContext = createContext<TimerContextValue | null>(null);
 
-export function TimerProvider({ children }: { children: React.ReactNode }) {
+export function TimerProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<TimerMode>("focus");
   const [durations, setDurations] = useState<TimerDurations>(
     DEFAULT_TIMER_DURATIONS,
@@ -749,7 +751,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useTimer(): TimerContextValue {
-  const context = React.useContext(TimerContext);
+  const context = useContext(TimerContext);
 
   if (!context) {
     throw new Error("useTimer must be used within a TimerProvider");

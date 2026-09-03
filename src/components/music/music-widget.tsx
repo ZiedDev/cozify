@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, SubmitEvent } from "react";
 import {
   Button,
   Typography,
@@ -21,10 +21,11 @@ import {
   Music,
 } from "lucide-react";
 
+import { MarqueeTitle } from "./marquee-title";
+
 import { useMusic } from "@/context/music-context";
 import { AppMode } from "@/config/modes";
 import { formatTime } from "@/config/playlists";
-import { MarqueeTitle } from "./marquee-title";
 
 interface MusicWidgetProps {
   activeMode?: AppMode;
@@ -89,7 +90,7 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
     }
   }, [tracklist.length, isDrawerActive]);
 
-  const handleLoad = (e?: React.FormEvent) => {
+  const handleLoad = (e?: SubmitEvent) => {
     if (e) e.preventDefault();
     if (!inputUrl.trim()) return;
     const success = loadUrl(inputUrl.trim(), undefined, undefined, true);

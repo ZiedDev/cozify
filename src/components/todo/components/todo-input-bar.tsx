@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, SubmitEvent } from "react";
 import { Button, Input, Popover, Calendar } from "@heroui/react";
 import { parseDate, today, getLocalTimeZone } from "@internationalized/date";
 import {
@@ -30,7 +30,7 @@ export function TodoInputBar() {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleAdd = (e?: React.FormEvent) => {
+  const handleAdd = (e?: SubmitEvent) => {
     if (e) e.preventDefault();
     if (!title.trim()) return;
 
@@ -158,11 +158,7 @@ export function TodoInputBar() {
                 type="button"
               >
                 <ActiveTagIcon className="size-3" />
-                <span>
-                  {tag
-                    ? activeTagMeta?.label || tag
-                    : "Tag"}
-                </span>
+                <span>{tag ? activeTagMeta?.label || tag : "Tag"}</span>
               </button>
             </Popover.Trigger>
             <Popover.Content>

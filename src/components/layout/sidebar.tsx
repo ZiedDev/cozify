@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { ProgressBar, Tooltip, Typography } from "@heroui/react";
 
 import { useClock } from "@/hooks/use-clock";
@@ -138,7 +139,7 @@ export function SidebarTimer({
 
 interface SidebarWidgetProps {
   show: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function SidebarWidget({ show, children }: SidebarWidgetProps) {

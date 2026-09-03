@@ -247,7 +247,7 @@ export function ActivityHeatmap({
         >
           <div
             className={`flex flex-col ${gridGapClass} w-full select-none ${
-              viewMode === "12m" ? "min-w-[500px]" : "min-w-[340px]"
+              viewMode === "12m" ? "min-w-125" : "min-w-85"
             }`}
           >
             {/* Top Month Header Row */}
@@ -314,7 +314,7 @@ export function ActivityHeatmap({
                       return (
                         <div
                           key={`empty-${weekIdx}-${dayIdx}`}
-                          className="w-full aspect-square rounded-[2px] opacity-0 pointer-events-none"
+                          className="w-full aspect-square rounded-sm opacity-0 pointer-events-none"
                         />
                       );
                     }
@@ -330,7 +330,7 @@ export function ActivityHeatmap({
                       <button
                         key={day.dateStr}
                         aria-label={tooltip}
-                        className={`w-full aspect-square rounded-[2px] sm:rounded-[3px] border transition-transform duration-75 hover:scale-125 ${
+                        className={`w-full aspect-square rounded-sm sm:rounded-md border transition-transform duration-75 hover:scale-125 ${
                           day.isFuture ? "cursor-default" : "cursor-pointer"
                         } ${getContributionColor(day, isSelected)}`}
                         type="button"

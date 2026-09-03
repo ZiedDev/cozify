@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { SubmitEvent, useState } from "react";
 import {
   Typography,
   Button,
@@ -63,7 +63,7 @@ export function Navbar() {
     setIsPickerOpen,
   } = useMusic();
 
-  const handleLoad = (e?: React.FormEvent) => {
+  const handleLoad = (e?: SubmitEvent) => {
     if (e) e.preventDefault();
     if (!inputUrl.trim()) return;
     const success = loadUrl(inputUrl.trim(), undefined, undefined, true);

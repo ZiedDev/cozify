@@ -1,9 +1,10 @@
-import React, {
+import {
   useState,
   useRef,
   useCallback,
   useEffect,
   useMemo,
+  DragEvent,
 } from "react";
 import {
   AlertDialog,
@@ -81,7 +82,7 @@ export function TodoList() {
   }, []);
 
   // Item-level drag handlers
-  const handleDragStart = useCallback((e: React.DragEvent, id: string) => {
+  const handleDragStart = useCallback((e: DragEvent, id: string) => {
     e.dataTransfer.setData("text/plain", id);
     e.dataTransfer.effectAllowed = "move";
 
@@ -93,7 +94,7 @@ export function TodoList() {
   }, []);
 
   const handleItemDragOver = useCallback(
-    (e: React.DragEvent, id: string) => {
+    (e: DragEvent, id: string) => {
       e.preventDefault();
       e.stopPropagation();
       e.dataTransfer.dropEffect = "move";
@@ -127,7 +128,7 @@ export function TodoList() {
   }, [executeDrop]);
 
   const handleItemDrop = useCallback(
-    (e: React.DragEvent, targetId: string) => {
+    (e: DragEvent, targetId: string) => {
       e.preventDefault();
       e.stopPropagation();
 
@@ -148,7 +149,7 @@ export function TodoList() {
 
   // Container-level drag over and drop (handles shadows, margins, and empty space)
   const handleContainerDragOver = useCallback(
-    (e: React.DragEvent) => {
+    (e: DragEvent) => {
       e.preventDefault();
       e.dataTransfer.dropEffect = "move";
 
@@ -180,7 +181,7 @@ export function TodoList() {
   );
 
   const handleContainerDrop = useCallback(
-    (e: React.DragEvent) => {
+    (e: DragEvent) => {
       e.preventDefault();
       executeDrop();
     },

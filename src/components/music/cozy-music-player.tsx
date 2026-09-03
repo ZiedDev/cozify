@@ -1,4 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  SyntheticEvent,
+  SubmitEvent,
+} from "react";
 import {
   Button,
   Typography,
@@ -20,9 +27,10 @@ import {
 } from "lucide-react";
 import gsap from "gsap";
 
+import { MarqueeTitle } from "./marquee-title";
+
 import { useMusic } from "@/context/music-context";
 import { formatTime } from "@/config/playlists";
-import { MarqueeTitle } from "./marquee-title";
 
 export function CozyMusicCard() {
   const {
@@ -91,9 +99,7 @@ export function CozyMusicCard() {
     }
   }, [videoAspectRatio]);
 
-  const handlePosterLoad = (
-    e: React.SyntheticEvent<HTMLImageElement, Event>,
-  ) => {
+  const handlePosterLoad = (e: SyntheticEvent<HTMLImageElement, Event>) => {
     const img = e.currentTarget;
 
     if (img.naturalWidth && img.naturalHeight) {
@@ -169,7 +175,7 @@ export function CozyMusicCard() {
     }
   }, [tracklist.length, isTracklistOpen]);
 
-  const handleLoad = (e?: React.FormEvent) => {
+  const handleLoad = (e?: SubmitEvent) => {
     if (e) e.preventDefault();
     if (!inputUrl.trim()) return;
     const success = loadUrl(inputUrl.trim(), undefined, undefined, true);
@@ -217,11 +223,17 @@ export function CozyMusicCard() {
             title={isSpotify ? "Open in Spotify" : "Open in YouTube"}
           >
             {isSpotify ? (
-              <svg className="size-4 sm:size-4.5 fill-current shrink-0" viewBox="0 0 24 24">
+              <svg
+                className="size-4 sm:size-4.5 fill-current shrink-0"
+                viewBox="0 0 24 24"
+              >
                 <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.495 17.306c-.215.352-.676.463-1.028.247-2.816-1.72-6.36-2.109-10.536-1.155-.403.093-.804-.158-.897-.562-.093-.403.158-.804.562-.897 4.571-1.045 8.492-.596 11.652 1.339.352.216.463.676.247 1.028zm1.467-3.262c-.27.44-.848.578-1.288.308-3.224-1.982-8.14-2.557-11.954-1.399-.497.151-1.025-.133-1.176-.63-.151-.497.133-1.025.63-1.176 4.364-1.324 9.791-.682 13.48 1.589.44.27.578.848.308 1.288zm.126-3.41c-3.867-2.296-10.248-2.508-13.941-1.387-.593.18-1.22-.164-1.4-.757-.18-.593.164-1.22.757-1.4 4.248-1.29 11.294-1.037 15.741 1.603.533.316.707 1.01.391 1.543-.316.533-1.01.707-1.543.391z" />
               </svg>
             ) : (
-              <svg className="size-4 sm:size-4.5 fill-current shrink-0" viewBox="0 0 24 24">
+              <svg
+                className="size-4 sm:size-4.5 fill-current shrink-0"
+                viewBox="0 0 24 24"
+              >
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
               </svg>
             )}
@@ -300,7 +312,7 @@ export function CozyMusicCard() {
               {/* Vinyl Grooves & Image with GSAP Controlled Velocity Spin & Transparent Center Hole Mask */}
               <div
                 ref={discRef}
-                className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative shadow-inner will-change-transform [transform:translateZ(0)]"
+                className="w-full h-full rounded-full overflow-hidden flex items-center justify-center relative shadow-inner will-change-transform transform-[translateZ(0)]"
                 style={{
                   WebkitMaskImage:
                     "radial-gradient(circle at center, transparent 14px, black 15px)",

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, SubmitEvent } from "react";
 import {
   Popover,
   Button,
@@ -88,7 +88,7 @@ export function ThemePopover() {
     setAppThemeColor(newHue);
   };
 
-  const handleAddCustom = (e?: React.FormEvent) => {
+  const handleAddCustom = (e?: SubmitEvent) => {
     if (e) e.preventDefault();
     if (!imageUrl.trim()) return;
 
