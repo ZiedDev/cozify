@@ -6,8 +6,14 @@ import {
   Separator,
   Typography,
 } from "@heroui/react";
-import { Settings as SettingsIcon, Database, Info } from "lucide-react";
+import {
+  Settings as SettingsIcon,
+  Database,
+  Sliders,
+  Info,
+} from "lucide-react";
 
+import { GeneralTab } from "./components/general-tab";
 import { DataTab } from "./components/data-tab";
 import { AboutTab } from "./components/about-tab";
 import { SessionsLogModal } from "./components/sessions-log-modal";
@@ -21,7 +27,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
-  const [selectedTab, setSelectedTab] = useState<string>("data");
+  const [selectedTab, setSelectedTab] = useState<string>("general");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isTasksLogModalOpen, setIsTasksLogModalOpen] = useState(false);
 
@@ -80,6 +86,15 @@ export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
                     >
                       <Tabs.Tab
                         className="flex items-center justify-center sm:justify-start gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium flex-1 sm:w-full text-center sm:text-left cursor-pointer transition-colors hover:bg-surface/70 text-muted data-selected:text-white"
+                        id="general"
+                      >
+                        <Sliders className="size-4 shrink-0 transition-colors" />
+                        <span>General</span>
+                        <Tabs.Indicator className="rounded-xl bg-accent text-accent-foreground shadow-xs" />
+                      </Tabs.Tab>
+
+                      <Tabs.Tab
+                        className="flex items-center justify-center sm:justify-start gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium flex-1 sm:w-full text-center sm:text-left cursor-pointer transition-colors hover:bg-surface/70 text-muted data-selected:text-white"
                         id="data"
                       >
                         <Database className="size-4 shrink-0 transition-colors" />
@@ -113,6 +128,10 @@ export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
                   orientation="vertical"
                   size={24}
                 >
+                  <Tabs.Panel className="p-0 m-0 outline-none" id="general">
+                    <GeneralTab />
+                  </Tabs.Panel>
+
                   <Tabs.Panel className="p-0 m-0 outline-none" id="data">
                     <DataTab
                       onOpenSessionsLog={handleOpenSessionsLog}

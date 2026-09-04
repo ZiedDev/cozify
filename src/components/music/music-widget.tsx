@@ -113,14 +113,14 @@ export function MusicWidget({ activeMode }: MusicWidgetProps) {
       <div className="relative">
         {/* 1. Minimized Floating Miniplayer Pill (Exact dock matching styling, color, height, and padding) */}
         <div
-          className={`rounded-full bg-surface/95 border border-separator/40 shadow-lg p-1 origin-bottom-left transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform ${
+          className={`rounded-full bg-surface/95 border border-separator/40 shadow-lg p-1 origin-bottom-left transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform max-w-37.5 min-[1260px]:max-w-64 xl:max-w-72 ${
             !isDeckOpen
               ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
               : "opacity-0 scale-90 translate-y-2 pointer-events-none absolute bottom-0 left-0"
           }`}
         >
           <button
-            className="flex items-center gap-1.5 min-[701px]:gap-2 rounded-full h-8 px-3 min-[701px]:px-5 text-xs min-[701px]:text-sm md:text-base font-medium whitespace-nowrap text-foreground cursor-pointer transition-[opacity,transform,scale] duration-200 hover:opacity-90 active:scale-95 max-w-37.5 min-[1260px]:max-w-52.5"
+            className="flex items-center gap-1.5 min-[701px]:gap-2 rounded-full h-8 px-3 min-[701px]:px-5 text-xs min-[701px]:text-sm md:text-base font-medium whitespace-nowrap text-foreground cursor-pointer transition-[opacity,transform,scale] duration-200 hover:opacity-90 active:scale-95 w-full max-w-full min-w-0"
             title="Open Audio Deck"
             type="button"
             onClick={() => setIsDeckOpen(true)}

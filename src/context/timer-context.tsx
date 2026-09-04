@@ -10,6 +10,7 @@ import {
 } from "react";
 import { toast } from "@heroui/react";
 
+import { useSound } from "@/context/sound-context";
 import {
   TimerMode,
   TimerDurations,
@@ -45,6 +46,7 @@ export type { TimerContextValue } from "@/menus/pomodoro/types";
 export const TimerContext = createContext<TimerContextValue | null>(null);
 
 export function TimerProvider({ children }: { children: ReactNode }) {
+  const { playSound } = useSound();
   const [mode, setMode] = useState<TimerMode>("focus");
   const [durations, setDurations] = useState<TimerDurations>(
     DEFAULT_TIMER_DURATIONS,
@@ -205,6 +207,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const pause = useCallback(() => {
     toast.clear();
     if (isRunning) {
+      playSound("pomoPause");
       const currentRemaining =
         targetEndTimeRef.current !== null
           ? Math.ceil((targetEndTimeRef.current - Date.now()) / 1000)
@@ -228,11 +231,12 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         }));
       }
     }
-  }, [isRunning, timeLeft, mode, currentCycle, durations.focus]);
+  }, [isRunning, timeLeft, mode, currentCycle, durations.focus, playSound]);
 
   // Start / Resume helper: resumes seamlessly from remainingOnPauseRef or state timeLeft
   const start = useCallback(() => {
     toast.clear();
+    playSound("pomoStart");
     setIsRunning(true);
     const remaining =
       typeof remainingOnPauseRef.current === "number"
@@ -241,7 +245,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
     remainingOnPauseRef.current = remaining;
     targetEndTimeRef.current = Date.now() + remaining * 1000;
-  }, [timeLeft]);
+  }, [timeLeft, playSound]);
 
   // Clean Toggle between Start/Resume and Pause
   const toggle = useCallback(() => {
@@ -481,6 +485,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       // Trigger Toast on cycle finish
       if (remaining <= 0 && !hasTriggeredToastRef.current) {
         hasTriggeredToastRef.current = true;
+        playSound("pomoEnd");
 
         if (mode === "focus") {
           const isSessionComplete = currentCycle >= targetCycles;
@@ -530,6 +535,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     finishCycleAndTakeBreak,
     startNextCycle,
     stopAndCelebrate,
+    playSound,
   ]);
 
   const reset = useCallback(() => {

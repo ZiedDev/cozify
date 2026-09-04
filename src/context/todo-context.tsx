@@ -8,6 +8,7 @@ import {
   ReactNode,
 } from "react";
 
+import { useSound } from "@/context/sound-context";
 import {
   TodoItem,
   TodoPriority,
@@ -79,6 +80,7 @@ const DEFAULT_TODOS: TodoItem[] = [
 ];
 
 export function TodoProvider({ children }: { children: ReactNode }) {
+  const { playSound } = useSound();
   const [todos, setTodos] = useState<TodoItem[]>(() =>
     storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, DEFAULT_TODOS),
   );
@@ -154,20 +156,27 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const toggleTodo = useCallback((id: string) => {
-    setTodos((prev) =>
-      prev.map((t) => {
-        if (t.id !== id) return t;
-        const nextCompleted = !t.completed;
+  const toggleTodo = useCallback(
+    (id: string) => {
+      setTodos((prev) =>
+        prev.map((t) => {
+          if (t.id !== id) return t;
+          const nextCompleted = !t.completed;
 
-        return {
-          ...t,
-          completed: nextCompleted,
-          completedAt: nextCompleted ? Date.now() : undefined,
-        };
-      }),
-    );
-  }, []);
+          if (nextCompleted) {
+            playSound("taskComplete");
+          }
+
+          return {
+            ...t,
+            completed: nextCompleted,
+            completedAt: nextCompleted ? Date.now() : undefined,
+          };
+        }),
+      );
+    },
+    [playSound],
+  );
 
   const updateTodo = useCallback((id: string, updates: Partial<TodoItem>) => {
     setTodos((prev) =>

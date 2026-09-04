@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+import { useSound } from "@/context/sound-context";
 import { showAchievementToast } from "@/menus/stats/components/achievement-toast";
 import {
   calculateMilestones,
@@ -29,6 +30,8 @@ const KONAMI_CODE = [
 ];
 
 export function useAchievementTracker() {
+  const { playSound } = useSound();
+
   useEffect(() => {
     const checkAndNotifyAchievements = () => {
       const sessions = storageAdapter.getItem<SessionRecord[]>(
@@ -67,6 +70,7 @@ export function useAchievementTracker() {
       currentMilestones.forEach((m) => {
         if (m.unlocked && !knownSet.has(m.id)) {
           showAchievementToast(m);
+          playSound("achievement");
           knownSet.add(m.id);
           updated = true;
         } else if (!m.unlocked && knownSet.has(m.id)) {
