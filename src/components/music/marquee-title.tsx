@@ -1,14 +1,14 @@
 import { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 
-interface MarqueeTitleProps {
+type Props = {
   text: string;
   isPlaying?: boolean;
   className?: string;
   speed?: number; // pixels per second (default: 12 for smooth, relaxed reading)
   pauseDuration?: number; // pause at endpoints in seconds (default: 2.5)
   align?: "start" | "center";
-}
+};
 
 export function MarqueeTitle({
   text,
@@ -17,7 +17,7 @@ export function MarqueeTitle({
   speed = 12,
   pauseDuration = 2.5,
   align = "start",
-}: MarqueeTitleProps) {
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [overflow, setOverflow] = useState(0);

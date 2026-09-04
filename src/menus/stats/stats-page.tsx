@@ -123,11 +123,7 @@ export function StatsPage() {
               overallStats={overallStats}
               timeOfDayStats={timeOfDayStats}
             />
-            <TagsAnalytics
-              overallStats={overallStats}
-              tagStats={tagStats}
-              todos={todos}
-            />
+            <TagsAnalytics tagStats={tagStats} todos={todos} />
           </div>
         </ScrollShadow>
       </div>

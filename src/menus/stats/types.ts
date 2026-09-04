@@ -2,12 +2,12 @@ import { LucideIcon } from "lucide-react";
 
 export type TimeRangeFilter = "all" | "today" | "week" | "month" | "custom";
 
-export interface CustomDateRange {
+export type CustomDateRange = {
   start: string; // YYYY-MM-DD
   end: string; // YYYY-MM-DD
-}
+};
 
-export interface DayActivity {
+export type DayActivity = {
   dateStr: string; // YYYY-MM-DD
   dayLabel: string; // e.g. "Mon", "Tue", "W12", "Jan"
   fullDateLabel: string; // e.g. "Aug 26, 2026"
@@ -21,9 +21,9 @@ export interface DayActivity {
   periodType?: "hourly" | "daily" | "weekly" | "monthly";
   dateRange?: { start: string; end: string };
   isFuture?: boolean;
-}
+};
 
-export interface TimeOfDayStat {
+export type TimeOfDayStat = {
   period: "morning" | "afternoon" | "evening" | "night";
   label: string;
   timeRange: string;
@@ -31,9 +31,9 @@ export interface TimeOfDayStat {
   sessionsCount: number;
   percentage: number;
   iconName: "sunrise" | "sun" | "sunset" | "moon";
-}
+};
 
-export interface TagStat {
+export type TagStat = {
   id: string;
   label: string;
   color: string;
@@ -42,9 +42,9 @@ export interface TagStat {
   taskCount: number;
   completedTaskCount: number;
   percentage: number;
-}
+};
 
-export interface PriorityStat {
+export type PriorityStat = {
   id: string;
   label: string;
   color: string;
@@ -52,9 +52,9 @@ export interface PriorityStat {
   total: number;
   completed: number;
   percentage: number;
-}
+};
 
-export interface Milestone {
+export type Milestone = {
   id: string;
   title: string;
   description: string;
@@ -72,9 +72,9 @@ export interface Milestone {
   lockedTitle?: string;
   lockedDescription?: string;
   lockedIcon?: LucideIcon;
-}
+};
 
-export interface OverallStats {
+export type OverallStats = {
   totalFocusMinutes: number;
   totalSessions: number;
   totalCycles: number;
@@ -97,4 +97,4 @@ export interface OverallStats {
 
   // Rhythm
   peakProductivePeriod: string;
-}
+};

@@ -11,7 +11,7 @@ import {
 
 export type TodoPriority = "none" | "low" | "medium" | "high";
 
-export interface TagDefinition {
+export type TagDefinition = {
   id: string;
   label: string;
   iconName: "briefcase-business" | "graduation-cap" | "brush" | "user" | "tag";
@@ -21,7 +21,7 @@ export interface TagDefinition {
   borderClass: string; // Tailwind border class
   textClass: string; // Tailwind text color class
   chartFill: string; // Solid Tailwind class for charts/bars
-}
+};
 
 export const PRESET_TAGS: readonly TagDefinition[] = [
   {

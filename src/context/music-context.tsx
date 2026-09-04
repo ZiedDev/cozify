@@ -36,7 +36,7 @@ export const toActualVolume = (sliderVal: number): number => {
   return Math.round(100 * Math.pow(sliderVal / 100, 2));
 };
 
-export interface SavedMusicState {
+type SavedMusicState = {
   activeUrl: string;
   activePlatform: MusicPlatform;
   title: string;
@@ -48,9 +48,9 @@ export interface SavedMusicState {
   currentTrackIndex?: number;
   tracklist?: MusicTrack[];
   currentTime?: number;
-}
+};
 
-export interface MusicContextValue {
+type MusicContextValue = {
   activeUrl: string;
   activePlatform: MusicPlatform;
   title: string;

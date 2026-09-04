@@ -194,12 +194,13 @@ export function SidebarTimer({
   );
 }
 
-interface SidebarWidgetProps {
+function SidebarWidget({
+  show,
+  children,
+}: {
   show: boolean;
   children: ReactNode;
-}
-
-function SidebarWidget({ show, children }: SidebarWidgetProps) {
+}) {
   return (
     <div
       className={`grid w-full transition-[grid-template-rows,opacity] duration-300 ease-out ${
@@ -215,11 +216,7 @@ function SidebarWidget({ show, children }: SidebarWidgetProps) {
   );
 }
 
-interface SidebarProps {
-  activeMode: AppMode;
-}
-
-export function Sidebar({ activeMode }: SidebarProps) {
+export function Sidebar({ activeMode }: { activeMode: AppMode }) {
   const { hasActiveSession } = useTimer();
   const showClock = activeMode !== "home";
   const showTimer =

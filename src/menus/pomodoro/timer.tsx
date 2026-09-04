@@ -7,10 +7,8 @@ import { TimerTabs } from "./components/timer-tabs";
 import { TimerDisplay } from "./components/timer-display";
 import { TimerControls } from "./components/timer-controls";
 import { BreakModal } from "./components/break-modal";
-import {
-  InterruptAlert,
-  ConfirmationState,
-} from "./components/interrupt-alert";
+import { InterruptAlert } from "./components/interrupt-alert";
+import { ConfirmationState } from "./types";
 import { formatDurationLabel } from "./logic/time-utils";
 import { shouldPromptForTargetReduction } from "./logic/cycle-rules";
 
@@ -261,7 +259,7 @@ export function Timer() {
             timeLeft,
         )}
         onOpenChange={setIsBreakModalOpen}
-        onSelectBreak={(breakMode) => finishCycleAndTakeBreak(breakMode)}
+        onSelectBreak={finishCycleAndTakeBreak}
         onSkipBreak={finishCycleAndSkipToNext}
       />
 

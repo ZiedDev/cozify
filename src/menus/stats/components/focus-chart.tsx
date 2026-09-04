@@ -7,13 +7,13 @@ import { formatMinutesDisplay } from "../logic/stats-calculator";
 
 import { BarChart } from "@/components/ui/bar-chart";
 
-interface FocusChartProps {
+export function FocusChart({
+  data,
+  onSelectRange,
+}: {
   data: DayActivity[];
-  isHourly?: boolean;
   onSelectRange?: (range: { start: string; end: string }) => void;
-}
-
-export function FocusChart({ data, onSelectRange }: FocusChartProps) {
+}) {
   const [selectedDay, setSelectedDay] = useState<DayActivity | null>(null);
 
   // Clear touch selection when time range filter changes

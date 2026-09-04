@@ -4,15 +4,13 @@ import { Sunrise, Sun, Sunset, Moon, Clock, Zap } from "lucide-react";
 import { TimeOfDayStat, OverallStats } from "../types";
 import { formatMinutesDisplay } from "../logic/stats-calculator";
 
-interface ProductivityRhythmProps {
-  timeOfDayStats: TimeOfDayStat[];
-  overallStats: OverallStats;
-}
-
 export function ProductivityRhythm({
   timeOfDayStats,
   overallStats,
-}: ProductivityRhythmProps) {
+}: {
+  timeOfDayStats: TimeOfDayStat[];
+  overallStats: OverallStats;
+}) {
   const getPeriodIcon = (iconName: string) => {
     switch (iconName) {
       case "sunrise":

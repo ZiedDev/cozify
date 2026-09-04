@@ -11,13 +11,13 @@ import { toast } from "@heroui/react";
 
 import { PipTimerCard } from "@/components/pomodoro/pip-timer-card";
 
-interface PipContextValue {
+type PipContextValue = {
   isPipActive: boolean;
   isSupported: boolean;
   openPip: () => Promise<void>;
   closePip: () => void;
   togglePip: () => void;
-}
+};
 
 const PipContext = createContext<PipContextValue | null>(null);
 

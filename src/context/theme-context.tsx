@@ -18,7 +18,7 @@ import {
 } from "@/config/themes";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
 
-interface SparseThemeConfig {
+type SparseThemeConfig = {
   activeBackgroundId?: string | null;
   customBackgrounds?: { id: string; name: string; url: string }[];
   overlayOpacity?: number;
@@ -27,9 +27,9 @@ interface SparseThemeConfig {
   positionY?: number;
   zoom?: number;
   hue?: number;
-}
+};
 
-export interface ThemeContextValue {
+type ThemeContextValue = {
   activeBackground: ThemeBackground | null;
   allBackgrounds: ThemeBackground[];
   customBackgrounds: ThemeBackground[];
@@ -51,7 +51,7 @@ export interface ThemeContextValue {
   setZoom: (zoom: number) => void;
   setAppThemeColor: (hue: number) => void;
   resetTheme: () => void;
-}
+};
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 

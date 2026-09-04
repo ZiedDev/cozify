@@ -21,7 +21,7 @@ export type TodoFilter = "all" | "today" | "active" | "completed";
 
 export type TodoViewMode = "minimal" | "detailed";
 
-export interface TodoItem {
+export type TodoItem = {
   id: string;
   title: string;
   completed: boolean;
@@ -33,7 +33,7 @@ export interface TodoItem {
   notes?: string;
   archived?: boolean;
   archivedAt?: number;
-}
+};
 
 export type TagOption = TagDefinition;
 

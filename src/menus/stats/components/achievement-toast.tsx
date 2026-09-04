@@ -13,9 +13,9 @@ import { Trophy, Star } from "lucide-react";
 import { Milestone } from "@/menus/stats/types";
 import { TIER_CONFIG } from "@/menus/stats/achievements/types";
 
-export interface AchievementToastContentValue {
+type AchievementToastContentValue = {
   milestone: Milestone;
-}
+};
 
 export const achievementToastQueue =
   new ToastQueue<AchievementToastContentValue>();

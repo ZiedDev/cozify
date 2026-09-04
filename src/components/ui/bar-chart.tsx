@@ -11,18 +11,18 @@ import {
   MouseEvent,
 } from "react";
 
-interface MousePosition {
+type MousePosition = {
   x: number;
   y: number;
   percentX: number;
-}
+};
 
 type TooltipRenderFn = (props: {
   item: Record<string, any>;
   index: number;
 }) => ReactNode;
 
-interface BarChartContextValue {
+type BarChartContextValue = {
   data: Record<string, any>[];
   width: number;
   height: number;
@@ -39,7 +39,7 @@ interface BarChartContextValue {
   tooltipContent: TooltipRenderFn | null;
   setTooltipContent: (fn: TooltipRenderFn | null) => void;
   onItemClick?: (item: Record<string, any>, index: number) => void;
-}
+};
 
 const BarChartContext = createContext<BarChartContextValue | null>(null);
 
@@ -55,14 +55,14 @@ function useBarChartContext() {
   return ctx;
 }
 
-export interface BarChartProps extends HTMLAttributes<HTMLDivElement> {
+type BarChartProps = HTMLAttributes<HTMLDivElement> & {
   data: Record<string, any>[];
   height?: number;
   width?: number | string;
   margin?: { top?: number; right?: number; bottom?: number; left?: number };
   children?: ReactNode;
   onItemClick?: (item: Record<string, any>, index: number) => void;
-}
+};
 
 export function BarChartRoot({
   data = [],
@@ -248,13 +248,13 @@ export function BarChartRoot({
 }
 
 // 1. Grid Component
-export interface BarChartGridProps {
+type BarChartGridProps = {
   strokeDasharray?: string;
   className?: string;
   horizontal?: boolean;
   vertical?: boolean;
   ticksCount?: number;
-}
+};
 
 export function BarChartGrid({
   strokeDasharray = "4 4",
@@ -289,11 +289,11 @@ export function BarChartGrid({
 }
 
 // 2. Y-Axis Component
-export interface BarChartYAxisProps {
+type BarChartYAxisProps = {
   tickFormatter?: (value: number) => string;
   ticksCount?: number;
   className?: string;
-}
+};
 
 export function BarChartYAxis({
   tickFormatter = (v) => `${v}`,
@@ -326,11 +326,11 @@ export function BarChartYAxis({
 }
 
 // 3. X-Axis Component
-export interface BarChartXAxisProps {
+type BarChartXAxisProps = {
   dataKey: string;
   tickFormatter?: (value: any, index: number) => string;
   className?: string;
-}
+};
 
 export function BarChartXAxis({
   dataKey,
@@ -375,12 +375,12 @@ export function BarChartXAxis({
 }
 
 // 4. Bar Component
-export interface BarChartBarProps {
+type BarChartBarProps = {
   dataKey: string;
   radius?: number;
   className?: string;
   hoverClassName?: string;
-}
+};
 
 export function BarChartBar({
   dataKey,
@@ -491,12 +491,12 @@ export function BarChartBar({
 }
 
 // 5. Reference Line Component (e.g. Average line)
-export interface BarChartReferenceLineProps {
+type BarChartReferenceLineProps = {
   y: number;
   label?: string;
   strokeDasharray?: string;
   className?: string;
-}
+};
 
 export function BarChartReferenceLine({
   y: targetValue,
@@ -537,9 +537,9 @@ export function BarChartReferenceLine({
 }
 
 // 6. Tooltip Component Definition and Renderer (Desktop Mouse Only)
-export interface BarChartTooltipProps {
+type BarChartTooltipProps = {
   content?: TooltipRenderFn;
-}
+};
 
 export function BarChartTooltip({ content }: BarChartTooltipProps) {
   const { setTooltipContent } = useBarChartContext();

@@ -2,19 +2,19 @@ import { useState } from "react";
 import { ProgressBar, Tabs, Typography } from "@heroui/react";
 import { Tag, Clock, CheckCircle2 } from "lucide-react";
 
-import { TagStat, OverallStats } from "../types";
+import { TagStat } from "../types";
 import { formatMinutesDisplay } from "../logic/stats-calculator";
 
 import { getTagInfo, getTagIcon } from "@/config/tags";
 import { TodoItem } from "@/menus/todo/types";
 
-interface TagsAnalyticsProps {
+export function TagsAnalytics({
+  tagStats,
+  todos,
+}: {
   tagStats: TagStat[];
-  overallStats: OverallStats;
   todos: TodoItem[];
-}
-
-export function TagsAnalytics({ tagStats, todos }: TagsAnalyticsProps) {
+}) {
   const [activeSubTab, setActiveSubTab] = useState<string>("focus");
 
   // Calculate task tag stats directly from todos

@@ -17,7 +17,7 @@ import {
 } from "@/menus/todo/types";
 import { storageAdapter, STORAGE_KEYS, AppSettings } from "@/services/storage";
 
-interface TodoContextType {
+type TodoContextType = {
   todos: TodoItem[];
   filteredTodos: TodoItem[];
   viewMode: TodoViewMode;
@@ -54,7 +54,7 @@ interface TodoContextType {
   setSelectedTag: (tag: string | null) => void;
   setSelectedPriority: (priority: TodoPriority | "all" | null) => void;
   setSearchQuery: (q: string) => void;
-}
+};
 
 const TodoContext = createContext<TodoContextType | null>(null);
 

@@ -21,7 +21,7 @@ import {
   Milestone,
 } from "../types";
 
-interface StatsHeaderProps {
+type Props = {
   range: TimeRangeFilter;
   onRangeChange: (r: TimeRangeFilter) => void;
   customDateRange: CustomDateRange | null;
@@ -30,7 +30,7 @@ interface StatsHeaderProps {
   milestones: Milestone[];
   onOpenAchievements: () => void;
   hasData?: boolean;
-}
+};
 
 const TIME_RANGES: { id: TimeRangeFilter; label: string }[] = [
   { id: "today", label: "Today" },
@@ -61,7 +61,7 @@ export function StatsHeader({
   milestones,
   onOpenAchievements,
   hasData: _hasData,
-}: StatsHeaderProps) {
+}: Props) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const customTabRef = useRef<HTMLDivElement>(null);
   const previousRangeRef = useRef<TimeRangeFilter>(

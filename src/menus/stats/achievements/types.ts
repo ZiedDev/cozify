@@ -1,6 +1,6 @@
 import { LucideIcon } from "lucide-react";
 
-export interface AchievementMetrics {
+export type AchievementMetrics = {
   totalSessions: number;
   totalCycles: number;
   totalFocusMinutes: number;
@@ -22,7 +22,7 @@ export interface AchievementMetrics {
   hasOvertime15: boolean;
   totalOvertimeMins: number;
   isKonamiUnlocked: boolean;
-}
+};
 
 export type AchievementTier =
   | "bronze"
@@ -31,14 +31,14 @@ export type AchievementTier =
   | "platinum"
   | "diamond";
 
-export interface TierStyleConfig {
+export type TierStyleConfig = {
   label: string;
   iconColor: string;
   badgeClass: string;
   borderHighlight: string;
   progressFill: string;
   glowColor: string;
-}
+};
 
 export const TIER_CONFIG: Record<AchievementTier, TierStyleConfig> = {
   bronze: {
@@ -93,7 +93,7 @@ export const TIER_CONFIG: Record<AchievementTier, TierStyleConfig> = {
   },
 };
 
-export interface AchievementDefinition {
+export type AchievementDefinition = {
   id: string;
   title: string;
   description: string;
@@ -109,4 +109,4 @@ export interface AchievementDefinition {
   lockedDescription?: string;
   lockedIcon?: LucideIcon;
   getValue: (m: AchievementMetrics) => number;
-}
+};

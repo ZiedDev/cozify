@@ -405,11 +405,7 @@ export function SidebarTodoWidget({
   );
 }
 
-interface SidebarLeftProps {
-  activeMode: AppMode;
-}
-
-export function SidebarLeft({ activeMode }: SidebarLeftProps) {
+export function SidebarLeft({ activeMode }: { activeMode: AppMode }) {
   // Show sidebar and widgets on desktop/tablet (> 950px) when not on To-Do tab
   if (activeMode === "todo") return null;
 

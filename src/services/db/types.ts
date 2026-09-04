@@ -1,7 +1,7 @@
 import { ThemeConfig } from "@/config/themes";
 import { TodoItem } from "@/menus/todo/types";
 
-export interface SessionRecord {
+export type SessionRecord = {
   id: string;
   createdAt: number;
   title: string;
@@ -15,46 +15,46 @@ export interface SessionRecord {
   overtimeSeconds?: number;
   notes?: string;
   updatedAt?: number;
-}
+};
 
-export interface AppSettings {
+export type AppSettings = {
   todo?: {
     mode?: "minimal" | "detailed";
   };
   [key: string]: unknown;
-}
+};
 
-export interface DBStoreMap {
+export type DBStoreMap = {
   sessions: SessionRecord;
   todos: TodoItem;
   theme: Partial<ThemeConfig> & { key: string };
   timer: Record<string, unknown> & { key: string };
   settings: AppSettings & { key: string };
   syncQueue: SyncQueueItem;
-}
+};
 
 export type StoreName = keyof DBStoreMap;
 
-export interface SyncQueueItem {
+export type SyncQueueItem = {
   id: string;
   store: StoreName;
   action: "create" | "update" | "delete";
   entityId: string;
   payload?: unknown;
   timestamp: number;
-}
+};
 
-export interface SyncStats {
+export type SyncStats = {
   pendingCount: number;
   lastSyncedAt: number | null;
   isSyncing: boolean;
   providerName?: string;
-}
+};
 
 /**
- * Interface for online cloud providers (e.g. Supabase, MongoDB, Firebase)
+ * Type for online cloud providers (e.g. Supabase, MongoDB, Firebase)
  */
-export interface RemoteDatabaseProvider {
+export type RemoteDatabaseProvider = {
   name: string;
   pushBatch(
     items: SyncQueueItem[],
@@ -66,4 +66,4 @@ export interface RemoteDatabaseProvider {
     settings?: AppSettings;
     timestamp: number;
   }>;
-}
+};

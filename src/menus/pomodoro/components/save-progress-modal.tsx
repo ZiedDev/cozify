@@ -32,15 +32,13 @@ import {
   SessionRecord,
 } from "@/services/storage";
 
-interface SaveProgressModalProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
 export function SaveProgressModal({
   isOpen,
   onOpenChange,
-}: SaveProgressModalProps) {
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const {
     mode,
     isCycleActive,

@@ -4,12 +4,13 @@ import { ProgressBar, Typography } from "@heroui/react";
 import { OverallStats } from "../types";
 import { formatMinutesDisplay } from "../logic/stats-calculator";
 
-interface StatsKpiCardProps {
+export function StatsKpiCard({
+  type,
+  stats,
+}: {
   type: "kpi_focus_time" | "kpi_pomodoros" | "kpi_streaks" | "kpi_tasks";
   stats: OverallStats;
-}
-
-export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
+}) {
   switch (type) {
     case "kpi_focus_time":
       return (

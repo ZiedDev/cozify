@@ -1,11 +1,11 @@
 export type MusicPlatform = "youtube" | "spotify";
 
-export interface MusicTrack {
+export type MusicTrack = {
   id: string;
   title: string;
   author?: string;
   duration?: number;
-}
+};
 
 export function formatTime(secs: number): string {
   const m = Math.floor(secs / 60) || 0;
@@ -14,7 +14,7 @@ export function formatTime(secs: number): string {
   return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
-export interface Playlist {
+export type Playlist = {
   id: string;
   title: string;
   author: string;
@@ -24,16 +24,16 @@ export interface Playlist {
   category: "lofi" | "synthwave" | "piano" | "ambient" | "spotify" | "custom";
   isLive?: boolean;
   isCustom?: boolean;
-}
+};
 
-export interface ParsedMedia {
+export type ParsedMedia = {
   platform: MusicPlatform;
   type: "video" | "playlist" | "track" | "album" | "episode";
   id: string;
   videoId?: string;
   index?: number;
   originalUrl: string;
-}
+};
 
 export function parseYouTubeUrl(url: string): ParsedMedia | null {
   if (!url || typeof url !== "string") return null;

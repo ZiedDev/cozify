@@ -2,15 +2,15 @@ import { storageAdapter, STORAGE_KEYS, SessionRecord } from "./storage";
 
 import { ThemeConfig } from "@/config/themes";
 
-export interface CozifyBackupData {
+type CozifyBackupData = {
   timer?: any;
   history?: SessionRecord[];
   theme?: Partial<ThemeConfig>;
   todos?: any[];
   [key: string]: any;
-}
+};
 
-export interface CozifyBackup {
+type CozifyBackup = {
   version: number;
   exportedAt: string;
   stats?: {
@@ -19,16 +19,16 @@ export interface CozifyBackup {
     customWallpapersCount: number;
   };
   data: CozifyBackupData;
-}
+};
 
-export interface StorageOverview {
+export type StorageOverview = {
   sessionsCount: number;
   todosCount: number;
   totalFocusMinutes: number;
   customWallpapersCount: number;
   storageSizeBytes: number;
   formattedStorageSize: string;
-}
+};
 
 /**
  * Calculates storage metrics and statistics from localStorage
@@ -181,7 +181,7 @@ export function exportAndDownloadBackup(): {
   };
 }
 
-export interface ImportResult {
+type ImportResult = {
   success: boolean;
   message: string;
   details?: {
@@ -189,7 +189,7 @@ export interface ImportResult {
     hasTheme: boolean;
     hasTimer: boolean;
   };
-}
+};
 
 /**
  * Validates and imports data from a JSON string or parsed object

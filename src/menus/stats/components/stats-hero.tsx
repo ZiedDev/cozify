@@ -4,12 +4,6 @@ import { Typography } from "@heroui/react";
 import { OverallStats, TimeRangeFilter, CustomDateRange } from "../types";
 import { formatMinutesDisplay } from "../logic/stats-calculator";
 
-interface StatsHeroProps {
-  stats: OverallStats;
-  range: TimeRangeFilter;
-  customDateRange: CustomDateRange | null;
-}
-
 const formatToDDMMYY = (dateStr: string) => {
   const parts = dateStr.split("-");
 
@@ -22,7 +16,15 @@ const formatToDDMMYY = (dateStr: string) => {
   return `${dd}/${mm}/${yy}`;
 };
 
-export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
+export function StatsHero({
+  stats,
+  range,
+  customDateRange,
+}: {
+  stats: OverallStats;
+  range: TimeRangeFilter;
+  customDateRange: CustomDateRange | null;
+}) {
   const getRangeLabel = () => {
     if (customDateRange) {
       return customDateRange.start === customDateRange.end

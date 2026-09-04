@@ -2,15 +2,15 @@ import { TimerMode, TimerDurations } from "@/config/timer";
 
 export type { TimerMode, TimerDurations };
 
-export interface CycleState {
+export type CycleState = {
   timeLeft: number;
   isCompleted: boolean;
   initialDuration?: number;
   focusElapsed?: number;
   overtimeElapsed?: number;
-}
+};
 
-export interface PersistedTimerState {
+export type PersistedTimerState = {
   mode: TimerMode;
   timeLeft: number;
   isRunning: boolean;
@@ -22,18 +22,18 @@ export interface PersistedTimerState {
   accumulatedFocusSeconds: number;
   accumulatedOvertimeSeconds: number;
   cycleStates?: Record<number, CycleState>;
-}
+};
 
-export interface ConfirmationState {
+export type ConfirmationState = {
   title: string;
   description: string;
   confirmLabel: string;
   confirmVariant?: "primary" | "secondary" | "danger" | "danger-soft";
   status?: "default" | "warning" | "danger" | "success" | "accent";
   onConfirm: () => void;
-}
+};
 
-export interface TimerContextValue {
+export type TimerContextValue = {
   mode: TimerMode;
   timeLeft: number;
   isRunning: boolean;
@@ -69,4 +69,4 @@ export interface TimerContextValue {
   setTargetCycles: (cycles: number) => void;
   setCurrentCycle: (cycle: number) => void;
   setCustomDurations: (newDurations: Partial<TimerDurations>) => void;
-}
+};

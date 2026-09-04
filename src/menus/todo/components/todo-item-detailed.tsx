@@ -16,7 +16,7 @@ import { TodoItem, getIntegratedTagPriorityInfo } from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
 
-export interface TodoItemDetailedProps {
+type Props = {
   todo: TodoItem;
   index?: number;
   isDragging?: boolean;
@@ -26,7 +26,7 @@ export interface TodoItemDetailedProps {
   onDragOver: (e: DragEvent, id: string) => void;
   onDragEnd: () => void;
   onDrop: (e: DragEvent, id: string) => void;
-}
+};
 
 export function TodoItemDetailed({
   todo,
@@ -37,7 +37,7 @@ export function TodoItemDetailed({
   onDragOver,
   onDragEnd,
   onDrop,
-}: TodoItemDetailedProps) {
+}: Props) {
   const { toggleTodo, deleteTodo, updateTodo } = useTodos();
 
   const [isEditingNotes, setIsEditingNotes] = useState(false);

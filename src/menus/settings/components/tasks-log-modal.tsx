@@ -32,14 +32,15 @@ import {
 } from "@/menus/todo/types";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
 
-interface TasksLogModalProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
 const PAGE_SIZE = 20;
 
-export function TasksLogModal({ isOpen, onOpenChange }: TasksLogModalProps) {
+export function TasksLogModal({
+  isOpen,
+  onOpenChange,
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<
     "all" | "completed" | "archived" | "active"

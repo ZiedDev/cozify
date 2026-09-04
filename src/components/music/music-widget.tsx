@@ -27,11 +27,7 @@ import { useMusic } from "@/context/music-context";
 import { AppMode } from "@/config/modes";
 import { formatTime } from "@/config/playlists";
 
-interface MusicWidgetProps {
-  activeMode?: AppMode;
-}
-
-export function MusicWidget({ activeMode }: MusicWidgetProps) {
+export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
   const {
     activePlatform,
     title,

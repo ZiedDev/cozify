@@ -26,12 +26,6 @@ const FILTER_TABS = [
   { id: "locked", label: "Locked", icon: Lock },
 ] as const;
 
-interface AchievementsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  milestones: Milestone[];
-}
-
 function formatUnlockDate(dateStr?: string) {
   if (!dateStr) return "";
   const d = new Date(dateStr);
@@ -45,7 +39,11 @@ export function AchievementsModal({
   isOpen,
   onClose,
   milestones,
-}: AchievementsModalProps) {
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  milestones: Milestone[];
+}) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [filterMode, setFilterMode] = useState<"all" | "unlocked" | "locked">(
     "all",

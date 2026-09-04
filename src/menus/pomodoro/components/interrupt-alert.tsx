@@ -2,17 +2,13 @@ import { AlertDialog, Button, Typography } from "@heroui/react";
 
 import { ConfirmationState } from "../types";
 
-export type { ConfirmationState };
-
-interface InterruptAlertProps {
-  confirmation: ConfirmationState | null;
-  onCancel: () => void;
-}
-
 export function InterruptAlert({
   confirmation,
   onCancel,
-}: InterruptAlertProps) {
+}: {
+  confirmation: ConfirmationState | null;
+  onCancel: () => void;
+}) {
   const isOpen = confirmation !== null;
 
   if (!isOpen || !confirmation) return null;

@@ -1,10 +1,10 @@
 export type TimerMode = "focus" | "shortBreak" | "longBreak";
 
-export interface TimerDurations {
+export type TimerDurations = {
   focus: number; // in seconds
   shortBreak: number; // in seconds
   longBreak: number; // in seconds
-}
+};
 
 export const DEFAULT_TIMER_DURATIONS: TimerDurations = {
   focus: 25 * 60,

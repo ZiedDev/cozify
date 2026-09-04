@@ -1,16 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "@heroui/react";
 
-import {
-  TimeRangeFilter,
-  CustomDateRange,
-  OverallStats,
-  DayActivity,
-  TimeOfDayStat,
-  TagStat,
-  PriorityStat,
-  Milestone,
-} from "@/menus/stats/types";
+import { TimeRangeFilter, CustomDateRange } from "@/menus/stats/types";
 import {
   storageAdapter,
   STORAGE_KEYS,
@@ -30,39 +21,7 @@ import {
   formatMinutesDisplay,
 } from "@/menus/stats/logic/stats-calculator";
 
-export interface UseStatsReturn {
-  sessions: SessionRecord[];
-  todos: TodoItem[];
-  range: TimeRangeFilter;
-  setRange: (r: TimeRangeFilter) => void;
-  customDateRange: CustomDateRange | null;
-  setCustomDateRange: (r: CustomDateRange | null) => void;
-  isAchievementsModalOpen: boolean;
-  setIsAchievementsModalOpen: (open: boolean) => void;
-
-  filteredSessions: SessionRecord[];
-  filteredTodos: TodoItem[];
-  overallStats: OverallStats;
-  allTimeStats: OverallStats;
-  dailyChartData: DayActivity[];
-  heatmapData: {
-    weeks: DayActivity[][];
-    months: { label: string; weekIndex: number }[];
-    rangeTitle?: string;
-  };
-  timeOfDayStats: TimeOfDayStat[];
-  tagStats: TagStat[];
-  priorityStats: PriorityStat[];
-  milestones: Milestone[];
-
-  deleteSession: (id: string) => void;
-  updateSession: (id: string, updates: Partial<SessionRecord>) => void;
-  clearAllSessions: () => void;
-  copySummaryToClipboard: () => void;
-  exportStatsJson: () => void;
-}
-
-export function useStats(): UseStatsReturn {
+export function useStats() {
   const [sessions, setSessions] = useState<SessionRecord[]>(() =>
     storageAdapter.getItem<SessionRecord[]>(STORAGE_KEYS.SESSIONS_HISTORY, []),
   );

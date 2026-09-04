@@ -2,12 +2,13 @@ import { Tabs, Typography } from "@heroui/react";
 
 import { TIMER_MODES, TimerMode } from "@/config/timer";
 
-interface TimerTabsProps {
+export function TimerTabs({
+  mode,
+  onSwitchMode,
+}: {
   mode: TimerMode;
   onSwitchMode: (newMode: TimerMode) => void;
-}
-
-export function TimerTabs({ mode, onSwitchMode }: TimerTabsProps) {
+}) {
   return (
     <Tabs
       className="w-fit max-w-full"

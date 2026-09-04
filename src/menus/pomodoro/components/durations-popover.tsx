@@ -16,19 +16,17 @@ import {
   TimerDurations,
 } from "@/config/timer";
 
-interface DurationsPopoverProps {
-  durations: TimerDurations;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  setCustomDurations: (newDurations: Partial<TimerDurations>) => void;
-}
-
 export function DurationsPopover({
   durations,
   isOpen,
   onOpenChange,
   setCustomDurations,
-}: DurationsPopoverProps) {
+}: {
+  durations: TimerDurations;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  setCustomDurations: (newDurations: Partial<TimerDurations>) => void;
+}) {
   const lastChangeTimeRef = useRef<{ [key: string]: number }>({});
 
   const handleGuardedChange = (key: string, action: () => void) => {

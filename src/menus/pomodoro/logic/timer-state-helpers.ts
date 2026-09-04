@@ -5,7 +5,7 @@ import {
   DEFAULT_TARGET_CYCLES,
 } from "@/config/timer";
 
-export interface TimerStatusParams {
+type TimerStatusParams = {
   mode: TimerMode;
   timeLeft: number;
   duration: number;
@@ -14,16 +14,16 @@ export interface TimerStatusParams {
   completedCycles: number;
   accumulatedFocusSeconds: number;
   accumulatedOvertimeSeconds: number;
-}
+};
 
-export interface DerivedTimerStatus {
+type DerivedTimerStatus = {
   isOvertime: boolean;
   isIdle: boolean;
   isPaused: boolean;
   isCycleActive: boolean;
   reachedCycles: number;
   hasActiveSession: boolean;
-}
+};
 
 /**
  * Derives timer status flags from base parameters
@@ -181,11 +181,11 @@ export function calculateTotalOvertimeSeconds(
   return Math.max(0, Math.round(overtime));
 }
 
-export interface CycleElapsedMetrics {
+type CycleElapsedMetrics = {
   initialDuration: number;
   focusElapsed: number;
   overtimeElapsed: number;
-}
+};
 
 /**
  * Calculates initialDuration, focusElapsed, and overtimeElapsed for a cycle

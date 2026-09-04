@@ -23,12 +23,13 @@ import {
   StorageOverview,
 } from "@/services/data-management";
 
-interface DataTabProps {
+export function DataTab({
+  onOpenSessionsLog,
+  onOpenTasksLog,
+}: {
   onOpenSessionsLog?: () => void;
   onOpenTasksLog?: () => void;
-}
-
-export function DataTab({ onOpenSessionsLog, onOpenTasksLog }: DataTabProps) {
+}) {
   const [stats, setStats] = useState<StorageOverview>(() =>
     getStorageOverview(),
   );

@@ -13,7 +13,7 @@ import { TodoItem, getIntegratedTagPriorityInfo } from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
 
-export interface TodoItemMinimalProps {
+type Props = {
   todo: TodoItem;
   index?: number;
   isDragging?: boolean;
@@ -23,7 +23,7 @@ export interface TodoItemMinimalProps {
   onDragOver: (e: DragEvent, id: string) => void;
   onDragEnd: () => void;
   onDrop: (e: DragEvent, id: string) => void;
-}
+};
 
 export function TodoItemMinimal({
   todo,
@@ -34,7 +34,7 @@ export function TodoItemMinimal({
   onDragOver,
   onDragEnd,
   onDrop,
-}: TodoItemMinimalProps) {
+}: Props) {
   const { toggleTodo, deleteTodo } = useTodos();
 
   const integratedMeta = getIntegratedTagPriorityInfo(

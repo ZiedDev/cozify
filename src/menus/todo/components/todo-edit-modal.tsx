@@ -24,13 +24,15 @@ import {
 
 import { useTodos } from "@/hooks/use-todos";
 
-interface TodoEditModalProps {
+export function TodoEditModal({
+  todo,
+  isOpen,
+  onClose,
+}: {
   todo: TodoItem | null;
   isOpen: boolean;
   onClose: () => void;
-}
-
-export function TodoEditModal({ todo, isOpen, onClose }: TodoEditModalProps) {
+}) {
   const { updateTodo } = useTodos();
 
   const [title, setTitle] = useState("");

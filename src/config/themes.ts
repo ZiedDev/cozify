@@ -1,12 +1,12 @@
-export interface ThemeBackground {
+export type ThemeBackground = {
   id: string;
   name: string;
   url: string;
   thumbnail?: string;
   isCustom?: boolean;
-}
+};
 
-export interface ThemeConfig {
+export type ThemeConfig = {
   activeBackgroundId: string | null;
   customBackgrounds: ThemeBackground[];
   overlayOpacity: number; // 0 to 100 (%)
@@ -15,7 +15,7 @@ export interface ThemeConfig {
   positionY: number; // 0 to 100 (% vertical shift)
   zoom: number; // 100 to 200 (% scale)
   hue: number; // 0 to 360 (default 291)
-}
+};
 
 export const DEFAULT_HUE = 291;
 export const DEFAULT_CHROMA = 0.1;

@@ -14,12 +14,12 @@ import { storageAdapter } from "@/services/storage";
 
 const SOUND_STORAGE_KEY = "cozify_sound_volume";
 
-interface SoundContextValue {
+type SoundContextValue = {
   volume: number;
   setVolume: (volume: number) => void;
   toggleMute: () => void;
   playSound: (sound: SoundEffect) => void;
-}
+};
 
 export const SoundContext = createContext<SoundContextValue | null>(null);
 

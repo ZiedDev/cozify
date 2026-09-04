@@ -13,7 +13,7 @@ import { DurationsPopover } from "./durations-popover";
 import { TimerDurations } from "@/config/timer";
 import { usePip } from "@/hooks/use-pip";
 
-interface TimerControlsProps {
+type Props = {
   isRunning: boolean;
   isPaused: boolean;
   isFocus: boolean;
@@ -29,7 +29,7 @@ interface TimerControlsProps {
   onOpenSaveModal: () => void;
   onDurationPopoverOpenChange: (open: boolean) => void;
   setCustomDurations: (newDurations: Partial<TimerDurations>) => void;
-}
+};
 
 export function TimerControls({
   isRunning,
@@ -47,7 +47,7 @@ export function TimerControls({
   onOpenSaveModal,
   onDurationPopoverOpenChange,
   setCustomDurations,
-}: TimerControlsProps) {
+}: Props) {
   const { isPipActive, togglePip } = usePip();
 
   return (

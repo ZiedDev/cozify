@@ -5,7 +5,7 @@ import { formatDurationLabel, formatTimerDisplay } from "../logic/time-utils";
 
 import { TimerDurations } from "@/config/timer";
 
-interface BreakModalProps {
+type Props = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   durations: TimerDurations;
@@ -14,7 +14,7 @@ interface BreakModalProps {
   timeLeft: number;
   onSelectBreak: (mode: "shortBreak" | "longBreak") => void;
   onSkipBreak: () => void;
-}
+};
 
 export function BreakModal({
   isOpen,
@@ -25,7 +25,7 @@ export function BreakModal({
   timeLeft,
   onSelectBreak,
   onSkipBreak,
-}: BreakModalProps) {
+}: Props) {
   if (!isOpen || timeLeft <= 0) return null;
 
   return (

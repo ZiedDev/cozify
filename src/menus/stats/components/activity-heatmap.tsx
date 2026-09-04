@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, Calendar, X } from "lucide-react";
 import { DayActivity, OverallStats } from "../types";
 import { formatMinutesDisplay } from "../logic/stats-calculator";
 
-interface ActivityHeatmapProps {
+type Props = {
   heatmapData: {
     weeks: DayActivity[][];
     months: { label: string; weekIndex: number }[];
@@ -14,7 +14,7 @@ interface ActivityHeatmapProps {
   };
   overallStats: OverallStats;
   onSelectDate?: (dateStr: string) => void;
-}
+};
 
 type ViewMode = "6m" | "12m";
 
@@ -22,7 +22,7 @@ export function ActivityHeatmap({
   heatmapData,
   overallStats: _overallStats,
   onSelectDate,
-}: ActivityHeatmapProps) {
+}: Props) {
   const { weeks } = heatmapData;
   const scrollRef = useRef<HTMLDivElement>(null);
 

@@ -10,15 +10,13 @@ import { formatTimerDisplay } from "../logic/time-utils";
 import { useTimer } from "@/hooks/use-timer";
 import { MIN_TARGET_CYCLES, MAX_TARGET_CYCLES } from "@/config/timer";
 
-interface CycleTrackerProps {
-  onRequestJumpCycle?: (cycleNumber: number) => void;
-  onRequestTargetChange?: (newTarget: number) => void;
-}
-
 export function CycleTracker({
   onRequestJumpCycle,
   onRequestTargetChange,
-}: CycleTrackerProps) {
+}: {
+  onRequestJumpCycle?: (cycleNumber: number) => void;
+  onRequestTargetChange?: (newTarget: number) => void;
+}) {
   const {
     mode,
     timeLeft,

@@ -32,17 +32,15 @@ import { PRESET_TAGS } from "@/menus/todo/types";
 import { getTagIcon } from "@/config/tags";
 import { formatMinutesDisplay } from "@/menus/stats/logic/stats-calculator";
 
-interface SessionsLogModalProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
 const PAGE_SIZE = 20;
 
 export function SessionsLogModal({
   isOpen,
   onOpenChange,
-}: SessionsLogModalProps) {
+}: {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<
     "all" | "cycles" | "overtime" | "notes"

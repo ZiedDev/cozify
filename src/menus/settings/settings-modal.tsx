@@ -21,12 +21,13 @@ import { TasksLogModal } from "./components/tasks-log-modal";
 
 import { siteConfig } from "@/config/site";
 
-interface SettingsModalProps {
+export function SettingsModal({
+  isOpen,
+  onOpenChange,
+}: {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-}
-
-export function SettingsModal({ isOpen, onOpenChange }: SettingsModalProps) {
+}) {
   const [selectedTab, setSelectedTab] = useState<string>("general");
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isTasksLogModalOpen, setIsTasksLogModalOpen] = useState(false);

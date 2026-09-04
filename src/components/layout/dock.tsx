@@ -2,12 +2,13 @@ import { Tabs, Typography } from "@heroui/react";
 
 import { DOCK_ITEMS, AppMode } from "@/config/modes";
 
-interface DockProps {
+export function Dock({
+  activeMode,
+  onSelectMode,
+}: {
   activeMode: AppMode;
   onSelectMode: (mode: AppMode) => void;
-}
-
-export function Dock({ activeMode, onSelectMode }: DockProps) {
+}) {
   return (
     <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-fit max-w-[95vw]">
       <Tabs

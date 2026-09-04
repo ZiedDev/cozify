@@ -9,11 +9,11 @@ import {
 
 export type AppMode = "home" | "pomodoro" | "todo" | "music" | "stats";
 
-export interface DockItem {
+type DockItem = {
   id: AppMode;
   label: string;
   icon: LucideIcon;
-}
+};
 
 export const DOCK_ITEMS: readonly DockItem[] = [
   { id: "home", label: "Home", icon: Home },

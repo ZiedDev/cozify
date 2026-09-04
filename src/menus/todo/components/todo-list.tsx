@@ -25,10 +25,10 @@ import { TodoEditModal } from "./todo-edit-modal";
 
 import { useTodos } from "@/hooks/use-todos";
 
-interface DragOverState {
+type DragOverState = {
   id: string;
   position: "top" | "bottom";
-}
+};
 
 const PAGE_SIZE = 20;
 

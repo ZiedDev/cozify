@@ -3,19 +3,17 @@ import { Plus, Minus } from "lucide-react";
 
 import { MAX_DURATION_SECONDS } from "@/config/timer";
 
-interface TimerDisplayProps {
-  formattedTime: string;
-  isOvertime: boolean;
-  timeLeft: number;
-  onAddMinutes?: (minutes: number) => void;
-}
-
 export function TimerDisplay({
   formattedTime,
   isOvertime,
   timeLeft,
   onAddMinutes,
-}: TimerDisplayProps) {
+}: {
+  formattedTime: string;
+  isOvertime: boolean;
+  timeLeft: number;
+  onAddMinutes?: (minutes: number) => void;
+}) {
   const isMinusDisabled = timeLeft <= 60;
   const isPlusDisabled = timeLeft >= MAX_DURATION_SECONDS;
 
