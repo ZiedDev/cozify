@@ -59,6 +59,11 @@ export function StatsHero({ stats, range, customDateRange }: StatsHeroProps) {
             >
               {formatMinutesDisplay(stats.totalFocusMinutes)}
             </Typography>
+            {stats.totalOvertimeMinutes > 0 && (
+              <span className="text-xs font-medium text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                +{formatMinutesDisplay(stats.totalOvertimeMinutes)}
+              </span>
+            )}
             {stats.totalActiveDays > 0 && stats.totalFocusMinutes > 0 && (
               <span className="text-xs text-muted font-normal whitespace-nowrap">
                 (avg{" "}

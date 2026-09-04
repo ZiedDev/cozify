@@ -1,9 +1,17 @@
-import { Button } from "@heroui/react";
-import { Play, Pause, Coffee, Flag, RotateCcw, Brain } from "lucide-react";
+import { Button, Tooltip } from "@heroui/react";
+import {
+  Play,
+  Pause,
+  SkipForward,
+  Flag,
+  RotateCcw,
+  PictureInPicture2,
+} from "lucide-react";
 
 import { DurationsPopover } from "./durations-popover";
 
 import { TimerDurations } from "@/config/timer";
+import { usePip } from "@/hooks/use-pip";
 
 interface TimerControlsProps {
   isRunning: boolean;
@@ -12,6 +20,7 @@ interface TimerControlsProps {
   hasStarted: boolean;
   isReadyToFinish: boolean;
   durations: TimerDurations;
+  timeLeft: number;
   isDurationPopoverOpen: boolean;
   onToggle: () => void;
   onReset: () => void;
@@ -29,6 +38,7 @@ export function TimerControls({
   hasStarted,
   isReadyToFinish,
   durations,
+  timeLeft,
   isDurationPopoverOpen,
   onToggle,
   onReset,
@@ -38,6 +48,8 @@ export function TimerControls({
   onDurationPopoverOpenChange,
   setCustomDurations,
 }: TimerControlsProps) {
+  const { isPipActive, togglePip } = usePip();
+
   return (
     <div className="flex items-center gap-1.5 xs:gap-2 sm:gap-3 flex-wrap justify-center max-w-full">
       {/* Start / Pause / Resume Action Button */}
@@ -62,57 +74,91 @@ export function TimerControls({
 
       {/* Reset Current Cycle Button */}
       {hasStarted && (
-        <Button
-          isIconOnly
-          aria-label="Reset Current Cycle"
-          className="size-12 sm:size-14 rounded-2xl flex items-center justify-center p-0"
-          size="lg"
-          variant="secondary"
-          onPress={onReset}
-        >
-          <RotateCcw className="size-5" />
-        </Button>
+        <Tooltip delay={150}>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              aria-label="Reset Current Cycle"
+              className="size-12 sm:size-14 rounded-2xl flex items-center justify-center p-0"
+              size="lg"
+              variant="secondary"
+              onPress={onReset}
+            >
+              <RotateCcw className="size-5" />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator shadow-lg">
+            <span className="text-xs font-medium">Reset cycle</span>
+          </Tooltip.Content>
+        </Tooltip>
       )}
 
-      {/* Take Break Button (when in focus mode) */}
+      {/* Skip Cycle Button (when in focus mode) */}
       {isFocus && hasStarted && (
-        <Button
-          aria-label="Take Break"
-          className="px-6 sm:px-7 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
-          size="lg"
-          variant="secondary"
-          onPress={onOpenBreakModal}
-        >
-          <Coffee className="size-5" />
-          <span>Break</span>
-        </Button>
+        <Tooltip delay={150}>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              aria-label="Skip Cycle"
+              className="size-12 sm:size-14 rounded-2xl flex items-center justify-center p-0"
+              isDisabled={timeLeft <= 0}
+              size="lg"
+              variant="secondary"
+              onPress={onOpenBreakModal}
+            >
+              <SkipForward className="size-5" />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator shadow-lg">
+            <span className="text-xs font-medium">
+              {timeLeft <= 0 ? "Time has passed" : "Skip cycle"}
+            </span>
+          </Tooltip.Content>
+        </Tooltip>
       )}
 
-      {/* Switch to Focus Button (when in break mode and break has started) */}
+      {/* Skip Break Button (when in break mode and break has started) */}
       {!isFocus && hasStarted && (
-        <Button
-          aria-label="Switch to Focus"
-          className="px-6 sm:px-7 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
-          size="lg"
-          variant="secondary"
-          onPress={onSwitchToFocus}
-        >
-          <Brain className="size-5" />
-          <span>Focus</span>
-        </Button>
+        <Tooltip delay={150}>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              aria-label="Skip Break"
+              className="size-12 sm:size-14 rounded-2xl flex items-center justify-center p-0"
+              isDisabled={timeLeft <= 0}
+              size="lg"
+              variant="secondary"
+              onPress={onSwitchToFocus}
+            >
+              <SkipForward className="size-5" />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator shadow-lg">
+            <span className="text-xs font-medium">
+              {timeLeft <= 0 ? "Break finished" : "Skip break"}
+            </span>
+          </Tooltip.Content>
+        </Tooltip>
       )}
 
       {/* Finish Session Button */}
-      <Button
-        aria-label="Finish Session"
-        className="px-6 sm:px-7 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
-        size="lg"
-        variant={isReadyToFinish ? "primary" : "secondary"}
-        onPress={onOpenSaveModal}
-      >
-        <Flag className="size-5" />
-        <span>Finish</span>
-      </Button>
+      <Tooltip delay={150}>
+        <Tooltip.Trigger>
+          <Button
+            isIconOnly
+            aria-label="Finish Session"
+            className="size-12 sm:size-14 rounded-2xl flex items-center justify-center p-0"
+            size="lg"
+            variant={isReadyToFinish ? "primary" : "secondary"}
+            onPress={onOpenSaveModal}
+          >
+            <Flag className="size-5" />
+          </Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator shadow-lg">
+          <span className="text-xs font-medium">Finish session</span>
+        </Tooltip.Content>
+      </Tooltip>
 
       {/* Duration Customization Popover */}
       <DurationsPopover
@@ -121,6 +167,29 @@ export function TimerControls({
         setCustomDurations={setCustomDurations}
         onOpenChange={onDurationPopoverOpenChange}
       />
+
+      {/* Pop out Timer (Always on top Picture-in-Picture) */}
+      <Tooltip delay={150}>
+        <Tooltip.Trigger>
+          <Button
+            isIconOnly
+            aria-label={isPipActive ? "Close pop-out window" : "Pop out timer"}
+            className={`size-12 sm:size-14 rounded-2xl flex items-center justify-center p-0 transition-all ${
+              isPipActive ? "bg-accent text-accent-foreground shadow-sm" : ""
+            }`}
+            size="lg"
+            variant={isPipActive ? "primary" : "secondary"}
+            onPress={togglePip}
+          >
+            <PictureInPicture2 className="size-5" />
+          </Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator shadow-lg">
+          <span className="text-xs font-medium">
+            {isPipActive ? "Close pop-out window" : "Pop out timer"}
+          </span>
+        </Tooltip.Content>
+      </Tooltip>
     </div>
   );
 }

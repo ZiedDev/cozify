@@ -82,7 +82,13 @@ export function hasCustomSettings(
 export function calculateTotalFocusSeconds(
   cycleStates: Record<
     number,
-    { timeLeft: number; isCompleted: boolean; initialDuration?: number }
+    {
+      timeLeft: number;
+      isCompleted: boolean;
+      initialDuration?: number;
+      focusElapsed?: number;
+      overtimeElapsed?: number;
+    }
   >,
   currentCycle: number,
   mode: TimerMode,
@@ -98,21 +104,31 @@ export function calculateTotalFocusSeconds(
     if (cycleNum === currentCycle && mode === "focus") {
       continue;
     }
-    const initial = state.initialDuration || defaultFocusDuration;
 
-    if (state.isCompleted) {
-      total += Math.max(initial, initial - state.timeLeft);
+    if (typeof state.focusElapsed === "number") {
+      total += state.focusElapsed;
     } else {
-      total += Math.max(0, initial - state.timeLeft);
+      const initial = state.initialDuration || defaultFocusDuration;
+      const effectiveTimeLeft = Math.max(0, state.timeLeft);
+
+      total += Math.min(initial, Math.max(0, initial - effectiveTimeLeft));
     }
   }
 
-  // 2. Add current active focus cycle
+  // 2. Add current active focus cycle (capped at initial so overtime is excluded)
   if (mode === "focus") {
     const currentState = cycleStates[currentCycle];
     const initial = currentState?.initialDuration || defaultFocusDuration;
+    const effectiveTimeLeft = Math.max(0, currentRemainingTime);
 
-    total += Math.max(0, initial - currentRemainingTime);
+    const activeFocus =
+      currentState?.isCompleted &&
+      typeof currentState?.focusElapsed === "number" &&
+      currentRemainingTime <= 0
+        ? currentState.focusElapsed
+        : Math.min(initial, Math.max(0, initial - effectiveTimeLeft));
+
+    total += activeFocus;
   }
 
   return Math.max(0, Math.round(total));
@@ -124,7 +140,13 @@ export function calculateTotalFocusSeconds(
 export function calculateTotalOvertimeSeconds(
   cycleStates: Record<
     number,
-    { timeLeft: number; isCompleted: boolean; initialDuration?: number }
+    {
+      timeLeft: number;
+      isCompleted: boolean;
+      initialDuration?: number;
+      focusElapsed?: number;
+      overtimeElapsed?: number;
+    }
   >,
   currentCycle: number,
   mode: TimerMode,
@@ -138,14 +160,62 @@ export function calculateTotalOvertimeSeconds(
     if (cycleNum === currentCycle && mode === "focus") {
       continue;
     }
-    if (state.timeLeft < 0) {
+
+    if (typeof state.overtimeElapsed === "number") {
+      overtime += state.overtimeElapsed;
+    } else if (state.timeLeft < 0) {
       overtime += Math.abs(state.timeLeft);
     }
   }
 
-  if (mode === "focus" && currentRemainingTime < 0) {
-    overtime += Math.abs(currentRemainingTime);
+  if (mode === "focus") {
+    const currentState = cycleStates[currentCycle];
+    const activeOvertime =
+      currentRemainingTime < 0
+        ? Math.abs(currentRemainingTime)
+        : (currentState?.overtimeElapsed ?? 0);
+
+    overtime += activeOvertime;
   }
 
   return Math.max(0, Math.round(overtime));
+}
+
+export interface CycleElapsedMetrics {
+  initialDuration: number;
+  focusElapsed: number;
+  overtimeElapsed: number;
+}
+
+/**
+ * Calculates initialDuration, focusElapsed, and overtimeElapsed for a cycle
+ */
+export function calculateCycleElapsed(
+  cycleState:
+    | {
+        initialDuration?: number;
+        focusElapsed?: number;
+        overtimeElapsed?: number;
+        isCompleted?: boolean;
+      }
+    | undefined,
+  currentRemaining: number,
+  defaultDuration: number,
+): CycleElapsedMetrics {
+  const initialDuration = cycleState?.initialDuration || defaultDuration;
+  const focusElapsed =
+    cycleState?.isCompleted &&
+    typeof cycleState?.focusElapsed === "number" &&
+    currentRemaining <= 0
+      ? cycleState.focusElapsed
+      : Math.min(
+          initialDuration,
+          Math.max(0, initialDuration - Math.max(0, currentRemaining)),
+        );
+  const overtimeElapsed =
+    currentRemaining < 0
+      ? Math.abs(currentRemaining)
+      : (cycleState?.overtimeElapsed ?? 0);
+
+  return { initialDuration, focusElapsed, overtimeElapsed };
 }

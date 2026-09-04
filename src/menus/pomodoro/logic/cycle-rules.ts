@@ -72,7 +72,12 @@ export const countCompletedCycles = (
 
 export function calculateSavedCycleProgressPercent(
   cycleState:
-    | { timeLeft: number; isCompleted: boolean; initialDuration?: number }
+    | {
+        timeLeft: number;
+        isCompleted: boolean;
+        initialDuration?: number;
+        focusElapsed?: number;
+      }
     | undefined,
   currentGlobalFocusDuration: number,
 ): number {
@@ -82,9 +87,19 @@ export function calculateSavedCycleProgressPercent(
 
   if (baseDuration <= 0) return 0;
 
+  if (typeof cycleState.focusElapsed === "number") {
+    return Math.min(
+      100,
+      Math.max(0, (cycleState.focusElapsed / baseDuration) * 100),
+    );
+  }
+
   return Math.min(
     100,
-    Math.max(0, ((baseDuration - cycleState.timeLeft) / baseDuration) * 100),
+    Math.max(
+      0,
+      ((baseDuration - Math.max(0, cycleState.timeLeft)) / baseDuration) * 100,
+    ),
   );
 }
 

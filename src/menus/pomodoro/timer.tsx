@@ -37,6 +37,7 @@ export function Timer() {
     toggle,
     addMinutes,
     finishCycleAndTakeBreak,
+    finishCycleAndSkipToNext,
     skipBreak,
     setCustomDurations,
     stopAndCelebrate,
@@ -58,6 +59,13 @@ export function Timer() {
       setIsDurationPopoverOpen(false);
     }
   }, [isBreakModalOpen, isSaveModalOpen, confirmation]);
+
+  // Automatically close skip modal if time has already passed / time is over
+  useEffect(() => {
+    if (timeLeft <= 0 && isBreakModalOpen) {
+      setIsBreakModalOpen(false);
+    }
+  }, [timeLeft, isBreakModalOpen]);
 
   // Spacebar toggle shortcut
   useEffect(() => {
@@ -209,8 +217,10 @@ export function Timer() {
         isReadyToFinish={isReadyToFinish}
         isRunning={isRunning}
         setCustomDurations={setCustomDurations}
+        timeLeft={timeLeft}
         onDurationPopoverOpenChange={setIsDurationPopoverOpen}
         onOpenBreakModal={() => {
+          if (timeLeft <= 0) return;
           setIsDurationPopoverOpen(false);
           setIsBreakModalOpen(true);
         }}
@@ -219,7 +229,10 @@ export function Timer() {
           stopAndCelebrate();
         }}
         onReset={handleRequestReset}
-        onSwitchToFocus={() => handleSwitchMode("focus")}
+        onSwitchToFocus={() => {
+          if (timeLeft <= 0) return;
+          skipBreak();
+        }}
         onToggle={toggle}
       />
 
@@ -238,12 +251,18 @@ export function Timer() {
 
       {/* Break Selection Modal */}
       <BreakModal
+        currentCycle={currentCycle}
         durations={durations}
-        isCycleCompleted={!isFocus || timeLeft <= 0}
         isOpen={isBreakModalOpen}
+        timeLeft={timeLeft}
+        timeUsed={Math.max(
+          0,
+          (cycleStates[currentCycle]?.initialDuration || durations.focus) -
+            timeLeft,
+        )}
         onOpenChange={setIsBreakModalOpen}
         onSelectBreak={(breakMode) => finishCycleAndTakeBreak(breakMode)}
-        onSkipBreak={skipBreak}
+        onSkipBreak={finishCycleAndSkipToNext}
       />
 
       {/* Unified Interruption & Cycle Collision Alert Dialog */}

@@ -125,6 +125,7 @@ export function ActivityHeatmap({
   // Metrics for active window (excluding unreached future days)
   const visibleStats = useMemo(() => {
     let focusMinutes = 0;
+    let overtimeMinutes = 0;
     let activeDays = 0;
     let pastDays = 0;
 
@@ -133,13 +134,20 @@ export function ActivityHeatmap({
         if (d && !d.isFuture) {
           pastDays++;
           focusMinutes += d.focusMinutes;
-          if (d.focusMinutes > 0) activeDays++;
+          overtimeMinutes += d.overtimeMinutes || 0;
+          if (
+            d.focusMinutes > 0 ||
+            (d.overtimeMinutes && d.overtimeMinutes > 0)
+          ) {
+            activeDays++;
+          }
         }
       });
     });
 
     return {
       focusMinutes,
+      overtimeMinutes,
       activeDays,
       totalDays: Math.max(1, pastDays),
       consistency: Math.round((activeDays / Math.max(1, pastDays)) * 100),
@@ -201,8 +209,13 @@ export function ActivityHeatmap({
             type="h2"
             weight="bold"
           >
-            {formatMinutesDisplay(visibleStats.focusMinutes)} of focus in{" "}
-            {periodLabel}
+            {formatMinutesDisplay(visibleStats.focusMinutes)}
+            {visibleStats.overtimeMinutes > 0 && (
+              <span className="text-accent text-xs font-medium ml-1.5">
+                +{formatMinutesDisplay(visibleStats.overtimeMinutes)}
+              </span>
+            )}{" "}
+            of focus in {periodLabel}
           </Typography>
           <Typography className="text-xs mt-0.5" color="muted" type="body-xs">
             {dateRangeLabel} · {visibleStats.activeDays} active days (
@@ -322,8 +335,9 @@ export function ActivityHeatmap({
                     const isSelected = selectedDay?.dateStr === day.dateStr;
                     const tooltip = day.isFuture
                       ? `${day.fullDateLabel} (Upcoming)`
-                      : day.focusMinutes > 0
-                        ? `${formatMinutesDisplay(day.focusMinutes)} of focus on ${day.fullDateLabel}`
+                      : day.focusMinutes > 0 ||
+                          (day.overtimeMinutes && day.overtimeMinutes > 0)
+                        ? `${formatMinutesDisplay(day.focusMinutes)}${day.overtimeMinutes ? ` +${formatMinutesDisplay(day.overtimeMinutes)}` : ""} of focus on ${day.fullDateLabel}`
                         : `No focus activity on ${day.fullDateLabel}`;
 
                     return (
@@ -383,13 +397,19 @@ export function ActivityHeatmap({
               >
                 {selectedDay.fullDateLabel}
               </Typography>
-              <div className="flex items-center gap-3 text-xs text-muted mt-0.5">
+              <div className="flex items-center gap-3 text-xs text-muted mt-0.5 flex-wrap">
                 <span>
                   Focus:{" "}
                   <strong className="text-foreground font-semibold">
                     {formatMinutesDisplay(selectedDay.focusMinutes)}
                   </strong>
                 </span>
+                {selectedDay.overtimeMinutes &&
+                selectedDay.overtimeMinutes > 0 ? (
+                  <span className="text-accent font-medium">
+                    +{formatMinutesDisplay(selectedDay.overtimeMinutes)}
+                  </span>
+                ) : null}
                 <span>
                   Pomodoros:{" "}
                   <strong className="text-foreground font-semibold">
@@ -538,6 +558,20 @@ export function ActivityHeatmap({
                     : "0m"}
                 </Typography>
               </div>
+              {hoveredDay.day.overtimeMinutes &&
+              hoveredDay.day.overtimeMinutes > 0 ? (
+                <div className="flex items-center justify-between text-xs text-muted">
+                  <Typography color="muted" type="body-xs">
+                    Overtime:
+                  </Typography>
+                  <Typography
+                    className="font-medium text-accent"
+                    type="body-xs"
+                  >
+                    +{formatMinutesDisplay(hoveredDay.day.overtimeMinutes)}
+                  </Typography>
+                </div>
+              ) : null}
               {hoveredDay.day.cycleCount > 0 && (
                 <div className="flex items-center justify-between text-xs text-muted">
                   <Typography color="muted" type="body-xs">

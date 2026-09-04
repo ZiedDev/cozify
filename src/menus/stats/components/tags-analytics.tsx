@@ -147,6 +147,11 @@ export function TagsAnalytics({ tagStats, todos }: TagsAnalyticsProps) {
                         <span className="font-semibold text-foreground">
                           {formatMinutesDisplay(tag.focusMinutes)}
                         </span>
+                        {tag.overtimeMinutes && tag.overtimeMinutes > 0 ? (
+                          <span className="text-[10px] text-accent font-medium">
+                            (+{formatMinutesDisplay(tag.overtimeMinutes)})
+                          </span>
+                        ) : null}
                         <span className="text-xs text-muted w-8 text-right">
                           {tag.percentage}%
                         </span>

@@ -6,6 +6,8 @@ export interface CycleState {
   timeLeft: number;
   isCompleted: boolean;
   initialDuration?: number;
+  focusElapsed?: number;
+  overtimeElapsed?: number;
 }
 
 export interface PersistedTimerState {
@@ -58,6 +60,7 @@ export interface TimerContextValue {
   switchMode: (newMode: TimerMode, autoStart?: boolean) => void;
   addMinutes: (minutes: number) => void;
   finishCycleAndTakeBreak: (breakMode?: "shortBreak" | "longBreak") => void;
+  finishCycleAndSkipToNext: () => void;
   skipBreak: () => void;
   startNextCycle: () => void;
   startNewSession: () => void;

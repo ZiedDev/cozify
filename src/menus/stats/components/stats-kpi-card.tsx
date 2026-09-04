@@ -39,7 +39,7 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
               </Typography>
             </div>
 
-            <div className="flex items-baseline gap-1 my-1">
+            <div className="flex items-baseline gap-1.5 my-1 flex-wrap">
               <Typography
                 className="text-xl sm:text-2xl font-serif text-foreground tracking-tight tabular-nums"
                 type="h2"
@@ -47,6 +47,11 @@ export function StatsKpiCard({ type, stats }: StatsKpiCardProps) {
               >
                 {formatMinutesDisplay(stats.totalFocusMinutes)}
               </Typography>
+              {stats.totalOvertimeMinutes > 0 && (
+                <span className="text-[10px] font-medium text-accent bg-accent/10 border border-accent/20 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                  +{formatMinutesDisplay(stats.totalOvertimeMinutes)}
+                </span>
+              )}
             </div>
           </div>
 

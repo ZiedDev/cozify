@@ -39,6 +39,7 @@ import {
   hasCustomSettings,
   calculateTotalFocusSeconds,
   calculateTotalOvertimeSeconds,
+  calculateCycleElapsed,
 } from "@/menus/pomodoro/logic/timer-state-helpers";
 
 export type { TimerContextValue } from "@/menus/pomodoro/types";
@@ -219,16 +220,26 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       setIsRunning(false);
 
       if (mode === "focus") {
-        setCycleStates((prev) => ({
-          ...prev,
-          [currentCycle]: {
-            timeLeft: currentRemaining,
-            isCompleted:
-              currentRemaining <= 0 || !!prev[currentCycle]?.isCompleted,
-            initialDuration:
-              prev[currentCycle]?.initialDuration || durations.focus,
-          },
-        }));
+        setCycleStates((prev) => {
+          const { initialDuration, focusElapsed, overtimeElapsed } =
+            calculateCycleElapsed(
+              prev[currentCycle],
+              currentRemaining,
+              durations.focus,
+            );
+
+          return {
+            ...prev,
+            [currentCycle]: {
+              timeLeft: currentRemaining,
+              isCompleted:
+                currentRemaining <= 0 || !!prev[currentCycle]?.isCompleted,
+              initialDuration,
+              focusElapsed,
+              overtimeElapsed,
+            },
+          };
+        });
       }
     }
   }, [isRunning, timeLeft, mode, currentCycle, durations.focus, playSound]);
@@ -275,14 +286,22 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         const hasProgress = isRunning || currentRemaining < durations.focus;
 
         if (hasProgress || isFinished) {
+          const { initialDuration, focusElapsed, overtimeElapsed } =
+            calculateCycleElapsed(
+              cycleStates[currentCycle],
+              currentRemaining,
+              durations.focus,
+            );
+
           activeCycleStates = {
             ...cycleStates,
             [currentCycle]: {
               timeLeft: currentRemaining,
               isCompleted:
                 isFinished || !!cycleStates[currentCycle]?.isCompleted,
-              initialDuration:
-                cycleStates[currentCycle]?.initialDuration || durations.focus,
+              initialDuration,
+              focusElapsed,
+              overtimeElapsed,
             },
           };
           setCycleStates(activeCycleStates);
@@ -341,14 +360,27 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       const nextBreakMode =
         preferredBreak || determinePreferredBreak(currentCycle, targetCycles);
 
-      // 1. Mark current cycle completed
+      // Determine accurate remaining time at this moment so we don't fake full duration
+      const currentRemaining =
+        mode === "focus" && isRunning && targetEndTimeRef.current !== null
+          ? Math.ceil((targetEndTimeRef.current - Date.now()) / 1000)
+          : timeLeft;
+
+      const { focusElapsed, overtimeElapsed } = calculateCycleElapsed(
+        cycleStates[currentCycle],
+        currentRemaining,
+        durations.focus,
+      );
+
+      // 1. Change the 100% value to the focus time used in that cycle and mark it as complete
       setCycleStates((prev) => ({
         ...prev,
         [currentCycle]: {
           timeLeft: 0,
           isCompleted: true,
-          initialDuration:
-            prev[currentCycle]?.initialDuration || durations.focus,
+          initialDuration: focusElapsed,
+          focusElapsed,
+          overtimeElapsed,
         },
       }));
 
@@ -370,8 +402,69 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       setIsRunning(true);
       targetEndTimeRef.current = Date.now() + breakDuration * 1000;
     },
-    [currentCycle, targetCycles, durations],
+    [
+      currentCycle,
+      targetCycles,
+      durations,
+      mode,
+      isRunning,
+      timeLeft,
+      cycleStates,
+    ],
   );
+
+  const finishCycleAndSkipToNext = useCallback(() => {
+    toast.clear();
+
+    const currentRemaining =
+      mode === "focus" && isRunning && targetEndTimeRef.current !== null
+        ? Math.ceil((targetEndTimeRef.current - Date.now()) / 1000)
+        : timeLeft;
+
+    const { focusElapsed, overtimeElapsed } = calculateCycleElapsed(
+      cycleStates[currentCycle],
+      currentRemaining,
+      durations.focus,
+    );
+
+    // 1. Change the 100% value to the focus time used in that cycle and mark it as complete
+    setCycleStates((prev) => ({
+      ...prev,
+      [currentCycle]: {
+        timeLeft: 0,
+        isCompleted: true,
+        initialDuration: focusElapsed,
+        focusElapsed,
+        overtimeElapsed,
+      },
+    }));
+
+    // 2. Advance to next cycle
+    const next = calculateNextCycle(currentCycle);
+
+    setCurrentCycleState(next);
+    if (currentCycle >= targetCycles) {
+      setTargetCyclesState(next);
+    }
+
+    // 3. Set focus mode ready for next cycle
+    setMode("focus");
+    hasTriggeredToastRef.current = false;
+    const nextDuration = durations.focus;
+
+    setTimeLeft(nextDuration);
+    remainingOnPauseRef.current = nextDuration;
+    setIsRunning(false);
+    targetEndTimeRef.current = null;
+  }, [
+    currentCycle,
+    targetCycles,
+    durations,
+    mode,
+    isRunning,
+    timeLeft,
+    cycleStates,
+  ]);
 
   // Skip Break: Sets Focus mode ready on appropriate cycle without destroying existing cycle progress
   const skipBreak = useCallback(() => {
@@ -439,16 +532,26 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       setIsRunning(false);
 
       if (mode === "focus") {
-        setCycleStates((prev) => ({
-          ...prev,
-          [currentCycle]: {
-            timeLeft: currentRemaining,
-            isCompleted:
-              currentRemaining <= 0 || !!prev[currentCycle]?.isCompleted,
-            initialDuration:
-              prev[currentCycle]?.initialDuration || durations.focus,
-          },
-        }));
+        setCycleStates((prev) => {
+          const { initialDuration, focusElapsed, overtimeElapsed } =
+            calculateCycleElapsed(
+              prev[currentCycle],
+              currentRemaining,
+              durations.focus,
+            );
+
+          return {
+            ...prev,
+            [currentCycle]: {
+              timeLeft: currentRemaining,
+              isCompleted:
+                currentRemaining <= 0 || !!prev[currentCycle]?.isCompleted,
+              initialDuration,
+              focusElapsed,
+              overtimeElapsed,
+            },
+          };
+        });
       }
     }
     setIsSaveModalOpen(true);
@@ -470,13 +573,21 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         setCycleStates((prev) => {
           if (prev[currentCycle]?.timeLeft === remaining) return prev;
 
+          const { initialDuration, focusElapsed, overtimeElapsed } =
+            calculateCycleElapsed(
+              prev[currentCycle],
+              remaining,
+              durations.focus,
+            );
+
           return {
             ...prev,
             [currentCycle]: {
               timeLeft: remaining,
               isCompleted: remaining <= 0 || !!prev[currentCycle]?.isCompleted,
-              initialDuration:
-                prev[currentCycle]?.initialDuration || durations.focus,
+              initialDuration,
+              focusElapsed,
+              overtimeElapsed,
             },
           };
         });
@@ -555,6 +666,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
           timeLeft: initialTime,
           isCompleted: false,
           initialDuration: initialTime,
+          focusElapsed: 0,
+          overtimeElapsed: 0,
         },
       }));
     }
@@ -580,17 +693,32 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       }
 
       if (mode === "focus") {
-        setCycleStates((cyclePrev) => ({
-          ...cyclePrev,
-          [currentCycle]: {
-            timeLeft: updated,
-            isCompleted: updated <= 0 || !!cyclePrev[currentCycle]?.isCompleted,
-            initialDuration: Math.max(
-              updated,
-              cyclePrev[currentCycle]?.initialDuration || durations.focus,
-            ),
-          },
-        }));
+        setCycleStates((cyclePrev) => {
+          const currentInitial = Math.max(
+            updated,
+            cyclePrev[currentCycle]?.initialDuration || durations.focus,
+          );
+          const currentFocusElapsed =
+            updated >= 0
+              ? Math.max(0, Math.min(currentInitial, currentInitial - updated))
+              : currentInitial;
+          const currentOvertimeElapsed =
+            updated < 0
+              ? Math.abs(updated)
+              : (cyclePrev[currentCycle]?.overtimeElapsed ?? 0);
+
+          return {
+            ...cyclePrev,
+            [currentCycle]: {
+              timeLeft: updated,
+              isCompleted:
+                updated <= 0 || !!cyclePrev[currentCycle]?.isCompleted,
+              initialDuration: currentInitial,
+              focusElapsed: currentFocusElapsed,
+              overtimeElapsed: currentOvertimeElapsed,
+            },
+          };
+        });
       }
     },
     [isRunning, timeLeft, mode, currentCycle, durations.focus],
@@ -647,14 +775,22 @@ export function TimerProvider({ children }: { children: ReactNode }) {
             ? Math.ceil((targetEndTimeRef.current - Date.now()) / 1000)
             : timeLeft;
 
+        const { initialDuration, focusElapsed, overtimeElapsed } =
+          calculateCycleElapsed(
+            cycleStates[currentCycle],
+            currentRemaining,
+            durations.focus,
+          );
+
         latestCycleStates = {
           ...cycleStates,
           [currentCycle]: {
             timeLeft: currentRemaining,
             isCompleted:
               currentRemaining <= 0 || !!cycleStates[currentCycle]?.isCompleted,
-            initialDuration:
-              cycleStates[currentCycle]?.initialDuration || durations.focus,
+            initialDuration,
+            focusElapsed,
+            overtimeElapsed,
           },
         };
         setCycleStates(latestCycleStates);
@@ -741,6 +877,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     switchMode,
     addMinutes,
     finishCycleAndTakeBreak,
+    finishCycleAndSkipToNext,
     skipBreak,
     startNextCycle,
     startNewSession,

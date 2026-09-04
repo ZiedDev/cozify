@@ -337,7 +337,7 @@ export function calculateOverallStats(
     const otMins = Number(s.overtimeMinutes) || 0;
     const totalMins = focusMins + otMins;
 
-    totalFocusMinutes += totalMins;
+    totalFocusMinutes += focusMins;
     totalCycles += Number(s.cyclesCompleted ?? s.sprintsCompleted) || 0;
     targetCyclesTotal += Number(s.targetCycles ?? s.targetSprints) || 0;
     totalOvertimeMinutes += otMins;
@@ -466,11 +466,23 @@ export function calculateFocusTrendChartData(
     // Bucket by hour (0 - 23)
     const hourMap = new Map<
       number,
-      { minutes: number; cycles: number; count: number; tasks: number }
+      {
+        focusMinutes: number;
+        overtimeMinutes: number;
+        cycles: number;
+        count: number;
+        tasks: number;
+      }
     >();
 
     for (let h = 0; h < 24; h++) {
-      hourMap.set(h, { minutes: 0, cycles: 0, count: 0, tasks: 0 });
+      hourMap.set(h, {
+        focusMinutes: 0,
+        overtimeMinutes: 0,
+        cycles: 0,
+        count: 0,
+        tasks: 0,
+      });
     }
 
     for (let i = 0; i < sessions.length; i++) {
@@ -482,8 +494,8 @@ export function calculateFocusTrendChartData(
         const hour = d.getHours();
         const curr = hourMap.get(hour)!;
 
-        curr.minutes +=
-          (Number(s.focusMinutes) || 0) + (Number(s.overtimeMinutes) || 0);
+        curr.focusMinutes += Number(s.focusMinutes) || 0;
+        curr.overtimeMinutes += Number(s.overtimeMinutes) || 0;
         curr.cycles += Number(s.cyclesCompleted ?? s.sprintsCompleted) || 0;
         curr.count += 1;
       }
@@ -512,14 +524,15 @@ export function calculateFocusTrendChartData(
       const shortLabel = `${displayHour} ${ampm}`;
       const fullLabel = `${displayHour}:00 ${ampm} - ${displayHour}:59 ${ampm}`;
 
+      const totalPeriodMinutes = sData.focusMinutes + sData.overtimeMinutes;
       const intensity =
-        sData.minutes >= 45
+        totalPeriodMinutes >= 45
           ? 4
-          : sData.minutes >= 25
+          : totalPeriodMinutes >= 25
             ? 3
-            : sData.minutes >= 10
+            : totalPeriodMinutes >= 10
               ? 2
-              : sData.minutes > 0
+              : totalPeriodMinutes > 0
                 ? 1
                 : 0;
 
@@ -527,7 +540,8 @@ export function calculateFocusTrendChartData(
         dateStr: `${targetDateStr}T${String(h).padStart(2, "0")}:00:00`,
         dayLabel: shortLabel,
         fullDateLabel: fullLabel,
-        focusMinutes: sData.minutes,
+        focusMinutes: sData.focusMinutes,
+        overtimeMinutes: sData.overtimeMinutes,
         cycleCount: sData.cycles,
         sessionCount: sData.count,
         taskCompletedCount: sData.tasks,
@@ -543,7 +557,12 @@ export function calculateFocusTrendChartData(
   // 2. MULTI-DAY / EXTENDED RANGE BREAKDOWN
   const sessionMap = new Map<
     string,
-    { minutes: number; cycles: number; count: number }
+    {
+      focusMinutes: number;
+      overtimeMinutes: number;
+      cycles: number;
+      count: number;
+    }
   >();
   const todoMap = new Map<string, number>();
 
@@ -552,13 +571,14 @@ export function calculateFocusTrendChartData(
     const d = new Date(s.createdAt);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const curr = sessionMap.get(dateStr) || {
-      minutes: 0,
+      focusMinutes: 0,
+      overtimeMinutes: 0,
       cycles: 0,
       count: 0,
     };
 
-    curr.minutes +=
-      (Number(s.focusMinutes) || 0) + (Number(s.overtimeMinutes) || 0);
+    curr.focusMinutes += Number(s.focusMinutes) || 0;
+    curr.overtimeMinutes += Number(s.overtimeMinutes) || 0;
     curr.cycles += Number(s.cyclesCompleted ?? s.sprintsCompleted) || 0;
     curr.count += 1;
     sessionMap.set(dateStr, curr);
@@ -639,19 +659,21 @@ export function calculateFocusTrendChartData(
       const fullDateLabel = `${DAY_NAMES[dayOfWeek]}, ${MONTH_NAMES[m]} ${dNum}, ${y}`;
 
       const sData = sessionMap.get(dateStr) || {
-        minutes: 0,
+        focusMinutes: 0,
+        overtimeMinutes: 0,
         cycles: 0,
         count: 0,
       };
+      const totalPeriodMinutes = sData.focusMinutes + sData.overtimeMinutes;
       const taskCount = todoMap.get(dateStr) || 0;
       const intensity =
-        sData.minutes >= 120
+        totalPeriodMinutes >= 120
           ? 4
-          : sData.minutes >= 60
+          : totalPeriodMinutes >= 60
             ? 3
-            : sData.minutes >= 25
+            : totalPeriodMinutes >= 25
               ? 2
-              : sData.minutes > 0
+              : totalPeriodMinutes > 0
                 ? 1
                 : 0;
 
@@ -659,8 +681,9 @@ export function calculateFocusTrendChartData(
         dateStr,
         dayLabel: dayName,
         fullDateLabel,
-        focusMinutes: sData.minutes,
-        totalPeriodMinutes: sData.minutes,
+        focusMinutes: sData.focusMinutes,
+        overtimeMinutes: sData.overtimeMinutes,
+        totalPeriodMinutes: sData.focusMinutes,
         cycleCount: sData.cycles,
         sessionCount: sData.count,
         taskCompletedCount: taskCount,
@@ -692,7 +715,8 @@ export function calculateFocusTrendChartData(
         ) + 1,
       );
 
-      let totalMinutes = 0;
+      let totalFocusMinutes = 0;
+      let totalOvertimeMinutes = 0;
       let totalCycles = 0;
       let totalSessions = 0;
       let totalTasks = 0;
@@ -705,25 +729,31 @@ export function calculateFocusTrendChartData(
         const sData = sessionMap.get(dateStr);
 
         if (sData) {
-          totalMinutes += sData.minutes;
+          totalFocusMinutes += sData.focusMinutes;
+          totalOvertimeMinutes += sData.overtimeMinutes;
           totalCycles += sData.cycles;
           totalSessions += sData.count;
         }
         totalTasks += todoMap.get(dateStr) || 0;
       }
 
-      const avgDailyMinutes = Math.round(totalMinutes / daysInBucket);
+      const avgDailyMinutes = Math.round(totalFocusMinutes / daysInBucket);
+      const avgDailyOvertimeMinutes = Math.round(
+        totalOvertimeMinutes / daysInBucket,
+      );
       const shortLabel = `${currentWeekStart.getMonth() + 1}/${currentWeekStart.getDate()}`;
       const fullLabel = `Week of ${MONTH_NAMES[currentWeekStart.getMonth()]} ${currentWeekStart.getDate()} – ${MONTH_NAMES[currentWeekEnd.getMonth()]} ${currentWeekEnd.getDate()}`;
 
+      const totalPeriodMinutes = totalFocusMinutes + totalOvertimeMinutes;
+      const avgPeriodDaily = Math.round(totalPeriodMinutes / daysInBucket);
       const intensity =
-        avgDailyMinutes >= 120
+        avgPeriodDaily >= 120
           ? 4
-          : avgDailyMinutes >= 60
+          : avgPeriodDaily >= 60
             ? 3
-            : avgDailyMinutes >= 25
+            : avgPeriodDaily >= 25
               ? 2
-              : avgDailyMinutes > 0
+              : avgPeriodDaily > 0
                 ? 1
                 : 0;
 
@@ -735,7 +765,8 @@ export function calculateFocusTrendChartData(
         dayLabel: shortLabel,
         fullDateLabel: fullLabel,
         focusMinutes: avgDailyMinutes,
-        totalPeriodMinutes: totalMinutes,
+        overtimeMinutes: avgDailyOvertimeMinutes,
+        totalPeriodMinutes: totalFocusMinutes,
         cycleCount: totalCycles,
         sessionCount: totalSessions,
         taskCompletedCount: totalTasks,
@@ -784,7 +815,8 @@ export function calculateFocusTrendChartData(
       Math.round((mEnd.getTime() - mStart.getTime()) / 86400000) + 1,
     );
 
-    let totalMinutes = 0;
+    let totalFocusMinutes = 0;
+    let totalOvertimeMinutes = 0;
     let totalCycles = 0;
     let totalSessions = 0;
     let totalTasks = 0;
@@ -797,26 +829,32 @@ export function calculateFocusTrendChartData(
       const sData = sessionMap.get(dateStr);
 
       if (sData) {
-        totalMinutes += sData.minutes;
+        totalFocusMinutes += sData.focusMinutes;
+        totalOvertimeMinutes += sData.overtimeMinutes;
         totalCycles += sData.cycles;
         totalSessions += sData.count;
       }
       totalTasks += todoMap.get(dateStr) || 0;
     }
 
-    const avgDailyMinutes = Math.round(totalMinutes / daysInBucket);
+    const avgDailyMinutes = Math.round(totalFocusMinutes / daysInBucket);
+    const avgDailyOvertimeMinutes = Math.round(
+      totalOvertimeMinutes / daysInBucket,
+    );
     const mIdx = currentMonth.getMonth();
     const shortLabel = MONTH_NAMES[mIdx];
     const fullLabel = `${FULL_MONTH_NAMES[mIdx]} ${currentMonth.getFullYear()}`;
 
+    const totalPeriodMinutes = totalFocusMinutes + totalOvertimeMinutes;
+    const avgPeriodDaily = Math.round(totalPeriodMinutes / daysInBucket);
     const intensity =
-      avgDailyMinutes >= 120
+      avgPeriodDaily >= 120
         ? 4
-        : avgDailyMinutes >= 60
+        : avgPeriodDaily >= 60
           ? 3
-          : avgDailyMinutes >= 25
+          : avgPeriodDaily >= 25
             ? 2
-            : avgDailyMinutes > 0
+            : avgPeriodDaily > 0
               ? 1
               : 0;
 
@@ -828,7 +866,8 @@ export function calculateFocusTrendChartData(
       dayLabel: shortLabel,
       fullDateLabel: fullLabel,
       focusMinutes: avgDailyMinutes,
-      totalPeriodMinutes: totalMinutes,
+      overtimeMinutes: avgDailyOvertimeMinutes,
+      totalPeriodMinutes: totalFocusMinutes,
       cycleCount: totalCycles,
       sessionCount: totalSessions,
       taskCompletedCount: totalTasks,
@@ -870,29 +909,36 @@ export function calculateHeatmapData(
 
   const sessionMap = new Map<
     string,
-    { minutes: number; cycles: number; count: number }
+    {
+      focusMinutes: number;
+      overtimeMinutes: number;
+      cycles: number;
+      count: number;
+    }
   >();
   const todoMap = new Map<string, number>();
 
   for (let i = 0; i < sessions.length; i++) {
     const s = sessions[i];
-    const mins =
-      (Number(s.focusMinutes) || 0) + (Number(s.overtimeMinutes) || 0);
+    const focusMins = Number(s.focusMinutes) || 0;
+    const otMins = Number(s.overtimeMinutes) || 0;
     const cycles = Number(s.cyclesCompleted ?? s.sprintsCompleted) || 0;
     const d = new Date(s.createdAt);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     const curr = sessionMap.get(dateStr) || {
-      minutes: 0,
+      focusMinutes: 0,
+      overtimeMinutes: 0,
       cycles: 0,
       count: 0,
     };
 
-    curr.minutes += mins;
+    curr.focusMinutes += focusMins;
+    curr.overtimeMinutes += otMins;
     curr.cycles += cycles;
     curr.count += 1;
     sessionMap.set(dateStr, curr);
 
-    if (mins > 0 || cycles > 0) {
+    if (focusMins > 0 || otMins > 0 || cycles > 0) {
       const yr = d.getFullYear();
 
       if (yr < earliestYear) {
@@ -959,26 +1005,29 @@ export function calculateHeatmapData(
         const fullDateLabel = `${MONTH_NAMES[m]} ${dNum}, ${y}`;
 
         const sData = sessionMap.get(dateStr) || {
-          minutes: 0,
+          focusMinutes: 0,
+          overtimeMinutes: 0,
           cycles: 0,
           count: 0,
         };
         const taskCount = todoMap.get(dateStr) || 0;
+        const totalProductiveMins = sData.focusMinutes + sData.overtimeMinutes;
 
         let intensityLevel: 0 | 1 | 2 | 3 | 4 = 0;
 
         if (!isFuture) {
-          if (sData.minutes >= 120) intensityLevel = 4;
-          else if (sData.minutes >= 60) intensityLevel = 3;
-          else if (sData.minutes >= 25) intensityLevel = 2;
-          else if (sData.minutes > 0 || taskCount > 0) intensityLevel = 1;
+          if (totalProductiveMins >= 120) intensityLevel = 4;
+          else if (totalProductiveMins >= 60) intensityLevel = 3;
+          else if (totalProductiveMins >= 25) intensityLevel = 2;
+          else if (totalProductiveMins > 0 || taskCount > 0) intensityLevel = 1;
         }
 
         weekDays.push({
           dateStr,
           dayLabel: dayName,
           fullDateLabel,
-          focusMinutes: isFuture ? 0 : sData.minutes,
+          focusMinutes: isFuture ? 0 : sData.focusMinutes,
+          overtimeMinutes: isFuture ? 0 : sData.overtimeMinutes,
           cycleCount: isFuture ? 0 : sData.cycles,
           sessionCount: isFuture ? 0 : sData.count,
           taskCompletedCount: isFuture ? 0 : taskCount,
@@ -1110,6 +1159,7 @@ export function calculateTagStats(
       label: string;
       color: string;
       focusMinutes: number;
+      overtimeMinutes: number;
       taskCount: number;
       completedTaskCount: number;
     }
@@ -1121,6 +1171,7 @@ export function calculateTagStats(
       label: tag.label,
       color: tag.color,
       focusMinutes: 0,
+      overtimeMinutes: 0,
       taskCount: 0,
       completedTaskCount: 0,
     });
@@ -1131,6 +1182,7 @@ export function calculateTagStats(
     label: "General Focus",
     color: "text-muted bg-surface-secondary/50 border-separator/40",
     focusMinutes: 0,
+    overtimeMinutes: 0,
     taskCount: 0,
     completedTaskCount: 0,
   });
@@ -1138,8 +1190,8 @@ export function calculateTagStats(
   // Match sessions to tags (explicit s.tag first, fallback to keyword matching)
   for (let i = 0; i < sessions.length; i++) {
     const s = sessions[i];
-    const mins =
-      (Number(s.focusMinutes) || 0) + (Number(s.overtimeMinutes) || 0);
+    const focusMins = Number(s.focusMinutes) || 0;
+    const otMins = Number(s.overtimeMinutes) || 0;
 
     let matched = false;
 
@@ -1147,13 +1199,15 @@ export function calculateTagStats(
       const existing = tagMap.get(s.tag);
 
       if (existing) {
-        existing.focusMinutes += mins;
+        existing.focusMinutes += focusMins;
+        existing.overtimeMinutes += otMins;
         matched = true;
       } else {
         tagMap.set(s.tag, {
           label: s.tag.charAt(0).toUpperCase() + s.tag.slice(1),
           color: "text-accent bg-accent/10 border-accent/30",
-          focusMinutes: mins,
+          focusMinutes: focusMins,
+          overtimeMinutes: otMins,
           taskCount: 0,
           completedTaskCount: 0,
         });
@@ -1166,7 +1220,8 @@ export function calculateTagStats(
         if (text.includes(tag.id) || text.includes(tag.label.toLowerCase())) {
           const item = tagMap.get(tag.id)!;
 
-          item.focusMinutes += mins;
+          item.focusMinutes += focusMins;
+          item.overtimeMinutes += otMins;
           matched = true;
           break;
         }
@@ -1176,7 +1231,8 @@ export function calculateTagStats(
     if (!matched) {
       const item = tagMap.get("general")!;
 
-      item.focusMinutes += mins;
+      item.focusMinutes += focusMins;
+      item.overtimeMinutes += otMins;
     }
   }
 
@@ -1201,6 +1257,7 @@ export function calculateTagStats(
         label: tagId.charAt(0).toUpperCase() + tagId.slice(1),
         color: "text-accent bg-accent/10 border-accent/30",
         focusMinutes: 0,
+        overtimeMinutes: 0,
         taskCount: 1,
         completedTaskCount: t.completed ? 1 : 0,
       });
@@ -1218,6 +1275,7 @@ export function calculateTagStats(
       label: val.label,
       color: val.color,
       focusMinutes: val.focusMinutes,
+      overtimeMinutes: val.overtimeMinutes,
       taskCount: val.taskCount,
       completedTaskCount: val.completedTaskCount,
       percentage:
@@ -1227,7 +1285,12 @@ export function calculateTagStats(
             ? Math.round((val.taskCount / totalTasks) * 100)
             : 0,
     }))
-    .filter((t) => t.focusMinutes > 0 || t.taskCount > 0);
+    .filter(
+      (t) =>
+        t.focusMinutes > 0 ||
+        (t.overtimeMinutes !== undefined && t.overtimeMinutes > 0) ||
+        t.taskCount > 0,
+    );
 }
 
 /**

@@ -2,6 +2,7 @@ import { useRef } from "react";
 import {
   Button,
   Popover,
+  Tooltip,
   Separator,
   NumberField,
   Typography,
@@ -42,17 +43,22 @@ export function DurationsPopover({
 
   return (
     <Popover isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Popover.Trigger>
-        <Button
-          isIconOnly
-          aria-label="Customize Durations"
-          className="px-6 sm:px-7 py-6 sm:py-7 rounded-2xl text-sm sm:text-base font-medium flex items-center gap-1.5"
-          size="lg"
-          variant="secondary"
-        >
-          <SlidersHorizontal className="size-5" />
-        </Button>
-      </Popover.Trigger>
+      <Tooltip delay={150} isDisabled={isOpen}>
+        <Tooltip.Trigger>
+          <Button
+            isIconOnly
+            aria-label="Customize Durations"
+            className="size-12 sm:size-14 rounded-2xl flex items-center justify-center p-0"
+            size="lg"
+            variant="secondary"
+          >
+            <SlidersHorizontal className="size-5" />
+          </Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator shadow-lg">
+          <span className="text-xs font-medium">Customize durations</span>
+        </Tooltip.Content>
+      </Tooltip>
       <Popover.Content>
         <Popover.Dialog className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between">

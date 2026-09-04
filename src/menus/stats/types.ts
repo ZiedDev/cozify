@@ -12,6 +12,7 @@ export interface DayActivity {
   dayLabel: string; // e.g. "Mon", "Tue", "W12", "Jan"
   fullDateLabel: string; // e.g. "Aug 26, 2026"
   focusMinutes: number;
+  overtimeMinutes?: number;
   totalPeriodMinutes?: number; // total focus minutes when grouped by week/month
   cycleCount: number;
   sessionCount: number;
@@ -37,6 +38,7 @@ export interface TagStat {
   label: string;
   color: string;
   focusMinutes: number;
+  overtimeMinutes?: number;
   taskCount: number;
   completedTaskCount: number;
   percentage: number;

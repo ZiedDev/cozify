@@ -1,7 +1,7 @@
 import { Modal, Button, Chip, Typography } from "@heroui/react";
-import { Coffee, SkipForward } from "lucide-react";
+import { SkipForward } from "lucide-react";
 
-import { formatDurationLabel } from "../logic/time-utils";
+import { formatDurationLabel, formatTimerDisplay } from "../logic/time-utils";
 
 import { TimerDurations } from "@/config/timer";
 
@@ -9,7 +9,9 @@ interface BreakModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   durations: TimerDurations;
-  isCycleCompleted: boolean;
+  currentCycle: number;
+  timeUsed: number;
+  timeLeft: number;
   onSelectBreak: (mode: "shortBreak" | "longBreak") => void;
   onSkipBreak: () => void;
 }
@@ -18,11 +20,13 @@ export function BreakModal({
   isOpen,
   onOpenChange,
   durations,
-  isCycleCompleted,
+  currentCycle,
+  timeUsed,
+  timeLeft,
   onSelectBreak,
   onSkipBreak,
 }: BreakModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen || timeLeft <= 0) return null;
 
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -31,21 +35,45 @@ export function BreakModal({
           <Modal.CloseTrigger />
           <Modal.Header>
             <Modal.Icon>
-              <Coffee className="size-5" />
+              <SkipForward className="size-5" />
             </Modal.Icon>
             <div>
-              <Modal.Heading>Time to Recharge</Modal.Heading>
+              <Modal.Heading>Skip Current Cycle</Modal.Heading>
               <Typography
                 className="font-normal mt-0.5"
                 color="muted"
                 type="body-xs"
               >
-                Starting a break will count the current cycle as completed
+                Complete Cycle {currentCycle} with actual focus time and choose
+                what&apos;s next
               </Typography>
             </div>
           </Modal.Header>
 
           <Modal.Body className="space-y-3">
+            {/* Live elapsed summary */}
+            <div className="p-3 rounded-2xl bg-surface-secondary/50 border border-separator/60 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Typography className="text-muted text-[11px]" type="body-xs">
+                  Current Cycle
+                </Typography>
+                <Typography type="body-sm" weight="semibold">
+                  Cycle {currentCycle}
+                </Typography>
+              </div>
+              <div className="text-right space-y-0.5">
+                <Typography className="text-muted text-[11px]" type="body-xs">
+                  Saves as 100%
+                </Typography>
+                <Typography
+                  className="text-accent font-mono text-sm"
+                  weight="bold"
+                >
+                  {formatTimerDisplay(timeUsed)}
+                </Typography>
+              </div>
+            </div>
+
             <div className="space-y-2 pt-1">
               {/* Short Break */}
               <button
@@ -71,7 +99,7 @@ export function BreakModal({
                       size="sm"
                       variant="soft"
                     >
-                      Completes current cycle
+                      Completes cycle
                     </Chip>
                   </div>
                   <Typography className="block" color="muted" type="body-xs">
@@ -112,7 +140,7 @@ export function BreakModal({
                       size="sm"
                       variant="soft"
                     >
-                      Completes current cycle
+                      Completes cycle
                     </Chip>
                   </div>
                   <Typography className="block" color="muted" type="body-xs">
@@ -129,17 +157,11 @@ export function BreakModal({
                 </Typography>
               </button>
 
-              {/* Skip Break Option - only active when current cycle is completed */}
+              {/* Start Next Cycle (Skip Break) */}
               <button
-                className={`w-full p-3 rounded-2xl border text-left transition-colors flex items-center justify-between group ${
-                  isCycleCompleted
-                    ? "bg-surface-secondary/70 hover:bg-accent/10 border-separator/60 hover:border-accent/40 cursor-pointer"
-                    : "bg-surface-secondary/30 border-separator/30 opacity-45 cursor-not-allowed"
-                }`}
-                disabled={!isCycleCompleted}
+                className="w-full p-3 rounded-2xl bg-surface-secondary/70 hover:bg-accent/10 border border-separator/60 hover:border-accent/40 text-left transition-colors flex items-center justify-between group cursor-pointer"
                 type="button"
                 onClick={() => {
-                  if (!isCycleCompleted) return;
                   onOpenChange(false);
                   onSkipBreak();
                 }}
@@ -147,30 +169,26 @@ export function BreakModal({
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <Typography
-                      className={`transition-colors ${
-                        isCycleCompleted
-                          ? "text-foreground group-hover:text-accent"
-                          : "text-muted"
-                      }`}
+                      className="text-foreground group-hover:text-accent transition-colors"
                       type="body-sm"
                       weight="semibold"
                     >
-                      Skip Break
+                      Start Next Cycle
                     </Typography>
+                    <Chip
+                      className="text-[10px] h-4.5 px-1.5 font-medium"
+                      size="sm"
+                      variant="soft"
+                    >
+                      No break
+                    </Chip>
                   </div>
                   <Typography className="block" color="muted" type="body-xs">
-                    {isCycleCompleted
-                      ? "Jump straight into the next focus cycle"
-                      : "Complete the current focus cycle first"}
+                    Complete Cycle {currentCycle} and jump straight into Cycle{" "}
+                    {currentCycle + 1}
                   </Typography>
                 </div>
-                <SkipForward
-                  className={`size-4 shrink-0 transition-colors ${
-                    isCycleCompleted
-                      ? "text-muted group-hover:text-accent"
-                      : "text-muted/40"
-                  }`}
-                />
+                <SkipForward className="size-4 shrink-0 text-muted group-hover:text-accent transition-colors" />
               </button>
             </div>
           </Modal.Body>

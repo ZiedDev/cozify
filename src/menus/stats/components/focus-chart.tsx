@@ -185,6 +185,15 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
                   </span>
                 </div>
 
+                {item.overtimeMinutes && item.overtimeMinutes > 0 ? (
+                  <div className="flex items-center justify-between text-xs text-muted">
+                    <span>Overtime:</span>
+                    <span className="font-medium text-accent">
+                      +{formatMinutesDisplay(item.overtimeMinutes)}
+                    </span>
+                  </div>
+                ) : null}
+
                 {(isWeekly || isMonthly) &&
                   item.totalPeriodMinutes !== undefined && (
                     <div className="flex items-center justify-between text-xs text-muted">
@@ -249,6 +258,12 @@ export function FocusChart({ data, onSelectRange }: FocusChartProps) {
                     {isWeekly || isMonthly ? "/day" : ""}
                   </strong>
                 </span>
+                {selectedDay.overtimeMinutes &&
+                selectedDay.overtimeMinutes > 0 ? (
+                  <span className="text-accent font-medium">
+                    +{formatMinutesDisplay(selectedDay.overtimeMinutes)}
+                  </span>
+                ) : null}
                 {(isWeekly || isMonthly) &&
                   selectedDay.totalPeriodMinutes !== undefined && (
                     <span>
