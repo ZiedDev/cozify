@@ -10,7 +10,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
   useAchievementTracker();
 
   return (
-    <div className="relative flex flex-col h-screen overflow-hidden">
+    <div className="relative flex flex-col h-screen overflow-hidden bg-background">
       <BackgroundView />
       <Toast.Provider className="z-9999" placement="bottom end" />
       <AchievementToastProvider />

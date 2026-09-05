@@ -1,15 +1,24 @@
 import {
   createContext,
-  useContext,
   useState,
   useCallback,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "@heroui/react";
 
+import {
+  mobilePipManager,
+  isVideoPipSupported,
+  isMobileDevice,
+} from "./mobile-pip-manager";
+
 import { PipTimerCard } from "@/components/pomodoro/pip-timer-card";
+import { useTimer } from "@/hooks/use-timer";
+import { useTheme } from "@/hooks/use-theme";
+import { calculateCycleProgressPercent } from "@/menus/pomodoro/logic/cycle-rules";
 
 type PipContextValue = {
   isPipActive: boolean;
@@ -19,7 +28,7 @@ type PipContextValue = {
   togglePip: () => void;
 };
 
-const PipContext = createContext<PipContextValue | null>(null);
+export const PipContext = createContext<PipContextValue | null>(null);
 
 const DEFAULT_PIP_WIDTH = 400;
 const DEFAULT_PIP_HEIGHT = 240;
@@ -104,120 +113,281 @@ function copyStyles(sourceDoc: Document, targetDoc: Document) {
 export function PipProvider({ children }: { children: ReactNode }) {
   const [pipWindow, setPipWindow] = useState<Window | null>(null);
   const [isPipActive, setIsPipActive] = useState<boolean>(false);
+  const [isMobile] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+
+    return isMobileDevice();
+  });
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  const {
+    mode,
+    formattedTime,
+    timeLeft,
+    durations,
+    currentCycle,
+    targetCycles,
+    isRunning,
+    isOvertime,
+    start,
+    pause,
+    addMinutes,
+  } = useTimer();
+
+  const progressPercent = calculateCycleProgressPercent(
+    mode,
+    timeLeft,
+    durations.focus,
+  );
+
+  const startRef = useRef(start);
+  const pauseRef = useRef(pause);
+  const addMinutesRef = useRef(addMinutes);
+
+  useEffect(() => {
+    if (!isMobile) return;
+    startRef.current = start;
+    pauseRef.current = pause;
+    addMinutesRef.current = addMinutes;
+    mobilePipManager.updateCallbacks(
+      () => startRef.current(),
+      () => pauseRef.current(),
+      (seconds) => addMinutesRef.current(seconds >= 0 ? 1 : -1),
+    );
+  }, [isMobile, start, pause, addMinutes]);
+
+  useEffect(() => {
+    if (isMobile && videoRef.current && canvasRef.current) {
+      mobilePipManager.init(videoRef.current, canvasRef.current);
+    }
+  }, [isMobile]);
+
+  const { activeBackground, overlayOpacity, blur } = useTheme();
+
+  const getPipTheme = useCallback(() => {
+    let accentColor = "#f59e0b";
+    let backgroundColor = "#0c0d14";
+
+    if (typeof window !== "undefined") {
+      try {
+        const style = getComputedStyle(document.documentElement);
+        const accent = style.getPropertyValue("--accent").trim();
+        const bg = style.getPropertyValue("--background").trim();
+
+        if (accent) accentColor = accent;
+        if (bg) backgroundColor = bg;
+      } catch {
+        // Ignore computed style access guard
+      }
+    }
+
+    return {
+      backgroundUrl: activeBackground?.url || null,
+      overlayOpacity,
+      blur,
+      accentColor,
+      backgroundColor,
+    };
+  }, [activeBackground?.url, overlayOpacity, blur]);
+
+  // Synchronize clock ticks and timer state to the mobile PiP canvas and MediaSession
+  useEffect(() => {
+    if (!isMobile) return;
+    if (isPipActive && mobilePipManager.getActive()) {
+      mobilePipManager.updateState({
+        formattedTime,
+        mode,
+        currentCycle,
+        targetCycles,
+        progressPercent,
+        isRunning,
+        isOvertime,
+        theme: getPipTheme(),
+      });
+    }
+  }, [
+    isMobile,
+    isPipActive,
+    formattedTime,
+    mode,
+    currentCycle,
+    targetCycles,
+    progressPercent,
+    isRunning,
+    isOvertime,
+    getPipTheme,
+  ]);
 
   const isSupported =
     typeof window !== "undefined" &&
-    ("documentPictureInPicture" in window || typeof window.open === "function");
+    (isMobile
+      ? isVideoPipSupported()
+      : Boolean(
+          "documentPictureInPicture" in window &&
+            window.documentPictureInPicture,
+        ));
 
   const closePip = useCallback(() => {
     if (pipWindow && !pipWindow.closed) {
       pipWindow.close();
     }
     setPipWindow(null);
+
+    if (mobilePipManager.getActive()) {
+      mobilePipManager.closePip();
+    }
+
     setIsPipActive(false);
   }, [pipWindow]);
 
   const openPip = useCallback(async () => {
+    // 1. If already active in Document PiP, focus it
     if (pipWindow && !pipWindow.closed) {
       pipWindow.focus();
 
       return;
     }
 
-    try {
-      let win: Window | null = null;
-      const dimensions = getSavedPipDimensions();
-
+    // 2. Desktop: Document Picture-in-Picture only (completely disabled video pip on desktop)
+    if (!isMobile) {
       if (
         "documentPictureInPicture" in window &&
         window.documentPictureInPicture
       ) {
-        // Modern Chromium browsers: OS-level always-on-top Picture-in-Picture window
-        win = await window.documentPictureInPicture.requestWindow({
-          width: dimensions.width,
-          height: dimensions.height,
-        });
-      } else {
-        // Fallback for other browsers: floating popup window
-        win = window.open(
-          "",
-          "CozifyPomodoroPiP",
-          `width=${dimensions.width},height=${dimensions.height},menubar=no,toolbar=no,location=no,status=no,resizable=yes`,
-        );
-      }
+        try {
+          const dimensions = getSavedPipDimensions();
+          const win = await window.documentPictureInPicture.requestWindow({
+            width: dimensions.width,
+            height: dimensions.height,
+          });
 
-      if (!win) {
-        toast.danger("Could not open pop-out window. Please allow popups.");
+          if (!win) {
+            toast.danger("Could not open pop-out window");
+
+            return;
+          }
+
+          copyStyles(document, win.document);
+
+          let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+          const handleResize = () => {
+            if (resizeTimer) clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+              if (win && !win.closed) {
+                try {
+                  localStorage.setItem(
+                    "cozify_pip_dimensions",
+                    JSON.stringify({
+                      width: win.innerWidth,
+                      height: win.innerHeight,
+                    }),
+                  );
+                } catch {
+                  // Ignore storage errors
+                }
+              }
+            }, 300);
+          };
+
+          win.addEventListener("resize", handleResize);
+
+          const observer = new MutationObserver(() => {
+            if (win && !win.closed) {
+              win.document.documentElement.className =
+                document.documentElement.className;
+              win.document.documentElement.style.cssText =
+                document.documentElement.style.cssText;
+              if (document.documentElement.hasAttribute("data-theme")) {
+                win.document.documentElement.setAttribute(
+                  "data-theme",
+                  document.documentElement.getAttribute("data-theme") || "",
+                );
+              }
+            }
+          });
+
+          observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class", "style", "data-theme"],
+          });
+
+          const handleClose = () => {
+            if (resizeTimer) clearTimeout(resizeTimer);
+            win?.removeEventListener("resize", handleResize);
+            observer.disconnect();
+            setPipWindow(null);
+            setIsPipActive(false);
+          };
+
+          win.addEventListener("pagehide", handleClose);
+          win.addEventListener("beforeunload", handleClose);
+
+          setPipWindow(win);
+          setIsPipActive(true);
+        } catch {
+          toast.danger("Failed to open floating window");
+        }
 
         return;
       }
 
-      copyStyles(document, win.document);
+      toast.danger("Floating window is not supported by your desktop browser");
 
-      // Listen for window resize to remember user-preferred dimensions dynamically
-      let resizeTimer: ReturnType<typeof setTimeout> | null = null;
-      const handleResize = () => {
-        if (resizeTimer) clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          if (win && !win.closed) {
-            try {
-              localStorage.setItem(
-                "cozify_pip_dimensions",
-                JSON.stringify({
-                  width: win.innerWidth,
-                  height: win.innerHeight,
-                }),
-              );
-            } catch {
-              // Ignore storage errors
-            }
-          }
-        }, 300);
-      };
-
-      win.addEventListener("resize", handleResize);
-
-      // Sync dark mode and theme CSS variable changes in real-time
-      const observer = new MutationObserver(() => {
-        if (win && !win.closed) {
-          win.document.documentElement.className =
-            document.documentElement.className;
-          win.document.documentElement.style.cssText =
-            document.documentElement.style.cssText;
-          if (document.documentElement.hasAttribute("data-theme")) {
-            win.document.documentElement.setAttribute(
-              "data-theme",
-              document.documentElement.getAttribute("data-theme") || "",
-            );
-          }
-        }
-      });
-
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ["class", "style", "data-theme"],
-      });
-
-      const handleClose = () => {
-        if (resizeTimer) clearTimeout(resizeTimer);
-        win?.removeEventListener("resize", handleResize);
-        observer.disconnect();
-        setPipWindow(null);
-        setIsPipActive(false);
-      };
-
-      win.addEventListener("pagehide", handleClose);
-      win.addEventListener("beforeunload", handleClose);
-
-      setPipWindow(win);
-      setIsPipActive(true);
-    } catch {
-      toast.danger("Failed to open floating window");
+      return;
     }
-  }, [pipWindow]);
+
+    // 3. Mobile only: Video Picture-in-Picture fallback (iOS Safari, Android Chrome, etc.)
+    if (isVideoPipSupported()) {
+      try {
+        await mobilePipManager.openPip({
+          state: {
+            formattedTime,
+            mode,
+            currentCycle,
+            targetCycles,
+            progressPercent,
+            isRunning,
+            isOvertime,
+            theme: getPipTheme(),
+          },
+          onPlay: () => startRef.current(),
+          onPause: () => pauseRef.current(),
+          onClose: () => {
+            setIsPipActive(false);
+          },
+        });
+        setIsPipActive(true);
+      } catch (err) {
+        const errorMsg =
+          err instanceof Error ? err.message : "Picture-in-Picture failed";
+
+        toast.danger(`Failed to open Picture-in-Picture: ${errorMsg}`);
+      }
+
+      return;
+    }
+
+    toast.danger("Picture-in-Picture is not supported on this device");
+  }, [
+    isMobile,
+    pipWindow,
+    formattedTime,
+    mode,
+    currentCycle,
+    targetCycles,
+    progressPercent,
+    isRunning,
+    isOvertime,
+    getPipTheme,
+  ]);
 
   const togglePip = useCallback(() => {
-    if (isPipActive && pipWindow && !pipWindow.closed) {
+    if (
+      (isPipActive && pipWindow && !pipWindow.closed) ||
+      (isPipActive && mobilePipManager.getActive())
+    ) {
       closePip();
     } else {
       openPip();
@@ -230,6 +400,9 @@ export function PipProvider({ children }: { children: ReactNode }) {
       if (pipWindow && !pipWindow.closed) {
         pipWindow.close();
       }
+      if (mobilePipManager.getActive()) {
+        mobilePipManager.cleanup();
+      }
     };
 
     window.addEventListener("beforeunload", handleUnload);
@@ -238,6 +411,9 @@ export function PipProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("beforeunload", handleUnload);
       if (pipWindow && !pipWindow.closed) {
         pipWindow.close();
+      }
+      if (mobilePipManager.getActive()) {
+        mobilePipManager.cleanup();
       }
     };
   }, [pipWindow]);
@@ -253,6 +429,31 @@ export function PipProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+
+      {/* Mobile Video PiP Bridge (centered in screen behind background so iOS PiP pops up smoothly from center, completely disabled on desktop) */}
+      {isMobile && (
+        <div
+          aria-hidden="true"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none -z-50 w-[480px] h-[270px] max-w-[85vw] max-h-[85vh] aspect-video overflow-hidden"
+        >
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 block w-full h-full"
+            height={270}
+            width={480}
+          />
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            playsInline
+            className="absolute inset-0 block w-full h-full aspect-video object-cover"
+            height={270}
+            width={480}
+          />
+        </div>
+      )}
+      {/* Desktop Document PiP Portal */}
       {isPipActive &&
         pipWindow &&
         !pipWindow.closed &&
@@ -261,12 +462,4 @@ export function PipProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function usePip() {
-  const context = useContext(PipContext);
-
-  if (!context) {
-    throw new Error("usePip must be used within a PipProvider");
-  }
-
-  return context;
-}
+export { usePip } from "@/hooks/use-pip";

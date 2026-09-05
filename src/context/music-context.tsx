@@ -105,7 +105,7 @@ type MusicContextValue = {
   moveCustomPlaylist: (id: string, direction: "up" | "down") => void;
 
   bindYTPlayerElement: (el: HTMLDivElement | null) => void;
-}
+};
 
 const MusicContext = createContext<MusicContextValue | null>(null);
 
