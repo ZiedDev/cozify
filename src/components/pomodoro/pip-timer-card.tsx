@@ -1,6 +1,7 @@
 import { Button, Typography } from "@heroui/react";
 import { Play, Pause, RotateCcw, Plus, Minus } from "lucide-react";
 
+import { BackgroundView } from "@/components/theme/background-view";
 import { useTimer } from "@/hooks/use-timer";
 import { TIMER_MODES, TimerMode } from "@/config/timer";
 import {
@@ -46,6 +47,8 @@ export function PipTimerCard() {
 
   return (
     <div className="group relative h-screen w-screen bg-background text-foreground flex flex-col items-center justify-center select-none overflow-hidden font-sans p-3 box-border text-center">
+      <BackgroundView />
+
       {/* 1. Mode Switcher (Matching original TimerTabs pill style - only appears on hover) */}
       <div className="absolute top-2.5 left-0 right-0 flex justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
         <div className="inline-flex items-center rounded-full bg-surface/85 backdrop-blur-md p-0.5 border border-separator/40 text-xs shadow-md">
@@ -71,7 +74,7 @@ export function PipTimerCard() {
       </div>
 
       {/* 2. Main Centered Timer Display (Always visible, centered) */}
-      <div className="flex flex-col items-center justify-center w-full my-auto">
+      <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto">
         <div className="flex items-center justify-center gap-1.5 sm:gap-3 w-full">
           {/* Minus 5 mins button (Only appears on hover) */}
           <Button
@@ -88,7 +91,7 @@ export function PipTimerCard() {
           {/* Large Centered Time Digits */}
           <Typography
             className={`font-sans text-6xl xs:text-7xl sm:text-8xl tracking-tight tabular-nums leading-none transition-colors ${
-              isOvertime ? "text-accent animate-pulse" : "text-foreground"
+              isOvertime ? "text-accent" : "text-foreground"
             }`}
             type="h1"
             weight="medium"
@@ -183,7 +186,7 @@ export function PipTimerCard() {
 
       {/* 3. Controls Row (Play/Pause + Reset - only appears on hover) */}
       <div className="absolute bottom-2.5 left-0 right-0 flex justify-center items-center gap-2 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
-        <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl bg-surface/85 backdrop-blur-md border border-separator/40 shadow-md">
+        <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl">
           {/* Main Action Button */}
           <Button
             className="px-5 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 shadow-xs"
@@ -209,7 +212,7 @@ export function PipTimerCard() {
             <Button
               isIconOnly
               aria-label="Reset Current Cycle"
-              className="size-8 rounded-xl flex items-center justify-center p-0 text-muted hover:text-foreground"
+              className="py-2 rounded-xl flex items-center justify-center p-0 text-muted hover:text-foreground"
               size="sm"
               variant="secondary"
               onPress={reset}

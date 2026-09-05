@@ -1,9 +1,33 @@
-import { useMemo, useState } from "react";
-import { Typography, ScrollShadow, Popover, Tooltip } from "@heroui/react";
-import { Check, CheckCircle2, Tag as TagIcon, Flag } from "lucide-react";
+import {
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  DragEvent,
+} from "react";
+import {
+  Typography,
+  ScrollShadow,
+  Popover,
+  Tooltip,
+  Separator,
+} from "@heroui/react";
+import {
+  Check,
+  CheckCircle2,
+  Tag as TagIcon,
+  Flag,
+  GripVertical,
+  ChevronDown,
+  FileText,
+  Edit2,
+} from "lucide-react";
 
 import { useTodos } from "@/hooks/use-todos";
+import { Marquee } from "@/components/ui/marquee";
 import {
+  TodoItem,
   TodoPriority,
   PRESET_TAGS,
   PRIORITY_THEMES,
@@ -13,6 +37,234 @@ import {
 } from "@/menus/todo/types";
 import { AppMode } from "@/config/modes";
 
+function SidebarTodoItem({
+  todo,
+  isExpanded,
+  onToggleExpand,
+  isDragging,
+  onDragStart,
+  onDragEnd,
+  onToggle,
+  onUpdateNotes,
+}: {
+  todo: TodoItem;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  isDragging: boolean;
+  onDragStart: (e: DragEvent, id: string) => void;
+  onDragEnd: () => void;
+  onToggle: (id: string) => void;
+  onUpdateNotes: (id: string, notes: string) => void;
+}) {
+  const [isEditingNotes, setIsEditingNotes] = useState(!todo.notes);
+  const [noteDraft, setNoteDraft] = useState(todo.notes || "");
+  const [isHovered, setIsHovered] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const integratedMeta = getIntegratedTagPriorityInfo(todo.tag, todo.priority);
+
+  useEffect(() => {
+    setNoteDraft(todo.notes || "");
+    if (!todo.notes) {
+      setIsEditingNotes(true);
+    }
+  }, [todo.notes]);
+
+  useEffect(() => {
+    if (isExpanded && (!todo.notes || isEditingNotes)) {
+      textareaRef.current?.focus();
+    }
+  }, [isExpanded, isEditingNotes, todo.notes]);
+
+  const handleSaveNotes = () => {
+    const trimmed = noteDraft.trim();
+
+    onUpdateNotes(todo.id, trimmed);
+    if (trimmed) {
+      setIsEditingNotes(false);
+    }
+  };
+
+  return (
+    <div
+      draggable
+      className={`group w-full flex flex-col px-2.5 py-1.5 rounded-xl border transition-[background-color,border-color,opacity,transform] duration-150 select-none text-left shrink-0 ${
+        isDragging
+          ? "opacity-25 bg-transparent border-dashed border-accent/70 scale-[0.98] shadow-none"
+          : "bg-surface/80 hover:bg-surface border-separator/40 hover:border-separator/80 shadow-2xs"
+      }`}
+      onDragEnd={onDragEnd}
+      onDragStart={(e) => {
+        const target = e.target as HTMLElement;
+
+        if (
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "INPUT" ||
+          target.closest("textarea") ||
+          target.closest("input")
+        ) {
+          e.preventDefault();
+
+          return;
+        }
+        onDragStart(e, todo.id);
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Main Task Header Row */}
+      <div className="w-full flex items-center gap-1.5 min-h-6">
+        {/* Drag Grip Handle */}
+        <span
+          className="text-muted/30 group-hover:text-muted/70 cursor-grab active:cursor-grabbing p-0.5 shrink-0 transition-colors"
+          title="Drag to reorder"
+        >
+          <GripVertical className="size-3 md:size-3.5" />
+        </span>
+
+        {/* Tactile Circular Check Button - ONLY clicking this toggles task */}
+        <button
+          aria-label={`Mark "${todo.title}" as complete`}
+          className="size-3.5 md:size-4 rounded-full border-2 border-muted/50 hover:border-accent hover:scale-110 bg-surface/50 transition-[border-color,transform] duration-150 flex items-center justify-center cursor-pointer shrink-0"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle(todo.id);
+          }}
+        >
+          <Check className="size-2 md:size-2.5 opacity-0 hover:opacity-60 transition-opacity" />
+        </button>
+
+        {/* Integrated Tag & Priority Icon */}
+        {(integratedMeta.hasTag || integratedMeta.hasPriority) && (
+          <Tooltip delay={200}>
+            <Tooltip.Trigger>
+              <span className="flex items-center justify-center shrink-0 cursor-default">
+                <integratedMeta.Icon
+                  className={`size-3.5 md:size-4 shrink-0 transition-colors ${integratedMeta.iconColor}`}
+                />
+              </span>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-foreground border border-separator shadow-lg">
+              {integratedMeta.tooltipText}
+            </Tooltip.Content>
+          </Tooltip>
+        )}
+
+        {/* Title: Clicking EXPANDS/COLLAPSES notes (does NOT check task) */}
+        <button
+          className="flex-1 min-w-0 cursor-pointer overflow-hidden flex items-center justify-between gap-1 py-0.5 text-left bg-transparent border-none p-0"
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleExpand();
+          }}
+        >
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <Marquee
+              playOnHover
+              align="start"
+              className="text-xs md:text-sm text-foreground/90 leading-snug hover:text-foreground transition-colors font-medium"
+              isHovered={isHovered && !isDragging}
+              text={todo.title}
+            />
+          </div>
+
+          {/* Indicator icons: FileText if notes present + rotating chevron */}
+          <div className="flex items-center gap-1 shrink-0 ml-1">
+            {todo.notes && !isExpanded && (
+              <FileText className="size-3 text-accent/80 shrink-0" />
+            )}
+            <ChevronDown
+              className={`size-3 text-muted/60 shrink-0 transition-transform duration-200 ${
+                isExpanded
+                  ? "rotate-180 text-accent"
+                  : "opacity-0 group-hover:opacity-100"
+              }`}
+            />
+          </div>
+        </button>
+      </div>
+
+      {/* Expanded Notes Section */}
+      {isExpanded && (
+        <div className="w-full pl-6 pr-0.5 pt-1.5 pb-0.5 flex flex-col gap-1.5 border-t border-separator/25 mt-1 animate-in fade-in duration-150">
+          {isEditingNotes || !todo.notes ? (
+            <div className="flex flex-col gap-1.5 w-full">
+              <textarea
+                ref={textareaRef}
+                className="w-full text-xs p-2 rounded-lg bg-surface-secondary/80 text-foreground border border-separator/50 focus:border-accent focus:outline-none resize-none placeholder:text-muted/60 leading-relaxed font-sans"
+                placeholder="Add a note... (Enter to save)"
+                rows={2}
+                value={noteDraft}
+                onBlur={handleSaveNotes}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "Enter" &&
+                    (e.metaKey || e.ctrlKey || !e.shiftKey)
+                  ) {
+                    e.preventDefault();
+                    handleSaveNotes();
+                  } else if (e.key === "Escape") {
+                    setNoteDraft(todo.notes || "");
+                    if (todo.notes) {
+                      setIsEditingNotes(false);
+                    } else {
+                      onToggleExpand();
+                    }
+                  }
+                }}
+              />
+              <div className="flex items-center justify-between text-[10px] text-muted px-0.5">
+                <span>Enter to save, Esc to cancel</span>
+                <div className="flex items-center gap-1.5">
+                  {todo.notes && (
+                    <button
+                      className="hover:text-foreground cursor-pointer px-1.5 py-0.5 rounded text-[10px]"
+                      type="button"
+                      onClick={() => {
+                        setNoteDraft(todo.notes || "");
+                        setIsEditingNotes(false);
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button
+                    className="text-accent hover:underline cursor-pointer font-medium px-2 py-0.5 rounded bg-accent/10 text-[10px]"
+                    type="button"
+                    onClick={handleSaveNotes}
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              className="group/note w-full flex items-start justify-between gap-2 p-2 rounded-lg bg-surface-secondary/40 hover:bg-surface-secondary/70 border border-separator/30 cursor-pointer transition-colors text-left"
+              title="Click to edit note"
+              type="button"
+              onClick={() => setIsEditingNotes(true)}
+            >
+              <Typography
+                className="text-xs text-foreground/80 whitespace-pre-wrap break-words leading-relaxed font-normal flex-1"
+                type="body-xs"
+              >
+                {todo.notes}
+              </Typography>
+              <span className="text-muted opacity-0 group-hover/note:opacity-100 transition-opacity p-0.5 shrink-0">
+                <Edit2 className="size-3 text-muted hover:text-accent" />
+              </span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SidebarTodoWidget({
   align = "start",
 }: {
@@ -21,12 +273,123 @@ export function SidebarTodoWidget({
   const {
     todos,
     toggleTodo,
+    updateTodo,
+    moveTodoToPosition,
     selectedTag,
     setSelectedTag,
     selectedPriority,
     setSelectedPriority,
   } = useTodos();
   const [visibleCount, setVisibleCount] = useState(15);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverState, setDragOverState] = useState<{
+    id: string;
+    position: "top" | "bottom";
+  } | null>(null);
+
+  const draggedIdRef = useRef<string | null>(null);
+  const dragOverStateRef = useRef<{
+    id: string;
+    position: "top" | "bottom";
+  } | null>(null);
+
+  const updateDragOver = useCallback(
+    (state: { id: string; position: "top" | "bottom" } | null) => {
+      if (
+        dragOverStateRef.current?.id === state?.id &&
+        dragOverStateRef.current?.position === state?.position
+      ) {
+        return;
+      }
+      dragOverStateRef.current = state;
+      setDragOverState(state);
+    },
+    [],
+  );
+
+  const updateDraggedId = useCallback((id: string | null) => {
+    draggedIdRef.current = id;
+    setDraggedId(id);
+  }, []);
+
+  const toggleExpand = useCallback((id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+
+      return next;
+    });
+  }, []);
+
+  const handleDragStart = useCallback((e: DragEvent, id: string) => {
+    e.dataTransfer.setData("text/plain", id);
+    e.dataTransfer.effectAllowed = "move";
+
+    draggedIdRef.current = id;
+    setTimeout(() => {
+      setDraggedId(id);
+    }, 0);
+  }, []);
+
+  const handleItemDragOver = useCallback(
+    (e: DragEvent, id: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+      e.dataTransfer.dropEffect = "move";
+
+      if (id === draggedIdRef.current) return;
+
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const position: "top" | "bottom" = e.clientY < midY ? "top" : "bottom";
+
+      updateDragOver({ id, position });
+    },
+    [updateDragOver],
+  );
+
+  const executeDrop = useCallback(() => {
+    const sourceId = draggedIdRef.current;
+    const targetState = dragOverStateRef.current;
+
+    if (sourceId && targetState && sourceId !== targetState.id) {
+      moveTodoToPosition(sourceId, targetState.id, targetState.position);
+    }
+
+    updateDraggedId(null);
+    updateDragOver(null);
+  }, [moveTodoToPosition, updateDraggedId, updateDragOver]);
+
+  const handleDragEnd = useCallback(() => {
+    executeDrop();
+  }, [executeDrop]);
+
+  const handleItemDrop = useCallback(
+    (e: DragEvent, targetId: string) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const sourceId =
+        e.dataTransfer.getData("text/plain") || draggedIdRef.current;
+      const targetState = dragOverStateRef.current;
+      const pos = targetState?.position || "bottom";
+
+      if (sourceId && sourceId !== targetId) {
+        moveTodoToPosition(sourceId, targetId, pos);
+      }
+
+      updateDraggedId(null);
+      updateDragOver(null);
+    },
+    [moveTodoToPosition, updateDraggedId, updateDragOver],
+  );
 
   // Collect unique tag options from presets and user tasks
   const tagOptions = useMemo(() => {
@@ -120,6 +483,46 @@ export function SidebarTodoWidget({
 
   const displayedTodos = filteredActiveTodos.slice(0, visibleCount);
   const hasMore = visibleCount < totalFiltered;
+
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const handleContainerDragOver = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+
+      const container = listRef.current;
+
+      if (!container || displayedTodos.length === 0) return;
+
+      const rect = container.getBoundingClientRect();
+      const relativeY = e.clientY - rect.top;
+
+      if (relativeY < 32) {
+        container.scrollTop -= 6;
+      } else if (relativeY > rect.height - 32) {
+        container.scrollTop += 6;
+      }
+
+      const firstItem = displayedTodos[0];
+      const lastItem = displayedTodos[displayedTodos.length - 1];
+
+      if (relativeY < 24 && firstItem) {
+        updateDragOver({ id: firstItem.id, position: "top" });
+      } else if (relativeY > rect.height - 24 && lastItem) {
+        updateDragOver({ id: lastItem.id, position: "bottom" });
+      }
+    },
+    [displayedTodos, updateDragOver],
+  );
+
+  const handleContainerDrop = useCallback(
+    (e: DragEvent) => {
+      e.preventDefault();
+      executeDrop();
+    },
+    [executeDrop],
+  );
 
   const ActiveTagIcon = selectedTag ? getTagIcon(selectedTag) : TagIcon;
   const activeTagMeta = selectedTag ? getTagInfo(selectedTag) : null;
@@ -325,65 +728,58 @@ export function SidebarTodoWidget({
         </div>
       ) : (
         <div className="flex-1 min-h-0 flex flex-col gap-1.5 w-full">
-          <ScrollShadow className="flex-1 min-h-0 max-h-full w-full flex flex-col gap-1.5 pr-0.5 overflow-y-auto no-scrollbar">
+          <ScrollShadow
+            ref={listRef}
+            className="flex-1 min-h-0 max-h-full w-full flex flex-col gap-1.5 pr-0.5 overflow-y-auto no-scrollbar"
+            orientation="vertical"
+            size={32}
+            onDragEnd={handleDragEnd}
+            onDragOver={handleContainerDragOver}
+            onDrop={handleContainerDrop}
+          >
             {displayedTodos.map((todo) => {
-              const integratedMeta = getIntegratedTagPriorityInfo(
-                todo.tag,
-                todo.priority,
-              );
+              const isDragOverThis =
+                dragOverState?.id === todo.id && draggedId !== todo.id;
+              const isDropTop =
+                isDragOverThis && dragOverState?.position === "top";
+              const isDropBottom =
+                isDragOverThis && dragOverState?.position === "bottom";
+              const isThisDragging = draggedId === todo.id;
 
               return (
                 <div
                   key={todo.id}
-                  className="group w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 shadow-2xs transition-[background-color,border-color] duration-150 select-none text-left shrink-0"
+                  className={`todo-item-row w-full flex flex-col gap-1 transition-[opacity,transform] duration-150 ${
+                    isThisDragging
+                      ? "opacity-25 pointer-events-none scale-[0.99]"
+                      : "opacity-100"
+                  }`}
+                  data-todo-id={todo.id}
+                  onDragOver={(e) => handleItemDragOver(e, todo.id)}
+                  onDrop={(e) => handleItemDrop(e, todo.id)}
                 >
-                  {/* Tactile Circular Check Button */}
-                  <button
-                    aria-label={`Mark "${todo.title}" as complete`}
-                    className="size-3.5 md:size-4 rounded-full border-2 border-muted/50 group-hover:border-accent group-hover:scale-110 bg-surface/50 transition-[border-color,transform] duration-150 flex items-center justify-center cursor-pointer shrink-0"
-                    type="button"
-                    onClick={() => toggleTodo(todo.id)}
-                  >
-                    <Check className="size-2 md:size-2.5 opacity-0 group-hover:opacity-60 transition-opacity" />
-                  </button>
-
-                  {/* Integrated Tag & Priority Icon matching the Todo page exactly */}
-                  {(integratedMeta.hasTag || integratedMeta.hasPriority) && (
-                    <Tooltip delay={200}>
-                      <Tooltip.Trigger>
-                        <span className="flex items-center justify-center shrink-0 cursor-default">
-                          <integratedMeta.Icon
-                            className={`size-3.5 md:size-4 shrink-0 transition-colors ${integratedMeta.iconColor}`}
-                          />
-                        </span>
-                      </Tooltip.Trigger>
-                      <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-foreground border border-separator shadow-lg">
-                        {integratedMeta.tooltipText}
-                      </Tooltip.Content>
-                    </Tooltip>
+                  {isDropTop && (
+                    <div className="py-0.5 px-1 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+                      <Separator className="h-0.5 bg-accent rounded-full shadow-xs" />
+                    </div>
                   )}
 
-                  {/* Title (Clicking completes/toggles task) */}
-                  <div
-                    className="flex-1 min-w-0 cursor-pointer overflow-hidden"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => toggleTodo(todo.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        toggleTodo(todo.id);
-                      }
-                    }}
-                  >
-                    <Typography
-                      truncate
-                      className="text-xs md:text-sm text-foreground/90 leading-snug"
-                      type="body-xs"
-                      weight="medium"
-                    >
-                      {todo.title}
-                    </Typography>
-                  </div>
+                  <SidebarTodoItem
+                    isDragging={isThisDragging}
+                    isExpanded={expandedIds.has(todo.id)}
+                    todo={todo}
+                    onDragEnd={handleDragEnd}
+                    onDragStart={handleDragStart}
+                    onToggle={toggleTodo}
+                    onToggleExpand={() => toggleExpand(todo.id)}
+                    onUpdateNotes={(id, notes) => updateTodo(id, { notes })}
+                  />
+
+                  {isDropBottom && (
+                    <div className="py-0.5 px-1 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
+                      <Separator className="h-0.5 bg-accent rounded-full shadow-xs" />
+                    </div>
+                  )}
                 </div>
               );
             })}

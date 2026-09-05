@@ -1,5 +1,5 @@
-import { DragEvent } from "react";
-import { Button, Tooltip, Typography } from "@heroui/react";
+import { DragEvent, useState } from "react";
+import { Button, Tooltip } from "@heroui/react";
 import {
   Archive,
   Edit3,
@@ -12,6 +12,7 @@ import {
 import { TodoItem, getIntegratedTagPriorityInfo } from "../types";
 
 import { useTodos } from "@/hooks/use-todos";
+import { Marquee } from "@/components/ui/marquee";
 
 type Props = {
   todo: TodoItem;
@@ -36,6 +37,7 @@ export function TodoItemMinimal({
   onDrop,
 }: Props) {
   const { toggleTodo, deleteTodo } = useTodos();
+  const [isHovered, setIsHovered] = useState(false);
 
   const integratedMeta = getIntegratedTagPriorityInfo(
     todo.tag,
@@ -61,6 +63,8 @@ export function TodoItemMinimal({
       onDragOver={(e) => onDragOver(e, todo.id)}
       onDragStart={(e) => onDragStart(e, todo.id)}
       onDrop={(e) => onDrop(e, todo.id)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Drag Handle */}
       <span
@@ -117,18 +121,19 @@ export function TodoItemMinimal({
           }
         }}
       >
-        <Typography
-          truncate
-          className={`text-xs md:text-sm transition-colors text-left flex-1 min-w-0 ${
-            todo.completed
-              ? "line-through text-muted"
-              : "text-foreground font-medium"
-          }`}
-          type="body-sm"
-          weight="medium"
-        >
-          {todo.title}
-        </Typography>
+        <div className="flex-1 min-w-0 overflow-hidden">
+          <Marquee
+            playOnHover
+            align="start"
+            className={`text-xs md:text-sm transition-colors text-left font-medium ${
+              todo.completed
+                ? "line-through text-muted"
+                : "text-foreground font-medium"
+            }`}
+            isHovered={isHovered && !isDragging}
+            text={todo.title}
+          />
+        </div>
 
         {/* Compact Due Date Indicator */}
         {todo.dueDate && (
