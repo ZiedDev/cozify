@@ -18,8 +18,6 @@ import {
   CheckCircle2,
   Tag as TagIcon,
   Flag,
-  GripVertical,
-  ChevronDown,
   FileText,
   Edit2,
 } from "lucide-react";
@@ -114,14 +112,6 @@ function SidebarTodoItem({
     >
       {/* Main Task Header Row */}
       <div className="w-full flex items-center gap-1.5 min-h-6">
-        {/* Drag Grip Handle */}
-        <span
-          className="text-muted/30 group-hover:text-muted/70 cursor-grab active:cursor-grabbing p-0.5 shrink-0 transition-colors"
-          title="Drag to reorder"
-        >
-          <GripVertical className="size-3 md:size-3.5" />
-        </span>
-
         {/* Tactile Circular Check Button - ONLY clicking this toggles task */}
         <button
           aria-label={`Mark "${todo.title}" as complete`}
@@ -175,13 +165,6 @@ function SidebarTodoItem({
             {todo.notes && !isExpanded && (
               <FileText className="size-3 text-accent/80 shrink-0" />
             )}
-            <ChevronDown
-              className={`size-3 text-muted/60 shrink-0 transition-transform duration-200 ${
-                isExpanded
-                  ? "rotate-180 text-accent"
-                  : "opacity-0 group-hover:opacity-100"
-              }`}
-            />
           </div>
         </button>
       </div>

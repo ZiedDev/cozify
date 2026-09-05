@@ -4,7 +4,6 @@ import {
   Archive,
   Edit3,
   Check,
-  GripVertical,
   Trash2,
   Calendar as CalendarIcon,
 } from "lucide-react";
@@ -66,15 +65,6 @@ export function TodoItemMinimal({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Drag Handle */}
-      <span
-        aria-label="Drag to reorder"
-        className="text-muted/30 group-hover:text-muted/70 cursor-grab active:cursor-grabbing p-0.5 shrink-0 transition-colors"
-        title="Drag to reorder"
-      >
-        <GripVertical className="size-3.5" />
-      </span>
-
       {/* Tactile Checkbox Button */}
       <button
         aria-label={

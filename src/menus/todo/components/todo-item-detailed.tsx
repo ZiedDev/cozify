@@ -6,7 +6,6 @@ import {
   Calendar,
   AlertCircle,
   Check,
-  GripVertical,
   Trash2,
   FileText,
   Plus,
@@ -86,17 +85,6 @@ export function TodoItemDetailed({
     >
       {/* 1. Top row: Drag Handle, Checkbox, Title, and Action Buttons */}
       <div className="flex items-start justify-between gap-2.5 w-full">
-        {/* Drag Handle */}
-        <div className="pt-0.5 shrink-0">
-          <span
-            aria-label="Drag to reorder"
-            className="text-muted/30 group-hover:text-muted/70 cursor-grab active:cursor-grabbing p-0.5 shrink-0 transition-colors inline-block"
-            title="Drag to reorder"
-          >
-            <GripVertical className="size-3.5" />
-          </span>
-        </div>
-
         {/* Tactile Checkbox Button */}
         <div className="pt-0.5 shrink-0">
           <button
