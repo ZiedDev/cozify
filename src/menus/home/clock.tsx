@@ -3,6 +3,7 @@ import { Typography } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
+import { RollingText } from "@/components/ui/rolling-text";
 import { useClock } from "@/hooks/use-clock";
 import { FOCUS_GREETINGS } from "@/config/greetings";
 
@@ -45,18 +46,19 @@ export function Clock() {
       {/* Centered Clock Display */}
       <div className="inline-flex items-start justify-center">
         <Typography
-          className="font-sans text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-foreground tabular-nums leading-none drop-shadow-xs"
+          aria-label={time12}
+          className="font-sans text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-foreground tabular-nums leading-none drop-shadow-xs flex items-center"
           type="h1"
           weight="medium"
         >
-          {time12}
+          <RollingText value={time12} />
         </Typography>
         <Typography
-          className="text-base sm:text-lg md:text-xl lg:text-2xl text-accent uppercase r ml-2 sm:ml-3 pt-1 sm:pt-2 select-none font-semibold"
+          className="text-base sm:text-lg md:text-xl lg:text-2xl text-accent uppercase r ml-2 sm:ml-3 pt-1 sm:pt-2 select-none font-semibold flex items-center"
           type="h3"
           weight="medium"
         >
-          {period}
+          <RollingText duration={0.6} stagger={0.08} value={period} />
         </Typography>
       </div>
 

@@ -201,6 +201,7 @@ export function Timer() {
       <TimerDisplay
         formattedTime={formattedTime}
         isOvertime={isOvertime}
+        mode={mode}
         timeLeft={timeLeft}
         onAddMinutes={addMinutes}
       />

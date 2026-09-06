@@ -1,18 +1,22 @@
 import { Button, Typography } from "@heroui/react";
 import { Plus, Minus } from "lucide-react";
 
-import { MAX_DURATION_SECONDS } from "@/config/timer";
+import { RollingTimerText } from "./rolling-timer-text";
+
+import { MAX_DURATION_SECONDS, TimerMode } from "@/config/timer";
 
 export function TimerDisplay({
   formattedTime,
   isOvertime,
   timeLeft,
   onAddMinutes,
+  mode,
 }: {
   formattedTime: string;
   isOvertime: boolean;
   timeLeft: number;
   onAddMinutes?: (minutes: number) => void;
+  mode?: TimerMode;
 }) {
   const isMinusDisabled = timeLeft <= 60;
   const isPlusDisabled = timeLeft >= MAX_DURATION_SECONDS;
@@ -37,13 +41,14 @@ export function TimerDisplay({
       {/* Main Time Digits & Labels */}
       <div className="flex flex-col items-center justify-center">
         <Typography
-          className={`font-sans text-6xl xs:text-7xl sm:text-8xl md:text-9xl lg:text-[9.5rem] tracking-tight tabular-nums leading-none transition-colors ${
+          aria-label={formattedTime}
+          className={`font-sans text-6xl xs:text-7xl sm:text-8xl md:text-9xl lg:text-[9.5rem] tracking-tight tabular-nums leading-none transition-colors flex items-center justify-center ${
             isOvertime ? "text-accent" : "text-foreground"
           }`}
           type="h1"
           weight="medium"
         >
-          {formattedTime}
+          <RollingTimerText formattedTime={formattedTime} mode={mode} />
         </Typography>
         {/* Minutes and Seconds Indicators */}
         <div className="flex items-center justify-between w-full max-w-44 xs:max-w-52 sm:max-w-64 md:max-w-80 px-2 sm:px-4 text-[9px] xs:text-[10px] sm:text-xs font-semibold st uppercase mt-0.5 sm:mt-1">

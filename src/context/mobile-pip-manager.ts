@@ -145,20 +145,56 @@ export class MobilePipManager {
     return this.isPipActive;
   }
 
+  private animBurstTimer: ReturnType<typeof setInterval> | null = null;
+
+  public triggerAnimationBurst() {
+    if (this.animBurstTimer !== null) {
+      clearInterval(this.animBurstTimer);
+      this.animBurstTimer = null;
+    }
+
+    const startTime =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    const burstDuration = 550; // ms
+
+    const step = () => {
+      if (this.canvasEl && this.currentState) {
+        const stillAnimating = drawTimerToCanvas(
+          this.canvasEl,
+          this.currentState,
+        );
+
+        try {
+          const track = this.stream?.getVideoTracks()[0] as any;
+
+          if (track && typeof track.requestFrame === "function") {
+            track.requestFrame();
+          }
+        } catch {}
+
+        const now =
+          typeof performance !== "undefined" ? performance.now() : Date.now();
+
+        if (!stillAnimating || now - startTime > burstDuration) {
+          if (this.animBurstTimer !== null) {
+            clearInterval(this.animBurstTimer);
+            this.animBurstTimer = null;
+          }
+        }
+      }
+    };
+
+    // Paint immediately and drive transition at 30fps
+    step();
+    this.animBurstTimer = setInterval(step, 1000 / 30);
+  }
+
   public updateState(state: CanvasTimerState) {
     this.currentState = state;
 
     if (this.canvasEl) {
-      drawTimerToCanvas(this.canvasEl, state);
+      this.triggerAnimationBurst();
     }
-
-    try {
-      const track = this.stream?.getVideoTracks()[0] as any;
-
-      if (track && typeof track.requestFrame === "function") {
-        track.requestFrame();
-      }
-    } catch {}
 
     // Two-way playback state synchronization between app controls and native floating PiP overlay
     if (this.videoEl && this.isPipActive) {
@@ -405,6 +441,11 @@ export class MobilePipManager {
   public cleanup() {
     this.isPipActive = false;
     this.stopRenderLoop();
+
+    if (this.animBurstTimer !== null) {
+      clearInterval(this.animBurstTimer);
+      this.animBurstTimer = null;
+    }
 
     if (this.audioCtx) {
       try {

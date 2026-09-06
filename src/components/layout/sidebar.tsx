@@ -7,6 +7,7 @@ import { useTimer } from "@/hooks/use-timer";
 import { usePip } from "@/hooks/use-pip";
 import { AppMode } from "@/config/modes";
 import { TIMER_MODE_LABELS } from "@/config/timer";
+import { RollingText } from "@/components/ui/rolling-text";
 
 export function SidebarClock({
   align = "end",
@@ -27,7 +28,7 @@ export function SidebarClock({
       }`}
     >
       <div className="inline-flex items-baseline gap-1 md:gap-1.5 font-sans text-xl md:text-2xl lg:text-3xl font-medium text-foreground tabular-nums leading-none">
-        <span>{time12}</span>
+        <RollingText value={time12} />
         <Typography
           className="text-xs md:text-sm font-normal uppercase"
           color="muted"
@@ -153,7 +154,7 @@ export function SidebarTimer({
 
         <div className="inline-flex items-baseline gap-1 md:gap-1.5 font-sans text-xl md:text-2xl lg:text-3xl font-medium tabular-nums leading-none">
           <span className={isOvertime ? "text-accent" : "text-foreground"}>
-            {formattedTime}
+            <RollingText triggerKey={mode} value={formattedTime} />
           </span>
         </div>
       </div>

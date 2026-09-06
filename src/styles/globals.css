@@ -2,11 +2,6 @@
 @import "@heroui/styles";
 @import "./theme.css";
 
-@theme {
-  --font-sans: "Varela Round", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Fraunces", Georgia, Cambria, "Times New Roman", Times, serif;
-}
-
 /* Prevent unwanted HeroUI carousel scroll chevrons on compact tab containers */
 .tabs__list-container > .tabs__list-container__scroll-prev,
 .tabs__list-container > .tabs__list-container__scroll-next {

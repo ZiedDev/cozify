@@ -1,6 +1,7 @@
 import { Button, Typography } from "@heroui/react";
 import { Play, Pause, RotateCcw, Plus, Minus } from "lucide-react";
 
+import { RollingText } from "@/components/ui/rolling-text";
 import { BackgroundView } from "@/components/theme/background-view";
 import { useTimer } from "@/hooks/use-timer";
 import { TIMER_MODES, TimerMode } from "@/config/timer";
@@ -90,13 +91,14 @@ export function PipTimerCard() {
 
           {/* Large Centered Time Digits */}
           <Typography
-            className={`font-sans text-6xl xs:text-7xl sm:text-8xl tracking-tight tabular-nums leading-none transition-colors ${
+            aria-label={formattedTime}
+            className={`font-sans text-6xl xs:text-7xl sm:text-8xl tracking-tight tabular-nums leading-none transition-colors flex items-center justify-center ${
               isOvertime ? "text-accent" : "text-foreground"
             }`}
             type="h1"
             weight="medium"
           >
-            {formattedTime}
+            <RollingText triggerKey={mode} value={formattedTime} />
           </Typography>
 
           {/* Plus 5 mins button (Only appears on hover) */}
