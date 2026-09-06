@@ -1,10 +1,10 @@
 export const SOUNDS = {
-  pomoStart: "/sounds/pomo-start.wav",
-  pomoPause: "/sounds/pomo-pause.wav",
-  pomoEnd: "/sounds/pomo-end.wav",
-  notification: "/sounds/notification.wav",
-  achievement: "/sounds/achievement.wav",
-  taskComplete: "/sounds/task-complete.wav",
+  pomoStart: "./sounds/pomo-start.wav",
+  pomoPause: "./sounds/pomo-pause.wav",
+  pomoEnd: "./sounds/pomo-end.wav",
+  notification: "./sounds/notification.wav",
+  achievement: "./sounds/achievement.wav",
+  taskComplete: "./sounds/task-complete.wav",
 } as const;
 
 export type SoundEffect = keyof typeof SOUNDS;
