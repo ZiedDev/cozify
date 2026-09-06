@@ -1,5 +1,21 @@
 {
   "tailwindCSS.experimental.classRegex": [
-    ["([\"'`][^\"'`]*.*?[\"'`])", "[\"'`]([^\"'`]*).*?[\"'`]"]
+    // Matches functions like cn(...), clsx(...), cva(...)
+    [
+      "(?:clsx|cn|cva|twMerge)\\(([^)]*)\\)",
+      "[\"'`]([^\"'`]*).*?[\"'`]"
+    ],
+    // Matches attributes like className="..." or class="..."
+    [
+      "(?:class|className)\\s*=\\s*[\"{'`]([^\"'}`]*)[\"}`]"
+    ]
   ],
+  "tailwindCSS.includeLanguages": {
+    "html": "html",
+    "javascript": "javascript",
+    "css": "css"
+  },
+  "editor.quickSuggestions": {
+    "strings": true
+  }
 }

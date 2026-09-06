@@ -1,5 +1,4 @@
-import { Card, Link, Typography } from "@heroui/react";
-import { FolderGit2 } from "lucide-react";
+import { Card, Link, Separator, Surface, Typography } from "@heroui/react";
 
 import { siteConfig } from "@/config/site";
 
@@ -7,65 +6,42 @@ export function AboutTab() {
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div>
-        <Typography
-          className="text-base text-foreground"
-          type="h3"
-          weight="semibold"
-        >
-          About Cozify
-        </Typography>
+      <Surface variant="transparent">
+        <Typography type="h4">About</Typography>
         <Typography color="muted" type="body-sm">
           Your ideal cozy focus & study environment.
         </Typography>
-      </div>
+      </Surface>
 
-      <Card className="border border-border/50 bg-surface/40">
+      <Card>
         <Card.Content className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div>
-              <Typography
-                className="text-sm text-foreground font-serif tracking-tight"
-                type="h4"
-                weight="bold"
-              >
+          <Card.Header>
+            <Card.Title>
+              <Typography className="font-serif" type="h6">
                 Cozify
               </Typography>
-              <Typography className="text-xs" color="muted" type="body-xs">
-                Version {siteConfig.version}
-              </Typography>
-            </div>
-          </div>
+            </Card.Title>
+            <Card.Description>Version {siteConfig.version}</Card.Description>
+          </Card.Header>
 
-          <Typography
-            className="text-xs leading-relaxed"
-            color="muted"
-            type="body-xs"
-          >
+          <Card.Description>
             Designed for mindful work, deep study sessions, and serene ambient
             productivity.
-          </Typography>
+          </Card.Description>
 
-          <div className="pt-3 flex flex-wrap items-center gap-4 text-xs border-t border-border/40">
-            <Link
-              className="flex items-center gap-1.5 text-muted hover:text-foreground text-xs font-medium transition-colors"
-              href={siteConfig.links.github}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <FolderGit2 className="size-3.5" />
-              <span>GitHub Repository</span>
-            </Link>
+          <Separator />
 
+          <Card.Footer className="gap-2">
+            Created By
             <Link
-              className="flex items-center gap-1.5 text-muted hover:text-foreground text-xs font-medium transition-colors"
+              className="text-muted hover:text-foreground transition-colors"
               href={siteConfig.links.profile}
               rel="noopener noreferrer"
               target="_blank"
             >
-              <span>ZiedDev</span>
+              ZiedDev
             </Link>
-          </div>
+          </Card.Footer>
         </Card.Content>
       </Card>
     </div>

@@ -1,17 +1,6 @@
 import { useState } from "react";
-import {
-  Modal,
-  Tabs,
-  ScrollShadow,
-  Separator,
-  Typography,
-} from "@heroui/react";
-import {
-  Settings as SettingsIcon,
-  Database,
-  Sliders,
-  Info,
-} from "lucide-react";
+import { Modal, Tabs, ScrollShadow, Typography, Surface } from "@heroui/react";
+import { Settings, Database, Sliders, Info } from "lucide-react";
 
 import { GeneralTab } from "./components/general-tab";
 import { DataTab } from "./components/data-tab";
@@ -60,87 +49,88 @@ export function SettingsModal({
     <>
       <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
         <Modal.Container size="lg">
-          <Modal.Dialog className="max-sm:mt-0! sm:max-w-195 md:max-w-210 w-full h-[85vh] sm:h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-separator/50 bg-surface shadow-2xl">
-            <Modal.CloseTrigger />
-
-            <Modal.Header className="px-5 sm:px-6 py-3.5 sm:py-4 gap-2.5">
+          <Modal.Dialog className="max-sm:mt-0! md:max-w-250 sm:h-140 max-h-[88vh] shadow-2xl space-y-5">
+            <Modal.Header className="flex-row">
               <Modal.Icon>
-                <SettingsIcon className="size-5 text-accent" />
+                <Settings className="text-accent" />
               </Modal.Icon>
-              <Modal.Heading className="text-base font-semibold">
-                Settings & Preferences
+              <Modal.Heading>
+                <Typography type="h4">Reset Application Data?</Typography>
+                <Typography color="muted" type="body-xs">
+                  Settings & Preferences
+                </Typography>
               </Modal.Heading>
             </Modal.Header>
-            <Separator />
-            <Modal.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+            <Modal.CloseTrigger />
+            <Modal.Body>
               <Tabs
-                className="flex-1 min-h-0 h-full flex flex-col sm:flex-row overflow-hidden gap-0"
+                className="h-full sm:flex-row"
                 selectedKey={selectedTab}
                 onSelectionChange={(key) => setSelectedTab(key as string)}
               >
                 {/* Responsive Tabs Navigation: Horizontal on mobile, vertical sidebar on desktop */}
-                <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-separator/40 p-2 sm:p-3 bg-surface-secondary/40 shrink-0 flex flex-row sm:flex-col justify-between items-center sm:items-stretch">
+                <Surface className="px-0 py-0 flex sm:flex-col justify-between sm:items-stretch">
                   <Tabs.ListContainer className="bg-transparent p-0 w-full">
                     <Tabs.List
                       aria-label="Settings Categories"
-                      className="flex flex-row sm:flex-col gap-1 w-full bg-transparent p-0"
+                      className="sm:flex-col space-y-5"
                     >
                       <Tabs.Tab
-                        className="flex items-center justify-center sm:justify-start gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium flex-1 sm:w-full text-center sm:text-left cursor-pointer transition-colors hover:bg-surface/70 text-muted data-selected:text-white"
+                        className="sm:justify-start gap-2 transition-colors"
                         id="general"
                       >
                         <Sliders className="size-4 shrink-0 transition-colors" />
-                        <span>General</span>
-                        <Tabs.Indicator className="rounded-xl bg-accent text-accent-foreground shadow-xs" />
+                        <Typography type="body">General</Typography>
+                        <Tabs.Indicator className="bg-accent" />
                       </Tabs.Tab>
 
                       <Tabs.Tab
-                        className="flex items-center justify-center sm:justify-start gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium flex-1 sm:w-full text-center sm:text-left cursor-pointer transition-colors hover:bg-surface/70 text-muted data-selected:text-white"
+                        className="sm:justify-start gap-2 transition-colors"
                         id="data"
                       >
                         <Database className="size-4 shrink-0 transition-colors" />
-                        <span className="truncate">Data & Storage</span>
-                        <Tabs.Indicator className="rounded-xl bg-accent text-accent-foreground shadow-xs" />
+                        <Typography type="body">Data & Storage</Typography>
+                        <Tabs.Indicator className="bg-accent" />
                       </Tabs.Tab>
 
                       <Tabs.Tab
-                        className="flex items-center justify-center sm:justify-start gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium flex-1 sm:w-full text-center sm:text-left cursor-pointer transition-colors hover:bg-surface/70 text-muted data-selected:text-white"
+                        className="sm:justify-start gap-2 transition-colors"
                         id="about"
                       >
-                        <Info className="size-4 shrink-0 transition-colors" />
-                        <span>About</span>
-                        <Tabs.Indicator className="rounded-xl bg-accent text-accent-foreground shadow-xs" />
+                        <Info className="size-4 transition-colors" />
+                        <Typography type="body">About</Typography>
+                        <Tabs.Indicator className="bg-accent" />
                       </Tabs.Tab>
                     </Tabs.List>
                   </Tabs.ListContainer>
 
                   <Typography
-                    className="hidden sm:block px-3 py-2 text-[11px] opacity-70 capitalize"
+                    className="hidden sm:block"
                     color="muted"
                     type="body-xs"
                   >
                     {siteConfig.version}
                   </Typography>
-                </div>
+                </Surface>
 
                 {/* Scrollable Panel Container */}
                 <ScrollShadow
-                  className="flex-1 min-h-0 h-full overflow-y-auto p-4 sm:p-7 bg-background/40"
+                  className="flex-1 bg-background/40 rounded-4xl p-4"
                   orientation="vertical"
                   size={24}
                 >
-                  <Tabs.Panel className="p-0 m-0 outline-none" id="general">
+                  <Tabs.Panel id="general">
                     <GeneralTab />
                   </Tabs.Panel>
 
-                  <Tabs.Panel className="p-0 m-0 outline-none" id="data">
+                  <Tabs.Panel id="data">
                     <DataTab
                       onOpenSessionsLog={handleOpenSessionsLog}
                       onOpenTasksLog={handleOpenTasksLog}
                     />
                   </Tabs.Panel>
 
-                  <Tabs.Panel className="p-0 m-0 outline-none" id="about">
+                  <Tabs.Panel id="about">
                     <AboutTab />
                   </Tabs.Panel>
                 </ScrollShadow>
