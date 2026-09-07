@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { cn } from "@heroui/styles";
 
 import DefaultLayout from "@/layouts/default";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -17,35 +18,58 @@ import { MusicView } from "@/menus/music/music-view";
 
 export function IndexPage() {
   const [activeMode, setActiveMode] = useState<AppMode>("home");
+  const [nextMode, setNextMode] = useState<AppMode>("home");
   const containerRef = useRef<HTMLDivElement>(null);
   const prevModeRef = useRef<AppMode>(activeMode);
 
+  // Enter animation
   useGSAP(
     () => {
       if (!containerRef.current) return;
 
-      const activeEl = containerRef.current.querySelector(
-        `[data-mode-view="${activeMode}"]`,
-      );
-
-      if (activeEl) {
-        gsap.fromTo(
-          activeEl,
-          { opacity: 0, scale: 0.985, y: 6 },
-          {
-            opacity: 1,
-            scale: 1,
-            y: 0,
-            duration: 0.28,
-            ease: "power2.out",
-            overwrite: "auto",
+      gsap.fromTo(
+        containerRef.current,
+        { opacity: 0, scale: 0.9, y: 20 },
+        {
+          opacity: 1,
+          scale: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power2.out",
+          onComplete: () => {
+            setActiveMode(nextMode);
           },
-        );
-      }
+        },
+      );
 
       prevModeRef.current = activeMode;
     },
     { dependencies: [activeMode], scope: containerRef },
+  );
+
+  // Exit animation
+  useGSAP(
+    () => {
+      if (!containerRef.current) return;
+
+      gsap.fromTo(
+        containerRef.current,
+        { opacity: 1, scale: 1, y: 0 },
+        {
+          opacity: 0,
+          scale: 0.9,
+          y: 20,
+          duration: 0.15,
+          ease: "power2.in",
+          onComplete: () => {
+            setActiveMode(nextMode);
+          },
+        },
+      );
+
+      prevModeRef.current = activeMode;
+    },
+    { dependencies: [nextMode], scope: containerRef },
   );
 
   return (
@@ -53,62 +77,18 @@ export function IndexPage() {
       <SidebarLeft activeMode={activeMode} />
       <Sidebar activeMode={activeMode} />
 
-      <Dock activeMode={activeMode} onSelectMode={setActiveMode} />
+      <Dock activeMode={nextMode} onSelectMode={setNextMode} />
 
       {/* Floating Audio Deck & Library Modal */}
       <MusicWidget activeMode={activeMode} />
       <PlaylistPickerModal />
 
-      <section
-        ref={containerRef}
-        className="flex flex-col items-center justify-center flex-1 w-full h-full py-1 min-h-0 overflow-hidden"
-      >
-        <div className="w-full h-full flex flex-col items-center justify-center flex-1 min-h-0 overflow-hidden relative">
-          <div
-            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 ${
-              activeMode === "home" ? "" : "hidden"
-            }`}
-            data-mode-view="home"
-          >
-            <Clock />
-          </div>
-
-          <div
-            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 ${
-              activeMode === "pomodoro" ? "" : "hidden"
-            }`}
-            data-mode-view="pomodoro"
-          >
-            <Timer />
-          </div>
-
-          <div
-            className={`w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden ${
-              activeMode === "todo" ? "" : "hidden"
-            }`}
-            data-mode-view="todo"
-          >
-            <TodoPage />
-          </div>
-
-          <div
-            className={`w-full h-full flex-1 flex flex-col items-center justify-between min-h-0 overflow-hidden ${
-              activeMode === "stats" ? "" : "hidden"
-            }`}
-            data-mode-view="stats"
-          >
-            <StatsPage />
-          </div>
-
-          <div
-            className={`w-full h-full flex-1 flex flex-col items-center justify-center min-h-0 overflow-hidden ${
-              activeMode === "music" ? "" : "hidden"
-            }`}
-            data-mode-view="music"
-          >
-            <MusicView />
-          </div>
-        </div>
+      <section ref={containerRef} className="w-full h-full overflow-hidden">
+        {activeMode === "home" && <Clock />}
+        {activeMode === "pomodoro" && <Timer />}
+        {activeMode === "todo" && <TodoPage />}
+        {activeMode === "music" && <MusicView />}
+        {activeMode === "stats" && <StatsPage />}
       </section>
     </DefaultLayout>
   );

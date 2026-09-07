@@ -1,11 +1,22 @@
+import { cn } from "@heroui/react";
+
 import { TodoHeader } from "./components/todo-header";
 import { TodoInputBar } from "./components/todo-input-bar";
 import { TodoList } from "./components/todo-list";
 import { TodoStatsBar } from "./components/todo-stats-bar";
 
-export function TodoPage() {
+export function TodoPage({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden">
+    <div
+      className={cn(
+        "flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden",
+        className,
+      )}
+      {...props}
+    >
       {/* Header & Quick Add anchored at top */}
       <div className="flex flex-col gap-3 w-full shrink-0">
         <TodoHeader />

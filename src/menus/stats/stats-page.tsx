@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { ScrollShadow } from "@heroui/react";
+import { cn, ScrollShadow } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
@@ -13,7 +13,10 @@ import { AchievementsModal } from "./components/achievements-modal";
 
 import { useStats } from "@/hooks/use-stats";
 
-export function StatsPage() {
+export function StatsPage({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   const {
     sessions,
     todos,
@@ -63,7 +66,11 @@ export function StatsPage() {
   return (
     <div
       ref={containerRef}
-      className="flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden select-none"
+      className={cn(
+        "flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden select-none",
+        className,
+      )}
+      {...props}
     >
       {/* Header with Title, Subtitle, Range Tabs, Custom Date Picker, and Achievements */}
       <div className="shrink-0 w-full">

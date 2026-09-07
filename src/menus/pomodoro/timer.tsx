@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Typography, Kbd } from "@heroui/react";
+import { Typography, Kbd, cn, Surface } from "@heroui/react";
 
 import { CycleTracker } from "./components/cycle-tracker";
 import { SaveProgressModal } from "./components/save-progress-modal";
@@ -15,7 +15,10 @@ import { shouldPromptForTargetReduction } from "./logic/cycle-rules";
 import { useTimer } from "@/hooks/use-timer";
 import { TimerMode } from "@/config/timer";
 
-export function Timer() {
+export function Timer({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   const {
     mode,
     durations,
@@ -187,7 +190,14 @@ export function Timer() {
     (currentCycle >= targetCycles && isFocus && timeLeft <= 0);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 sm:gap-5 md:gap-7 w-full max-w-lg md:max-w-xl mx-auto px-2 sm:px-4 py-1 select-none">
+    <Surface
+      className={cn(
+        "flex h-full w-full flex-col items-center justify-center text-center select-none space-y-2",
+        className,
+      )}
+      variant="transparent"
+      {...props}
+    >
       {/* Interactive Cycle Tracker */}
       <CycleTracker
         onRequestJumpCycle={handleRequestJumpCycle}
@@ -275,6 +285,6 @@ export function Timer() {
         isOpen={isSaveModalOpen}
         onOpenChange={setIsSaveModalOpen}
       />
-    </div>
+    </Surface>
   );
 }

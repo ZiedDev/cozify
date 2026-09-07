@@ -1,4 +1,4 @@
-import { Button, Typography } from "@heroui/react";
+import { Button, cn, Typography } from "@heroui/react";
 import { Plus, Minus } from "lucide-react";
 
 import { RollingTimerText } from "./rolling-timer-text";
@@ -28,13 +28,13 @@ export function TimerDisplay({
         <Button
           isIconOnly
           aria-label="Subtract 5 minutes"
-          className="shrink-0 size-8 xs:size-9 sm:size-10 md:size-11 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted hover:text-foreground hover:bg-surface/80"
+          className="size-10 rounded-xl text-muted"
           isDisabled={isMinusDisabled}
           size="sm"
           variant="ghost"
           onPress={() => onAddMinutes(-5)}
         >
-          <Minus className="size-4 sm:size-5 md:size-6" />
+          <Minus className="size-6" />
         </Button>
       )}
 
@@ -42,9 +42,10 @@ export function TimerDisplay({
       <div className="flex flex-col items-center justify-center">
         <Typography
           aria-label={formattedTime}
-          className={`font-sans text-6xl xs:text-7xl sm:text-8xl md:text-9xl lg:text-[9.5rem] tracking-tight tabular-nums leading-none transition-colors flex items-center justify-center ${
-            isOvertime ? "text-accent" : "text-foreground"
-          }`}
+          className={cn(
+            "text-6xl xs:text-7xl sm:text-7xl md:text-8xl lg:text-9xl transition-colors ",
+            isOvertime ? "text-accent" : "text-foreground",
+          )}
           type="h1"
           weight="medium"
         >
@@ -52,20 +53,10 @@ export function TimerDisplay({
         </Typography>
         {/* Minutes and Seconds Indicators */}
         <div className="flex items-center justify-between w-full max-w-44 xs:max-w-52 sm:max-w-64 md:max-w-80 px-2 sm:px-4 text-[9px] xs:text-[10px] sm:text-xs font-semibold st uppercase mt-0.5 sm:mt-1">
-          <Typography
-            className="text-[9px] xs:text-[10px] sm:text-xs st uppercase"
-            color="muted"
-            type="body-xs"
-            weight="semibold"
-          >
+          <Typography color="muted" type="body-xs" weight="semibold">
             minutes
           </Typography>
-          <Typography
-            className="text-[9px] xs:text-[10px] sm:text-xs st uppercase"
-            color="muted"
-            type="body-xs"
-            weight="semibold"
-          >
+          <Typography color="muted" type="body-xs" weight="semibold">
             seconds
           </Typography>
         </div>
@@ -76,13 +67,13 @@ export function TimerDisplay({
         <Button
           isIconOnly
           aria-label="Add 5 minutes"
-          className="shrink-0 size-8 xs:size-9 sm:size-10 md:size-11 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted hover:text-foreground hover:bg-surface/80"
+          className="size-10 rounded-xl text-muted"
           isDisabled={isPlusDisabled}
           size="sm"
           variant="ghost"
           onPress={() => onAddMinutes(5)}
         >
-          <Plus className="size-4 sm:size-5 md:size-6" />
+          <Plus className="size-6" />
         </Button>
       )}
     </div>

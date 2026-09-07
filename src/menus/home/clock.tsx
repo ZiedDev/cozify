@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Typography } from "@heroui/react";
+import { cn, Surface, Typography } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
@@ -7,7 +7,10 @@ import { RollingText } from "@/components/ui/rolling-text";
 import { useClock } from "@/hooks/use-clock";
 import { FOCUS_GREETINGS } from "@/config/greetings";
 
-export function Clock() {
+export function Clock({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   const { time12, period, fullDate, timeGreeting } = useClock();
   const clockRef = useRef<HTMLDivElement>(null);
 
@@ -39,48 +42,51 @@ export function Clock() {
   );
 
   return (
-    <div
+    <Surface
       ref={clockRef}
-      className="flex flex-col items-center justify-center text-center gap-2 sm:gap-3 select-none"
+      className={cn(
+        "flex h-full w-full flex-col items-center justify-center text-center select-none space-y-2",
+        className,
+      )}
+      variant="transparent"
+      {...props}
     >
       {/* Centered Clock Display */}
-      <div className="inline-flex items-start justify-center">
+      <Surface
+        className="inline-flex items-start justify-center"
+        variant="transparent"
+      >
         <Typography
           aria-label={time12}
-          className="font-sans text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl tracking-tight text-foreground tabular-nums leading-none drop-shadow-xs flex items-center"
+          className="text-6xl sm:text-7xl md:text-7xl lg:text-8xl xl:text-9xl"
           type="h1"
           weight="medium"
         >
           <RollingText value={time12} />
         </Typography>
         <Typography
-          className="text-base sm:text-lg md:text-xl lg:text-2xl text-accent uppercase r ml-2 sm:ml-3 pt-1 sm:pt-2 select-none font-semibold flex items-center"
+          className="text-base sm:text-lg md:text-xl lg:text-2xl text-accent uppercase ml-2 sm:ml-3 mt-1 sm:mt-4 select-none font-semibold"
           type="h3"
           weight="medium"
         >
           <RollingText duration={0.6} stagger={0.08} value={period} />
         </Typography>
-      </div>
+      </Surface>
 
       {/* Full Date */}
-      <Typography
-        className="text-base sm:text-lg md:text-xl lg:text-2xl  mt-0.5 sm:mt-1 font-normal"
-        color="muted"
-        type="h4"
-        weight="normal"
-      >
+      <Typography color="muted" type="h4" weight="normal">
         {fullDate}
       </Typography>
 
       {/* Greeting Mantra */}
       <Typography
-        className="text-xs sm:text-sm md:text-base lg:text-lg opacity-75 font-light text-center mt-1.5 sm:mt-2 max-w-md"
+        className="text-center"
         color="muted"
         type="body"
         weight="normal"
       >
         {timeGreeting}. {greeting}
       </Typography>
-    </div>
+    </Surface>
   );
 }
