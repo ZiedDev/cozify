@@ -13,6 +13,7 @@ import {
   InputGroup,
   ScrollShadow,
   Slider,
+  Spinner,
 } from "@heroui/react";
 import {
   Play,
@@ -27,7 +28,7 @@ import {
 } from "lucide-react";
 import gsap from "gsap";
 
-import { MarqueeTitle } from "@/components/music/marquee-title";
+import { MarqueeTitle } from "@/components/music";
 import { useMusic } from "@/context/music-context";
 import { formatTime } from "@/config/playlists";
 
@@ -59,6 +60,8 @@ export function CozyMusicCard() {
     togglePicker,
     togglePosterPreview,
     bindYTPlayerElement,
+    playerKey,
+    retryPlayer,
   } = useMusic();
 
   const [inputUrl, setInputUrl] = useState("");
@@ -219,7 +222,6 @@ export function CozyMusicCard() {
             href={currentPlayingUrl}
             rel="noopener noreferrer"
             target="_blank"
-            title={isSpotify ? "Open in Spotify" : "Open in YouTube"}
           >
             {isSpotify ? (
               <svg
@@ -297,7 +299,11 @@ export function CozyMusicCard() {
               }`}
               style={cropStyle}
             >
-              <div ref={bindYTPlayerElement} className="w-full h-full" />
+              <div
+                key={playerKey}
+                ref={bindYTPlayerElement}
+                className="w-full h-full"
+              />
             </div>
 
             {/* 2. Round Vinyl Disc Layer with Clean Scale, Blur & Brightness Transition */}
@@ -337,9 +343,26 @@ export function CozyMusicCard() {
                 <div className="absolute inset-0 rounded-full bg-[conic-gradient(from_0deg_at_50%_50%,rgba(255,255,255,0.15)_0deg,transparent_60deg,rgba(255,255,255,0.1)_180deg,transparent_240deg,rgba(255,255,255,0.15)_360deg)] pointer-events-none mix-blend-overlay" />
               </div>
 
-              {/* Central Spindle Hole with metallic rim and 100% transparent cutout */}
-              <div className="absolute size-7 rounded-full border-2 border-white/40 shadow-inner flex items-center justify-center pointer-events-none bg-transparent">
-                <div className="size-3.5 rounded-full border border-white/25 bg-transparent" />
+              {/* Central Spindle Hole with metallic rim and 100% transparent cutout or loading spinner */}
+              <div
+                className={`absolute size-8 rounded-full border-2 border-white/40 shadow-inner flex items-center justify-center bg-black/40 backdrop-blur-xs transition-[transform,opacity] ${
+                  isBuffering
+                    ? "pointer-events-auto cursor-pointer hover:scale-110 active:scale-95"
+                    : "pointer-events-none"
+                }`}
+                title={isBuffering ? "Loading... Click to reload player" : undefined}
+                onClick={(e) => {
+                  if (isBuffering) {
+                    e.stopPropagation();
+                    retryPlayer("manual_spindle_click");
+                  }
+                }}
+              >
+                {isBuffering ? (
+                  <Spinner color="accent" size="sm" />
+                ) : (
+                  <div className="size-3.5 rounded-full border border-white/25 bg-transparent" />
+                )}
               </div>
             </div>
           </button>

@@ -21,10 +21,10 @@ type Props = {
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
   onDelete: (todo: TodoItem) => void;
-  onDragStart: (e: DragEvent, id: string) => void;
-  onDragOver: (e: DragEvent, id: string) => void;
-  onDragEnd: () => void;
-  onDrop: (e: DragEvent, id: string) => void;
+  onDragStart?: (e: DragEvent, id: string) => void;
+  onDragOver?: (e: DragEvent, id: string) => void;
+  onDragEnd?: () => void;
+  onDrop?: (e: DragEvent, id: string) => void;
 };
 
 export function TodoItemDetailed({
@@ -70,18 +70,18 @@ export function TodoItemDetailed({
 
   return (
     <div
-      draggable
-      className={`group relative flex flex-col gap-2 p-3 md:p-3.5 rounded-2xl border transition-[background-color,border-color,opacity,transform] duration-150 select-none ${
+      className={`group relative flex flex-col gap-2 p-3 md:p-3.5 rounded-2xl border transition-[background-color,border-color,transform] duration-150 select-none ${
         isDragging
-          ? "opacity-25 bg-transparent border-dashed border-accent/70 scale-[0.98] shadow-none"
+          ? "bg-surface border-accent/70 shadow-md scale-[1.01]"
           : todo.completed
             ? "bg-surface-secondary/80 border-separator/30 opacity-70"
             : "bg-surface hover:border-separator/80 border-separator/40 shadow-xs"
       }`}
+      draggable={Boolean(onDragStart)}
       onDragEnd={onDragEnd}
-      onDragOver={(e) => onDragOver(e, todo.id)}
-      onDragStart={(e) => onDragStart(e, todo.id)}
-      onDrop={(e) => onDrop(e, todo.id)}
+      onDragOver={onDragOver ? (e) => onDragOver(e, todo.id) : undefined}
+      onDragStart={onDragStart ? (e) => onDragStart(e, todo.id) : undefined}
+      onDrop={onDrop ? (e) => onDrop(e, todo.id) : undefined}
     >
       {/* 1. Top row: Drag Handle, Checkbox, Title, and Action Buttons */}
       <div className="flex items-start justify-between gap-2.5 w-full">

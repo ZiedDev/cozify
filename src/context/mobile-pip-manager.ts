@@ -3,7 +3,7 @@ import {
   drawTimerToCanvas,
   CANVAS_PIP_WIDTH,
   CANVAS_PIP_HEIGHT,
-} from "@/components/pomodoro/canvas-timer-renderer";
+} from "@/components/pomodoro";
 
 export function isMobileDevice(): boolean {
   if (typeof window === "undefined" || typeof navigator === "undefined")

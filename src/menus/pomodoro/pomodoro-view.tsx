@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Typography, Kbd, cn, Surface } from "@heroui/react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 
 import { CycleTracker } from "./components/cycle-tracker";
 import { SaveProgressModal } from "./components/save-progress-modal";
@@ -15,10 +17,32 @@ import { shouldPromptForTargetReduction } from "./logic/cycle-rules";
 import { useTimer } from "@/hooks/use-timer";
 import { TimerMode } from "@/config/timer";
 
-export function Timer({
+export function PomodoroView({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
+  const timerRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (!timerRef.current) return;
+      const elements = timerRef.current.children;
+
+      gsap.fromTo(
+        elements,
+        { opacity: 0, y: 10, scale: 0.98 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.45,
+          stagger: 0.08,
+          ease: "power2.out",
+        },
+      );
+    },
+    { scope: timerRef },
+  );
   const {
     mode,
     durations,
@@ -191,6 +215,7 @@ export function Timer({
 
   return (
     <Surface
+      ref={timerRef}
       className={cn(
         "flex h-full w-full flex-col items-center justify-center text-center select-none space-y-2",
         className,
@@ -247,7 +272,7 @@ export function Timer({
 
       {/* Spacebar Shortcut Hint */}
       <Typography
-        className="text-[10px] sm:text-xs opacity-60 r uppercase"
+        className="text-[10px] sm:text-xs opacity-60 uppercase"
         color="muted"
         type="body-xs"
       >
@@ -288,3 +313,5 @@ export function Timer({
     </Surface>
   );
 }
+
+export { PomodoroView as Timer };

@@ -162,7 +162,7 @@ export function PlaylistPickerModal() {
                     key={item.id}
                     className={`group relative flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 ease-out select-none hover:shadow-md ${
                       isActive
-                        ? "bg-accent/10 border-accent text-accent shadow-xs ring-1 ring-accent/30"
+                        ? "bg-accent/10 border-accent text-accent shadow-xs"
                         : "bg-surface-secondary/30 hover:bg-surface-secondary/70 border-separator/40 hover:border-separator/70 text-foreground"
                     }`}
                   >

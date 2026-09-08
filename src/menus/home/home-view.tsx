@@ -7,7 +7,7 @@ import { RollingText } from "@/components/ui/rolling-text";
 import { useClock } from "@/hooks/use-clock";
 import { FOCUS_GREETINGS } from "@/config/greetings";
 
-export function Clock({
+export function HomeView({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
@@ -90,3 +90,5 @@ export function Clock({
     </Surface>
   );
 }
+
+export { HomeView as Clock };

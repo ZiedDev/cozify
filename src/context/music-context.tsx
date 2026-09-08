@@ -72,12 +72,14 @@ type MusicContextValue = {
   isPosterHidden: boolean;
   spotifyEmbedUrl: string | null;
   currentPlayingUrl: string;
+  playerKey: number;
 
   setIsDeckOpen: (open: boolean) => void;
   setIsPickerOpen: (open: boolean) => void;
   toggleDeck: () => void;
   togglePicker: () => void;
   togglePosterPreview: () => void;
+  retryPlayer: (reason?: string) => void;
 
   play: () => void;
   pause: () => void;
@@ -187,10 +189,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const [isDeckOpen, setIsDeckOpen] = useState<boolean>(false);
   const [isPickerOpen, setIsPickerOpen] = useState<boolean>(false);
   const [isReady, setIsReady] = useState<boolean>(false);
+  const [playerKey, setPlayerKey] = useState<number>(0);
 
   const playerRef = useRef<any>(null);
   const isReadyRef = useRef<boolean>(false);
   const isPlayingRef = useRef<boolean>(false);
+  const isBufferingRef = useRef<boolean>(false);
   const ytContainerRef = useRef<HTMLDivElement | null>(null);
   const progressTimerRef = useRef<any>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
@@ -213,6 +217,29 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const trackMetaCacheRef = useRef<
     Map<string, { title: string; author: string }>
   >(new Map());
+
+  // Mutable refs keeping the active playback state always fresh for async watchdog & player events
+  const activeUrlRef = useRef<string>(activeUrl);
+  activeUrlRef.current = activeUrl;
+  const volumeRef = useRef<number>(volume);
+  volumeRef.current = volume;
+  const currentTrackIndexRef = useRef<number>(currentTrackIndex);
+  currentTrackIndexRef.current = currentTrackIndex;
+  const currentVideoIdRef = useRef<string>(currentVideoId);
+  currentVideoIdRef.current = currentVideoId;
+  const currentTimeRef = useRef<number>(currentTime);
+  currentTimeRef.current = currentTime;
+
+  const bufferingWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef<number>(0);
+  const lastRetryTimeRef = useRef<number>(0);
+  const MAX_RETRIES = 3;
+  const WATCHDOG_TIMEOUT_MS = 8000;
+
+  const setBuffering = useCallback((buffering: boolean) => {
+    isBufferingRef.current = buffering;
+    setIsBuffering(buffering);
+  }, []);
 
   // Sync custom playlists to storage
   useEffect(() => {
@@ -553,6 +580,107 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }, 250);
   }, []);
 
+  // Cancel any active buffering watchdog timer
+  const clearBufferingWatchdog = useCallback(() => {
+    if (bufferingWatchdogRef.current) {
+      clearTimeout(bufferingWatchdogRef.current);
+      bufferingWatchdogRef.current = null;
+    }
+  }, []);
+
+  // Re-render and re-instantiate the YouTube iframe if stuck buffering or broken
+  const retryPlayer = useCallback(
+    (reason: string = "buffering_timeout") => {
+      clearBufferingWatchdog();
+
+      if (activePlatform !== "youtube") return;
+
+      const now = Date.now();
+      if (now - lastRetryTimeRef.current < 2000) return;
+      lastRetryTimeRef.current = now;
+
+      if (retryCountRef.current >= MAX_RETRIES) {
+        console.warn(`[Music] Max retries (${MAX_RETRIES}) reached for stuck player.`);
+        setBuffering(false);
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        toast("Playback Error", {
+          description:
+            "Audio stream got stuck and couldn't recover. Please try another track.",
+          variant: "danger",
+        });
+        return;
+      }
+
+      retryCountRef.current += 1;
+      const attempt = retryCountRef.current;
+      console.info(
+        `[Music] YouTube stuck loading (${reason}). Retrying iframe (${attempt}/${MAX_RETRIES})...`,
+      );
+
+      toast("Reloading Player 🔄", {
+        description: `Stream took too long to load. Retrying (${attempt}/${MAX_RETRIES})...`,
+        variant: "default",
+        timeout: 2500,
+      });
+
+      // Safely destroy existing player instance
+      try {
+        if (playerRef.current) {
+          playerRef.current.destroy?.();
+        }
+      } catch (e) {
+        console.warn("[Music] Failed to destroy player:", e);
+      }
+      playerRef.current = null;
+      isReadyRef.current = false;
+      setIsReady(false);
+      setBuffering(true);
+
+      // Trigger container element remount with new key
+      setPlayerKey((k) => k + 1);
+
+      // Arm watchdog for this retry attempt as well
+      bufferingWatchdogRef.current = setTimeout(() => {
+        if (
+          isBufferingRef.current ||
+          (isPlayingRef.current && !isReadyRef.current)
+        ) {
+          retryPlayer("retry_timeout");
+        }
+      }, WATCHDOG_TIMEOUT_MS);
+    },
+    [activePlatform, clearBufferingWatchdog, setBuffering],
+  );
+
+  // Arm the watchdog to trigger retryPlayer if buffering persists for > 8s
+  const startBufferingWatchdog = useCallback(() => {
+    clearBufferingWatchdog();
+
+    if (activePlatform !== "youtube") return;
+
+    bufferingWatchdogRef.current = setTimeout(() => {
+      if (
+        isBufferingRef.current ||
+        (isPlayingRef.current && (!isReadyRef.current || !isPlayerAttached()))
+      ) {
+        retryPlayer("watchdog_timeout");
+      }
+    }, WATCHDOG_TIMEOUT_MS);
+  }, [activePlatform, clearBufferingWatchdog, isPlayerAttached, retryPlayer]);
+
+  // Clean up timers & player on unmount
+  useEffect(() => {
+    return () => {
+      clearBufferingWatchdog();
+      clearInterval(progressTimerRef.current);
+      try {
+        playerRef.current?.destroy?.();
+      } catch {}
+      playerRef.current = null;
+    };
+  }, [clearBufferingWatchdog]);
+
   // Initialize YouTube Iframe API Player
   const initYTPlayer = useCallback(() => {
     if (!ytContainerRef.current || playerRef.current) return;
@@ -562,9 +690,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const ytData = parseYouTubeUrl(activeUrl);
+      const currentUrl = activeUrlRef.current;
+      const ytData = parseYouTubeUrl(currentUrl);
       const initialVid =
-        ytData?.type === "video" ? ytData.id : ytData?.videoId || "rFZHOHl-L8A";
+        currentVideoIdRef.current ||
+        (ytData?.type === "video"
+          ? ytData.id
+          : ytData?.videoId || "rFZHOHl-L8A");
 
       try {
         playerRef.current = new window.YT.Player(ytContainerRef.current, {
@@ -584,7 +716,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
               isReadyRef.current = true;
               setIsReady(true);
               try {
-                event.target.setVolume(toActualVolume(volume));
+                event.target.setVolume(toActualVolume(volumeRef.current));
                 if (event.target.setPlaybackQuality) {
                   event.target.setPlaybackQuality("small");
                 }
@@ -597,44 +729,87 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
                 pendingActionRef.current = null;
                 action();
-              } else if (ytData?.type === "playlist") {
+              } else if (
+                mediaTypeRef.current === "playlist" ||
+                ytData?.type === "playlist"
+              ) {
                 mediaTypeRef.current = "playlist";
-                targetFirstVideoIdRef.current = ytData.videoId || "";
+                targetFirstVideoIdRef.current = ytData?.videoId || "";
                 const targetIdx =
-                  initialSaved?.currentTrackIndex ?? ytData.index ?? 0;
-                const cueOpts: any = {
-                  list: ytData.id,
-                  index: targetIdx,
-                  suggestedQuality: "small",
-                };
+                  currentTrackIndexRef.current ?? ytData?.index ?? 0;
+                const playlistId = ytData?.id;
 
-                if (
-                  !ytData.id.startsWith("RD") &&
-                  !ytData.id.startsWith("UL")
-                ) {
-                  cueOpts.listType = "playlist";
-                }
+                if (playlistId) {
+                  const cueOpts: any = {
+                    list: playlistId,
+                    index: targetIdx,
+                    suggestedQuality: "small",
+                  };
 
-                try {
-                  event.target.cuePlaylist(cueOpts);
-                } catch {}
-
-                let attempts = 0;
-                const pollPlaylist = setInterval(() => {
-                  attempts++;
-                  const list = event.target?.getPlaylist?.();
-
-                  if (list && Array.isArray(list) && list.length > 0) {
-                    populatePlaylistTracks(list);
-                    clearInterval(pollPlaylist);
-                  } else if (attempts > 30) {
-                    clearInterval(pollPlaylist);
+                  if (
+                    !playlistId.startsWith("RD") &&
+                    !playlistId.startsWith("UL")
+                  ) {
+                    cueOpts.listType = "playlist";
                   }
-                }, 250);
+
+                  try {
+                    if (isPlayingRef.current) {
+                      startBufferingWatchdog();
+                      if (typeof event.target.loadPlaylist === "function") {
+                        event.target.loadPlaylist(cueOpts);
+                      } else {
+                        event.target.cuePlaylist(cueOpts);
+                      }
+                      setTimeout(() => {
+                        try {
+                          event.target?.unMute?.();
+                          event.target?.playVideo?.();
+                        } catch {}
+                      }, 50);
+                    } else {
+                      event.target.cuePlaylist(cueOpts);
+                    }
+                  } catch {}
+
+                  let attempts = 0;
+                  const pollPlaylist = setInterval(() => {
+                    attempts++;
+                    const list = event.target?.getPlaylist?.();
+
+                    if (list && Array.isArray(list) && list.length > 0) {
+                      populatePlaylistTracks(list);
+                      clearInterval(pollPlaylist);
+                    } else if (attempts > 30) {
+                      clearInterval(pollPlaylist);
+                    }
+                  }, 250);
+                }
               } else if (initialVid) {
                 mediaTypeRef.current = "video";
                 targetFirstVideoIdRef.current = "";
                 fetchMetadata(initialVid);
+                if (isPlayingRef.current) {
+                  startBufferingWatchdog();
+                  try {
+                    const startSec =
+                      currentTimeRef.current > 2 ? currentTimeRef.current : 0;
+
+                    if (typeof event.target.loadVideoById === "function") {
+                      event.target.loadVideoById({
+                        videoId: initialVid,
+                        startSeconds: startSec,
+                        suggestedQuality: "small",
+                      });
+                    }
+                    setTimeout(() => {
+                      try {
+                        event.target?.unMute?.();
+                        event.target?.playVideo?.();
+                      } catch {}
+                    }, 50);
+                  } catch {}
+                }
               }
             },
             onStateChange: (event: any) => {
@@ -655,45 +830,77 @@ export function MusicProvider({ children }: { children: ReactNode }) {
               }
 
               if (event.data === window.YT.PlayerState.PLAYING) {
+                retryCountRef.current = 0;
+                clearBufferingWatchdog();
                 isPlayingRef.current = true;
                 setIsPlaying(true);
-                setIsBuffering(false);
+                setBuffering(false);
                 startTimeline();
               } else if (event.data === window.YT.PlayerState.BUFFERING) {
-                setIsBuffering(true);
+                setBuffering(true);
+                startBufferingWatchdog();
               } else if (event.data === window.YT.PlayerState.PAUSED) {
+                clearBufferingWatchdog();
                 isPlayingRef.current = false;
                 setIsPlaying(false);
-                setIsBuffering(false);
+                setBuffering(false);
               } else if (event.data === window.YT.PlayerState.ENDED) {
+                clearBufferingWatchdog();
                 isPlayingRef.current = false;
                 setIsPlaying(false);
-                setIsBuffering(false);
+                setBuffering(false);
               } else if (event.data === window.YT.PlayerState.CUED) {
-                setIsBuffering(false);
+                setBuffering(false);
                 if (isPlayingRef.current) {
+                  startBufferingWatchdog();
                   try {
                     event.target?.unMute?.();
                     event.target?.playVideo?.();
                   } catch {}
                 } else {
+                  clearBufferingWatchdog();
                   setIsPlaying(false);
                 }
               } else if (event.data === -1) {
                 // UNSTARTED
                 if (isPlayingRef.current) {
-                  setIsBuffering(true);
+                  setBuffering(true);
+                  startBufferingWatchdog();
                   try {
                     event.target?.unMute?.();
                     event.target?.playVideo?.();
                   } catch {}
+                } else {
+                  clearBufferingWatchdog();
                 }
               }
             },
-            onError: () => {
-              isPlayingRef.current = false;
-              setIsPlaying(false);
-              setIsBuffering(false);
+            onError: (event: any) => {
+              const errCode = event?.data;
+
+              console.warn("[Music] YouTube Player error:", errCode);
+              if (errCode === 101 || errCode === 150) {
+                clearBufferingWatchdog();
+                isPlayingRef.current = false;
+                setIsPlaying(false);
+                setBuffering(false);
+                toast("Playback Restricted", {
+                  description:
+                    "This video cannot be played in embedded players.",
+                  variant: "danger",
+                });
+              } else if (errCode === 100) {
+                clearBufferingWatchdog();
+                isPlayingRef.current = false;
+                setIsPlaying(false);
+                setBuffering(false);
+                toast("Video Unavailable", {
+                  description: "This video was removed or marked private.",
+                  variant: "danger",
+                });
+              } else {
+                retryPlayer("player_error_" + errCode);
+              }
             },
           },
         });
@@ -730,33 +937,51 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       };
     }
   }, [
-    activeUrl,
-    volume,
     fetchMetadata,
     syncPlayerTrackMeta,
     startTimeline,
-    initialSaved,
     populatePlaylistTracks,
+    clearBufferingWatchdog,
+    startBufferingWatchdog,
+    retryPlayer,
+    setBuffering,
   ]);
 
   const bindYTPlayerElement = useCallback(
     (el: HTMLDivElement | null) => {
       ytContainerRef.current = el;
-      if (el && !playerRef.current) {
+      if (!el) {
+        if (playerRef.current) {
+          try {
+            playerRef.current.destroy?.();
+          } catch {}
+          playerRef.current = null;
+          isReadyRef.current = false;
+          setIsReady(false);
+        }
+
+        return;
+      }
+
+      if (!playerRef.current || !isPlayerAttached()) {
         initYTPlayer();
       }
     },
-    [initYTPlayer],
+    [initYTPlayer, isPlayerAttached],
   );
 
   const play = useCallback(() => {
     if (activePlatform === "youtube") {
-      setIsBuffering(true);
+      setBuffering(true);
+      isPlayingRef.current = true;
+      retryCountRef.current = 0;
+      startBufferingWatchdog();
 
       const executePlay = () => {
         if (!playerRef.current) return;
         try {
           if (typeof playerRef.current.playVideo === "function") {
+            playerRef.current.unMute?.();
             playerRef.current.playVideo();
           }
         } catch {}
@@ -766,19 +991,30 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         executePlay();
       } else {
         pendingActionRef.current = executePlay;
+        if (!playerRef.current && ytContainerRef.current) {
+          initYTPlayer();
+        }
       }
     } else {
       isPlayingRef.current = true;
       setIsPlaying(true);
-      setIsBuffering(false);
+      setBuffering(false);
     }
-  }, [activePlatform, isPlayerAttached]);
+  }, [
+    activePlatform,
+    isPlayerAttached,
+    startBufferingWatchdog,
+    initYTPlayer,
+    setBuffering,
+  ]);
 
   const pause = useCallback(() => {
+    clearBufferingWatchdog();
     pendingActionRef.current = null;
     isPlayingRef.current = false;
     setIsPlaying(false);
-    setIsBuffering(false);
+    setBuffering(false);
+    retryCountRef.current = 0;
     if (
       activePlatform === "youtube" &&
       isPlayerAttached() &&
@@ -788,7 +1024,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         playerRef.current.pauseVideo();
       } catch {}
     }
-  }, [activePlatform, isPlayerAttached]);
+  }, [activePlatform, isPlayerAttached, clearBufferingWatchdog, setBuffering]);
 
   const togglePlay = useCallback(() => {
     if (isPlaying) pause();
@@ -850,28 +1086,37 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (tracklist.length <= 1) return;
     if (isPlayerAttached() && playerRef.current?.nextVideo) {
       try {
+        retryCountRef.current = 0;
+        setBuffering(true);
+        startBufferingWatchdog();
         playerRef.current.nextVideo();
         isPlayingRef.current = true;
         setIsPlaying(true);
       } catch {}
     }
-  }, [isPlayerAttached, tracklist.length]);
+  }, [isPlayerAttached, tracklist.length, startBufferingWatchdog, setBuffering]);
 
   const prevTrack = useCallback(() => {
     if (tracklist.length <= 1) return;
     if (isPlayerAttached() && playerRef.current?.previousVideo) {
       try {
+        retryCountRef.current = 0;
+        setBuffering(true);
+        startBufferingWatchdog();
         playerRef.current.previousVideo();
         isPlayingRef.current = true;
         setIsPlaying(true);
       } catch {}
     }
-  }, [isPlayerAttached, tracklist.length]);
+  }, [isPlayerAttached, tracklist.length, startBufferingWatchdog, setBuffering]);
 
   const playTrackAt = useCallback(
     (index: number) => {
       if (isPlayerAttached() && playerRef.current?.playVideoAt) {
         try {
+          retryCountRef.current = 0;
+          setBuffering(true);
+          startBufferingWatchdog();
           playerRef.current.playVideoAt(index);
           setCurrentTrackIndex(index);
           isPlayingRef.current = true;
@@ -879,7 +1124,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         } catch {}
       }
     },
-    [isPlayerAttached],
+    [isPlayerAttached, startBufferingWatchdog, setBuffering],
   );
 
   const loadUrl = useCallback(
@@ -964,8 +1209,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             try {
               if (autoPlay) {
                 isPlayingRef.current = true;
-                setIsBuffering(true);
+                setBuffering(true);
                 setIsPlaying(false);
+                retryCountRef.current = 0;
+                startBufferingWatchdog();
 
                 if (typeof playerRef.current.loadPlaylist === "function") {
                   playerRef.current.loadPlaylist(playlistOpts);
@@ -981,9 +1228,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
                   } catch {}
                 }, 50);
               } else if (typeof playerRef.current.cuePlaylist === "function") {
+                clearBufferingWatchdog();
                 isPlayingRef.current = false;
                 setIsPlaying(false);
-                setIsBuffering(false);
+                setBuffering(false);
                 playerRef.current.cuePlaylist(playlistOpts);
               }
             } catch {}
@@ -1030,8 +1278,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
               try {
                 if (autoPlay) {
                   isPlayingRef.current = true;
-                  setIsBuffering(true);
+                  setBuffering(true);
                   setIsPlaying(false);
+                  retryCountRef.current = 0;
+                  startBufferingWatchdog();
                   if (typeof playerRef.current.loadVideoById === "function") {
                     playerRef.current.loadVideoById({
                       videoId: parsed.id,
@@ -1054,9 +1304,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
                 } else if (
                   typeof playerRef.current.cueVideoById === "function"
                 ) {
+                  clearBufferingWatchdog();
                   isPlayingRef.current = false;
                   setIsPlaying(false);
-                  setIsBuffering(false);
+                  setBuffering(false);
                   playerRef.current.cueVideoById({
                     videoId: parsed.id,
                     suggestedQuality: "small",
@@ -1073,6 +1324,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           pendingActionRef.current = executeLoad;
         }
       } else {
+        clearBufferingWatchdog();
         mediaTypeRef.current = "spotify";
         targetFirstVideoIdRef.current = "";
         currentVideoIdsRef.current = [];
@@ -1084,7 +1336,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         }
         isPlayingRef.current = autoPlay;
         setIsPlaying(autoPlay);
-        setIsBuffering(false);
+        setBuffering(false);
       }
 
       toast("Music Loaded 🎧", {
@@ -1100,6 +1352,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       fetchMetadata,
       populatePlaylistTracks,
       syncPlayerTrackMeta,
+      setBuffering,
+      startBufferingWatchdog,
+      clearBufferingWatchdog,
     ],
   );
 
@@ -1229,11 +1484,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       isPosterHidden,
       spotifyEmbedUrl,
       currentPlayingUrl,
+      playerKey,
       setIsDeckOpen,
       setIsPickerOpen,
       toggleDeck,
       togglePicker,
       togglePosterPreview,
+      retryPlayer,
       play,
       pause,
       togglePlay,
@@ -1273,11 +1530,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       isPosterHidden,
       spotifyEmbedUrl,
       currentPlayingUrl,
+      playerKey,
       setIsDeckOpen,
       setIsPickerOpen,
       toggleDeck,
       togglePicker,
       togglePosterPreview,
+      retryPlayer,
       play,
       pause,
       togglePlay,

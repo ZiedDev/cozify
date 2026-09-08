@@ -13,7 +13,7 @@ import { AchievementsModal } from "./components/achievements-modal";
 
 import { useStats } from "@/hooks/use-stats";
 
-export function StatsPage({
+export function StatsView({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
@@ -41,26 +41,22 @@ export function StatsPage({
     () => {
       if (!containerRef.current) return;
 
-      const cards = containerRef.current.querySelectorAll(
-        ".stats-animated-card",
-      );
+      const elements = containerRef.current.children;
 
-      if (cards.length > 0) {
-        gsap.fromTo(
-          cards,
-          { opacity: 0, y: 10, scale: 0.99 },
-          {
-            opacity: 1,
-            y: 0,
-            scale: 1,
-            duration: 0.35,
-            stagger: 0.06,
-            ease: "power2.out",
-          },
-        );
-      }
+      gsap.fromTo(
+        elements,
+        { opacity: 0, y: 10, scale: 0.99 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.4,
+          stagger: 0.08,
+          ease: "power2.out",
+        },
+      );
     },
-    { dependencies: [range, customDateRange], scope: containerRef },
+    { scope: containerRef },
   );
 
   return (
@@ -144,3 +140,5 @@ export function StatsPage({
     </div>
   );
 }
+
+export { StatsView as StatsPage };

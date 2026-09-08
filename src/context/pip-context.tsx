@@ -15,7 +15,7 @@ import {
   isMobileDevice,
 } from "./mobile-pip-manager";
 
-import { PipTimerCard } from "@/components/pomodoro/pip-timer-card";
+import { PipTimerCard } from "@/components/pomodoro";
 import { useTimer } from "@/hooks/use-timer";
 import { useTheme } from "@/hooks/use-theme";
 import { calculateCycleProgressPercent } from "@/menus/pomodoro/logic/cycle-rules";

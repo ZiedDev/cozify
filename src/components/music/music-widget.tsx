@@ -117,7 +117,6 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
         >
           <button
             className="flex items-center gap-1.5 min-[701px]:gap-2 rounded-full h-8 px-3 min-[701px]:px-5 text-xs min-[701px]:text-sm md:text-base font-medium whitespace-nowrap text-foreground cursor-pointer transition-[opacity,transform,scale] duration-200 hover:opacity-90 active:scale-95 w-full max-w-full min-w-0"
-            title="Open Audio Deck"
             type="button"
             onClick={() => setIsDeckOpen(true)}
           >
@@ -216,11 +215,6 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
                 href={currentPlayingUrl}
                 rel="noopener noreferrer"
                 target="_blank"
-                title={
-                  activePlatform === "spotify"
-                    ? "Open in Spotify"
-                    : "Open in YouTube"
-                }
               >
                 {activePlatform === "spotify" ? (
                   <svg

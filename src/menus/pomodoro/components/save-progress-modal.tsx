@@ -216,7 +216,7 @@ export function SaveProgressModal({
                       key={t.id}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
                         tag === t.id
-                          ? `${t.color} font-semibold ring-1 ring-accent/30`
+                          ? `${t.color} font-semibold`
                           : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground hover:bg-surface-secondary"
                       }`}
                       type="button"

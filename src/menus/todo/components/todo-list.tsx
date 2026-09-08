@@ -1,18 +1,5 @@
-import {
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  DragEvent,
-} from "react";
-import {
-  AlertDialog,
-  ScrollShadow,
-  Separator,
-  Typography,
-  Button,
-} from "@heroui/react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { AlertDialog, ScrollShadow, Typography, Button } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { CheckCircle2, Coffee, Search } from "lucide-react";
@@ -24,11 +11,7 @@ import { TodoItemDetailed } from "./todo-item-detailed";
 import { TodoEditModal } from "./todo-edit-modal";
 
 import { useTodos } from "@/hooks/use-todos";
-
-type DragOverState = {
-  id: string;
-  position: "top" | "bottom";
-};
+import { SortableList, SortableItem } from "@/components/ui/sortable-list";
 
 const PAGE_SIZE = 20;
 
@@ -39,7 +22,7 @@ export function TodoList() {
     filter,
     searchQuery,
     selectedTag,
-    moveTodoToPosition,
+    reorderTodos,
     permanentlyDeleteTodo,
   } = useTodos();
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
@@ -58,137 +41,11 @@ export function TodoList() {
   const hasMore = visibleCount < filteredTodos.length;
   const remainingCount = filteredTodos.length - visibleCount;
 
-  const [draggedId, setDraggedId] = useState<string | null>(null);
-  const [dragOverState, setDragOverState] = useState<DragOverState | null>(
-    null,
-  );
-
-  const draggedIdRef = useRef<string | null>(null);
-  const dragOverStateRef = useRef<DragOverState | null>(null);
-
   const listRef = useRef<HTMLDivElement>(null);
   const prevIdsRef = useRef<string[]>([]);
   const isInitialMountRef = useRef<boolean>(true);
 
-  // Sync state to refs for immediate synchronous access during drag/drop events
-  const updateDragOver = useCallback((state: DragOverState | null) => {
-    dragOverStateRef.current = state;
-    setDragOverState(state);
-  }, []);
-
-  const updateDraggedId = useCallback((id: string | null) => {
-    draggedIdRef.current = id;
-    setDraggedId(id);
-  }, []);
-
-  // Item-level drag handlers
-  const handleDragStart = useCallback((e: DragEvent, id: string) => {
-    e.dataTransfer.setData("text/plain", id);
-    e.dataTransfer.effectAllowed = "move";
-
-    draggedIdRef.current = id;
-    // Delay React state update by 0ms so the browser captures the drag image before applying the transparent drag placeholder
-    setTimeout(() => {
-      setDraggedId(id);
-    }, 0);
-  }, []);
-
-  const handleItemDragOver = useCallback(
-    (e: DragEvent, id: string) => {
-      e.preventDefault();
-      e.stopPropagation();
-      e.dataTransfer.dropEffect = "move";
-
-      const rect = e.currentTarget.getBoundingClientRect();
-      const midY = rect.top + rect.height / 2;
-      const position = e.clientY < midY ? "top" : "bottom";
-
-      updateDragOver({ id, position });
-    },
-    [updateDragOver],
-  );
-
-  // Central commit function: moves item to the target position
-  const executeDrop = useCallback(() => {
-    const sourceId = draggedIdRef.current;
-    const targetState = dragOverStateRef.current;
-
-    if (sourceId && targetState && sourceId !== targetState.id) {
-      moveTodoToPosition(sourceId, targetState.id, targetState.position);
-    }
-
-    updateDraggedId(null);
-    updateDragOver(null);
-  }, [moveTodoToPosition, updateDraggedId, updateDragOver]);
-
-  // When mouse is released anywhere (even outside container or outside browser window),
-  // place the element where the last indicator was rather than cancelling!
-  const handleDragEnd = useCallback(() => {
-    executeDrop();
-  }, [executeDrop]);
-
-  const handleItemDrop = useCallback(
-    (e: DragEvent, targetId: string) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const sourceId =
-        e.dataTransfer.getData("text/plain") || draggedIdRef.current;
-      const targetState = dragOverStateRef.current;
-      const pos = targetState?.position || "bottom";
-
-      if (sourceId && sourceId !== targetId) {
-        moveTodoToPosition(sourceId, targetId, pos);
-      }
-
-      updateDraggedId(null);
-      updateDragOver(null);
-    },
-    [moveTodoToPosition, updateDraggedId, updateDragOver],
-  );
-
-  // Container-level drag over and drop (handles shadows, margins, and empty space)
-  const handleContainerDragOver = useCallback(
-    (e: DragEvent) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-
-      const container = listRef.current;
-
-      if (!container || filteredTodos.length === 0) return;
-
-      // Auto-scroll when near top or bottom edge of the scroll container
-      const rect = container.getBoundingClientRect();
-      const relativeY = e.clientY - rect.top;
-
-      if (relativeY < 48) {
-        container.scrollTop -= 6;
-      } else if (relativeY > rect.height - 48) {
-        container.scrollTop += 6;
-      }
-
-      // If dragging in container space above all items or below all items
-      const firstItem = visibleTodos[0];
-      const lastItem = visibleTodos[visibleTodos.length - 1];
-
-      if (relativeY < 32 && firstItem) {
-        updateDragOver({ id: firstItem.id, position: "top" });
-      } else if (relativeY > rect.height - 32 && lastItem) {
-        updateDragOver({ id: lastItem.id, position: "bottom" });
-      }
-    },
-    [visibleTodos, updateDragOver],
-  );
-
-  const handleContainerDrop = useCallback(
-    (e: DragEvent) => {
-      e.preventDefault();
-      executeDrop();
-    },
-    [executeDrop],
-  );
-
-  // Fast GSAP animations: only animate newly added items with zero mount lag
+  // Animate newly added items with zero mount lag
   useGSAP(
     () => {
       const el = listRef.current;
@@ -204,7 +61,6 @@ export function TodoList() {
         return;
       }
 
-      // Check if a new item was added
       const newIds = currentIds.filter(
         (id) => !prevIdsRef.current.includes(id),
       );
@@ -281,94 +137,50 @@ export function TodoList() {
           className="w-full h-full pr-1.5 scroll-smooth py-1"
           orientation="vertical"
           size={32}
-          onDragEnd={handleDragEnd}
-          onDragOver={handleContainerDragOver}
-          onDrop={handleContainerDrop}
         >
-          <div
-            className={`flex flex-col w-full ${
-              viewMode === "minimal" ? "gap-1.5" : "gap-2.5"
-            }`}
-          >
-            {visibleTodos.map((todo, idx) => {
-              const isDragOverThis =
-                dragOverState?.id === todo.id && draggedId !== todo.id;
-              const isDropTop =
-                isDragOverThis && dragOverState?.position === "top";
-              const isDropBottom =
-                isDragOverThis && dragOverState?.position === "bottom";
+          <SortableList onReorder={reorderTodos}>
+            <div
+              className={`flex flex-col w-full ${
+                viewMode === "minimal" ? "gap-1.5" : "gap-2.5"
+              }`}
+            >
+              {visibleTodos.map((todo, idx) => (
+                <SortableItem key={todo.id} id={todo.id} index={idx}>
+                  <div className="todo-item-row w-full" data-todo-id={todo.id}>
+                    {viewMode === "minimal" ? (
+                      <TodoItemMinimal
+                        index={idx}
+                        todo={todo}
+                        onDelete={setDeletingTodo}
+                        onEdit={setEditingTodo}
+                      />
+                    ) : (
+                      <TodoItemDetailed
+                        index={idx}
+                        todo={todo}
+                        onDelete={setDeletingTodo}
+                        onEdit={setEditingTodo}
+                      />
+                    )}
+                  </div>
+                </SortableItem>
+              ))}
 
-              const isThisDragging = draggedId === todo.id;
-
-              return (
-                <div
-                  key={todo.id}
-                  className={`todo-item-row w-full flex flex-col gap-1 transition-[opacity,transform] duration-150 ${
-                    isThisDragging
-                      ? "opacity-25 pointer-events-none scale-[0.99]"
-                      : "opacity-100"
-                  }`}
-                  data-todo-id={todo.id}
-                  onDragOver={(e) => handleItemDragOver(e, todo.id)}
-                  onDrop={(e) => handleItemDrop(e, todo.id)}
-                >
-                  {/* Separator indicator above if drop position is top */}
-                  {isDropTop && (
-                    <div className="py-0.5 px-1 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
-                      <Separator className="h-0.5 bg-accent rounded-full shadow-xs" />
-                    </div>
-                  )}
-
-                  {viewMode === "minimal" ? (
-                    <TodoItemMinimal
-                      index={idx}
-                      isDragging={draggedId === todo.id}
-                      todo={todo}
-                      onDelete={setDeletingTodo}
-                      onDragEnd={handleDragEnd}
-                      onDragOver={handleItemDragOver}
-                      onDragStart={handleDragStart}
-                      onDrop={handleItemDrop}
-                      onEdit={setEditingTodo}
-                    />
-                  ) : (
-                    <TodoItemDetailed
-                      index={idx}
-                      isDragging={draggedId === todo.id}
-                      todo={todo}
-                      onDelete={setDeletingTodo}
-                      onDragEnd={handleDragEnd}
-                      onDragOver={handleItemDragOver}
-                      onDragStart={handleDragStart}
-                      onDrop={handleItemDrop}
-                      onEdit={setEditingTodo}
-                    />
-                  )}
-
-                  {/* Separator indicator below if drop position is bottom */}
-                  {isDropBottom && (
-                    <div className="py-0.5 px-1 animate-in fade-in zoom-in-95 duration-150 pointer-events-none">
-                      <Separator className="h-0.5 bg-accent rounded-full shadow-xs" />
-                    </div>
-                  )}
+              {/* Load more button at the end of the scroll when there are more items */}
+              {hasMore && (
+                <div className="flex justify-center pt-2 pb-3">
+                  <Button
+                    className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-colors cursor-pointer shadow-xs"
+                    size="sm"
+                    variant="secondary"
+                    onPress={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                  >
+                    Load more ({remainingCount} remaining)
+                  </Button>
                 </div>
-              );
-            })}
-
-            {/* Load more button at the end of the scroll when there are more items */}
-            {hasMore && (
-              <div className="flex justify-center pt-2 pb-3">
-                <Button
-                  className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-colors cursor-pointer shadow-xs"
-                  size="sm"
-                  variant="secondary"
-                  onPress={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-                >
-                  Load more ({remainingCount} remaining)
-                </Button>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </SortableList>
         </ScrollShadow>
       )}
 

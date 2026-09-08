@@ -4,7 +4,7 @@ import { Toast } from "@heroui/react";
 import { Navbar } from "@/components/layout/navbar";
 import { BackgroundView } from "@/components/theme/background-view";
 import { useAchievementTracker } from "@/hooks/use-achievement-tracker";
-import { AchievementToastProvider } from "@/menus/stats/components/achievement-toast";
+import { AchievementToastProvider } from "@/components/stats";
 
 export default function DefaultLayout({ children }: { children: ReactNode }) {
   useAchievementTracker();

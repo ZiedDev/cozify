@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import { useSound } from "@/context/sound-context";
-import { showAchievementToast } from "@/menus/stats/components/achievement-toast";
+import { showAchievementToast } from "@/components/stats";
 import {
   calculateMilestones,
   calculateOverallStats,

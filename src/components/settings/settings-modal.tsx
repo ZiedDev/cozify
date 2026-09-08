@@ -50,16 +50,16 @@ export function SettingsModal({
       <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
         <Modal.Container size="lg">
           <Modal.Dialog className="max-sm:mt-0! md:max-w-250 sm:h-140 max-h-[88vh] shadow-2xl space-y-5">
-            <Modal.Header className="flex-row">
+            <Modal.Header className="flex-row items-center gap-3">
               <Modal.Icon>
                 <Settings className="text-accent" />
               </Modal.Icon>
-              <Modal.Heading>
-                <Typography type="h4">Reset Application Data?</Typography>
+              <div>
+                <Modal.Heading>Settings</Modal.Heading>
                 <Typography color="muted" type="body-xs">
-                  Settings & Preferences
+                  Preferences & workspace management
                 </Typography>
-              </Modal.Heading>
+              </div>
             </Modal.Header>
             <Modal.CloseTrigger />
             <Modal.Body>

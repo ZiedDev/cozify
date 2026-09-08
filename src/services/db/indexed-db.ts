@@ -1,227 +1,98 @@
-import { StoreName, DBStoreMap } from "./types";
+import Dexie, { type EntityTable } from "dexie";
+import {
+  StoreName,
+  DBStoreMap,
+  SessionRecord,
+  AppSettings,
+  SyncQueueItem,
+} from "./types";
+import { TodoItem } from "@/menus/todo/types";
+import { ThemeConfig } from "@/config/themes";
 
 const DB_NAME = "cozify_idb";
 const DB_VERSION = 1;
 
-class CozifyIndexedDB {
-  private dbPromise: Promise<IDBDatabase> | null = null;
+export class CozifyDexieDB extends Dexie {
+  sessions!: EntityTable<SessionRecord, "id">;
+  todos!: EntityTable<TodoItem, "id">;
+  theme!: EntityTable<Partial<ThemeConfig> & { key: string }, "key">;
+  timer!: EntityTable<Record<string, unknown> & { key: string }, "key">;
+  settings!: EntityTable<AppSettings & { key: string }, "key">;
+  syncQueue!: EntityTable<SyncQueueItem, "id">;
 
-  private async getDB(): Promise<IDBDatabase> {
-    if (typeof window === "undefined" || !window.indexedDB) {
-      throw new Error("IndexedDB is not supported in this environment");
-    }
-
-    if (!this.dbPromise) {
-      this.dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
-        const request = window.indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onupgradeneeded = (event) => {
-          const db = (event.target as IDBOpenDBRequest).result;
-
-          // 1. Sessions store
-          if (!db.objectStoreNames.contains("sessions")) {
-            const sessionStore = db.createObjectStore("sessions", {
-              keyPath: "id",
-            });
-
-            sessionStore.createIndex("createdAt", "createdAt", {
-              unique: false,
-            });
-            sessionStore.createIndex("tag", "tag", { unique: false });
-          }
-
-          // 2. Todos store
-          if (!db.objectStoreNames.contains("todos")) {
-            const todoStore = db.createObjectStore("todos", { keyPath: "id" });
-
-            todoStore.createIndex("createdAt", "createdAt", { unique: false });
-            todoStore.createIndex("completed", "completed", { unique: false });
-            todoStore.createIndex("tag", "tag", { unique: false });
-            todoStore.createIndex("dueDate", "dueDate", { unique: false });
-          }
-
-          // 3. Theme key-value store
-          if (!db.objectStoreNames.contains("theme")) {
-            db.createObjectStore("theme", { keyPath: "key" });
-          }
-
-          // 4. Timer key-value store
-          if (!db.objectStoreNames.contains("timer")) {
-            db.createObjectStore("timer", { keyPath: "key" });
-          }
-
-          // 5. Settings key-value store
-          if (!db.objectStoreNames.contains("settings")) {
-            db.createObjectStore("settings", { keyPath: "key" });
-          }
-
-          // 6. Offline Sync Queue store
-          if (!db.objectStoreNames.contains("syncQueue")) {
-            const syncStore = db.createObjectStore("syncQueue", {
-              keyPath: "id",
-            });
-
-            syncStore.createIndex("timestamp", "timestamp", { unique: false });
-          }
-        };
-
-        request.onsuccess = () => {
-          resolve(request.result);
-        };
-
-        request.onerror = () => {
-          this.dbPromise = null;
-          reject(request.error);
-        };
-      });
-    }
-
-    return this.dbPromise;
-  }
-
-  public async getAll<K extends StoreName>(
-    storeName: K,
-  ): Promise<DBStoreMap[K][]> {
-    try {
-      const db = await this.getDB();
-
-      return new Promise<DBStoreMap[K][]>((resolve, reject) => {
-        const transaction = db.transaction(storeName, "readonly");
-        const store = transaction.objectStore(storeName);
-        const request = store.getAll();
-
-        request.onsuccess = () => {
-          resolve(request.result as DBStoreMap[K][]);
-        };
-        request.onerror = () => {
-          reject(request.error);
-        };
-      });
-    } catch {
-      return [];
-    }
-  }
-
-  public async get<K extends StoreName>(
-    storeName: K,
-    key: IDBValidKey,
-  ): Promise<DBStoreMap[K] | null> {
-    try {
-      const db = await this.getDB();
-
-      return new Promise<DBStoreMap[K] | null>((resolve, reject) => {
-        const transaction = db.transaction(storeName, "readonly");
-        const store = transaction.objectStore(storeName);
-        const request = store.get(key);
-
-        request.onsuccess = () => {
-          resolve((request.result as DBStoreMap[K]) || null);
-        };
-        request.onerror = () => {
-          reject(request.error);
-        };
-      });
-    } catch {
-      return null;
-    }
-  }
-
-  public async put<K extends StoreName>(
-    storeName: K,
-    value: DBStoreMap[K],
-  ): Promise<void> {
-    try {
-      const db = await this.getDB();
-
-      return new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction(storeName, "readwrite");
-        const store = transaction.objectStore(storeName);
-        const request = store.put(value);
-
-        request.onsuccess = () => {
-          resolve();
-        };
-        request.onerror = () => {
-          reject(request.error);
-        };
-      });
-    } catch {
-      // IndexedDB storage fallback
-    }
-  }
-
-  public async putBatch<K extends StoreName>(
-    storeName: K,
-    values: DBStoreMap[K][],
-  ): Promise<void> {
-    if (values.length === 0) return;
-    try {
-      const db = await this.getDB();
-
-      return new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction(storeName, "readwrite");
-        const store = transaction.objectStore(storeName);
-
-        for (const item of values) {
-          store.put(item);
-        }
-
-        transaction.oncomplete = () => {
-          resolve();
-        };
-        transaction.onerror = () => {
-          reject(transaction.error);
-        };
-      });
-    } catch {
-      // IndexedDB storage fallback
-    }
-  }
-
-  public async delete<K extends StoreName>(
-    storeName: K,
-    key: IDBValidKey,
-  ): Promise<void> {
-    try {
-      const db = await this.getDB();
-
-      return new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction(storeName, "readwrite");
-        const store = transaction.objectStore(storeName);
-        const request = store.delete(key);
-
-        request.onsuccess = () => {
-          resolve();
-        };
-        request.onerror = () => {
-          reject(request.error);
-        };
-      });
-    } catch {
-      // IndexedDB storage fallback
-    }
-  }
-
-  public async clear<K extends StoreName>(storeName: K): Promise<void> {
-    try {
-      const db = await this.getDB();
-
-      return new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction(storeName, "readwrite");
-        const store = transaction.objectStore(storeName);
-        const request = store.clear();
-
-        request.onsuccess = () => {
-          resolve();
-        };
-        request.onerror = () => {
-          reject(request.error);
-        };
-      });
-    } catch {
-      // IndexedDB storage fallback
-    }
+  constructor() {
+    super(DB_NAME);
+    this.version(DB_VERSION).stores({
+      sessions: "id, createdAt, tag",
+      todos: "id, createdAt, completed, tag, dueDate",
+      theme: "key",
+      timer: "key",
+      settings: "key",
+      syncQueue: "id, timestamp",
+    });
   }
 }
 
-export const idb = new CozifyIndexedDB();
+export const dexieDb = new CozifyDexieDB();
+
+/**
+ * Standard IDB adapter delegating directly to Dexie.
+ * Eliminates custom IDB transaction boilerplate while preserving 100% backward compatibility.
+ */
+export const idb = {
+  getAll: async <K extends StoreName>(
+    storeName: K,
+  ): Promise<DBStoreMap[K][]> => {
+    try {
+      return (await dexieDb.table(storeName).toArray()) as DBStoreMap[K][];
+    } catch {
+      return [];
+    }
+  },
+
+  get: async <K extends StoreName>(
+    storeName: K,
+    key: IDBValidKey,
+  ): Promise<DBStoreMap[K] | null> => {
+    try {
+      const res = await dexieDb.table(storeName).get(key as any);
+      return (res as DBStoreMap[K]) || null;
+    } catch {
+      return null;
+    }
+  },
+
+  put: async <K extends StoreName>(
+    storeName: K,
+    value: DBStoreMap[K],
+  ): Promise<void> => {
+    try {
+      await dexieDb.table(storeName).put(value);
+    } catch {}
+  },
+
+  putBatch: async <K extends StoreName>(
+    storeName: K,
+    values: DBStoreMap[K][],
+  ): Promise<void> => {
+    if (!values.length) return;
+    try {
+      await dexieDb.table(storeName).bulkPut(values);
+    } catch {}
+  },
+
+  delete: async <K extends StoreName>(
+    storeName: K,
+    key: IDBValidKey,
+  ): Promise<void> => {
+    try {
+      await dexieDb.table(storeName).delete(key as any);
+    } catch {}
+  },
+
+  clear: async <K extends StoreName>(storeName: K): Promise<void> => {
+    try {
+      await dexieDb.table(storeName).clear();
+    } catch {}
+  },
+};

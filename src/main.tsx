@@ -1,5 +1,9 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
+import gsap from "gsap";
+
+// Prevent animation teleporting/skipping when DevTools or console causes browser RAF throttling
+gsap.ticker.lagSmoothing(1000, 16);
 
 import { ThemeProvider } from "@/context/theme-context";
 import { SoundProvider } from "@/context/sound-context";

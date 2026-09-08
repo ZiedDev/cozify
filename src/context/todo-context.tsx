@@ -7,6 +7,7 @@ import {
   useMemo,
   ReactNode,
 } from "react";
+import { arrayMove } from "@dnd-kit/sortable";
 
 import { useSound } from "@/context/sound-context";
 import {
@@ -49,6 +50,8 @@ type TodoContextType = {
     targetId: string,
     position: "top" | "bottom",
   ) => void;
+  reorderTodos: (activeId: string, overId: string) => void;
+  reorderList: (reordered: TodoItem[]) => void;
   setViewMode: (mode: TodoViewMode) => void;
   setFilter: (filter: TodoFilter) => void;
   setSelectedTag: (tag: string | null) => void;
@@ -258,6 +261,22 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const reorderTodos = useCallback((activeId: string, overId: string) => {
+    if (activeId === overId) return;
+    setTodos((prev) => {
+      const oldIndex = prev.findIndex((t) => t.id === activeId);
+      const newIndex = prev.findIndex((t) => t.id === overId);
+
+      if (oldIndex === -1 || newIndex === -1) return prev;
+
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  }, []);
+
+  const reorderList = useCallback((reordered: TodoItem[]) => {
+    setTodos(reordered);
+  }, []);
+
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   // Active unarchived todos list
@@ -344,6 +363,8 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       restoreTodo,
       clearCompleted,
       moveTodoToPosition,
+      reorderTodos,
+      reorderList,
       setViewMode,
       setFilter,
       setSelectedTag,
@@ -367,6 +388,8 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       restoreTodo,
       clearCompleted,
       moveTodoToPosition,
+      reorderTodos,
+      reorderList,
       setViewMode,
       setFilter,
     ],

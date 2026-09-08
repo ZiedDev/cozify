@@ -19,10 +19,10 @@ type Props = {
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
   onDelete: (todo: TodoItem) => void;
-  onDragStart: (e: DragEvent, id: string) => void;
-  onDragOver: (e: DragEvent, id: string) => void;
-  onDragEnd: () => void;
-  onDrop: (e: DragEvent, id: string) => void;
+  onDragStart?: (e: DragEvent, id: string) => void;
+  onDragOver?: (e: DragEvent, id: string) => void;
+  onDragEnd?: () => void;
+  onDrop?: (e: DragEvent, id: string) => void;
 };
 
 export function TodoItemMinimal({
@@ -50,18 +50,18 @@ export function TodoItemMinimal({
 
   return (
     <div
-      draggable
-      className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 md:py-2.5 rounded-xl border transition-[background-color,border-color,opacity,transform] duration-150 select-none ${
+      className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 md:py-2.5 rounded-xl border transition-[background-color,border-color,transform] duration-150 select-none ${
         isDragging
-          ? "opacity-25 bg-transparent border-dashed border-accent/70 scale-[0.98] shadow-none"
+          ? "bg-surface border-accent/70 shadow-md scale-[1.01]"
           : todo.completed
             ? "bg-surface-secondary/80 border-separator/30 opacity-70"
             : "bg-surface hover:border-separator/70 border-separator/40 shadow-2xs"
       }`}
+      draggable={Boolean(onDragStart)}
       onDragEnd={onDragEnd}
-      onDragOver={(e) => onDragOver(e, todo.id)}
-      onDragStart={(e) => onDragStart(e, todo.id)}
-      onDrop={(e) => onDrop(e, todo.id)}
+      onDragOver={onDragOver ? (e) => onDragOver(e, todo.id) : undefined}
+      onDragStart={onDragStart ? (e) => onDragStart(e, todo.id) : undefined}
+      onDrop={onDrop ? (e) => onDrop(e, todo.id) : undefined}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >

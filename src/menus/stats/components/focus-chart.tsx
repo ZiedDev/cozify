@@ -60,39 +60,49 @@ export function FocusChart({
   };
 
   return (
-    <div className="flex flex-col gap-3 p-4 sm:p-5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full select-none overflow-visible">
-      {/* Header matching Summary Widget (Clean icon without boxed background) */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
+    <div className="flex flex-col gap-2.5 p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full select-none overflow-visible">
+      {/* Header matching Productivity Rhythm & Category Breakdown */}
+      <div className="flex items-start justify-between gap-2 mb-1 pb-2 border-b border-separator/20">
         <div className="flex flex-col">
-          <div className="flex items-center gap-2 text-muted text-xs font-medium">
-            <BarChart2 className="size-3.5 text-accent" />
+          <div className="flex items-center gap-2 text-foreground text-xs sm:text-sm font-semibold">
+            <BarChart2 className="size-3.5 text-accent shrink-0" />
             <span>Focus Trend</span>
           </div>
           <Typography
-            className="text-xs text-muted/80 font-light mt-0.5"
+            className="text-xs font-light mt-0.5"
+            color="muted"
             type="body-xs"
           >
             {getSubtitle()}
           </Typography>
         </div>
 
-        {/* Focus total pill */}
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-secondary border border-separator/40 text-xs tabular-nums font-medium text-foreground shrink-0">
-          <span className="text-muted font-normal">Total:</span>
-          <span className="text-accent font-semibold">
-            {formatMinutesDisplay(totalFocusInChart)}
+        {/* Peak indicator badge matching other cards */}
+        {peakInterval && peakInterval.focusMinutes > 0 ? (
+          <span className="flex items-center gap-1 text-xs px-2.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/25 font-medium shrink-0">
+            <TrendingUp className="size-3" />
+            <span>
+              {getPeakLabel()}:{" "}
+              {formatMinutesDisplay(peakInterval.focusMinutes)}
+            </span>
           </span>
-        </div>
+        ) : (
+          <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-secondary border border-separator/40 text-xs tabular-nums font-medium text-foreground shrink-0">
+            <span className="text-muted font-normal">Total:</span>
+            <span className="text-accent font-semibold">
+              {formatMinutesDisplay(totalFocusInChart)}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Main Bar Chart Container */}
-      <div className="relative w-full pt-1 pb-1 overflow-visible">
+      <div className="relative w-full overflow-visible">
         <BarChart
           data={data}
-          height={190}
-          margin={{ top: 14, right: 10, bottom: 28, left: 36 }}
           onItemClick={(item) => {
-            const day = item as DayActivity;
+            const raw = (item as any)?.payload ?? item;
+            const day = raw as DayActivity;
 
             setSelectedDay((prev) =>
               prev?.dateStr === day.dateStr && prev?.dayLabel === day.dayLabel
@@ -101,13 +111,10 @@ export function FocusChart({
             );
           }}
         >
-          <BarChart.Grid
-            className="stroke-separator/85"
-            strokeDasharray="4 4"
-          />
+          <BarChart.Grid />
           <BarChart.YAxis
             tickFormatter={(v) => (v === 0 ? "0m" : `${v}m`)}
-            ticksCount={3}
+            ticksCount={4}
           />
           <BarChart.XAxis
             dataKey="dayLabel"
@@ -153,20 +160,39 @@ export function FocusChart({
           />
           {avgFocusInChart > 0 && (
             <BarChart.ReferenceLine
-              className="stroke-accent/80"
+              className="stroke-accent/70 text-right"
               label={`Avg: ${formatMinutesDisplay(avgFocusInChart)}`}
-              strokeDasharray="5 4"
+              strokeDasharray="4 4"
               y={avgFocusInChart}
             />
           )}
           <BarChart.Bar
-            className="fill-accent/85 transition-[fill,opacity] duration-200 cursor-pointer"
+            className="fill-accent/85 transition-all duration-150 cursor-pointer"
             dataKey="focusMinutes"
-            hoverClassName="fill-accent"
-            radius={4}
-          />
+            maxBarSize={26}
+            radius={[3, 3, 0, 0]}
+          >
+            {data.map((entry, index) => {
+              const isSelected =
+                selectedDay &&
+                selectedDay.dateStr === entry.dateStr &&
+                selectedDay.dayLabel === entry.dayLabel;
+              const hasSelection = Boolean(selectedDay);
 
-          {/* Desktop Mouse Hover Tooltip (Hidden on Mobile via hidden sm:block in TooltipRenderer) */}
+              return (
+                <BarChart.Cell
+                  key={`cell-${index}`}
+                  className="cursor-pointer transition-all duration-150"
+                  fill="var(--accent)"
+                  fillOpacity={isSelected ? 1 : hasSelection ? 0.35 : 0.85}
+                  stroke={isSelected ? "var(--foreground)" : "none"}
+                  strokeWidth={isSelected ? 2 : 0}
+                />
+              );
+            })}
+          </BarChart.Bar>
+
+          {/* Desktop Mouse Hover Tooltip */}
           <BarChart.Tooltip
             content={({ item }) => (
               <div className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-surface/95 backdrop-blur-md border border-separator/90 shadow-2xl z-50 min-w-40 text-left select-none pointer-events-none">
@@ -229,28 +255,38 @@ export function FocusChart({
         </BarChart>
       </div>
 
-      {/* Selected Day/Interval Activity Inspector (Matching ActivityHeatmap for both Desktop & Mobile) */}
+      {/* Selected Day/Interval Activity Inspector */}
       {selectedDay && (
-        <div className="p-3.5 rounded-xl bg-surface-secondary/80 border border-separator/60 flex items-center justify-between gap-3 flex-wrap shadow-xs animate-in fade-in duration-150">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-accent/15 border border-accent/30 flex flex-col items-center justify-center text-accent font-bold shrink-0">
-              <span className="text-[9px] uppercase leading-none">
-                {selectedDay.dayLabel}
+        <div className="p-2.5 sm:p-3 rounded-xl bg-surface-secondary/80 border border-separator/50 flex items-center justify-between gap-2.5 flex-wrap shadow-xs animate-in fade-in duration-150">
+          <div className="flex items-center gap-2.5">
+            <div className="size-9 rounded-lg bg-accent/15 border border-accent/30 flex flex-col items-center justify-center text-accent font-bold shrink-0">
+              <span className="text-[8px] uppercase leading-none">
+                {isHourly ? "Hour" : selectedDay.dayLabel}
               </span>
-              <span className="text-sm font-extrabold leading-tight">
-                {selectedDay.dateStr
-                  ? new Date(`${selectedDay.dateStr}T12:00:00`).getDate()
-                  : selectedDay.dayLabel}
+              <span className="text-xs font-extrabold leading-tight">
+                {isHourly
+                  ? selectedDay.dayLabel
+                  : (() => {
+                      if (!selectedDay.dateStr) return selectedDay.dayLabel;
+                      const d = new Date(
+                        selectedDay.dateStr.includes("T")
+                          ? selectedDay.dateStr
+                          : `${selectedDay.dateStr}T12:00:00`,
+                      );
+                      const num = d.getDate();
+
+                      return isNaN(num) ? selectedDay.dayLabel : num;
+                    })()}
               </span>
             </div>
             <div className="flex flex-col">
               <Typography
-                className="text-xs font-bold text-foreground"
+                className="text-xs font-semibold text-foreground"
                 type="body-xs"
               >
                 {selectedDay.fullDateLabel}
               </Typography>
-              <div className="flex items-center gap-3 text-xs text-muted mt-0.5 flex-wrap">
+              <div className="flex items-center gap-2.5 text-xs text-muted mt-0.5 flex-wrap">
                 <span>
                   Focus:{" "}
                   <strong className="text-foreground font-semibold">
@@ -289,10 +325,10 @@ export function FocusChart({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {!isHourly && selectedDay.dateRange && onSelectRange && (
               <Button
-                className="h-7 px-3 rounded-full text-xs font-semibold bg-accent text-accent-foreground cursor-pointer shadow-2xs flex items-center gap-1"
+                className="h-6.5 px-2.5 rounded-full text-xs font-semibold bg-accent text-accent-foreground cursor-pointer shadow-2xs flex items-center gap-1"
                 size="sm"
                 variant="primary"
                 onPress={() => {
@@ -300,27 +336,27 @@ export function FocusChart({
                   setSelectedDay(null);
                 }}
               >
-                <Filter className="size-3.5" />
-                <span>Filter Charts to this Period</span>
+                <Filter className="size-3" />
+                <span>Filter</span>
               </Button>
             )}
             <Button
               isIconOnly
               aria-label="Close selection"
-              className="size-7 rounded-full text-muted hover:text-foreground cursor-pointer"
+              className="size-6.5 rounded-full text-muted hover:text-foreground cursor-pointer"
               size="sm"
               variant="ghost"
               onPress={() => setSelectedDay(null)}
             >
-              <X className="size-3.5" />
+              <X className="size-3" />
             </Button>
           </div>
         </div>
       )}
 
       {/* Chart Footer Metrics */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-2.5 border-t border-separator/30 text-xs">
-        <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-6 flex-wrap">
+      <div className="flex items-center justify-between gap-2 pt-2 border-t border-separator/20 text-xs">
+        <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
           <div className="flex items-center gap-1.5">
             <span className="text-muted">Total:</span>
             <span className="font-semibold text-foreground tabular-nums">
@@ -338,17 +374,20 @@ export function FocusChart({
           </div>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end gap-1.5 pt-1.5 sm:pt-0 border-t sm:border-t-0 border-separator/20">
-          <span className="text-muted flex items-center gap-1">
-            <TrendingUp className="size-3.5 text-accent" />
-            <span>{getPeakLabel()}:</span>
-          </span>
-          <span className="font-semibold text-accent tabular-nums">
-            {peakInterval && peakInterval.focusMinutes > 0
-              ? `${formatMinutesDisplay(peakInterval.focusMinutes)}${isHourly || isWeekly || isMonthly ? ` (${peakInterval.dayLabel})` : ""}`
-              : "—"}
-          </span>
-        </div>
+        {peakInterval && peakInterval.focusMinutes > 0 && (
+          <div className="flex items-center gap-1.5 text-right shrink-0">
+            <span className="text-muted flex items-center gap-1">
+              <TrendingUp className="size-3 text-accent" />
+              <span>{getPeakLabel()}:</span>
+            </span>
+            <span className="font-semibold text-accent tabular-nums">
+              {formatMinutesDisplay(peakInterval.focusMinutes)}
+              {isHourly || isWeekly || isMonthly
+                ? ` (${peakInterval.dayLabel})`
+                : ""}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
