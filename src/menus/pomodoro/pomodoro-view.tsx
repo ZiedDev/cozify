@@ -30,14 +30,14 @@ export function PomodoroView({
 
       gsap.fromTo(
         elements,
-        { opacity: 0, y: 10, scale: 0.98 },
+        { opacity: 0, y: 14, scale: 0.98 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.45,
-          stagger: 0.08,
-          ease: "power2.out",
+          duration: 0.5,
+          stagger: 0.07,
+          ease: "power3.out",
         },
       );
     },
@@ -217,7 +217,7 @@ export function PomodoroView({
     <Surface
       ref={timerRef}
       className={cn(
-        "flex h-full w-full flex-col items-center justify-center text-center select-none space-y-2",
+        "flex h-full w-full flex-col items-center justify-center text-center select-none space-y-2 overflow-x-hidden",
         className,
       )}
       variant="transparent"
@@ -276,40 +276,43 @@ export function PomodoroView({
         color="muted"
         type="body-xs"
       >
-        Press{" "}
-        <Kbd className="px-1.5 py-0.5 rounded bg-surface border border-separator/40 text-muted">
-          Space
-        </Kbd>{" "}
-        to {isRunning ? "pause" : isPaused ? "resume" : "start"}
+        Press <Kbd>Space</Kbd> to{" "}
+        {isRunning ? "pause" : isPaused ? "resume" : "start"}
       </Typography>
 
       {/* Break Selection Modal */}
-      <BreakModal
-        currentCycle={currentCycle}
-        durations={durations}
-        isOpen={isBreakModalOpen}
-        timeLeft={timeLeft}
-        timeUsed={Math.max(
-          0,
-          (cycleStates[currentCycle]?.initialDuration || durations.focus) -
-            timeLeft,
-        )}
-        onOpenChange={setIsBreakModalOpen}
-        onSelectBreak={finishCycleAndTakeBreak}
-        onSkipBreak={finishCycleAndSkipToNext}
-      />
+      {isBreakModalOpen && (
+        <BreakModal
+          currentCycle={currentCycle}
+          durations={durations}
+          isOpen={isBreakModalOpen}
+          timeLeft={timeLeft}
+          timeUsed={Math.max(
+            0,
+            (cycleStates[currentCycle]?.initialDuration || durations.focus) -
+              timeLeft,
+          )}
+          onOpenChange={setIsBreakModalOpen}
+          onSelectBreak={finishCycleAndTakeBreak}
+          onSkipBreak={finishCycleAndSkipToNext}
+        />
+      )}
 
       {/* Unified Interruption & Cycle Collision Alert Dialog */}
-      <InterruptAlert
-        confirmation={confirmation}
-        onCancel={() => setConfirmation(null)}
-      />
+      {confirmation && (
+        <InterruptAlert
+          confirmation={confirmation}
+          onCancel={() => setConfirmation(null)}
+        />
+      )}
 
       {/* Save Session Progress Modal */}
-      <SaveProgressModal
-        isOpen={isSaveModalOpen}
-        onOpenChange={setIsSaveModalOpen}
-      />
+      {isSaveModalOpen && (
+        <SaveProgressModal
+          isOpen={isSaveModalOpen}
+          onOpenChange={setIsSaveModalOpen}
+        />
+      )}
     </Surface>
   );
 }

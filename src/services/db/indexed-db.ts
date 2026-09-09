@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
+
 import {
   StoreName,
   DBStoreMap,
@@ -6,11 +7,12 @@ import {
   AppSettings,
   SyncQueueItem,
 } from "./types";
+
 import { TodoItem } from "@/menus/todo/types";
 import { ThemeConfig } from "@/config/themes";
 
-const DB_NAME = "cozify_idb";
-const DB_VERSION = 1;
+export const DB_NAME = "cozify_idb";
+export const DB_VERSION = 2;
 
 export class CozifyDexieDB extends Dexie {
   sessions!: EntityTable<SessionRecord, "id">;
@@ -22,13 +24,25 @@ export class CozifyDexieDB extends Dexie {
 
   constructor() {
     super(DB_NAME);
-    this.version(DB_VERSION).stores({
+    // Legacy Version 1 schema
+    this.version(1).stores({
       sessions: "id, createdAt, tag",
       todos: "id, createdAt, completed, tag, dueDate",
       theme: "key",
       timer: "key",
       settings: "key",
       syncQueue: "id, timestamp",
+    });
+
+    // Version 2: Reworked schemas with compound indexes for fast date-range, priority, and completion queries
+    this.version(2).stores({
+      sessions: "id, createdAt, tag, focusMinutes, [tag+createdAt]",
+      todos:
+        "id, createdAt, completed, tag, dueDate, priority, archived, [completed+dueDate], [completed+priority]",
+      theme: "key",
+      timer: "key",
+      settings: "key",
+      syncQueue: "id, timestamp, store, action",
     });
   }
 }
@@ -56,6 +70,7 @@ export const idb = {
   ): Promise<DBStoreMap[K] | null> => {
     try {
       const res = await dexieDb.table(storeName).get(key as any);
+
       return (res as DBStoreMap[K]) || null;
     } catch {
       return null;

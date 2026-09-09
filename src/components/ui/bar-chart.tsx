@@ -58,6 +58,7 @@ export function BarChartRoot({
     if (!onItemClick || !item) return;
     const key = `${item.dateStr ?? item.dayLabel ?? ""}_${index}`;
     const now = Date.now();
+
     // Guard against duplicate firing within 150ms between Bar and BarChart
     if (
       lastClickRef.current.key === key &&
@@ -270,6 +271,7 @@ export function BarChartBar({
       onClick={(entry: any, index: number) => {
         if (onItemClick && entry) {
           const item = entry.payload ?? entry;
+
           onItemClick(item, index);
         }
       }}

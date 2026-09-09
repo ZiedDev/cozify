@@ -15,17 +15,19 @@ export function MusicView({
   useGSAP(
     () => {
       if (!containerRef.current || !isActive) return;
-      const elements = containerRef.current.children;
+      const card = containerRef.current.querySelector(".cozy-music-wrapper");
+      const elements = card ? card.children : containerRef.current.children;
 
       gsap.fromTo(
         elements,
-        { opacity: 0, y: 10, scale: 0.98 },
+        { opacity: 0, y: 14, scale: 0.98 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.45,
-          ease: "power2.out",
+          duration: 0.5,
+          stagger: 0.07,
+          ease: "power3.out",
         },
       );
     },
@@ -36,7 +38,7 @@ export function MusicView({
     <div
       ref={containerRef}
       className={cn(
-        "w-full h-full flex flex-col items-center justify-center min-h-0 overflow-y-auto sm:overflow-hidden no-scrollbar select-none py-1 sm:py-2 px-2 sm:px-4",
+        "w-full h-full flex flex-col items-center justify-center min-h-0 overflow-x-hidden overflow-y-auto sm:overflow-hidden no-scrollbar select-none py-1 sm:py-2 px-2 sm:px-4",
         className,
       )}
       {...props}

@@ -17,10 +17,10 @@ function SidebarWidget({
 }) {
   return (
     <div
-      className={`grid w-full transition-[grid-template-rows,opacity] duration-300 ease-out ${
+      className={`grid w-full transition-[grid-template-rows,opacity,transform] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
         show
-          ? "grid-rows-[1fr] opacity-100"
-          : "grid-rows-[0fr] opacity-0 pointer-events-none"
+          ? "grid-rows-[1fr] opacity-100 translate-x-0"
+          : "grid-rows-[0fr] opacity-0 translate-x-4 pointer-events-none"
       }`}
     >
       <div className="overflow-hidden pb-4 sm:pb-6 w-full flex flex-col items-end">

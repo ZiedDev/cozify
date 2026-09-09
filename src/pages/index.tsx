@@ -31,12 +31,15 @@ export function IndexPage() {
 
     if (!containerRef.current) {
       setActiveMode(newMode);
+
       return;
     }
 
     isTransitioningRef.current = true;
     gsap.to(containerRef.current, {
       opacity: 0,
+      y: -8,
+      scale: 0.992,
       duration: 0.18,
       ease: "power2.in",
       onComplete: () => {
@@ -49,8 +52,10 @@ export function IndexPage() {
           if (containerRef.current) {
             gsap.to(containerRef.current, {
               opacity: 1,
-              duration: 0.25,
-              ease: "power2.out",
+              y: 0,
+              scale: 1,
+              duration: 0.35,
+              ease: "power3.out",
             });
           }
         } else {
@@ -66,11 +71,13 @@ export function IndexPage() {
 
       gsap.fromTo(
         containerRef.current,
-        { opacity: 0 },
+        { opacity: 0, y: 10, scale: 0.99 },
         {
           opacity: 1,
-          duration: 0.25,
-          ease: "power2.out",
+          y: 0,
+          scale: 1,
+          duration: 0.35,
+          ease: "power3.out",
         },
       );
     },

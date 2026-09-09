@@ -58,8 +58,6 @@ export function useStats() {
 
   // Listen to window focus & storage updates
   useEffect(() => {
-    reloadFromStorage();
-
     const handleStorageChange = () => {
       reloadFromStorage();
     };

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { SearchField, Tabs, Typography, Popover } from "@heroui/react";
+import { SearchField, Tabs, Typography, Popover, Button } from "@heroui/react";
 import {
   LayoutList,
   CheckSquare,
@@ -101,8 +101,8 @@ export function TodoHeader() {
 
   return (
     <div className="flex flex-col gap-2.5 md:gap-3 w-full shrink-0">
-      {/* Top row: Title + Stats & Search + View Switcher (Strictly Non-wrapping) */}
-      <div className="flex items-center justify-between gap-2 md:gap-3 w-full flex-nowrap">
+      {/* Top row: Title + Stats & Search + View Switcher */}
+      <div className="flex items-center justify-between gap-2 md:gap-3 w-full min-w-0">
         {/* Left Title & Counter */}
         <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
           <Typography
@@ -198,7 +198,7 @@ export function TodoHeader() {
       </div>
 
       {/* Bottom row: Filter Tabs + Autocomplete Filter Pickers */}
-      <div className="flex items-center justify-between gap-2 md:gap-3 w-full flex-wrap sm:flex-nowrap border-b border-separator/30 pb-2">
+      <div className="flex items-center justify-between gap-2 md:gap-3 w-full min-w-0 flex-wrap border-b border-separator/30 pb-2">
         {/* Filter Tabs */}
         <div className="shrink-0">
           <Tabs
@@ -248,17 +248,18 @@ export function TodoHeader() {
           {/* 1. Popover for Tag Filtering */}
           <Popover>
             <Popover.Trigger>
-              <button
+              <Button
                 className={`h-6.5 md:h-7 px-2.5 md:px-3 rounded-full text-[11px] md:text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
                   selectedTag
                     ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
                     : "bg-surface/80 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"
                 }`}
-                type="button"
+                size="sm"
+                variant="ghost"
               >
                 <ActiveTagIcon className="size-3 shrink-0 opacity-80" />
                 <span>{activeTagMeta?.label || selectedTag || "Tags"}</span>
-              </button>
+              </Button>
             </Popover.Trigger>
             <Popover.Content>
               <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">
@@ -303,13 +304,14 @@ export function TodoHeader() {
           {/* 2. Popover for Priority Filtering */}
           <Popover>
             <Popover.Trigger>
-              <button
+              <Button
                 className={`h-6.5 md:h-7 px-2.5 md:px-3 rounded-full text-[11px] md:text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
                   selectedPriority && selectedPriority !== "all"
                     ? `${PRIORITY_THEMES[selectedPriority]?.badgeClass || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
                     : "bg-surface/80 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"
                 }`}
-                type="button"
+                size="sm"
+                variant="ghost"
               >
                 <Flag className="size-3 shrink-0 opacity-80" />
                 <span>
@@ -317,7 +319,7 @@ export function TodoHeader() {
                     ? "Priority"
                     : PRIORITY_THEMES[selectedPriority]?.label || "Priority"}
                 </span>
-              </button>
+              </Button>
             </Popover.Trigger>
             <Popover.Content>
               <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">

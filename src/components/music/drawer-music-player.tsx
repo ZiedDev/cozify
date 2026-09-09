@@ -19,8 +19,9 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { useMusic } from "@/context/music-context";
 import { MarqueeTitle } from "./marquee-title";
+
+import { useMusic } from "@/context/music-context";
 import { formatTime } from "@/config/playlists";
 
 interface DrawerMusicPlayerProps {

@@ -27,14 +27,14 @@ export function HomeView({
 
       gsap.fromTo(
         elements,
-        { opacity: 0, y: 10, scale: 0.98 },
+        { opacity: 0, y: 14, scale: 0.98 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.45,
-          stagger: 0.08,
-          ease: "power2.out",
+          duration: 0.5,
+          stagger: 0.07,
+          ease: "power3.out",
         },
       );
     },
@@ -45,7 +45,7 @@ export function HomeView({
     <Surface
       ref={clockRef}
       className={cn(
-        "flex h-full w-full flex-col items-center justify-center text-center select-none space-y-2",
+        "flex h-full w-full flex-col items-center justify-center text-center select-none space-y-2 overflow-x-hidden",
         className,
       )}
       variant="transparent"

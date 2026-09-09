@@ -41,18 +41,20 @@ export function StatsView({
     () => {
       if (!containerRef.current) return;
 
-      const elements = containerRef.current.children;
+      const elements = containerRef.current.querySelectorAll(
+        ".stats-header-wrapper, .stats-animated-card",
+      );
 
       gsap.fromTo(
         elements,
-        { opacity: 0, y: 10, scale: 0.99 },
+        { opacity: 0, y: 14, scale: 0.985 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.4,
-          stagger: 0.08,
-          ease: "power2.out",
+          duration: 0.5,
+          stagger: 0.07,
+          ease: "power3.out",
         },
       );
     },
@@ -63,13 +65,13 @@ export function StatsView({
     <div
       ref={containerRef}
       className={cn(
-        "flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden select-none",
+        "flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-x-hidden overflow-y-hidden select-none",
         className,
       )}
       {...props}
     >
       {/* Header with Title, Subtitle, Range Tabs, Custom Date Picker, and Achievements */}
-      <div className="shrink-0 w-full">
+      <div className="stats-header-wrapper shrink-0 w-full">
         <StatsHeader
           customDateRange={customDateRange}
           hasData={hasData}
@@ -85,7 +87,7 @@ export function StatsView({
       {/* Main Unified Scrollable Content Area */}
       <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col my-1">
         <ScrollShadow
-          className="h-full w-full pr-1 sm:pr-1.5 space-y-3 sm:space-y-3.5 overflow-y-auto"
+          className="h-full w-full pr-1 sm:pr-1.5 space-y-3 sm:space-y-3.5 overflow-y-auto overflow-x-hidden"
           hideScrollBar={false}
         >
           {/* 1. Executive Summary Hero Banner */}
@@ -132,11 +134,13 @@ export function StatsView({
       </div>
 
       {/* Achievements & Trophies Modal */}
-      <AchievementsModal
-        isOpen={isAchievementsModalOpen}
-        milestones={milestones}
-        onClose={() => setIsAchievementsModalOpen(false)}
-      />
+      {isAchievementsModalOpen && (
+        <AchievementsModal
+          isOpen={isAchievementsModalOpen}
+          milestones={milestones}
+          onClose={() => setIsAchievementsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -34,6 +34,16 @@ export const db = {
       cacheManager.deleteMemoryItem("sessions", id, true);
       syncEngine.queueChange("sessions", "delete", id);
     },
+    getByTag(tag: string): SessionRecord[] {
+      return this.getAll().filter(
+        (s) => s.tag?.toLowerCase() === tag.toLowerCase(),
+      );
+    },
+    getByDateRange(startMs: number, endMs: number): SessionRecord[] {
+      return this.getAll().filter(
+        (s) => s.createdAt >= startMs && s.createdAt <= endMs,
+      );
+    },
     clear(): void {
       cacheManager.clearMemoryStore("sessions");
     },
@@ -45,6 +55,17 @@ export const db = {
     },
     get(id: string): TodoItem | null {
       return cacheManager.getMemoryItem("todos", id);
+    },
+    getActive(): TodoItem[] {
+      return this.getAll().filter((t) => !t.completed && !t.archived);
+    },
+    getCompleted(): TodoItem[] {
+      return this.getAll().filter((t) => t.completed && !t.archived);
+    },
+    getByTag(tag: string): TodoItem[] {
+      return this.getAll().filter(
+        (t) => t.tag?.toLowerCase() === tag.toLowerCase(),
+      );
     },
     save(todo: TodoItem): void {
       cacheManager.setMemoryItem("todos", todo.id, todo, false);

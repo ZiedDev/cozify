@@ -7,3 +7,12 @@
 .tabs__list-container > .tabs__list-container__scroll-next {
   display: none !important;
 }
+
+/* Enforce zero accidental horizontal viewport overflow */
+html,
+body,
+#root {
+  max-width: 100vw;
+  overflow-x: hidden !important;
+}
+

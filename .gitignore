@@ -27,5 +27,8 @@ pnpm-lock.yaml
 yarn.lock
 package-lock.json
 bun.lockb
-# heroui-agents-md
+
+# agents
 .heroui-docs/
+skills-lock.json
+.agents

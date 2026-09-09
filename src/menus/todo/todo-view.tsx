@@ -21,14 +21,14 @@ export function TodoView({
 
       gsap.fromTo(
         elements,
-        { opacity: 0, y: 10, scale: 0.99 },
+        { opacity: 0, y: 14, scale: 0.985 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.4,
-          stagger: 0.08,
-          ease: "power2.out",
+          duration: 0.5,
+          stagger: 0.07,
+          ease: "power3.out",
         },
       );
     },
@@ -39,7 +39,7 @@ export function TodoView({
     <div
       ref={containerRef}
       className={cn(
-        "flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-hidden",
+        "flex flex-col gap-2.5 sm:gap-3 w-full max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl 2xl:max-w-3xl mx-auto px-2 sm:px-3 md:px-4 py-1 h-full flex-1 min-h-0 justify-between overflow-x-hidden overflow-y-hidden",
         className,
       )}
       {...props}

@@ -1,5 +1,13 @@
 import { useMemo, useState, useRef, useEffect, useCallback } from "react";
-import { Typography, ScrollShadow, Popover, Tooltip } from "@heroui/react";
+import {
+  Typography,
+  ScrollShadow,
+  Popover,
+  Tooltip,
+  Button,
+} from "@heroui/react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import {
   Check,
   CheckCircle2,
@@ -74,7 +82,7 @@ export function SidebarTodoItem({
 
   return (
     <div
-      className="group w-full flex flex-col px-2.5 py-1.5 rounded-xl border transition-[background-color,border-color,transform] duration-150 select-none text-left shrink-0 bg-surface/85 hover:bg-surface border-separator/40 hover:border-separator/80 shadow-2xs cursor-grab active:cursor-grabbing"
+      className="sidebar-todo-item group w-full flex flex-col px-2.5 py-1.5 rounded-xl border transition-[background-color,border-color,transform] duration-150 select-none text-left shrink-0 bg-surface/85 hover:bg-surface border-separator/40 hover:border-separator/80 shadow-2xs cursor-grab active:cursor-grabbing"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -175,10 +183,7 @@ export function SidebarTodoItem({
 
       {/* Expanded Notes Section */}
       {isExpanded && (
-        <div
-          className="w-full pl-5 pr-0.5 pt-1.5 pb-0.5 flex flex-col gap-1.5 border-t border-separator/25 mt-1 animate-in fade-in duration-150"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="w-full pl-5 pr-0.5 pt-1.5 pb-0.5 flex flex-col gap-1.5 border-t border-separator/25 mt-1 animate-in fade-in duration-150">
           {isEditingNotes || !todo.notes ? (
             <div className="flex flex-col gap-1.5 w-full">
               <textarea
@@ -381,15 +386,39 @@ export function SidebarTodoWidget({
 
   const ActiveTagIcon = selectedTag ? getTagIcon(selectedTag) : TagIcon;
   const activeTagMeta = selectedTag ? getTagInfo(selectedTag) : null;
+  const widgetRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(
+    () => {
+      if (!widgetRef.current) return;
+      const header = widgetRef.current.querySelector(".sidebar-todo-header");
+      const items = widgetRef.current.querySelectorAll(".sidebar-todo-item");
+
+      gsap.fromTo(
+        [header, ...items].filter(Boolean),
+        { opacity: 0, x: -14, scale: 0.98 },
+        {
+          opacity: 1,
+          x: 0,
+          scale: 1,
+          duration: 0.4,
+          stagger: 0.04,
+          ease: "power3.out",
+        },
+      );
+    },
+    { dependencies: [displayedTodos.length], scope: widgetRef },
+  );
 
   return (
     <div
+      ref={widgetRef}
       className={`flex flex-col gap-1.5 sm:gap-2 w-full h-full flex-1 min-h-0 ${
         align === "center" ? "max-w-xs items-center" : "max-w-full items-start"
       } pointer-events-auto`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-1.5 border-b border-separator/30 pb-1.5 px-0.5 w-full shrink-0">
+      <div className="sidebar-todo-header flex items-center justify-between gap-1.5 border-b border-separator/30 pb-1.5 px-0.5 w-full shrink-0">
         <Typography
           className="text-xs md:text-sm text-foreground/90 uppercase"
           type="body-xs"
@@ -402,19 +431,20 @@ export function SidebarTodoWidget({
           {/* Priority Filter */}
           <Popover>
             <Popover.Trigger>
-              <button
-                aria-label="Filter by priority"
-                className={`size-6 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
-                  selectedPriority && selectedPriority !== "all"
-                    ? `${PRIORITY_THEMES[selectedPriority]?.badgeClass || "bg-accent/15 text-accent border-accent/40"} shadow-2xs`
-                    : "bg-surface-secondary/60 hover:bg-surface border-separator/40 text-muted hover:text-foreground"
-                }`}
-                title={
+              <Button
+                isIconOnly
+                aria-label={
                   selectedPriority && selectedPriority !== "all"
                     ? `Priority: ${PRIORITY_THEMES[selectedPriority]?.label || selectedPriority}`
                     : "Filter by priority"
                 }
-                type="button"
+                className={`size-6 min-w-6 p-0 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
+                  selectedPriority && selectedPriority !== "all"
+                    ? `${PRIORITY_THEMES[selectedPriority]?.badgeClass || "bg-accent/15 text-accent border-accent/40"} shadow-2xs`
+                    : "bg-surface-secondary/60 hover:bg-surface border-separator/40 text-muted hover:text-foreground"
+                }`}
+                size="sm"
+                variant="ghost"
               >
                 <Flag
                   className={`size-3 ${
@@ -427,7 +457,7 @@ export function SidebarTodoWidget({
                           : "opacity-80"
                   }`}
                 />
-              </button>
+              </Button>
             </Popover.Trigger>
             <Popover.Content placement="bottom end">
               <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-0.5 min-w-36 z-50">
@@ -475,22 +505,23 @@ export function SidebarTodoWidget({
           {/* Tag Filter */}
           <Popover>
             <Popover.Trigger>
-              <button
-                aria-label="Filter by tag"
-                className={`size-6 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
-                  selectedTag
-                    ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} shadow-2xs`
-                    : "bg-surface-secondary/60 hover:bg-surface border-separator/40 text-muted hover:text-foreground"
-                }`}
-                title={
+              <Button
+                isIconOnly
+                aria-label={
                   selectedTag
                     ? `Tag: ${activeTagMeta?.label || selectedTag}`
                     : "Filter by tag"
                 }
-                type="button"
+                className={`size-6 min-w-6 p-0 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
+                  selectedTag
+                    ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} shadow-2xs`
+                    : "bg-surface-secondary/60 hover:bg-surface border-separator/40 text-muted hover:text-foreground"
+                }`}
+                size="sm"
+                variant="ghost"
               >
                 <ActiveTagIcon className="size-3 opacity-90" />
-              </button>
+              </Button>
             </Popover.Trigger>
             <Popover.Content placement="bottom end">
               <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-0.5 min-w-36 z-50">

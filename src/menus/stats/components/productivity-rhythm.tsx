@@ -1,10 +1,11 @@
+import { memo } from "react";
 import { ProgressBar, Typography } from "@heroui/react";
 import { Sunrise, Sun, Sunset, Moon, Clock, Zap } from "lucide-react";
 
 import { TimeOfDayStat, OverallStats } from "../types";
 import { formatMinutesDisplay } from "../logic/stats-calculator";
 
-export function ProductivityRhythm({
+function ProductivityRhythmComponent({
   timeOfDayStats,
   overallStats,
 }: {
@@ -108,3 +109,5 @@ export function ProductivityRhythm({
     </div>
   );
 }
+
+export const ProductivityRhythm = memo(ProductivityRhythmComponent);

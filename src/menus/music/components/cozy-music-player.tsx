@@ -27,6 +27,7 @@ import {
   Loader2,
 } from "lucide-react";
 import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 import { MarqueeTitle } from "@/components/music";
 import { useMusic } from "@/context/music-context";
@@ -61,7 +62,6 @@ export function CozyMusicCard() {
     togglePosterPreview,
     bindYTPlayerElement,
     playerKey,
-    retryPlayer,
   } = useMusic();
 
   const [inputUrl, setInputUrl] = useState("");
@@ -115,7 +115,7 @@ export function CozyMusicCard() {
       : 0;
 
   // Physics-based Vinyl turntable animation via GSAP ticker with GPU force3D
-  useEffect(() => {
+  useGSAP(() => {
     const tickerCallback = (_time: number, deltaTime: number) => {
       if (!discRef.current) return;
       // Clamp dt to avoid frame drop glitches on tab switch or momentary lag
@@ -138,37 +138,43 @@ export function CozyMusicCard() {
     return () => {
       gsap.ticker.remove(tickerCallback);
     };
-  }, []);
+  });
 
   // Smooth spin up / spin down physics
-  useEffect(() => {
-    if (speedTweenRef.current) speedTweenRef.current.kill();
+  useGSAP(
+    () => {
+      if (speedTweenRef.current) speedTweenRef.current.kill();
 
-    if (isPlaying && !isBuffering) {
-      speedTweenRef.current = gsap.to(velocityRef.current, {
-        speed: 1,
-        duration: 1.8,
-        ease: "power2.out",
-      });
-    } else {
-      speedTweenRef.current = gsap.to(velocityRef.current, {
-        speed: 0,
-        duration: 2.4,
-        ease: "power3.out",
-      });
-    }
-  }, [isPlaying, isBuffering]);
+      if (isPlaying && !isBuffering) {
+        speedTweenRef.current = gsap.to(velocityRef.current, {
+          speed: 1,
+          duration: 1.8,
+          ease: "power2.out",
+        });
+      } else {
+        speedTweenRef.current = gsap.to(velocityRef.current, {
+          speed: 0,
+          duration: 2.4,
+          ease: "power3.out",
+        });
+      }
+    },
+    { dependencies: [isPlaying, isBuffering] },
+  );
 
   // Subtle title & artist reveal on track change
-  useEffect(() => {
-    if (metaRef.current) {
-      gsap.fromTo(
-        metaRef.current,
-        { opacity: 0, y: 5 },
-        { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
-      );
-    }
-  }, [title, author]);
+  useGSAP(
+    () => {
+      if (metaRef.current) {
+        gsap.fromTo(
+          metaRef.current,
+          { opacity: 0, y: 5 },
+          { opacity: 1, y: 0, duration: 0.35, ease: "power2.out" },
+        );
+      }
+    },
+    { dependencies: [title, author], scope: metaRef },
+  );
 
   // Auto-close tracklist if tracklist becomes empty
   useEffect(() => {
@@ -189,7 +195,7 @@ export function CozyMusicCard() {
   const isSpotify = activePlatform === "spotify";
 
   return (
-    <div className="w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto flex flex-col items-center gap-2 sm:gap-2.5 md:gap-3 select-none relative">
+    <div className="cozy-music-wrapper w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto flex flex-col items-center gap-2 sm:gap-2.5 md:gap-3 select-none relative">
       {/* Top Header: Platform Indicator, Status, Actions */}
       <div className="w-full flex items-center justify-between pb-0.5 px-1">
         <div className="flex items-center gap-2 min-w-0">
@@ -344,20 +350,7 @@ export function CozyMusicCard() {
               </div>
 
               {/* Central Spindle Hole with metallic rim and 100% transparent cutout or loading spinner */}
-              <div
-                className={`absolute size-8 rounded-full border-2 border-white/40 shadow-inner flex items-center justify-center bg-black/40 backdrop-blur-xs transition-[transform,opacity] ${
-                  isBuffering
-                    ? "pointer-events-auto cursor-pointer hover:scale-110 active:scale-95"
-                    : "pointer-events-none"
-                }`}
-                title={isBuffering ? "Loading... Click to reload player" : undefined}
-                onClick={(e) => {
-                  if (isBuffering) {
-                    e.stopPropagation();
-                    retryPlayer("manual_spindle_click");
-                  }
-                }}
-              >
+              <div className="absolute size-8 rounded-full border-2 border-white/40 shadow-inner flex items-center justify-center bg-black/40 backdrop-blur-xs transition-[transform,opacity] pointer-events-none">
                 {isBuffering ? (
                   <Spinner color="accent" size="sm" />
                 ) : (

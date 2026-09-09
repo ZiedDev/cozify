@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, memo } from "react";
 import { createPortal } from "react-dom";
 import { Tabs, Typography, Button } from "@heroui/react";
 import { ArrowLeft, ArrowRight, Calendar, X } from "lucide-react";
@@ -18,7 +18,7 @@ type Props = {
 
 type ViewMode = "6m" | "12m";
 
-export function ActivityHeatmap({
+function ActivityHeatmapComponent({
   heatmapData,
   overallStats: _overallStats,
   onSelectDate,
@@ -607,4 +607,5 @@ export function ActivityHeatmap({
   );
 }
 
+export const ActivityHeatmap = memo(ActivityHeatmapComponent);
 export { ActivityHeatmap as FocusGrid };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, memo } from "react";
 import { ProgressBar, Tabs, Typography } from "@heroui/react";
 import { Tag, Clock, CheckCircle2 } from "lucide-react";
 
@@ -8,7 +8,7 @@ import { formatMinutesDisplay } from "../logic/stats-calculator";
 import { getTagInfo, getTagIcon } from "@/config/tags";
 import { TodoItem } from "@/menus/todo/types";
 
-export function TagsAnalytics({
+function TagsAnalyticsComponent({
   tagStats,
   todos,
 }: {
@@ -18,7 +18,7 @@ export function TagsAnalytics({
   const [activeSubTab, setActiveSubTab] = useState<string>("focus");
 
   // Calculate task tag stats directly from todos
-  const taskTagStats = (() => {
+  const taskTagStats = useMemo(() => {
     const map = new Map<string, { total: number; completed: number }>();
 
     for (const todo of todos) {
@@ -48,7 +48,7 @@ export function TagsAnalytics({
         },
       };
     });
-  })();
+  }, [todos]);
 
   return (
     <div className="p-3.5 sm:p-4 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors w-full h-full flex flex-col justify-between select-none">
@@ -241,3 +241,5 @@ export function TagsAnalytics({
     </div>
   );
 }
+
+export const TagsAnalytics = memo(TagsAnalyticsComponent);

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { Typography, Button } from "@heroui/react";
 import { BarChart2, TrendingUp, Calendar, Filter, X } from "lucide-react";
 
@@ -7,7 +7,7 @@ import { formatMinutesDisplay } from "../logic/stats-calculator";
 
 import { BarChart } from "@/components/ui/bar-chart";
 
-export function FocusChart({
+function FocusChartComponent({
   data,
   onSelectRange,
 }: {
@@ -392,3 +392,5 @@ export function FocusChart({
     </div>
   );
 }
+
+export const FocusChart = memo(FocusChartComponent);

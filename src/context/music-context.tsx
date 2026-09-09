@@ -198,7 +198,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const ytContainerRef = useRef<HTMLDivElement | null>(null);
   const progressTimerRef = useRef<any>(null);
   const pendingActionRef = useRef<(() => void) | null>(null);
-  const lastKnownVideoIdRef = useRef<string>("");
+  const lastKnownVideoIdRef = useRef<string>(currentVideoId || "");
   const currentVideoIdsRef = useRef<string[]>([]);
   const mediaTypeRef = useRef<"video" | "playlist" | "spotify">(
     initialMedia?.platform === "spotify"
@@ -220,17 +220,24 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Mutable refs keeping the active playback state always fresh for async watchdog & player events
   const activeUrlRef = useRef<string>(activeUrl);
+
   activeUrlRef.current = activeUrl;
   const volumeRef = useRef<number>(volume);
+
   volumeRef.current = volume;
   const currentTrackIndexRef = useRef<number>(currentTrackIndex);
+
   currentTrackIndexRef.current = currentTrackIndex;
   const currentVideoIdRef = useRef<string>(currentVideoId);
+
   currentVideoIdRef.current = currentVideoId;
   const currentTimeRef = useRef<number>(currentTime);
+
   currentTimeRef.current = currentTime;
 
-  const bufferingWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bufferingWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const retryCountRef = useRef<number>(0);
   const lastRetryTimeRef = useRef<number>(0);
   const MAX_RETRIES = 3;
@@ -508,9 +515,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           : null;
       const currentVidId = data ? data.video_id : "";
 
-      if (currentVidId && currentVidId !== lastKnownVideoIdRef.current) {
+      const isNewTrack = Boolean(
+        currentVidId && currentVidId !== lastKnownVideoIdRef.current,
+      );
+
+      if (isNewTrack) {
         lastKnownVideoIdRef.current = currentVidId;
         setCurrentVideoId(currentVidId);
+        setCurrentTime(0);
+        currentTimeRef.current = 0;
+        try {
+          playerRef.current.seekTo(0, true);
+        } catch {}
         setPosterUrl(
           `https://img.youtube.com/vi/${currentVidId}/hqdefault.jpg`,
         );
@@ -544,13 +560,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           setIsLive(live);
         }
       }
-      if (typeof playerRef.current.getCurrentTime === "function") {
+      if (
+        !isNewTrack &&
+        typeof playerRef.current.getCurrentTime === "function"
+      ) {
         const cur = playerRef.current.getCurrentTime() || 0;
 
         setCurrentTime(cur);
       }
     } catch {}
-  }, [fetchMetadata]);
+  }, [fetchMetadata, setCurrentTime]);
 
   // Timeline scrubber update loop
   const startTimeline = useCallback(() => {
@@ -559,15 +578,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       if (!playerRef.current || !isReadyRef.current) return;
       try {
         if (typeof playerRef.current.getCurrentTime !== "function") return;
+        const vData =
+          typeof playerRef.current.getVideoData === "function"
+            ? playerRef.current.getVideoData()
+            : {};
+
+        if (vData?.video_id && vData.video_id !== lastKnownVideoIdRef.current) {
+          syncPlayerTrackMeta();
+
+          return;
+        }
+
         const cur = playerRef.current.getCurrentTime() || 0;
         const dur =
           typeof playerRef.current.getDuration === "function"
             ? playerRef.current.getDuration() || 0
             : 0;
-        const vData =
-          typeof playerRef.current.getVideoData === "function"
-            ? playerRef.current.getVideoData()
-            : {};
 
         const live = vData?.isLive === true || (dur > 43200 && isFinite(dur));
 
@@ -578,7 +604,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         }
       } catch {}
     }, 250);
-  }, []);
+  }, [syncPlayerTrackMeta, setCurrentTime]);
 
   // Cancel any active buffering watchdog timer
   const clearBufferingWatchdog = useCallback(() => {
@@ -590,17 +616,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Re-render and re-instantiate the YouTube iframe if stuck buffering or broken
   const retryPlayer = useCallback(
-    (reason: string = "buffering_timeout") => {
+    (_reason: string = "buffering_timeout") => {
       clearBufferingWatchdog();
 
       if (activePlatform !== "youtube") return;
 
       const now = Date.now();
+
       if (now - lastRetryTimeRef.current < 2000) return;
       lastRetryTimeRef.current = now;
 
       if (retryCountRef.current >= MAX_RETRIES) {
-        console.warn(`[Music] Max retries (${MAX_RETRIES}) reached for stuck player.`);
         setBuffering(false);
         setIsPlaying(false);
         isPlayingRef.current = false;
@@ -609,14 +635,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             "Audio stream got stuck and couldn't recover. Please try another track.",
           variant: "danger",
         });
+
         return;
       }
 
       retryCountRef.current += 1;
       const attempt = retryCountRef.current;
-      console.info(
-        `[Music] YouTube stuck loading (${reason}). Retrying iframe (${attempt}/${MAX_RETRIES})...`,
-      );
 
       toast("Reloading Player 🔄", {
         description: `Stream took too long to load. Retrying (${attempt}/${MAX_RETRIES})...`,
@@ -629,13 +653,21 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         if (playerRef.current) {
           playerRef.current.destroy?.();
         }
-      } catch (e) {
-        console.warn("[Music] Failed to destroy player:", e);
-      }
+      } catch {}
       playerRef.current = null;
       isReadyRef.current = false;
       setIsReady(false);
       setBuffering(true);
+
+      // Preserve playing state and queue auto-play upon ready
+      isPlayingRef.current = true;
+      setIsPlaying(true);
+      pendingActionRef.current = () => {
+        try {
+          playerRef.current?.unMute?.();
+          playerRef.current?.playVideo?.();
+        } catch {}
+      };
 
       // Trigger container element remount with new key
       setPlayerKey((k) => k + 1);
@@ -700,6 +732,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
       try {
         playerRef.current = new window.YT.Player(ytContainerRef.current, {
+          host: "https://www.youtube-nocookie.com",
           videoId: initialVid,
           playerVars: {
             autoplay: 0,
@@ -710,6 +743,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             disablekb: 1,
             fs: 0,
             iv_load_policy: 3,
+            enablejsapi: 1,
+            origin: typeof window !== "undefined" ? window.location.origin : "",
+            widget_referrer:
+              typeof window !== "undefined" ? window.location.origin : "",
           },
           events: {
             onReady: (event: any) => {
@@ -793,7 +830,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
                   startBufferingWatchdog();
                   try {
                     const startSec =
-                      currentTimeRef.current > 2 ? currentTimeRef.current : 0;
+                      retryCountRef.current > 0 && currentTimeRef.current > 2
+                        ? currentTimeRef.current
+                        : 0;
 
                     if (typeof event.target.loadVideoById === "function") {
                       event.target.loadVideoById({
@@ -878,7 +917,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             onError: (event: any) => {
               const errCode = event?.data;
 
-              console.warn("[Music] YouTube Player error:", errCode);
               if (errCode === 101 || errCode === 150) {
                 clearBufferingWatchdog();
                 isPlayingRef.current = false;
@@ -1041,6 +1079,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         try {
           playerRef.current.seekTo(seconds, true);
           setCurrentTime(seconds);
+          currentTimeRef.current = seconds;
           if (shouldContinuePlaying ?? isPlayingRef.current) {
             playerRef.current.playVideo?.();
             isPlayingRef.current = true;
@@ -1089,12 +1128,23 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         retryCountRef.current = 0;
         setBuffering(true);
         startBufferingWatchdog();
+        setCurrentTime(0);
+        currentTimeRef.current = 0;
         playerRef.current.nextVideo();
+        try {
+          playerRef.current.seekTo(0, true);
+        } catch {}
         isPlayingRef.current = true;
         setIsPlaying(true);
       } catch {}
     }
-  }, [isPlayerAttached, tracklist.length, startBufferingWatchdog, setBuffering]);
+  }, [
+    isPlayerAttached,
+    tracklist.length,
+    startBufferingWatchdog,
+    setBuffering,
+    setCurrentTime,
+  ]);
 
   const prevTrack = useCallback(() => {
     if (tracklist.length <= 1) return;
@@ -1103,12 +1153,23 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         retryCountRef.current = 0;
         setBuffering(true);
         startBufferingWatchdog();
+        setCurrentTime(0);
+        currentTimeRef.current = 0;
         playerRef.current.previousVideo();
+        try {
+          playerRef.current.seekTo(0, true);
+        } catch {}
         isPlayingRef.current = true;
         setIsPlaying(true);
       } catch {}
     }
-  }, [isPlayerAttached, tracklist.length, startBufferingWatchdog, setBuffering]);
+  }, [
+    isPlayerAttached,
+    tracklist.length,
+    startBufferingWatchdog,
+    setBuffering,
+    setCurrentTime,
+  ]);
 
   const playTrackAt = useCallback(
     (index: number) => {
@@ -1117,14 +1178,19 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           retryCountRef.current = 0;
           setBuffering(true);
           startBufferingWatchdog();
+          setCurrentTime(0);
+          currentTimeRef.current = 0;
           playerRef.current.playVideoAt(index);
+          try {
+            playerRef.current.seekTo(0, true);
+          } catch {}
           setCurrentTrackIndex(index);
           isPlayingRef.current = true;
           setIsPlaying(true);
         } catch {}
       }
     },
-    [isPlayerAttached, startBufferingWatchdog, setBuffering],
+    [isPlayerAttached, startBufferingWatchdog, setBuffering, setCurrentTime],
   );
 
   const loadUrl = useCallback(
@@ -1174,11 +1240,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           lastKnownVideoIdRef.current = "";
           currentVideoIdsRef.current = [];
           setTracklist([]);
+          setCurrentTime(0);
+          currentTimeRef.current = 0;
 
           // 1. Force stop any previous playback & queue
           try {
             if (typeof playerRef.current.stopVideo === "function") {
               playerRef.current.stopVideo();
+            }
+            if (typeof playerRef.current.seekTo === "function") {
+              playerRef.current.seekTo(0, true);
             }
           } catch {}
 
@@ -1199,6 +1270,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             const playlistOpts: any = {
               list: parsed.id,
               index: targetIndex,
+              startSeconds: 0,
               suggestedQuality: "small",
             };
 
@@ -1273,6 +1345,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
             currentVideoIdsRef.current = [];
             setTracklist([]);
             setCurrentTrackIndex(0);
+            setCurrentTime(0);
+            currentTimeRef.current = 0;
             fetchMetadata(parsed.id);
             if (playerRef.current) {
               try {
@@ -1285,6 +1359,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
                   if (typeof playerRef.current.loadVideoById === "function") {
                     playerRef.current.loadVideoById({
                       videoId: parsed.id,
+                      startSeconds: 0,
                       suggestedQuality: "small",
                     });
                   } else if (
@@ -1292,6 +1367,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
                   ) {
                     playerRef.current.cueVideoById({
                       videoId: parsed.id,
+                      startSeconds: 0,
                       suggestedQuality: "small",
                     });
                   }
@@ -1310,6 +1386,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
                   setBuffering(false);
                   playerRef.current.cueVideoById({
                     videoId: parsed.id,
+                    startSeconds: 0,
                     suggestedQuality: "small",
                   });
                 }
@@ -1329,6 +1406,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         targetFirstVideoIdRef.current = "";
         currentVideoIdsRef.current = [];
         setTracklist([]);
+        setCurrentTime(0);
+        currentTimeRef.current = 0;
         if (playerRef.current?.pauseVideo) {
           try {
             playerRef.current.pauseVideo();
@@ -1353,6 +1432,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       populatePlaylistTracks,
       syncPlayerTrackMeta,
       setBuffering,
+      setCurrentTime,
       startBufferingWatchdog,
       clearBufferingWatchdog,
     ],

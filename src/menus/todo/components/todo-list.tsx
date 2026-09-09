@@ -58,6 +58,24 @@ export function TodoList() {
         isInitialMountRef.current = false;
         prevIdsRef.current = currentIds;
 
+        const rows = el.querySelectorAll(".todo-item-row");
+
+        if (rows.length > 0) {
+          gsap.fromTo(
+            rows,
+            { opacity: 0, y: 10, scale: 0.98 },
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 0.35,
+              stagger: 0.04,
+              ease: "power2.out",
+              overwrite: "auto",
+            },
+          );
+        }
+
         return;
       }
 
@@ -134,7 +152,7 @@ export function TodoList() {
       ) : (
         <ScrollShadow
           ref={listRef}
-          className="w-full h-full pr-1.5 scroll-smooth py-1"
+          className="w-full h-full pr-1.5 scroll-smooth py-1 overflow-x-hidden"
           orientation="vertical"
           size={32}
         >
@@ -185,11 +203,13 @@ export function TodoList() {
       )}
 
       {/* Deep Edit Modal */}
-      <TodoEditModal
-        isOpen={Boolean(editingTodo)}
-        todo={editingTodo}
-        onClose={() => setEditingTodo(null)}
-      />
+      {editingTodo && (
+        <TodoEditModal
+          isOpen={Boolean(editingTodo)}
+          todo={editingTodo}
+          onClose={() => setEditingTodo(null)}
+        />
+      )}
 
       {/* Permanent Delete Confirmation Dialog */}
       {deletingTodo && (
@@ -232,7 +252,23 @@ export function TodoList() {
                   variant="danger"
                   onPress={() => {
                     if (deletingTodo) {
-                      permanentlyDeleteTodo(deletingTodo.id);
+                      const id = deletingTodo.id;
+                      const targetRow = listRef.current?.querySelector(
+                        `[data-todo-id="${id}"]`,
+                      );
+
+                      if (targetRow) {
+                        gsap.to(targetRow, {
+                          opacity: 0,
+                          x: -24,
+                          scale: 0.95,
+                          duration: 0.22,
+                          ease: "power2.in",
+                          onComplete: () => permanentlyDeleteTodo(id),
+                        });
+                      } else {
+                        permanentlyDeleteTodo(id);
+                      }
                       setDeletingTodo(null);
                     }
                   }}

@@ -1,5 +1,6 @@
-import { DragEvent, useState } from "react";
+import { DragEvent, useState, useRef, memo } from "react";
 import { Button, Tooltip } from "@heroui/react";
+import gsap from "gsap";
 import {
   Archive,
   Edit3,
@@ -25,7 +26,7 @@ type Props = {
   onDrop?: (e: DragEvent, id: string) => void;
 };
 
-export function TodoItemMinimal({
+function TodoItemMinimalComponent({
   todo,
   isDragging = false,
   onEdit,
@@ -35,8 +36,63 @@ export function TodoItemMinimal({
   onDragEnd,
   onDrop,
 }: Props) {
-  const { toggleTodo, deleteTodo } = useTodos();
+  const { toggleTodo, deleteTodo, filter } = useTodos();
   const [isHovered, setIsHovered] = useState(false);
+  const itemRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = () => {
+    if (filter === "active" && itemRef.current) {
+      const rowEl =
+        (itemRef.current.closest(".todo-item-row") as HTMLElement) ||
+        itemRef.current;
+
+      gsap.to(rowEl, {
+        opacity: 0,
+        x: 24,
+        height: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        overflow: "hidden",
+        duration: 0.28,
+        ease: "power2.inOut",
+        onComplete: () => {
+          gsap.set(rowEl, { clearProps: "all" });
+          toggleTodo(todo.id);
+        },
+      });
+    } else {
+      toggleTodo(todo.id);
+    }
+  };
+
+  const handleArchive = () => {
+    if (itemRef.current) {
+      const rowEl =
+        (itemRef.current.closest(".todo-item-row") as HTMLElement) ||
+        itemRef.current;
+
+      gsap.to(rowEl, {
+        opacity: 0,
+        x: -24,
+        height: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        overflow: "hidden",
+        duration: 0.28,
+        ease: "power2.inOut",
+        onComplete: () => {
+          gsap.set(rowEl, { clearProps: "all" });
+          deleteTodo(todo.id);
+        },
+      });
+    } else {
+      deleteTodo(todo.id);
+    }
+  };
 
   const integratedMeta = getIntegratedTagPriorityInfo(
     todo.tag,
@@ -50,6 +106,7 @@ export function TodoItemMinimal({
 
   return (
     <div
+      ref={itemRef}
       className={`group relative flex items-center justify-between gap-2.5 px-3 py-2 md:py-2.5 rounded-xl border transition-[background-color,border-color,transform] duration-150 select-none ${
         isDragging
           ? "bg-surface border-accent/70 shadow-md scale-[1.01]"
@@ -78,7 +135,7 @@ export function TodoItemMinimal({
             : "border-muted/50 hover:border-accent hover:scale-110 bg-surface"
         }`}
         type="button"
-        onClick={() => toggleTodo(todo.id)}
+        onClick={handleToggle}
       >
         {todo.completed && <Check className="size-2.5 md:size-3 stroke-3" />}
       </button>
@@ -104,10 +161,10 @@ export function TodoItemMinimal({
         className="flex items-center gap-2 flex-1 min-w-0 cursor-pointer overflow-hidden"
         role="button"
         tabIndex={0}
-        onClick={() => toggleTodo(todo.id)}
+        onClick={handleToggle}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
-            toggleTodo(todo.id);
+            handleToggle();
           }
         }}
       >
@@ -172,7 +229,7 @@ export function TodoItemMinimal({
               className="size-7 rounded-lg text-muted/60 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
               size="sm"
               variant="ghost"
-              onPress={() => deleteTodo(todo.id)}
+              onPress={handleArchive}
             >
               <Archive className="size-3.5" />
             </Button>
@@ -204,3 +261,5 @@ export function TodoItemMinimal({
     </div>
   );
 }
+
+export const TodoItemMinimal = memo(TodoItemMinimalComponent);

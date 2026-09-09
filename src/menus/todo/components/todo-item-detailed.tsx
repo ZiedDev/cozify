@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect, DragEvent } from "react";
+import { useState, useRef, useEffect, DragEvent, memo } from "react";
 import { Button, Tooltip, Typography, TextArea } from "@heroui/react";
+import gsap from "gsap";
 import {
   Archive,
   Edit3,
@@ -27,7 +28,7 @@ type Props = {
   onDrop?: (e: DragEvent, id: string) => void;
 };
 
-export function TodoItemDetailed({
+function TodoItemDetailedComponent({
   todo,
   isDragging = false,
   onEdit,
@@ -37,11 +38,66 @@ export function TodoItemDetailed({
   onDragEnd,
   onDrop,
 }: Props) {
-  const { toggleTodo, deleteTodo, updateTodo } = useTodos();
+  const { toggleTodo, deleteTodo, updateTodo, filter } = useTodos();
+  const itemRef = useRef<HTMLDivElement>(null);
 
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [noteDraft, setNoteDraft] = useState(todo.notes || "");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleToggle = () => {
+    if (filter === "active" && itemRef.current) {
+      const rowEl =
+        (itemRef.current.closest(".todo-item-row") as HTMLElement) ||
+        itemRef.current;
+
+      gsap.to(rowEl, {
+        opacity: 0,
+        x: 24,
+        height: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        overflow: "hidden",
+        duration: 0.28,
+        ease: "power2.inOut",
+        onComplete: () => {
+          gsap.set(rowEl, { clearProps: "all" });
+          toggleTodo(todo.id);
+        },
+      });
+    } else {
+      toggleTodo(todo.id);
+    }
+  };
+
+  const handleArchive = () => {
+    if (itemRef.current) {
+      const rowEl =
+        (itemRef.current.closest(".todo-item-row") as HTMLElement) ||
+        itemRef.current;
+
+      gsap.to(rowEl, {
+        opacity: 0,
+        x: -24,
+        height: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 0,
+        marginBottom: 0,
+        overflow: "hidden",
+        duration: 0.28,
+        ease: "power2.inOut",
+        onComplete: () => {
+          gsap.set(rowEl, { clearProps: "all" });
+          deleteTodo(todo.id);
+        },
+      });
+    } else {
+      deleteTodo(todo.id);
+    }
+  };
 
   useEffect(() => {
     setNoteDraft(todo.notes || "");
@@ -70,6 +126,7 @@ export function TodoItemDetailed({
 
   return (
     <div
+      ref={itemRef}
       className={`group relative flex flex-col gap-2 p-3 md:p-3.5 rounded-2xl border transition-[background-color,border-color,transform] duration-150 select-none ${
         isDragging
           ? "bg-surface border-accent/70 shadow-md scale-[1.01]"
@@ -99,7 +156,7 @@ export function TodoItemDetailed({
                 : "border-muted/50 hover:border-accent hover:scale-110 bg-surface"
             }`}
             type="button"
-            onClick={() => toggleTodo(todo.id)}
+            onClick={handleToggle}
           >
             {todo.completed && <Check className="size-3 stroke-3" />}
           </button>
@@ -110,10 +167,10 @@ export function TodoItemDetailed({
           className="flex flex-col gap-0.5 min-w-0 flex-1 cursor-pointer text-left"
           role="button"
           tabIndex={0}
-          onClick={() => toggleTodo(todo.id)}
+          onClick={handleToggle}
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
-              toggleTodo(todo.id);
+              handleToggle();
             }
           }}
         >
@@ -160,7 +217,7 @@ export function TodoItemDetailed({
                 className="size-7 md:size-7.5 rounded-xl text-muted/60 hover:text-amber-400 hover:bg-amber-500/10 transition-colors cursor-pointer"
                 size="sm"
                 variant="ghost"
-                onPress={() => deleteTodo(todo.id)}
+                onPress={handleArchive}
               >
                 <Archive className="size-3.5 md:size-4" />
               </Button>
@@ -310,3 +367,5 @@ export function TodoItemDetailed({
     </div>
   );
 }
+
+export const TodoItemDetailed = memo(TodoItemDetailedComponent);
