@@ -106,49 +106,15 @@ export const PRIORITY_THEMES: Record<
   },
 };
 
-// Fallback color schemes for custom or dynamic tags
-const DYNAMIC_PALETTES: Omit<TagDefinition, "id" | "label" | "iconName">[] = [
-  {
-    color: "text-rose-400 bg-rose-500/10 border-rose-500/30",
-    dotColor: "bg-rose-400",
-    bgClass: "bg-rose-500/10",
-    borderClass: "border-rose-500/30",
-    textClass: "text-rose-400",
-    chartFill: "bg-rose-400",
-  },
-  {
-    color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
-    dotColor: "bg-cyan-400",
-    bgClass: "bg-cyan-500/10",
-    borderClass: "border-cyan-500/30",
-    textClass: "text-cyan-400",
-    chartFill: "bg-cyan-400",
-  },
-  {
-    color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/30",
-    dotColor: "bg-indigo-400",
-    bgClass: "bg-indigo-500/10",
-    borderClass: "border-indigo-500/30",
-    textClass: "text-indigo-400",
-    chartFill: "bg-indigo-400",
-  },
-  {
-    color: "text-orange-400 bg-orange-500/10 border-orange-500/30",
-    dotColor: "bg-orange-400",
-    bgClass: "bg-orange-500/10",
-    borderClass: "border-orange-500/30",
-    textClass: "text-orange-400",
-    chartFill: "bg-orange-400",
-  },
-  {
-    color: "text-teal-400 bg-teal-500/10 border-teal-500/30",
-    dotColor: "bg-teal-400",
-    bgClass: "bg-teal-500/10",
-    borderClass: "border-teal-500/30",
-    textClass: "text-teal-400",
-    chartFill: "bg-teal-400",
-  },
-];
+// Uniform color scheme for all custom or dynamic tags
+export const CUSTOM_TAG_PALETTE: Omit<TagDefinition, "id" | "label" | "iconName"> = {
+  color: "text-accent bg-accent/10 border-accent/30",
+  dotColor: "bg-accent",
+  bgClass: "bg-accent/10",
+  borderClass: "border-accent/30",
+  textClass: "text-accent",
+  chartFill: "bg-accent",
+};
 
 /**
  * Returns the corresponding Lucide icon component for a tag
@@ -181,21 +147,12 @@ export function getTagInfo(tagIdOrName?: string | null): TagDefinition | null {
   const normalized = tagIdOrName.trim().toLowerCase();
 
   const preset = PRESET_TAGS.find(
-    (t) => t.id === normalized || t.label.toLowerCase() === normalized,
+    (presetTag) =>
+      presetTag.id === normalized ||
+      presetTag.label.toLowerCase() === normalized,
   );
 
   if (preset) return preset;
-
-  // Hash custom tag string for deterministic color assignment
-  let hash = 0;
-
-  for (let i = 0; i < normalized.length; i++) {
-    hash = (hash << 5) - hash + normalized.charCodeAt(i);
-    hash |= 0;
-  }
-
-  const paletteIndex = Math.abs(hash) % DYNAMIC_PALETTES.length;
-  const palette = DYNAMIC_PALETTES[paletteIndex];
 
   // Capitalize tag name nicely
   const formattedLabel =
@@ -205,7 +162,7 @@ export function getTagInfo(tagIdOrName?: string | null): TagDefinition | null {
     id: normalized,
     label: formattedLabel,
     iconName: "tag",
-    ...palette,
+    ...CUSTOM_TAG_PALETTE,
   };
 }
 

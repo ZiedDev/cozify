@@ -8,10 +8,10 @@ export type MusicTrack = {
 };
 
 export function formatTime(secs: number): string {
-  const m = Math.floor(secs / 60) || 0;
-  const s = Math.floor(secs % 60) || 0;
+  const minutes = Math.floor(secs / 60) || 0;
+  const seconds = Math.floor(secs % 60) || 0;
 
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
+  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 }
 
 export type Playlist = {
@@ -83,8 +83,8 @@ export function extractSpotifyData(url: string): ParsedMedia | null {
   try {
     const parsed = new URL(trimmed);
     const parts = parsed.pathname.split("/").filter(Boolean);
-    const typeIndex = parts.findIndex((p) =>
-      ["track", "playlist", "album", "artist", "episode"].includes(p),
+    const typeIndex = parts.findIndex((part) =>
+      ["track", "playlist", "album", "artist", "episode"].includes(part),
     );
 
     if (typeIndex !== -1 && parts[typeIndex + 1]) {

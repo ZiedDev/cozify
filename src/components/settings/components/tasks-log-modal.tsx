@@ -72,7 +72,7 @@ export function TasksLogModal({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handlePermanentDelete = (id: string) => {
-    const next = todos.filter((t) => t.id !== id);
+    const next = todos.filter((todo) => todo.id !== id);
 
     setTodos(next);
     storageAdapter.setItem(STORAGE_KEYS.TODOS, next);
@@ -82,8 +82,8 @@ export function TasksLogModal({
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
   };
 
-  const triggerDelete = (id: string, e?: MouseEvent) => {
-    if (e?.shiftKey) {
+  const triggerDelete = (id: string, event?: MouseEvent) => {
+    if (event?.shiftKey) {
       handlePermanentDelete(id);
     } else {
       setConfirmDeleteId((prev) => (prev === id ? null : id));
@@ -92,8 +92,10 @@ export function TasksLogModal({
   };
 
   const handleRestoreTodo = (id: string) => {
-    const next = todos.map((t) =>
-      t.id === id ? { ...t, archived: false, archivedAt: undefined } : t,
+    const next = todos.map((todo) =>
+      todo.id === id
+        ? { ...todo, archived: false, archivedAt: undefined }
+        : todo,
     );
 
     setTodos(next);
@@ -102,22 +104,22 @@ export function TasksLogModal({
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
   };
 
-  const handleStartEdit = (t: TodoItem) => {
-    setEditingTodoId(t.id);
-    setEditTitle(t.title);
-    setEditNotes(t.notes || "");
-    setEditPriority(t.priority || "none");
-    setEditTag(t.tag);
-    setEditDueDate(t.dueDate || "");
+  const handleStartEdit = (todo: TodoItem) => {
+    setEditingTodoId(todo.id);
+    setEditTitle(todo.title);
+    setEditNotes(todo.notes || "");
+    setEditPriority(todo.priority || "none");
+    setEditTag(todo.tag);
+    setEditDueDate(todo.dueDate || "");
     setConfirmDeleteId(null);
   };
 
   const handleSaveEdit = (id: string) => {
-    const next = todos.map((t) => {
-      if (t.id !== id) return t;
+    const next = todos.map((todo) => {
+      if (todo.id !== id) return todo;
 
       return {
-        ...t,
+        ...todo,
         title: editTitle.trim() || "Untitled Task",
         notes: editNotes.trim() || undefined,
         priority: editPriority,
@@ -134,19 +136,20 @@ export function TasksLogModal({
   };
 
   const filteredTodos = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
 
-    return todos.filter((t) => {
+    return todos.filter((todo) => {
       // 1. Status Filter Mode
-      if (filterMode === "completed" && !t.completed) return false;
-      if (filterMode === "archived" && !t.archived) return false;
-      if (filterMode === "active" && (t.completed || t.archived)) return false;
+      if (filterMode === "completed" && !todo.completed) return false;
+      if (filterMode === "archived" && !todo.archived) return false;
+      if (filterMode === "active" && (todo.completed || todo.archived))
+        return false;
 
       // 2. Search query
-      if (q) {
-        const matchTitle = (t.title || "").toLowerCase().includes(q);
-        const matchNotes = (t.notes || "").toLowerCase().includes(q);
-        const matchTag = (t.tag || "").toLowerCase().includes(q);
+      if (query) {
+        const matchTitle = (todo.title || "").toLowerCase().includes(query);
+        const matchNotes = (todo.notes || "").toLowerCase().includes(query);
+        const matchTag = (todo.tag || "").toLowerCase().includes(query);
 
         if (!matchTitle && !matchNotes && !matchTag) return false;
       }
@@ -164,9 +167,11 @@ export function TasksLogModal({
 
   const stats = useMemo(() => {
     const total = todos.length;
-    const completed = todos.filter((t) => t.completed).length;
-    const archived = todos.filter((t) => t.archived).length;
-    const active = todos.filter((t) => !t.completed && !t.archived).length;
+    const completed = todos.filter((todo) => todo.completed).length;
+    const archived = todos.filter((todo) => todo.archived).length;
+    const active = todos.filter(
+      (todo) => !todo.completed && !todo.archived,
+    ).length;
 
     return { total, completed, archived, active };
   }, [todos]);
@@ -174,9 +179,9 @@ export function TasksLogModal({
   const formatDateTime = (timestamp?: number) => {
     if (!timestamp) return "—";
     try {
-      const d = new Date(timestamp);
+      const parsedDate = new Date(timestamp);
 
-      return d.toLocaleDateString(undefined, {
+      return parsedDate.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -233,7 +238,7 @@ export function TasksLogModal({
                         className="text-xs"
                         placeholder="Filter title, notes, or tag..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(event) => setSearchQuery(event.target.value)}
                       />
                     </InputGroup>
                   </TextField>
@@ -262,8 +267,8 @@ export function TasksLogModal({
                       role="button"
                       tabIndex={0}
                       onClick={() => setFilterMode("all")}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ")
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ")
                           setFilterMode("all");
                       }}
                     >
@@ -295,8 +300,8 @@ export function TasksLogModal({
                           prev === "completed" ? "all" : "completed",
                         )
                       }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
                           setFilterMode((prev) =>
                             prev === "completed" ? "all" : "completed",
                           );
@@ -311,7 +316,7 @@ export function TasksLogModal({
                         }
                         type="body-xs"
                       >
-                        Done
+                        Completed
                       </Typography>
                       <Typography
                         className="text-emerald-400 tabular-nums"
@@ -335,8 +340,8 @@ export function TasksLogModal({
                           prev === "archived" ? "all" : "archived",
                         )
                       }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
                           setFilterMode((prev) =>
                             prev === "archived" ? "all" : "archived",
                           );
@@ -375,8 +380,8 @@ export function TasksLogModal({
                           prev === "active" ? "all" : "active",
                         )
                       }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
                           setFilterMode((prev) =>
                             prev === "active" ? "all" : "active",
                           );
@@ -437,18 +442,20 @@ export function TasksLogModal({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {visibleTodos.map((t) => {
+                  {visibleTodos.map((todoItem) => {
                     const tagColor =
                       PRESET_TAGS.find(
-                        (p) => p.id === t.tag || p.label === t.tag,
+                        (presetTag) =>
+                          presetTag.id === todoItem.tag ||
+                          presetTag.label === todoItem.tag,
                       )?.color ||
                       "text-muted bg-surface-secondary border-separator/40";
-                    const isEditing = editingTodoId === t.id;
+                    const isEditing = editingTodoId === todoItem.id;
 
                     if (isEditing) {
                       return (
                         <div
-                          key={t.id}
+                          key={todoItem.id}
                           className="flex flex-col gap-3 p-3.5 rounded-2xl bg-surface border border-accent/60 shadow-sm animate-in fade-in"
                         >
                           <div className="flex items-center justify-between">
@@ -457,7 +464,7 @@ export function TasksLogModal({
                               Edit Task Record
                             </span>
                             <span className="text-[11px] text-muted font-light">
-                              Created {formatDateTime(t.createdAt)}
+                              Created {formatDateTime(todoItem.createdAt)}
                             </span>
                           </div>
 
@@ -466,15 +473,17 @@ export function TasksLogModal({
                             <div className="flex flex-col gap-1">
                               <label
                                 className="text-[10px] uppercase r text-muted font-medium"
-                                htmlFor={`task-edit-title-${t.id}`}
+                                htmlFor={`task-edit-title-${todoItem.id}`}
                               >
                                 Task Title
                               </label>
                               <input
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
-                                id={`task-edit-title-${t.id}`}
+                                id={`task-edit-title-${todoItem.id}`}
                                 value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
+                                onChange={(event) =>
+                                  setEditTitle(event.target.value)
+                                }
                               />
                             </div>
 
@@ -482,7 +491,7 @@ export function TasksLogModal({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <div className="flex flex-col gap-1">
                                 <span className="text-[10px] uppercase r text-muted font-medium">
-                                  Priority
+                                   Priority
                                 </span>
                                 <div className="flex items-center gap-1">
                                   {(
@@ -492,18 +501,20 @@ export function TasksLogModal({
                                       "medium",
                                       "high",
                                     ] as TodoPriority[]
-                                  ).map((p) => (
+                                  ).map((priorityOption) => (
                                     <button
-                                      key={p}
+                                      key={priorityOption}
                                       className={`px-2 py-1 rounded-lg text-[11px] font-medium border capitalize flex-1 transition-colors cursor-pointer ${
-                                        editPriority === p
+                                        editPriority === priorityOption
                                           ? "bg-accent/15 border-accent text-accent"
                                           : "bg-surface-secondary border-separator/40 text-muted"
                                       }`}
                                       type="button"
-                                      onClick={() => setEditPriority(p)}
+                                      onClick={() =>
+                                        setEditPriority(priorityOption)
+                                      }
                                     >
-                                      {p}
+                                      {priorityOption}
                                     </button>
                                   ))}
                                 </div>
@@ -512,17 +523,17 @@ export function TasksLogModal({
                               <div className="flex flex-col gap-1">
                                 <label
                                   className="text-[10px] uppercase r text-muted font-medium"
-                                  htmlFor={`task-edit-due-${t.id}`}
+                                  htmlFor={`task-edit-due-${todoItem.id}`}
                                 >
                                   Due Date
                                 </label>
                                 <input
                                   className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
-                                  id={`task-edit-due-${t.id}`}
+                                  id={`task-edit-due-${todoItem.id}`}
                                   type="date"
                                   value={editDueDate}
-                                  onChange={(e) =>
-                                    setEditDueDate(e.target.value)
+                                  onChange={(event) =>
+                                    setEditDueDate(event.target.value)
                                   }
                                 />
                               </div>
@@ -571,17 +582,19 @@ export function TasksLogModal({
                             <div className="flex flex-col gap-1">
                               <label
                                 className="text-[10px] uppercase r text-muted font-medium"
-                                htmlFor={`task-edit-notes-${t.id}`}
+                                htmlFor={`task-edit-notes-${todoItem.id}`}
                               >
                                 Notes
                               </label>
                               <textarea
                                 className="w-full p-2 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent resize-none"
-                                id={`task-edit-notes-${t.id}`}
+                                id={`task-edit-notes-${todoItem.id}`}
                                 placeholder="Task description or notes..."
                                 rows={2}
                                 value={editNotes}
-                                onChange={(e) => setEditNotes(e.target.value)}
+                                onChange={(event) =>
+                                  setEditNotes(event.target.value)
+                                }
                               />
                             </div>
                           </div>
@@ -601,7 +614,7 @@ export function TasksLogModal({
                               className="h-7 px-3 text-xs rounded-lg bg-accent text-accent-foreground"
                               size="sm"
                               variant="primary"
-                              onPress={() => handleSaveEdit(t.id)}
+                              onPress={() => handleSaveEdit(todoItem.id)}
                             >
                               <Check className="size-3.5 mr-1" />
                               Save Changes
@@ -613,7 +626,7 @@ export function TasksLogModal({
 
                     return (
                       <div
-                        key={t.id}
+                        key={todoItem.id}
                         className="group relative flex flex-col gap-2 p-3.5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors select-none"
                       >
                         {/* Top Row: Title, Badges, Actions */}
@@ -623,24 +636,24 @@ export function TasksLogModal({
                               <Typography
                                 truncate
                                 className={`text-xs sm:text-sm ${
-                                  t.completed
+                                  todoItem.completed
                                     ? "line-through text-muted"
                                     : "text-foreground"
                                 }`}
                                 type="body-sm"
                                 weight="semibold"
                               >
-                                {t.title}
+                                {todoItem.title}
                               </Typography>
 
-                              {t.completed && (
+                              {todoItem.completed && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                                   <CheckCircle2 className="size-2.5" />
                                   <span>Done</span>
                                 </span>
                               )}
 
-                              {t.archived && (
+                              {todoItem.archived && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
                                   <Archive className="size-2.5" />
                                   <span>Archived</span>
@@ -652,12 +665,12 @@ export function TasksLogModal({
                               <span className="flex items-center gap-1">
                                 <Calendar className="size-3 text-muted" />
                                 <span>
-                                  Created {formatDateTime(t.createdAt)}
+                                  Created {formatDateTime(todoItem.createdAt)}
                                 </span>
                               </span>
-                              {t.dueDate && (
+                              {todoItem.dueDate && (
                                 <span className="flex items-center gap-1 text-accent">
-                                  <span>Due: {t.dueDate}</span>
+                                  <span>Due: {todoItem.dueDate}</span>
                                 </span>
                               )}
                             </div>
@@ -671,19 +684,19 @@ export function TasksLogModal({
                               className="size-7 rounded-xl text-muted hover:text-foreground hover:bg-surface-secondary transition-colors cursor-pointer"
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleStartEdit(t)}
+                              onClick={() => handleStartEdit(todoItem)}
                             >
                               <Edit3 className="size-3.5" />
                             </Button>
 
-                            {t.archived && (
+                            {todoItem.archived && (
                               <Button
                                 isIconOnly
                                 aria-label="Restore task"
                                 className="size-7 rounded-xl text-muted hover:text-accent hover:bg-accent/10 transition-colors cursor-pointer"
                                 size="sm"
                                 variant="ghost"
-                                onPress={() => handleRestoreTodo(t.id)}
+                                onPress={() => handleRestoreTodo(todoItem.id)}
                               >
                                 <RotateCcw className="size-3.5" />
                               </Button>
@@ -693,13 +706,15 @@ export function TasksLogModal({
                               isIconOnly
                               aria-label="Permanently delete task (Hold Shift to skip confirmation)"
                               className={`size-7 rounded-xl transition-colors cursor-pointer ${
-                                confirmDeleteId === t.id
+                                confirmDeleteId === todoItem.id
                                   ? "text-danger bg-danger/15"
                                   : "text-muted hover:text-danger hover:bg-danger/10"
                               }`}
                               size="sm"
                               variant="ghost"
-                              onClick={(e) => triggerDelete(t.id, e)}
+                              onClick={(event) =>
+                                triggerDelete(todoItem.id, event)
+                              }
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -707,7 +722,7 @@ export function TasksLogModal({
                         </div>
 
                         {/* Confirmation Banner */}
-                        {confirmDeleteId === t.id && (
+                        {confirmDeleteId === todoItem.id && (
                           <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-danger/10 border border-danger/25 text-xs animate-in fade-in zoom-in-95">
                             <span className="text-[11px] text-danger font-medium">
                               Permanently delete this task?
@@ -717,7 +732,7 @@ export function TasksLogModal({
                                 className="h-6 px-2.5 text-[11px] font-semibold rounded-lg bg-danger text-danger-foreground hover:bg-danger/90 cursor-pointer"
                                 size="sm"
                                 variant="primary"
-                                onPress={() => handlePermanentDelete(t.id)}
+                                onPress={() => handlePermanentDelete(todoItem.id)}
                               >
                                 Delete
                               </Button>
@@ -735,40 +750,40 @@ export function TasksLogModal({
 
                         {/* Metadata row: Priority & Tag */}
                         <div className="flex items-center gap-2 flex-wrap text-[11px] pt-0.5">
-                          {t.priority && t.priority !== "none" && (
+                          {todoItem.priority && todoItem.priority !== "none" && (
                             <span
                               className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${
-                                t.priority === "high"
+                                todoItem.priority === "high"
                                   ? "text-rose-400 bg-rose-500/10 border-rose-500/30"
-                                  : t.priority === "medium"
+                                  : todoItem.priority === "medium"
                                     ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
                                     : "text-blue-400 bg-blue-500/10 border-blue-500/30"
                               }`}
                             >
                               <Flag className="size-2.5" />
-                              <span className="capitalize">{t.priority}</span>
+                              <span className="capitalize">{todoItem.priority}</span>
                             </span>
                           )}
 
-                          {t.tag && (
+                          {todoItem.tag && (
                             <span
                               className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${tagColor}`}
                             >
                               <Tag className="size-2.5" />
-                              <span>{t.tag}</span>
+                              <span>{todoItem.tag}</span>
                             </span>
                           )}
                         </div>
 
                         {/* Optional Notes */}
-                        {t.notes && (
+                        {todoItem.notes && (
                           <div className="flex items-start gap-1.5 p-2 rounded-xl bg-surface-secondary/50 border border-separator/20 text-xs text-foreground/80 mt-1">
                             <FileText className="size-3.5 text-muted shrink-0 mt-0.5" />
                             <Typography
                               className="leading-relaxed whitespace-pre-wrap"
                               type="body-xs"
                             >
-                              {t.notes}
+                              {todoItem.notes}
                             </Typography>
                           </div>
                         )}

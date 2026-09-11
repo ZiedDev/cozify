@@ -16,7 +16,7 @@ export const MASTERY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-purple-400",
     borderHighlight:
       "border-purple-400 shadow-[0_0_14px_rgba(192,132,252,0.35)]",
-    getValue: (m) => (m.hasPerfectSession ? 1 : 0),
+    getValue: (metrics) => (metrics.hasPerfectSession ? 1 : 0),
   },
   {
     id: "overdrive_5",
@@ -31,7 +31,7 @@ export const MASTERY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-purple-400",
     borderHighlight:
       "border-purple-500/80 shadow-[0_0_12px_rgba(168,85,247,0.25)]",
-    getValue: (m) => (m.hasOvertime5 ? 1 : 0),
+    getValue: (metrics) => (metrics.hasOvertime5 ? 1 : 0),
   },
   {
     id: "overdrive_15",
@@ -45,7 +45,7 @@ export const MASTERY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-purple-400",
     borderHighlight:
       "border-purple-400 shadow-[0_0_14px_rgba(192,132,252,0.35)]",
-    getValue: (m) => (m.hasOvertime15 ? 1 : 0),
+    getValue: (metrics) => (metrics.hasOvertime15 ? 1 : 0),
   },
   {
     id: "overtime_total_60",
@@ -59,7 +59,7 @@ export const MASTERY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-purple-400",
     borderHighlight:
       "border-purple-400 shadow-[0_0_16px_rgba(192,132,252,0.4)]",
-    getValue: (m) => m.totalOvertimeMins,
+    getValue: (metrics) => metrics.totalOvertimeMins,
   },
 
   // Meta Trophy Hunter Achievements

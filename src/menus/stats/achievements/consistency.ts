@@ -16,7 +16,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-orange-400",
     borderHighlight:
       "border-orange-500/80 shadow-[0_0_12px_rgba(249,115,22,0.25)]",
-    getValue: (m) => m.currentStreakDays,
+    getValue: (metrics) => metrics.currentStreakDays,
   },
   {
     id: "streak_3",
@@ -30,7 +30,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-orange-400",
     borderHighlight:
       "border-orange-500/80 shadow-[0_0_12px_rgba(249,115,22,0.25)]",
-    getValue: (m) => m.currentStreakDays,
+    getValue: (metrics) => metrics.currentStreakDays,
   },
   {
     id: "streak_5",
@@ -43,7 +43,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 5,
     badgeColor: "text-orange-400",
     borderHighlight: "border-orange-400 shadow-[0_0_14px_rgba(251,146,60,0.3)]",
-    getValue: (m) => m.currentStreakDays,
+    getValue: (metrics) => metrics.currentStreakDays,
   },
   {
     id: "week_of_fire",
@@ -56,7 +56,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 7,
     badgeColor: "text-orange-400",
     borderHighlight: "border-orange-400 shadow-[0_0_14px_rgba(251,146,60,0.3)]",
-    getValue: (m) => m.currentStreakDays,
+    getValue: (metrics) => metrics.currentStreakDays,
   },
   {
     id: "streak_10",
@@ -70,7 +70,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-orange-400",
     borderHighlight:
       "border-orange-400 shadow-[0_0_16px_rgba(251,146,60,0.35)]",
-    getValue: (m) => m.currentStreakDays,
+    getValue: (metrics) => metrics.currentStreakDays,
   },
   {
     id: "streak_14",
@@ -84,7 +84,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-orange-400",
     borderHighlight:
       "border-orange-400 shadow-[0_0_16px_rgba(251,146,60,0.35)]",
-    getValue: (m) => m.currentStreakDays,
+    getValue: (metrics) => metrics.currentStreakDays,
   },
   {
     id: "streak_21",
@@ -98,7 +98,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-orange-400",
     borderHighlight:
       "border-orange-300 shadow-[0_0_18px_rgba(253,186,116,0.4)]",
-    getValue: (m) => m.currentStreakDays,
+    getValue: (metrics) => metrics.currentStreakDays,
   },
   {
     id: "streak_30",
@@ -112,7 +112,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-orange-400",
     borderHighlight:
       "border-orange-300 shadow-[0_0_20px_rgba(253,186,116,0.45)]",
-    getValue: (m) => m.currentStreakDays,
+    getValue: (metrics) => metrics.currentStreakDays,
   },
 
   // Daily Volume Chain
@@ -128,7 +128,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-yellow-400",
     borderHighlight:
       "border-yellow-500/80 shadow-[0_0_12px_rgba(234,179,8,0.25)]",
-    getValue: (m) => m.maxDailySessions,
+    getValue: (metrics) => metrics.maxDailySessions,
   },
   {
     id: "triple_threat",
@@ -141,7 +141,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 3,
     badgeColor: "text-yellow-400",
     borderHighlight: "border-yellow-400 shadow-[0_0_14px_rgba(250,204,21,0.3)]",
-    getValue: (m) => m.maxDailySessions,
+    getValue: (metrics) => metrics.maxDailySessions,
   },
   {
     id: "quad_power",
@@ -155,7 +155,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-yellow-400",
     borderHighlight:
       "border-yellow-400 shadow-[0_0_16px_rgba(250,204,21,0.35)]",
-    getValue: (m) => m.maxDailySessions,
+    getValue: (metrics) => metrics.maxDailySessions,
   },
 
   // Time-of-Day Habits
@@ -171,7 +171,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-amber-400",
     borderHighlight:
       "border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.25)]",
-    getValue: (m) => (m.hasEarlyMorningSession ? 1 : 0),
+    getValue: (metrics) => (metrics.hasEarlyMorningSession ? 1 : 0),
   },
   {
     id: "morning_clarity",
@@ -184,7 +184,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 2,
     badgeColor: "text-amber-400",
     borderHighlight: "border-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.3)]",
-    getValue: (m) => m.morningSessionsCount,
+    getValue: (metrics) => metrics.morningSessionsCount,
   },
   {
     id: "afternoon_surge",
@@ -199,7 +199,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-amber-400",
     borderHighlight:
       "border-amber-500/80 shadow-[0_0_12px_rgba(245,158,11,0.25)]",
-    getValue: (m) => (m.hasAfternoonSession ? 1 : 0),
+    getValue: (metrics) => (metrics.hasAfternoonSession ? 1 : 0),
   },
   {
     id: "night_owl",
@@ -213,7 +213,7 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-indigo-400",
     borderHighlight:
       "border-indigo-500/80 shadow-[0_0_12px_rgba(99,102,241,0.25)]",
-    getValue: (m) => (m.hasLateNightSession ? 1 : 0),
+    getValue: (metrics) => (metrics.hasLateNightSession ? 1 : 0),
   },
   {
     id: "weekend_warrior",
@@ -226,6 +226,6 @@ export const CONSISTENCY_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 1,
     badgeColor: "text-orange-400",
     borderHighlight: "border-orange-400 shadow-[0_0_14px_rgba(251,146,60,0.3)]",
-    getValue: (m) => (m.hadSatAndSun ? 1 : 0),
+    getValue: (metrics) => (metrics.hadSatAndSun ? 1 : 0),
   },
 ];

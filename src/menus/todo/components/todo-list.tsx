@@ -48,17 +48,17 @@ export function TodoList() {
   // Animate newly added items with zero mount lag
   useGSAP(
     () => {
-      const el = listRef.current;
+      const containerElement = listRef.current;
 
-      if (!el) return;
+      if (!containerElement) return;
 
-      const currentIds = visibleTodos.map((t) => t.id);
+      const currentIds = visibleTodos.map((todo) => todo.id);
 
       if (isInitialMountRef.current) {
         isInitialMountRef.current = false;
         prevIdsRef.current = currentIds;
 
-        const rows = el.querySelectorAll(".todo-item-row");
+        const rows = containerElement.querySelectorAll(".todo-item-row");
 
         if (rows.length > 0) {
           gsap.fromTo(
@@ -87,11 +87,13 @@ export function TodoList() {
 
       if (newIds.length > 0) {
         newIds.forEach((id) => {
-          const newEl = el.querySelector(`[data-todo-id="${id}"]`);
+          const todoElement = containerElement.querySelector(
+            `[data-todo-id="${id}"]`,
+          );
 
-          if (newEl) {
+          if (todoElement) {
             gsap.fromTo(
-              newEl,
+              todoElement,
               { opacity: 0, y: -12, scale: 0.96 },
               {
                 opacity: 1,
@@ -162,19 +164,19 @@ export function TodoList() {
                 viewMode === "minimal" ? "gap-1.5" : "gap-2.5"
               }`}
             >
-              {visibleTodos.map((todo, idx) => (
-                <SortableItem key={todo.id} id={todo.id} index={idx}>
+              {visibleTodos.map((todo, index) => (
+                <SortableItem key={todo.id} id={todo.id} index={index}>
                   <div className="todo-item-row w-full" data-todo-id={todo.id}>
                     {viewMode === "minimal" ? (
                       <TodoItemMinimal
-                        index={idx}
+                        index={index}
                         todo={todo}
                         onDelete={setDeletingTodo}
                         onEdit={setEditingTodo}
                       />
                     ) : (
                       <TodoItemDetailed
-                        index={idx}
+                        index={index}
                         todo={todo}
                         onDelete={setDeletingTodo}
                         onEdit={setEditingTodo}
@@ -191,7 +193,9 @@ export function TodoList() {
                     className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-colors cursor-pointer shadow-xs"
                     size="sm"
                     variant="secondary"
-                    onPress={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                    onPress={() =>
+                      setVisibleCount((prevCount) => prevCount + PAGE_SIZE)
+                    }
                   >
                     Load more ({remainingCount} remaining)
                   </Button>

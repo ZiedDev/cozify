@@ -56,7 +56,7 @@ type TodoContextType = {
   setFilter: (filter: TodoFilter) => void;
   setSelectedTag: (tag: string | null) => void;
   setSelectedPriority: (priority: TodoPriority | "all" | null) => void;
-  setSearchQuery: (q: string) => void;
+  setSearchQuery: (query: string) => void;
 };
 
 const TodoContext = createContext<TodoContextType | null>(null);
@@ -106,9 +106,9 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   >(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const setFilter = useCallback((f: TodoFilter) => {
-    setFilterState(f);
-    storageAdapter.setItem("cozify_todo_filter", f);
+  const setFilter = useCallback((nextFilter: TodoFilter) => {
+    setFilterState(nextFilter);
+    storageAdapter.setItem("cozify_todo_filter", nextFilter);
   }, []);
 
   // Sync todos to localStorage
@@ -161,17 +161,17 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
   const toggleTodo = useCallback(
     (id: string) => {
-      setTodos((prev) =>
-        prev.map((t) => {
-          if (t.id !== id) return t;
-          const nextCompleted = !t.completed;
+      setTodos((prevTodos) =>
+        prevTodos.map((todo) => {
+          if (todo.id !== id) return todo;
+          const nextCompleted = !todo.completed;
 
           if (nextCompleted) {
             playSound("taskComplete");
           }
 
           return {
-            ...t,
+            ...todo,
             completed: nextCompleted,
             completedAt: nextCompleted ? Date.now() : undefined,
           };
@@ -182,67 +182,67 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   );
 
   const updateTodo = useCallback((id: string, updates: Partial<TodoItem>) => {
-    setTodos((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) => (todo.id === id ? { ...todo, ...updates } : todo)),
     );
   }, []);
 
   // Archive task on delete instead of completely removing
   const deleteTodo = useCallback((id: string) => {
-    setTodos((prev) =>
-      prev.map((t) =>
-        t.id === id
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) =>
+        todo.id === id
           ? {
-              ...t,
+              ...todo,
               archived: true,
               archivedAt: Date.now(),
             }
-          : t,
+          : todo,
       ),
     );
   }, []);
 
   const permanentlyDeleteTodo = useCallback((id: string) => {
-    setTodos((prev) => prev.filter((t) => t.id !== id));
+    setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
   }, []);
 
   const restoreTodo = useCallback((id: string) => {
-    setTodos((prev) =>
-      prev.map((t) =>
-        t.id === id
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) =>
+        todo.id === id
           ? {
-              ...t,
+              ...todo,
               archived: false,
               archivedAt: undefined,
             }
-          : t,
+          : todo,
       ),
     );
   }, []);
 
   const clearCompleted = useCallback(() => {
-    setTodos((prev) =>
-      prev.map((t) =>
-        t.completed
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) =>
+        todo.completed
           ? {
-              ...t,
+              ...todo,
               archived: true,
               archivedAt: Date.now(),
             }
-          : t,
+          : todo,
       ),
     );
   }, []);
 
   const moveTodoToPosition = useCallback(
     (sourceId: string, targetId: string, position: "top" | "bottom") => {
-      setTodos((prev) => {
-        const sourceIndex = prev.findIndex((t) => t.id === sourceId);
-        const targetIndex = prev.findIndex((t) => t.id === targetId);
+      setTodos((prevTodos) => {
+        const sourceIndex = prevTodos.findIndex((todo) => todo.id === sourceId);
+        const targetIndex = prevTodos.findIndex((todo) => todo.id === targetId);
 
-        if (sourceIndex === -1 || targetIndex === -1) return prev;
+        if (sourceIndex === -1 || targetIndex === -1) return prevTodos;
 
-        const updated = [...prev];
+        const updated = [...prevTodos];
         const [moved] = updated.splice(sourceIndex, 1);
 
         let insertIndex = targetIndex;
@@ -263,13 +263,13 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
   const reorderTodos = useCallback((activeId: string, overId: string) => {
     if (activeId === overId) return;
-    setTodos((prev) => {
-      const oldIndex = prev.findIndex((t) => t.id === activeId);
-      const newIndex = prev.findIndex((t) => t.id === overId);
+    setTodos((prevTodos) => {
+      const oldIndex = prevTodos.findIndex((todo) => todo.id === activeId);
+      const newIndex = prevTodos.findIndex((todo) => todo.id === overId);
 
-      if (oldIndex === -1 || newIndex === -1) return prev;
+      if (oldIndex === -1 || newIndex === -1) return prevTodos;
 
-      return arrayMove(prev, oldIndex, newIndex);
+      return arrayMove(prevTodos, oldIndex, newIndex);
     });
   }, []);
 
@@ -281,7 +281,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
   // Active unarchived todos list
   const activeTodos = useMemo(() => {
-    return todos.filter((t) => !t.archived);
+    return todos.filter((todo) => !todo.archived);
   }, [todos]);
 
   // Derived filtered todos list
@@ -307,10 +307,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
       // 3. Search query
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase().trim();
-        const matchesTitle = todo.title.toLowerCase().includes(q);
-        const matchesNotes = todo.notes?.toLowerCase().includes(q);
-        const matchesTag = todo.tag?.toLowerCase().includes(q);
+        const query = searchQuery.toLowerCase().trim();
+        const matchesTitle = todo.title.toLowerCase().includes(query);
+        const matchesNotes = todo.notes?.toLowerCase().includes(query);
+        const matchesTag = todo.tag?.toLowerCase().includes(query);
 
         if (!matchesTitle && !matchesNotes && !matchesTag) {
           return false;
@@ -338,7 +338,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   // Statistics on active unarchived todos
   const stats = useMemo(() => {
     const total = activeTodos.length;
-    const completed = activeTodos.filter((t) => t.completed).length;
+    const completed = activeTodos.filter((todo) => todo.completed).length;
     const active = total - completed;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 

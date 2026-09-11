@@ -8,12 +8,12 @@ const formatToDDMMYY = (dateStr: string) => {
   const parts = dateStr.split("-");
 
   if (parts.length !== 3) return dateStr;
-  const [y, m, d] = parts;
-  const yy = y.slice(-2);
-  const mm = m.padStart(2, "0");
-  const dd = d.padStart(2, "0");
+  const [year, month, day] = parts;
+  const shortYear = year.slice(-2);
+  const paddedMonth = month.padStart(2, "0");
+  const paddedDay = day.padStart(2, "0");
 
-  return `${dd}/${mm}/${yy}`;
+  return `${paddedDay}/${paddedMonth}/${shortYear}`;
 };
 
 export function StatsHero({

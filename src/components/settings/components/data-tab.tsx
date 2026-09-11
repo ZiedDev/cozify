@@ -68,8 +68,8 @@ export function DataTab({
     }
   };
 
-  const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileSelect = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
     if (!file) return;
 

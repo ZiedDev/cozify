@@ -88,8 +88,8 @@ export function ThemePopover() {
     setAppThemeColor(newHue);
   };
 
-  const handleAddCustom = (e?: SubmitEvent) => {
-    if (e) e.preventDefault();
+  const handleAddCustom = (event?: SubmitEvent) => {
+    if (event) event.preventDefault();
     if (!imageUrl.trim()) return;
 
     const success = addCustomBackground(imageName, imageUrl);
@@ -331,8 +331,8 @@ export function ThemePopover() {
                         onClick={() => {
                           if (!isEditing) selectBackground(bg);
                         }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
                             if (!isEditing) selectBackground(bg);
                           }
                         }}
@@ -347,9 +347,9 @@ export function ThemePopover() {
                           <div
                             className="flex items-center gap-1"
                             role="presentation"
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}
+                            onPointerDown={(event) => event.stopPropagation()}
                           >
                             {/* Move Left */}
                             <Tooltip delay={150}>
@@ -358,9 +358,9 @@ export function ThemePopover() {
                                   aria-label="Move left"
                                   className="size-4.5 rounded-full bg-black/70 hover:bg-surface text-white flex items-center justify-center cursor-pointer transition-colors"
                                   type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
                                     moveCustomBackground(bg.id, "left");
                                   }}
                                 >
@@ -379,9 +379,9 @@ export function ThemePopover() {
                                   aria-label="Move right"
                                   className="size-4.5 rounded-full bg-black/70 hover:bg-surface text-white flex items-center justify-center cursor-pointer transition-colors"
                                   type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
                                     moveCustomBackground(bg.id, "right");
                                   }}
                                 >
@@ -408,9 +408,9 @@ export function ThemePopover() {
                                       : "bg-black/70 hover:bg-surface"
                                   }`}
                                   type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
                                     if (isEditing) {
                                       handleSaveRename(bg.id);
                                     } else {
@@ -438,9 +438,9 @@ export function ThemePopover() {
                                   aria-label={`Delete ${bg.name}`}
                                   className="size-4.5 rounded-full bg-black/70 hover:bg-danger text-white flex items-center justify-center cursor-pointer transition-colors"
                                   type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
+                                  onClick={(event) => {
+                                    event.preventDefault();
+                                    event.stopPropagation();
                                     removeCustomBackground(bg.id);
                                   }}
                                 >
@@ -458,17 +458,20 @@ export function ThemePopover() {
                           <div
                             className="relative z-20"
                             role="presentation"
-                            onClick={(e) => e.stopPropagation()}
-                            onKeyDown={(e) => e.stopPropagation()}
+                            onClick={(event) => event.stopPropagation()}
+                            onKeyDown={(event) => event.stopPropagation()}
                           >
                             <input
                               className="text-[10px] font-medium text-foreground bg-surface px-1 py-0.5 rounded border border-accent w-full outline-none"
                               value={editingName}
                               onBlur={() => handleSaveRename(bg.id)}
-                              onChange={(e) => setEditingName(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") handleSaveRename(bg.id);
-                                if (e.key === "Escape") setEditingId(null);
+                              onChange={(event) =>
+                                setEditingName(event.target.value)
+                              }
+                              onKeyDown={(event) => {
+                                if (event.key === "Enter")
+                                  handleSaveRename(bg.id);
+                                if (event.key === "Escape") setEditingId(null);
                               }}
                             />
                           </div>

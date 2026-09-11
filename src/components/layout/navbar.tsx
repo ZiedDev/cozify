@@ -17,7 +17,7 @@ export function Navbar() {
   const { todos } = useTodos();
   const { hasActiveSession } = useTimer();
 
-  const activeTodoCount = todos.filter((t) => !t.completed).length;
+  const activeTodoCount = todos.filter((todo) => !todo.completed).length;
 
   return (
     <header className="sticky top-0 z-40">

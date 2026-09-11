@@ -108,5 +108,5 @@ export type AchievementDefinition = {
   lockedTitle?: string;
   lockedDescription?: string;
   lockedIcon?: LucideIcon;
-  getValue: (m: AchievementMetrics) => number;
+  getValue: (metrics: AchievementMetrics) => number;
 };

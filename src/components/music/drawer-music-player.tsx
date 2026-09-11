@@ -58,8 +58,8 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
     setIsPickerOpen,
   } = useMusic();
 
-  const handleLoad = (e?: SubmitEvent) => {
-    if (e) e.preventDefault();
+  const handleLoad = (event?: SubmitEvent) => {
+    if (event) event.preventDefault();
     if (!inputUrl.trim()) return;
     const success = loadUrl(inputUrl.trim(), undefined, undefined, true);
 
@@ -424,7 +424,7 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
               className="text-xs"
               placeholder="Paste Spotify or YouTube link..."
               value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
+              onChange={(event) => setInputUrl(event.target.value)}
             />
           </InputGroup>
         </TextField>

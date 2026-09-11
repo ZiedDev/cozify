@@ -1,5 +1,5 @@
 import { useState, useMemo, memo } from "react";
-import { ProgressBar, Tabs, Typography } from "@heroui/react";
+import { ProgressBar, Tabs, Typography, ScrollShadow } from "@heroui/react";
 import { Tag, Clock, CheckCircle2 } from "lucide-react";
 
 import { TagStat } from "../types";
@@ -83,7 +83,9 @@ function TagsAnalyticsComponent({
         <div className="mb-2.5 pb-2 border-b border-separator/20">
           <Tabs
             selectedKey={activeSubTab}
-            onSelectionChange={(k) => setActiveSubTab(k as string)}
+            onSelectionChange={(selectedSubTab) =>
+              setActiveSubTab(selectedSubTab as string)
+            }
           >
             <Tabs.ListContainer className="rounded-full">
               <Tabs.List
@@ -113,7 +115,11 @@ function TagsAnalyticsComponent({
 
         {/* Tab 1: Focus Time Allocation */}
         {activeSubTab === "focus" && (
-          <div className="flex flex-col gap-2.5 pt-0.5">
+          <ScrollShadow
+            className="max-h-48 sm:max-h-56 overflow-y-auto flex flex-col gap-2.5 pt-0.5 no-scrollbar pr-1"
+            orientation="vertical"
+            size={20}
+          >
             {tagStats.length === 0 ? (
               <Typography
                 className="py-5 text-center text-xs"
@@ -123,7 +129,7 @@ function TagsAnalyticsComponent({
                 No tagged focus sessions recorded yet.
               </Typography>
             ) : (
-              tagStats.slice(0, 4).map((tag) => {
+              tagStats.map((tag) => {
                 const tagMeta = getTagInfo(tag.id);
                 const TagIcon = getTagIcon(tag.id);
                 const colorInfo = {
@@ -172,12 +178,16 @@ function TagsAnalyticsComponent({
                 );
               })
             )}
-          </div>
+          </ScrollShadow>
         )}
 
         {/* Tab 2: Task Completion by Tag */}
         {activeSubTab === "tasks" && (
-          <div className="flex flex-col gap-2.5 pt-0.5">
+          <ScrollShadow
+            className="max-h-48 sm:max-h-56 overflow-y-auto flex flex-col gap-2.5 pt-0.5 no-scrollbar pr-1"
+            orientation="vertical"
+            size={20}
+          >
             {taskTagStats.length === 0 ? (
               <Typography
                 className="py-5 text-center text-xs"
@@ -187,7 +197,7 @@ function TagsAnalyticsComponent({
                 No tagged tasks created yet.
               </Typography>
             ) : (
-              taskTagStats.slice(0, 4).map((item) => {
+              taskTagStats.map((item) => {
                 const TagIcon = getTagIcon(item.id);
 
                 return (
@@ -226,7 +236,7 @@ function TagsAnalyticsComponent({
                 );
               })
             )}
-          </div>
+          </ScrollShadow>
         )}
       </div>
 

@@ -16,8 +16,8 @@ export function shouldPromptForTargetReduction(
 
   return (
     Object.entries(cycleStates).some(
-      ([k, s]) =>
-        Number(k) > newTarget && (s.isCompleted || s.timeLeft < focusDuration),
+      ([cycleKey, cycleState]) =>
+        Number(cycleKey) > newTarget && (cycleState.isCompleted || cycleState.timeLeft < focusDuration),
     ) ||
     (currentCycle > newTarget && isCurrentCycleActive)
   );
@@ -68,7 +68,7 @@ export const clampTargetCycles = (count: number): number =>
 
 export const countCompletedCycles = (
   cycleStates: Record<number, { isCompleted: boolean }>,
-): number => Object.values(cycleStates).filter((s) => s.isCompleted).length;
+): number => Object.values(cycleStates).filter((cycleState) => cycleState.isCompleted).length;
 
 export function calculateSavedCycleProgressPercent(
   cycleState:
@@ -110,11 +110,11 @@ export function getNextFocusCycleAfterBreak(
 ): number {
   if (!cycleStates[currentCycle]?.isCompleted) return currentCycle;
 
-  for (let c = currentCycle + 1; c <= targetCycles; c++) {
-    if (!cycleStates[c]?.isCompleted) return c;
+  for (let cycleNum = currentCycle + 1; cycleNum <= targetCycles; cycleNum++) {
+    if (!cycleStates[cycleNum]?.isCompleted) return cycleNum;
   }
-  for (let c = 1; c < currentCycle; c++) {
-    if (!cycleStates[c]?.isCompleted) return c;
+  for (let cycleNum = 1; cycleNum < currentCycle; cycleNum++) {
+    if (!cycleStates[cycleNum]?.isCompleted) return cycleNum;
   }
 
   return Math.min(targetCycles, currentCycle + 1);

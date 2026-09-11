@@ -22,10 +22,10 @@ type Props = {
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
   onDelete: (todo: TodoItem) => void;
-  onDragStart?: (e: DragEvent, id: string) => void;
-  onDragOver?: (e: DragEvent, id: string) => void;
+  onDragStart?: (event: DragEvent, id: string) => void;
+  onDragOver?: (event: DragEvent, id: string) => void;
   onDragEnd?: () => void;
-  onDrop?: (e: DragEvent, id: string) => void;
+  onDrop?: (event: DragEvent, id: string) => void;
 };
 
 function TodoItemDetailedComponent({
@@ -136,9 +136,13 @@ function TodoItemDetailedComponent({
       }`}
       draggable={Boolean(onDragStart)}
       onDragEnd={onDragEnd}
-      onDragOver={onDragOver ? (e) => onDragOver(e, todo.id) : undefined}
-      onDragStart={onDragStart ? (e) => onDragStart(e, todo.id) : undefined}
-      onDrop={onDrop ? (e) => onDrop(e, todo.id) : undefined}
+      onDragOver={
+        onDragOver ? (event) => onDragOver(event, todo.id) : undefined
+      }
+      onDragStart={
+        onDragStart ? (event) => onDragStart(event, todo.id) : undefined
+      }
+      onDrop={onDrop ? (event) => onDrop(event, todo.id) : undefined}
     >
       {/* 1. Top row: Drag Handle, Checkbox, Title, and Action Buttons */}
       <div className="flex items-start justify-between gap-2.5 w-full">
@@ -168,8 +172,8 @@ function TodoItemDetailedComponent({
           role="button"
           tabIndex={0}
           onClick={handleToggle}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
               handleToggle();
             }
           }}
@@ -306,11 +310,14 @@ function TodoItemDetailedComponent({
               placeholder="Add notes for this task... (Press Esc or click away to save)"
               rows={2}
               value={noteDraft}
-              onChange={(e) => setNoteDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
+              onChange={(event) => setNoteDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
                   handleSaveNotes();
-                } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                } else if (
+                  event.key === "Enter" &&
+                  (event.metaKey || event.ctrlKey)
+                ) {
                   handleSaveNotes();
                 }
               }}
@@ -344,8 +351,8 @@ function TodoItemDetailedComponent({
             tabIndex={0}
             title="Click to edit notes"
             onClick={() => setIsEditingNotes(true)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
                 setIsEditingNotes(true);
               }
             }}

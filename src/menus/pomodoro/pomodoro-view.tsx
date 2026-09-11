@@ -94,9 +94,9 @@ export function PomodoroView({
 
   // Spacebar toggle shortcut
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.code === "Space" && e.target === document.body) {
-        e.preventDefault();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === "Space" && event.target === document.body) {
+        event.preventDefault();
         toggle();
       }
     };

@@ -16,7 +16,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-cyan-400",
     borderHighlight:
       "border-cyan-500/80 shadow-[0_0_12px_rgba(6,182,212,0.25)]",
-    getValue: (m) => m.totalSessions,
+    getValue: (metrics) => metrics.totalSessions,
   },
   {
     id: "focus_novice",
@@ -30,7 +30,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-cyan-400",
     borderHighlight:
       "border-cyan-500/80 shadow-[0_0_12px_rgba(6,182,212,0.25)]",
-    getValue: (m) => m.totalCycles,
+    getValue: (metrics) => metrics.totalCycles,
   },
   {
     id: "flow_starter",
@@ -43,7 +43,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 10,
     badgeColor: "text-cyan-400",
     borderHighlight: "border-cyan-400 shadow-[0_0_14px_rgba(34,211,238,0.3)]",
-    getValue: (m) => m.totalCycles,
+    getValue: (metrics) => metrics.totalCycles,
   },
   {
     id: "focus_adept",
@@ -56,7 +56,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 25,
     badgeColor: "text-cyan-400",
     borderHighlight: "border-cyan-400 shadow-[0_0_16px_rgba(34,211,238,0.35)]",
-    getValue: (m) => m.totalCycles,
+    getValue: (metrics) => metrics.totalCycles,
   },
   {
     id: "marathon_runner",
@@ -69,7 +69,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 50,
     badgeColor: "text-cyan-400",
     borderHighlight: "border-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.4)]",
-    getValue: (m) => m.totalCycles,
+    getValue: (metrics) => metrics.totalCycles,
   },
   {
     id: "grand_centurion",
@@ -82,7 +82,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 100,
     badgeColor: "text-cyan-400",
     borderHighlight: "border-cyan-300 shadow-[0_0_20px_rgba(103,232,249,0.45)]",
-    getValue: (m) => m.totalCycles,
+    getValue: (metrics) => metrics.totalCycles,
   },
 
   // Focus Minutes / Time Chain
@@ -98,7 +98,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-blue-400",
     borderHighlight:
       "border-blue-500/80 shadow-[0_0_12px_rgba(59,130,246,0.25)]",
-    getValue: (m) => m.totalFocusMinutes,
+    getValue: (metrics) => metrics.totalFocusMinutes,
   },
   {
     id: "half_day_focus",
@@ -111,7 +111,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 300,
     badgeColor: "text-blue-400",
     borderHighlight: "border-blue-400 shadow-[0_0_14px_rgba(96,165,250,0.3)]",
-    getValue: (m) => m.totalFocusMinutes,
+    getValue: (metrics) => metrics.totalFocusMinutes,
   },
   {
     id: "workday_master",
@@ -124,7 +124,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 480,
     badgeColor: "text-blue-400",
     borderHighlight: "border-blue-400 shadow-[0_0_16px_rgba(96,165,250,0.35)]",
-    getValue: (m) => m.totalFocusMinutes,
+    getValue: (metrics) => metrics.totalFocusMinutes,
   },
   {
     id: "kilo_focus",
@@ -137,7 +137,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 1000,
     badgeColor: "text-blue-400",
     borderHighlight: "border-blue-300 shadow-[0_0_20px_rgba(147,197,253,0.45)]",
-    getValue: (m) => m.totalFocusMinutes,
+    getValue: (metrics) => metrics.totalFocusMinutes,
   },
 
   // Single Session Endurance Chain
@@ -154,7 +154,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-indigo-400",
     borderHighlight:
       "border-indigo-400 shadow-[0_0_14px_rgba(129,140,248,0.3)]",
-    getValue: (m) => m.longestSessionMinutes,
+    getValue: (metrics) => metrics.longestSessionMinutes,
   },
   {
     id: "deep_session_60",
@@ -168,7 +168,7 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-indigo-400",
     borderHighlight:
       "border-indigo-400 shadow-[0_0_16px_rgba(129,140,248,0.35)]",
-    getValue: (m) => m.longestSessionMinutes,
+    getValue: (metrics) => metrics.longestSessionMinutes,
   },
   {
     id: "deep_session_90",
@@ -182,6 +182,6 @@ export const FOCUS_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-indigo-400",
     borderHighlight:
       "border-indigo-300 shadow-[0_0_18px_rgba(165,180,252,0.4)]",
-    getValue: (m) => m.longestSessionMinutes,
+    getValue: (metrics) => metrics.longestSessionMinutes,
   },
 ];

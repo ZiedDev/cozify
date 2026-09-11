@@ -35,7 +35,7 @@ export function StatsView({
   } = useStats();
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const hasData = sessions.length > 0 || todos.some((t) => t.completed);
+  const hasData = sessions.length > 0 || todos.some((todo) => todo.completed);
 
   useGSAP(
     () => {

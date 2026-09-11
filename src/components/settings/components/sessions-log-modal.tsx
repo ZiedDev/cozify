@@ -76,42 +76,42 @@ export function SessionsLogModal({
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDeleteSession = (id: string) => {
-    const next = sessions.filter((s) => s.id !== id);
+  const handleDeleteSession = (sessionId: string) => {
+    const next = sessions.filter((session) => session.id !== sessionId);
 
     setSessions(next);
     storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
     setConfirmDeleteId(null);
-    if (editingSessionId === id) setEditingSessionId(null);
+    if (editingSessionId === sessionId) setEditingSessionId(null);
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
   };
 
-  const triggerDelete = (id: string, e?: MouseEvent) => {
-    if (e?.shiftKey) {
-      handleDeleteSession(id);
+  const triggerDelete = (sessionId: string, event?: MouseEvent) => {
+    if (event?.shiftKey) {
+      handleDeleteSession(sessionId);
     } else {
-      setConfirmDeleteId((prev) => (prev === id ? null : id));
-      if (editingSessionId === id) setEditingSessionId(null);
+      setConfirmDeleteId((prev) => (prev === sessionId ? null : sessionId));
+      if (editingSessionId === sessionId) setEditingSessionId(null);
     }
   };
 
-  const handleStartEdit = (s: SessionRecord) => {
-    setEditingSessionId(s.id);
-    setEditTitle(s.title || "Focus Session");
-    setEditFocusMinutes(s.focusMinutes ?? 25);
-    setEditOvertimeMinutes(s.overtimeMinutes ?? 0);
-    setEditTag(s.tag);
-    setEditNotes(s.notes ?? "");
+  const handleStartEdit = (session: SessionRecord) => {
+    setEditingSessionId(session.id);
+    setEditTitle(session.title || "Focus Session");
+    setEditFocusMinutes(session.focusMinutes ?? 25);
+    setEditOvertimeMinutes(session.overtimeMinutes ?? 0);
+    setEditTag(session.tag);
+    setEditNotes(session.notes ?? "");
     setConfirmDeleteId(null);
   };
 
-  const handleSaveEdit = (id: string) => {
-    const next = sessions.map((s) => {
-      if (s.id !== id) return s;
+  const handleSaveEdit = (sessionId: string) => {
+    const next = sessions.map((session) => {
+      if (session.id !== sessionId) return session;
 
       return {
-        ...s,
+        ...session,
         title: editTitle.trim() || "Focus Session",
         focusMinutes: Math.max(1, editFocusMinutes),
         overtimeMinutes: Math.max(0, editOvertimeMinutes),
@@ -128,24 +128,24 @@ export function SessionsLogModal({
   };
 
   const filteredSessions = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
 
-    return sessions.filter((s) => {
+    return sessions.filter((session) => {
       // 1. Status Filter Mode
       if (
         filterMode === "cycles" &&
-        Number(s.cyclesCompleted ?? (s.sprintsCompleted || 0)) <= 1
+        Number(session.cyclesCompleted ?? (session.sprintsCompleted || 0)) <= 1
       )
         return false;
-      if (filterMode === "overtime" && Number(s.overtimeMinutes || 0) <= 0)
+      if (filterMode === "overtime" && Number(session.overtimeMinutes || 0) <= 0)
         return false;
-      if (filterMode === "notes" && !(s.notes && s.notes.trim())) return false;
+      if (filterMode === "notes" && !(session.notes && session.notes.trim())) return false;
 
       // 2. Search query
-      if (q) {
-        const matchTitle = (s.title || "").toLowerCase().includes(q);
-        const matchNotes = (s.notes || "").toLowerCase().includes(q);
-        const matchTag = (s.tag || "").toLowerCase().includes(q);
+      if (query) {
+        const matchTitle = (session.title || "").toLowerCase().includes(query);
+        const matchNotes = (session.notes || "").toLowerCase().includes(query);
+        const matchTag = (session.tag || "").toLowerCase().includes(query);
 
         if (!matchTitle && !matchNotes && !matchTag) return false;
       }
@@ -164,31 +164,31 @@ export function SessionsLogModal({
   const multiCycleCount = useMemo(
     () =>
       sessions.filter(
-        (s) => Number(s.cyclesCompleted ?? (s.sprintsCompleted || 0)) > 1,
+        (session) => Number(session.cyclesCompleted ?? (session.sprintsCompleted || 0)) > 1,
       ).length,
     [sessions],
   );
 
   const overtimeCount = useMemo(
-    () => sessions.filter((s) => Number(s.overtimeMinutes || 0) > 0).length,
+    () => sessions.filter((session) => Number(session.overtimeMinutes || 0) > 0).length,
     [sessions],
   );
 
   const notesCount = useMemo(
-    () => sessions.filter((s) => Boolean(s.notes && s.notes.trim())).length,
+    () => sessions.filter((session) => Boolean(session.notes && session.notes.trim())).length,
     [sessions],
   );
 
   const formatSessionDateTime = (dateVal?: number | string) => {
     if (!dateVal) return { date: "—", time: "—" };
     try {
-      const d = new Date(dateVal);
-      const date = d.toLocaleDateString(undefined, {
+      const dateObj = new Date(dateVal);
+      const date = dateObj.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
         year: "numeric",
       });
-      const time = d.toLocaleTimeString(undefined, {
+      const time = dateObj.toLocaleTimeString(undefined, {
         hour: "2-digit",
         minute: "2-digit",
       });
@@ -246,7 +246,7 @@ export function SessionsLogModal({
                         className="text-xs"
                         placeholder="Filter title or notes..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(event) => setSearchQuery(event.target.value)}
                       />
                     </InputGroup>
                   </TextField>
@@ -275,8 +275,8 @@ export function SessionsLogModal({
                       role="button"
                       tabIndex={0}
                       onClick={() => setFilterMode("all")}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ")
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ")
                           setFilterMode("all");
                       }}
                     >
@@ -308,8 +308,8 @@ export function SessionsLogModal({
                           prev === "cycles" ? "all" : "cycles",
                         )
                       }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
                           setFilterMode((prev) =>
                             prev === "cycles" ? "all" : "cycles",
                           );
@@ -348,8 +348,8 @@ export function SessionsLogModal({
                           prev === "overtime" ? "all" : "overtime",
                         )
                       }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
                           setFilterMode((prev) =>
                             prev === "overtime" ? "all" : "overtime",
                           );
@@ -388,8 +388,8 @@ export function SessionsLogModal({
                           prev === "notes" ? "all" : "notes",
                         )
                       }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
                           setFilterMode((prev) =>
                             prev === "notes" ? "all" : "notes",
                           );
@@ -450,18 +450,18 @@ export function SessionsLogModal({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {visibleSessions.map((s) => {
-                    const { date, time } = formatSessionDateTime(s.createdAt);
+                  {visibleSessions.map((session) => {
+                    const { date, time } = formatSessionDateTime(session.createdAt);
                     const totalMins =
-                      (Number(s.focusMinutes) || 0) +
-                      (Number(s.overtimeMinutes) || 0);
-                    const cycleCount = s.cyclesCompleted ?? s.sprintsCompleted;
-                    const isEditing = editingSessionId === s.id;
+                      (Number(session.focusMinutes) || 0) +
+                      (Number(session.overtimeMinutes) || 0);
+                    const cycleCount = session.cyclesCompleted ?? session.sprintsCompleted;
+                    const isEditing = editingSessionId === session.id;
 
                     if (isEditing) {
                       return (
                         <div
-                          key={s.id}
+                          key={session.id}
                           className="flex flex-col gap-3 p-3.5 rounded-2xl bg-surface border border-accent/60 shadow-sm animate-in fade-in"
                         >
                           <div className="flex items-center justify-between">
@@ -479,15 +479,15 @@ export function SessionsLogModal({
                             <div className="sm:col-span-1 flex flex-col gap-1">
                               <label
                                 className="text-[10px] uppercase r text-muted font-medium"
-                                htmlFor={`session-edit-title-${s.id}`}
+                                htmlFor={`session-edit-title-${session.id}`}
                               >
                                 Title
                               </label>
                               <input
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
-                                id={`session-edit-title-${s.id}`}
+                                id={`session-edit-title-${session.id}`}
                                 value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
+                                onChange={(event) => setEditTitle(event.target.value)}
                               />
                             </div>
 
@@ -495,19 +495,19 @@ export function SessionsLogModal({
                             <div className="flex flex-col gap-1">
                               <label
                                 className="text-[10px] uppercase r text-muted font-medium"
-                                htmlFor={`session-edit-focus-${s.id}`}
+                                htmlFor={`session-edit-focus-${session.id}`}
                               >
                                 Focus (Mins)
                               </label>
                               <input
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
-                                id={`session-edit-focus-${s.id}`}
+                                id={`session-edit-focus-${session.id}`}
                                 min={1}
                                 type="number"
                                 value={editFocusMinutes}
-                                onChange={(e) =>
+                                onChange={(event) =>
                                   setEditFocusMinutes(
-                                    Math.max(1, Number(e.target.value) || 1),
+                                    Math.max(1, Number(event.target.value) || 1),
                                   )
                                 }
                               />
@@ -517,19 +517,19 @@ export function SessionsLogModal({
                             <div className="flex flex-col gap-1">
                               <label
                                 className="text-[10px] uppercase r text-muted font-medium"
-                                htmlFor={`session-edit-ot-${s.id}`}
+                                htmlFor={`session-edit-ot-${session.id}`}
                               >
                                 Overtime (Mins)
                               </label>
                               <input
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
-                                id={`session-edit-ot-${s.id}`}
+                                id={`session-edit-ot-${session.id}`}
                                 min={0}
                                 type="number"
                                 value={editOvertimeMinutes}
-                                onChange={(e) =>
+                                onChange={(event) =>
                                   setEditOvertimeMinutes(
-                                    Math.max(0, Number(e.target.value) || 0),
+                                    Math.max(0, Number(event.target.value) || 0),
                                   )
                                 }
                               />
@@ -553,22 +553,22 @@ export function SessionsLogModal({
                               >
                                 None
                               </button>
-                              {PRESET_TAGS.map((t) => {
-                                const TagIconComp = getTagIcon(t.id);
+                              {PRESET_TAGS.map((tagItem) => {
+                                const TagIconComp = getTagIcon(tagItem.id);
 
                                 return (
                                   <button
-                                    key={t.id}
+                                    key={tagItem.id}
                                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
-                                      editTag === t.id
-                                        ? `${t.color} font-semibold`
+                                      editTag === tagItem.id
+                                        ? `${tagItem.color} font-semibold`
                                         : "bg-surface-secondary border-separator/40 text-muted hover:text-foreground"
                                     }`}
                                     type="button"
-                                    onClick={() => setEditTag(t.id)}
+                                    onClick={() => setEditTag(tagItem.id)}
                                   >
                                     <TagIconComp className="size-3 opacity-80" />
-                                    <span>{t.label}</span>
+                                    <span>{tagItem.label}</span>
                                   </button>
                                 );
                               })}
@@ -579,17 +579,17 @@ export function SessionsLogModal({
                           <div className="flex flex-col gap-1">
                             <label
                               className="text-[10px] uppercase r text-muted font-medium"
-                              htmlFor={`session-edit-notes-${s.id}`}
+                              htmlFor={`session-edit-notes-${session.id}`}
                             >
                               Notes
                             </label>
                             <textarea
                               className="w-full p-2 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent resize-none"
-                              id={`session-edit-notes-${s.id}`}
+                              id={`session-edit-notes-${session.id}`}
                               placeholder="Session notes or reflections..."
                               rows={2}
                               value={editNotes}
-                              onChange={(e) => setEditNotes(e.target.value)}
+                              onChange={(event) => setEditNotes(event.target.value)}
                             />
                           </div>
 
@@ -608,7 +608,7 @@ export function SessionsLogModal({
                               className="h-7 px-3 text-xs rounded-lg bg-accent text-accent-foreground"
                               size="sm"
                               variant="primary"
-                              onPress={() => handleSaveEdit(s.id)}
+                              onPress={() => handleSaveEdit(session.id)}
                             >
                               <Check className="size-3.5 mr-1" />
                               Save Changes
@@ -620,7 +620,7 @@ export function SessionsLogModal({
 
                     return (
                       <div
-                        key={s.id}
+                        key={session.id}
                         className="group relative flex flex-col gap-2 p-3.5 rounded-2xl bg-surface border border-separator/40 hover:border-separator/80 shadow-xs transition-colors select-none"
                       >
                         {/* Top Row: Title, Date & Time, Duration Pill + Actions */}
@@ -632,7 +632,7 @@ export function SessionsLogModal({
                               type="body-sm"
                               weight="semibold"
                             >
-                              {s.title || "Focus Session"}
+                              {session.title || "Focus Session"}
                             </Typography>
                             <div className="flex items-center gap-2.5 text-[11px] text-muted font-light mt-0.5">
                               <span className="flex items-center gap-1">
@@ -656,7 +656,7 @@ export function SessionsLogModal({
                               className="size-7 rounded-xl text-muted hover:text-foreground hover:bg-surface-secondary transition-colors cursor-pointer"
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleStartEdit(s)}
+                              onClick={() => handleStartEdit(session)}
                             >
                               <Edit3 className="size-3.5" />
                             </Button>
@@ -664,13 +664,13 @@ export function SessionsLogModal({
                               isIconOnly
                               aria-label="Delete session (Hold Shift to skip confirmation)"
                               className={`size-7 rounded-xl transition-colors cursor-pointer ${
-                                confirmDeleteId === s.id
+                                confirmDeleteId === session.id
                                   ? "text-danger bg-danger/15"
                                   : "text-muted hover:text-danger hover:bg-danger/10"
                               }`}
                               size="sm"
                               variant="ghost"
-                              onClick={(e) => triggerDelete(s.id, e)}
+                              onClick={(event) => triggerDelete(session.id, event)}
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -678,7 +678,7 @@ export function SessionsLogModal({
                         </div>
 
                         {/* Confirmation Banner */}
-                        {confirmDeleteId === s.id && (
+                        {confirmDeleteId === session.id && (
                           <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-danger/10 border border-danger/25 text-xs animate-in fade-in zoom-in-95">
                             <span className="text-[11px] text-danger font-medium">
                               Delete this focus session?
@@ -688,7 +688,7 @@ export function SessionsLogModal({
                                 className="h-6 px-2.5 text-[11px] font-semibold rounded-lg bg-danger text-danger-foreground hover:bg-danger/90 cursor-pointer"
                                 size="sm"
                                 variant="primary"
-                                onPress={() => handleDeleteSession(s.id)}
+                                onPress={() => handleDeleteSession(session.id)}
                               >
                                 Delete
                               </Button>
@@ -716,41 +716,41 @@ export function SessionsLogModal({
                             </span>
                           )}
 
-                          {s.overtimeMinutes !== undefined &&
-                            s.overtimeMinutes > 0 && (
+                          {session.overtimeMinutes !== undefined &&
+                            session.overtimeMinutes > 0 && (
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
                                 <Zap className="size-3" />
                                 <span>
-                                  +{formatMinutesDisplay(s.overtimeMinutes)}{" "}
+                                  +{formatMinutesDisplay(session.overtimeMinutes)}{" "}
                                   overtime
                                 </span>
                               </span>
                             )}
 
-                          {s.tag && (
+                          {session.tag && (
                             <span
                               className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${
                                 PRESET_TAGS.find(
-                                  (p) => p.id === s.tag || p.label === s.tag,
+                                  (presetTag) => presetTag.id === session.tag || presetTag.label === session.tag,
                                 )?.color ||
                                 "text-muted bg-surface-secondary border-separator/40"
                               }`}
                             >
                               <Tag className="size-2.5" />
-                              <span className="capitalize">{s.tag}</span>
+                              <span className="capitalize">{session.tag}</span>
                             </span>
                           )}
                         </div>
 
                         {/* Optional Notes */}
-                        {s.notes && (
+                        {session.notes && (
                           <div className="flex items-start gap-1.5 p-2 rounded-xl bg-surface-secondary/50 border border-separator/20 text-xs text-foreground/80 mt-1">
                             <FileText className="size-3.5 text-muted shrink-0 mt-0.5" />
                             <Typography
                               className="leading-relaxed whitespace-pre-wrap"
                               type="body-xs"
                             >
-                              {s.notes}
+                              {session.notes}
                             </Typography>
                           </div>
                         )}

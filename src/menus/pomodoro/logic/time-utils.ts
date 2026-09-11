@@ -17,12 +17,12 @@ export function formatTimerDisplay(timeLeft: number): string {
  * Formats duration into human-readable format (e.g. "5 min" or "5m 30s")
  */
 export function formatDurationLabel(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60);
-  const s = totalSeconds % 60;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
 
-  if (s === 0) return `${m} min`;
+  if (seconds === 0) return `${minutes} min`;
 
-  return `${m}m ${s}s`;
+  return `${minutes}m ${seconds}s`;
 }
 
 /**

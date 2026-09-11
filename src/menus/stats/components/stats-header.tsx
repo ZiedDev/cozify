@@ -23,9 +23,9 @@ import {
 
 type Props = {
   range: TimeRangeFilter;
-  onRangeChange: (r: TimeRangeFilter) => void;
+  onRangeChange: (newRange: TimeRangeFilter) => void;
   customDateRange: CustomDateRange | null;
-  onCustomDateRangeChange: (r: CustomDateRange | null) => void;
+  onCustomDateRangeChange: (newCustomRange: CustomDateRange | null) => void;
   overallStats?: OverallStats;
   milestones: Milestone[];
   onOpenAchievements: () => void;
@@ -44,12 +44,12 @@ const formatToDDMMYY = (dateStr: string) => {
   const parts = dateStr.split("-");
 
   if (parts.length !== 3) return dateStr;
-  const [y, m, d] = parts;
-  const yy = y.slice(-2);
-  const mm = m.padStart(2, "0");
-  const dd = d.padStart(2, "0");
+  const [year, month, day] = parts;
+  const shortYear = year.slice(-2);
+  const paddedMonth = month.padStart(2, "0");
+  const paddedDay = day.padStart(2, "0");
 
-  return `${dd}/${mm}/${yy}`;
+  return `${paddedDay}/${paddedMonth}/${shortYear}`;
 };
 
 export function StatsHeader({
@@ -76,7 +76,7 @@ export function StatsHeader({
   }, [range]);
 
   const unlockedMilestonesCount = useMemo(
-    () => milestones.filter((m) => m.unlocked).length,
+    () => milestones.filter((milestone) => milestone.unlocked).length,
     [milestones],
   );
   const totalMilestonesCount = milestones.length;
@@ -116,12 +116,12 @@ export function StatsHeader({
   }, [customDateRange]);
 
   const handleCalendarChange = (
-    val: { start: DateValue; end: DateValue } | null,
+    rangeValue: { start: DateValue; end: DateValue } | null,
   ) => {
-    if (val?.start && val?.end) {
+    if (rangeValue?.start && rangeValue?.end) {
       onCustomDateRangeChange({
-        start: val.start.toString(),
-        end: val.end.toString(),
+        start: rangeValue.start.toString(),
+        end: rangeValue.end.toString(),
       });
       onRangeChange("custom");
       setIsCalendarOpen(false);
@@ -186,8 +186,8 @@ export function StatsHeader({
               role="button"
               tabIndex={0}
               onClick={() => setIsCalendarOpen(true)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
                   setIsCalendarOpen(true);
                 }
               }}
@@ -198,8 +198,8 @@ export function StatsHeader({
                 aria-label="Clear custom date range"
                 className="size-4 rounded-full flex items-center justify-center bg-black/10 hover:bg-black/25 dark:bg-white/15 dark:hover:bg-white/30 text-accent-foreground/90 hover:text-accent-foreground transition-colors cursor-pointer ml-0.5"
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
+                onClick={(event) => {
+                  event.stopPropagation();
                   onCustomDateRangeChange(null);
                   onRangeChange(previousRangeRef.current || "week");
                   setIsCalendarOpen(false);
@@ -294,17 +294,17 @@ export function StatsHeader({
                 </RangeCalendar.Header>
                 <RangeCalendar.Grid className="w-full">
                   <RangeCalendar.GridHeader>
-                    {(day) => (
+                    {(dayName) => (
                       <RangeCalendar.HeaderCell className="text-[10px] font-medium text-muted">
-                        {day}
+                        {dayName}
                       </RangeCalendar.HeaderCell>
                     )}
                   </RangeCalendar.GridHeader>
                   <RangeCalendar.GridBody>
-                    {(date) => (
+                    {(calendarDate) => (
                       <RangeCalendar.Cell
                         className="size-7 text-xs rounded-lg"
-                        date={date}
+                        date={calendarDate}
                       />
                     )}
                   </RangeCalendar.GridBody>

@@ -118,11 +118,14 @@ export class MobilePipManager {
 
     video.addEventListener("leavepictureinpicture", handleLeave);
 
-    const v = video as any;
+    const iosVideo = video as any;
 
-    if (v.webkitSupportsPresentationMode || v.webkitSetPresentationMode) {
+    if (
+      iosVideo.webkitSupportsPresentationMode ||
+      iosVideo.webkitSetPresentationMode
+    ) {
       video.addEventListener("webkitpresentationmodechanged", () => {
-        if (v.webkitPresentationMode === "inline") {
+        if (iosVideo.webkitPresentationMode === "inline") {
           handleLeave();
         }
       });
@@ -402,11 +405,11 @@ export class MobilePipManager {
 
     // 7. Trigger PiP synchronously WITHOUT awaiting playPromise
     // Awaiting breaks the user gesture activation token on iOS Safari
-    const v = this.videoEl as any;
+    const iosVideo = this.videoEl as any;
 
-    if (typeof v.webkitSetPresentationMode === "function") {
+    if (typeof iosVideo.webkitSetPresentationMode === "function") {
       // iOS Safari (iPhone / iPad)
-      v.webkitSetPresentationMode("picture-in-picture");
+      iosVideo.webkitSetPresentationMode("picture-in-picture");
     } else if (this.videoEl.requestPictureInPicture) {
       // Android Chrome / Standard W3C PiP
       await this.videoEl.requestPictureInPicture();

@@ -46,10 +46,10 @@ export function getStorageOverview(): StorageOverview {
 
   const totalFocusMinutes = Array.isArray(sessions)
     ? sessions.reduce(
-        (acc, s) =>
-          acc +
-          (Number(s.focusMinutes) || 0) +
-          (Number(s.overtimeMinutes) || 0),
+        (totalMins, session) =>
+          totalMins +
+          (Number(session.focusMinutes) || 0) +
+          (Number(session.overtimeMinutes) || 0),
         0,
       )
     : 0;
@@ -64,8 +64,8 @@ export function getStorageOverview(): StorageOverview {
   const appKeys = new Set(Object.values(STORAGE_KEYS));
 
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    for (let storageIndex = 0; storageIndex < localStorage.length; storageIndex++) {
+      const key = localStorage.key(storageIndex);
 
       if (key && appKeys.has(key as any)) {
         const value = localStorage.getItem(key) || "";

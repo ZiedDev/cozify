@@ -119,21 +119,21 @@ export function TodoEditModal({
               </Label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {(["none", "low", "medium", "high"] as TodoPriority[]).map(
-                  (p) => (
+                  (priorityOption) => (
                     <button
-                      key={p}
+                      key={priorityOption}
                       className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                        priority === p
+                        priority === priorityOption
                           ? "bg-accent/20 border-accent text-accent font-semibold shadow-xs"
                           : "bg-surface-secondary/40 border-separator/30 text-muted hover:text-foreground"
                       }`}
                       type="button"
-                      onClick={() => setPriority(p)}
+                      onClick={() => setPriority(priorityOption)}
                     >
                       <span
-                        className={`size-2 rounded-full ${PRIORITY_CONFIG[p].dotColor}`}
+                        className={`size-2 rounded-full ${PRIORITY_CONFIG[priorityOption].dotColor}`}
                       />
-                      <span>{PRIORITY_CONFIG[p].label}</span>
+                      <span>{PRIORITY_CONFIG[priorityOption].label}</span>
                     </button>
                   ),
                 )}
@@ -188,7 +188,9 @@ export function TodoEditModal({
                   className="w-full"
                   name="editDueDate"
                   value={dueDate ? parseDate(dueDate) : null}
-                  onChange={(val) => setDueDate(val ? val.toString() : "")}
+                  onChange={(selectedDate) =>
+                    setDueDate(selectedDate ? selectedDate.toString() : "")
+                  }
                 >
                   <DateField.Group fullWidth>
                     <DateField.Input>
@@ -212,18 +214,20 @@ export function TodoEditModal({
                       </Calendar.Header>
                       <Calendar.Grid>
                         <Calendar.GridHeader>
-                          {(day) => (
-                            <Calendar.HeaderCell>{day}</Calendar.HeaderCell>
+                          {(dayName) => (
+                            <Calendar.HeaderCell>{dayName}</Calendar.HeaderCell>
                           )}
                         </Calendar.GridHeader>
                         <Calendar.GridBody>
-                          {(date) => <Calendar.Cell date={date} />}
+                          {(calendarDate) => (
+                            <Calendar.Cell date={calendarDate} />
+                          )}
                         </Calendar.GridBody>
                       </Calendar.Grid>
                       <Calendar.YearPickerGrid>
                         <Calendar.YearPickerGridBody>
-                          {({ year }) => (
-                            <Calendar.YearPickerCell year={year} />
+                          {({ year: calendarYear }) => (
+                            <Calendar.YearPickerCell year={calendarYear} />
                           )}
                         </Calendar.YearPickerGridBody>
                       </Calendar.YearPickerGrid>
@@ -251,22 +255,22 @@ export function TodoEditModal({
                 >
                   None
                 </button>
-                {PRESET_TAGS.map((t) => {
-                  const TagIconComp = getTagIcon(t.id);
+                {PRESET_TAGS.map((presetTag) => {
+                  const TagIconComp = getTagIcon(presetTag.id);
 
                   return (
                     <button
-                      key={t.id}
+                      key={presetTag.id}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                        tag === t.id
-                          ? `${t.color} font-semibold`
+                        tag === presetTag.id
+                          ? `${presetTag.color} font-semibold`
                           : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground hover:bg-surface-secondary"
                       }`}
                       type="button"
-                      onClick={() => setTag(t.id)}
+                      onClick={() => setTag(presetTag.id)}
                     >
                       <TagIconComp className="size-3 opacity-80" />
-                      <span>{t.label}</span>
+                      <span>{presetTag.label}</span>
                     </button>
                   );
                 })}

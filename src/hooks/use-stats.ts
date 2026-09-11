@@ -38,22 +38,25 @@ export function useStats() {
 
   const [revision, setRevision] = useState<number>(0);
 
-  const setRange = useCallback((r: TimeRangeFilter) => {
-    setRangeState(r);
-    storageAdapter.setItem("cozify_stats_range", r);
+  const setRange = useCallback((newRange: TimeRangeFilter) => {
+    setRangeState(newRange);
+    storageAdapter.setItem("cozify_stats_range", newRange);
   }, []);
 
   // Sync / reload helper
   const reloadFromStorage = useCallback(() => {
-    const s = storageAdapter.getItem<SessionRecord[]>(
+    const savedSessions = storageAdapter.getItem<SessionRecord[]>(
       STORAGE_KEYS.SESSIONS_HISTORY,
       [],
     );
-    const t = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
+    const savedTodos = storageAdapter.getItem<TodoItem[]>(
+      STORAGE_KEYS.TODOS,
+      [],
+    );
 
-    setSessions(Array.isArray(s) ? s : []);
-    setTodos(Array.isArray(t) ? t : []);
-    setRevision((r) => r + 1);
+    setSessions(Array.isArray(savedSessions) ? savedSessions : []);
+    setTodos(Array.isArray(savedTodos) ? savedTodos : []);
+    setRevision((prevRevision) => prevRevision + 1);
   }, []);
 
   // Listen to window focus & storage updates
@@ -136,10 +139,10 @@ export function useStats() {
   // CRUD actions for sessions
   const deleteSession = useCallback(
     (id: string) => {
-      const next = sessions.filter((s) => s.id !== id);
+      const nextSessions = sessions.filter((session) => session.id !== id);
 
-      setSessions(next);
-      storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
+      setSessions(nextSessions);
+      storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, nextSessions);
       toast("Session deleted");
     },
     [sessions],
@@ -147,12 +150,12 @@ export function useStats() {
 
   const updateSession = useCallback(
     (id: string, updates: Partial<SessionRecord>) => {
-      const next = sessions.map((s) =>
-        s.id === id ? { ...s, ...updates } : s,
+      const nextSessions = sessions.map((session) =>
+        session.id === id ? { ...session, ...updates } : session,
       );
 
-      setSessions(next);
-      storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
+      setSessions(nextSessions);
+      storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, nextSessions);
       toast("Session updated");
     },
     [sessions],
@@ -173,7 +176,7 @@ export function useStats() {
       `🔥 Active Streak: ${overallStats.currentStreakDays} days (Best: ${overallStats.bestStreakDays})\n` +
       `✅ Tasks: ${overallStats.tasksCompleted}/${overallStats.tasksTotal} completed (${overallStats.taskCompletionRate}%)\n` +
       `🌅 Peak Rhythm: ${overallStats.peakProductivePeriod}\n` +
-      `🏆 Achievements: ${milestones.filter((m) => m.unlocked).length}/${milestones.length} unlocked`;
+      `🏆 Achievements: ${milestones.filter((milestone) => milestone.unlocked).length}/${milestones.length} unlocked`;
 
     navigator.clipboard
       .writeText(summary)
@@ -187,12 +190,12 @@ export function useStats() {
       overallStats,
       sessions,
       todos,
-      milestones: milestones.map((m) => ({
-        id: m.id,
-        title: m.title,
-        unlocked: m.unlocked,
-        progress: m.progress,
-        maxProgress: m.maxProgress,
+      milestones: milestones.map((milestone) => ({
+        id: milestone.id,
+        title: milestone.title,
+        unlocked: milestone.unlocked,
+        progress: milestone.progress,
+        maxProgress: milestone.maxProgress,
       })),
     };
 
@@ -200,11 +203,11 @@ export function useStats() {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
+    const downloadLink = document.createElement("a");
 
-    a.href = url;
-    a.download = `cozify-stats-${new Date().toISOString().split("T")[0]}.json`;
-    a.click();
+    downloadLink.href = url;
+    downloadLink.download = `cozify-stats-${new Date().toISOString().split("T")[0]}.json`;
+    downloadLink.click();
     URL.revokeObjectURL(url);
     toast("Exported stats JSON file");
   }, [overallStats, sessions, todos, milestones]);

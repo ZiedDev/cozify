@@ -28,11 +28,13 @@ const FILTER_TABS = [
 
 function formatUnlockDate(dateStr?: string) {
   if (!dateStr) return "";
-  const d = new Date(dateStr);
+  const parsedDate = new Date(dateStr);
 
-  return isNaN(d.getTime())
+  return isNaN(parsedDate.getTime())
     ? dateStr
-    : new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(d);
+    : new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+        parsedDate,
+      );
 }
 
 export function AchievementsModal({
@@ -50,7 +52,7 @@ export function AchievementsModal({
   );
 
   const unlockedCount = useMemo(
-    () => milestones.filter((m) => m.unlocked).length,
+    () => milestones.filter((milestone) => milestone.unlocked).length,
     [milestones],
   );
   const totalCount = milestones.length;
@@ -60,13 +62,13 @@ export function AchievementsModal({
   const totalXp = useMemo(
     () =>
       milestones
-        .filter((m) => m.unlocked)
-        .reduce((sum, m) => sum + (m.xp || 50), 0),
+        .filter((milestone) => milestone.unlocked)
+        .reduce((sum, milestone) => sum + (milestone.xp || 50), 0),
     [milestones],
   );
 
   const maxXp = useMemo(
-    () => milestones.reduce((sum, m) => sum + (m.xp || 50), 0),
+    () => milestones.reduce((sum, milestone) => sum + (milestone.xp || 50), 0),
     [milestones],
   );
 
@@ -74,12 +76,12 @@ export function AchievementsModal({
   const rank = useMemo(() => getRankFromXp(totalXp), [totalXp]);
 
   const filteredMilestones = useMemo(() => {
-    return milestones.filter((m) => {
-      if (activeCategory !== "all" && m.category !== activeCategory) {
+    return milestones.filter((milestone) => {
+      if (activeCategory !== "all" && milestone.category !== activeCategory) {
         return false;
       }
-      if (filterMode === "unlocked" && !m.unlocked) return false;
-      if (filterMode === "locked" && m.unlocked) return false;
+      if (filterMode === "unlocked" && !milestone.unlocked) return false;
+      if (filterMode === "locked" && milestone.unlocked) return false;
 
       return true;
     });
@@ -156,7 +158,9 @@ export function AchievementsModal({
             {/* Category Tabs */}
             <Tabs
               selectedKey={activeCategory}
-              onSelectionChange={(k) => setActiveCategory(k as string)}
+              onSelectionChange={(categoryKey) =>
+                setActiveCategory(categoryKey as string)
+              }
             >
               <Tabs.List
                 aria-label="Achievement Categories"
@@ -188,8 +192,8 @@ export function AchievementsModal({
             {/* Quick Status Filter Tabs */}
             <Tabs
               selectedKey={filterMode}
-              onSelectionChange={(k) =>
-                setFilterMode(k as "all" | "unlocked" | "locked")
+              onSelectionChange={(filterKey) =>
+                setFilterMode(filterKey as "all" | "unlocked" | "locked")
               }
             >
               <Tabs.List

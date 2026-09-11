@@ -20,10 +20,10 @@ type Props = {
   isDragging?: boolean;
   onEdit: (todo: TodoItem) => void;
   onDelete: (todo: TodoItem) => void;
-  onDragStart?: (e: DragEvent, id: string) => void;
-  onDragOver?: (e: DragEvent, id: string) => void;
+  onDragStart?: (event: DragEvent, id: string) => void;
+  onDragOver?: (event: DragEvent, id: string) => void;
   onDragEnd?: () => void;
-  onDrop?: (e: DragEvent, id: string) => void;
+  onDrop?: (event: DragEvent, id: string) => void;
 };
 
 function TodoItemMinimalComponent({
@@ -116,9 +116,13 @@ function TodoItemMinimalComponent({
       }`}
       draggable={Boolean(onDragStart)}
       onDragEnd={onDragEnd}
-      onDragOver={onDragOver ? (e) => onDragOver(e, todo.id) : undefined}
-      onDragStart={onDragStart ? (e) => onDragStart(e, todo.id) : undefined}
-      onDrop={onDrop ? (e) => onDrop(e, todo.id) : undefined}
+      onDragOver={
+        onDragOver ? (event) => onDragOver(event, todo.id) : undefined
+      }
+      onDragStart={
+        onDragStart ? (event) => onDragStart(event, todo.id) : undefined
+      }
+      onDrop={onDrop ? (event) => onDrop(event, todo.id) : undefined}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -162,8 +166,8 @@ function TodoItemMinimalComponent({
         role="button"
         tabIndex={0}
         onClick={handleToggle}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
             handleToggle();
           }
         }}

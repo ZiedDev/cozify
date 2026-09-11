@@ -101,8 +101,10 @@ export function CozyMusicCard() {
     }
   }, [videoAspectRatio]);
 
-  const handlePosterLoad = (e: SyntheticEvent<HTMLImageElement, Event>) => {
-    const img = e.currentTarget;
+  const handlePosterLoad = (
+    loadEvent: SyntheticEvent<HTMLImageElement, Event>,
+  ) => {
+    const img = loadEvent.currentTarget;
 
     if (img.naturalWidth && img.naturalHeight) {
       setVideoAspectRatio(img.naturalWidth / img.naturalHeight);
@@ -183,8 +185,8 @@ export function CozyMusicCard() {
     }
   }, [tracklist.length, isTracklistOpen]);
 
-  const handleLoad = (e?: SubmitEvent) => {
-    if (e) e.preventDefault();
+  const handleLoad = (event?: SubmitEvent) => {
+    if (event) event.preventDefault();
     if (!inputUrl.trim()) return;
     const success = loadUrl(inputUrl.trim(), undefined, undefined, true);
 
@@ -616,7 +618,7 @@ export function CozyMusicCard() {
               className="text-xs"
               placeholder="Paste Spotify or YouTube link..."
               value={inputUrl}
-              onChange={(e) => setInputUrl(e.target.value)}
+              onChange={(event) => setInputUrl(event.target.value)}
             />
           </InputGroup>
         </TextField>

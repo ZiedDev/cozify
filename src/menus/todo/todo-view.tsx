@@ -45,7 +45,7 @@ export function TodoView({
       {...props}
     >
       {/* Header & Quick Add anchored at top */}
-      <div className="flex flex-col gap-3 w-full shrink-0">
+      <div className="flex flex-col gap-3 w-full shrink-0 relative z-30">
         <TodoHeader />
         <TodoInputBar />
       </div>

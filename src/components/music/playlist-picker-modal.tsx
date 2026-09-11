@@ -5,7 +5,6 @@ import {
   TextField,
   InputGroup,
   ScrollShadow,
-  Separator,
   Typography,
   Tooltip,
 } from "@heroui/react";
@@ -17,9 +16,9 @@ import {
   Check,
   ChevronUp,
   ChevronDown,
-  Link as LinkIcon,
+  Link2,
+  ListMusic,
   Loader2,
-  Disc3,
   Radio,
 } from "lucide-react";
 
@@ -50,8 +49,8 @@ export function PlaylistPickerModal() {
     return [...customPlaylists, ...PRESET_PLAYLISTS];
   }, [customPlaylists]);
 
-  const handleAddPlaylist = async (e?: SubmitEvent) => {
-    if (e) e.preventDefault();
+  const handleAddPlaylist = async (event?: SubmitEvent) => {
+    if (event) event.preventDefault();
     if (!newUrl.trim() || isAdding) return;
 
     setIsAdding(true);
@@ -73,45 +72,53 @@ export function PlaylistPickerModal() {
     setEditingId(null);
   };
 
+  const handleClose = () => {
+    setIsPickerOpen(false);
+    setEditingId(null);
+    setNewUrl("");
+  };
+
   if (!isPickerOpen) return null;
 
   return (
     <Modal.Backdrop
       isOpen={isPickerOpen}
-      onOpenChange={(open) => !open && setIsPickerOpen(false)}
+      onOpenChange={(open) => !open && handleClose()}
     >
-      <Modal.Container size="lg">
-        <Modal.Dialog className="max-sm:mt-0! sm:max-w-190 md:max-w-205 w-full h-[82vh] sm:h-140 max-h-[85vh] flex flex-col overflow-hidden p-0 rounded-3xl border border-separator/50 bg-surface/95 backdrop-blur-2xl shadow-2xl">
+      <Modal.Container>
+        <Modal.Dialog
+          aria-label="Audio Stream Library"
+          className="max-sm:mt-0! sm:max-w-xl w-full h-[85vh] sm:h-140 max-h-[85vh] flex flex-col overflow-hidden p-0 rounded-2xl bg-surface border border-separator/60 shadow-2xl"
+        >
           <Modal.CloseTrigger />
 
-          {/* Modal Header */}
-          <Modal.Header className="px-5 sm:px-6 py-4 gap-3">
-            <div className="flex flex-col">
-              <Modal.Heading className="flex gap-2 text-base font-bold tracking-tight">
-                <Disc3 className="size-5 text-accent animate-spin-slow" />
-                Playlists Vault
+          {/* Header */}
+          <div className="p-4 sm:p-5 border-b border-separator/40 shrink-0">
+            <div className="flex items-center gap-2.5 mb-1">
+              <div className="size-8 rounded-xl bg-accent/15 flex items-center justify-center text-accent">
+                <ListMusic className="size-4" />
+              </div>
+              <Modal.Heading className="text-base sm:text-lg font-serif font-semibold text-foreground">
+                Audio Stream Library
               </Modal.Heading>
-              <Typography className="text-xs" color="muted" type="body-xs">
-                Your collection of records, lofi streams & albums
-              </Typography>
             </div>
-          </Modal.Header>
+            <Typography className="text-xs text-muted" type="body-xs">
+              Select a curated background stream or paste your own YouTube /
+              Spotify link below.
+            </Typography>
 
-          <Separator />
-
-          {/* Add Custom Playlist Bar with Automated Metadata & Artwork Fetching */}
-          <div className="p-3 sm:px-6 bg-surface-secondary/20 border-b border-separator/20">
+            {/* Direct URL Input Bar */}
             <form
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 mt-3.5"
               onSubmit={handleAddPlaylist}
             >
-              <TextField fullWidth aria-label="Playlist URL" className="flex-1">
+              <TextField fullWidth aria-label="Audio stream link">
                 <InputGroup
                   fullWidth
-                  className="bg-surface/80 border border-separator/40 rounded-full h-8.5 text-xs focus-within:border-accent"
+                  className="bg-surface-secondary/70 border border-separator/50 rounded-full h-8.5 text-xs"
                 >
-                  <InputGroup.Prefix className="pl-3 pr-1 text-muted">
-                    <LinkIcon className="size-3.5" />
+                  <InputGroup.Prefix className="text-muted pl-2.5">
+                    <Link2 className="size-3.5" />
                   </InputGroup.Prefix>
                   <InputGroup.Input
                     className="text-xs"
@@ -119,7 +126,7 @@ export function PlaylistPickerModal() {
                     placeholder="Paste Spotify or YouTube link (details auto-fetched)..."
                     type="url"
                     value={newUrl}
-                    onChange={(e) => setNewUrl(e.target.value)}
+                    onChange={(event) => setNewUrl(event.target.value)}
                   />
                 </InputGroup>
               </TextField>
@@ -234,9 +241,9 @@ export function PlaylistPickerModal() {
                         {isEditing ? (
                           <form
                             className="flex items-center gap-1.5"
-                            onSubmit={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
+                            onSubmit={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
                               handleSaveRename(item.id);
                             }}
                           >
@@ -244,9 +251,11 @@ export function PlaylistPickerModal() {
                               aria-label="Edit playlist title"
                               className="w-full h-6 px-2 rounded-full bg-surface border border-accent text-xs text-foreground outline-none"
                               value={editTitleText}
-                              onChange={(e) => setEditTitleText(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Escape") setEditingId(null);
+                              onChange={(event) =>
+                                setEditTitleText(event.target.value)
+                              }
+                              onKeyDown={(event) => {
+                                if (event.key === "Escape") setEditingId(null);
                               }}
                             />
                             <Button
@@ -307,9 +316,9 @@ export function PlaylistPickerModal() {
                                 aria-label="Move Up"
                                 className="p-1 rounded-full text-muted hover:text-foreground hover:bg-surface cursor-pointer"
                                 type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
                                   moveCustomPlaylist(item.id, "up");
                                 }}
                               >
@@ -327,9 +336,9 @@ export function PlaylistPickerModal() {
                                 aria-label="Move Down"
                                 className="p-1 rounded-full text-muted hover:text-foreground hover:bg-surface cursor-pointer"
                                 type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
+                                onClick={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
                                   moveCustomPlaylist(item.id, "down");
                                 }}
                               >
@@ -345,9 +354,9 @@ export function PlaylistPickerModal() {
                             aria-label="Rename"
                             className="p-1 rounded-full text-muted hover:text-foreground hover:bg-surface cursor-pointer"
                             type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
                               setEditingId(item.id);
                               setEditTitleText(item.title);
                             }}
@@ -359,9 +368,9 @@ export function PlaylistPickerModal() {
                             aria-label="Delete"
                             className="p-1 rounded-full text-muted hover:text-danger hover:bg-surface cursor-pointer"
                             type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
                               removeCustomPlaylist(item.id);
                             }}
                           >

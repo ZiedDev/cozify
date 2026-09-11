@@ -1,6 +1,6 @@
 import type { TimeValue } from "@heroui/react";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Modal,
   Button,
@@ -10,6 +10,8 @@ import {
   TimeField,
   Typography,
   toast,
+  Popover,
+  ScrollShadow,
 } from "@heroui/react";
 import { Time } from "@internationalized/date";
 import {
@@ -19,13 +21,16 @@ import {
   FileText,
   Tag,
   Zap,
+  ChevronDown,
+  X,
+  Plus,
 } from "lucide-react";
 
 import { secondsToHms } from "../logic/time-utils";
 import { calculateCyclesDone } from "../logic/cycle-rules";
 
 import { useTimer } from "@/hooks/use-timer";
-import { PRESET_TAGS, getTagIcon } from "@/config/tags";
+import { PRESET_TAGS, getTagIcon, getTagInfo } from "@/config/tags";
 import {
   storageAdapter,
   STORAGE_KEYS,
@@ -79,6 +84,9 @@ export function SaveProgressModal({
     return new Time(hours, minutes, seconds);
   });
   const [notes, setNotes] = useState("");
+  const [customTagInput, setCustomTagInput] = useState("");
+  const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
+  const [sessionTags, setSessionTags] = useState<string[]>([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -94,6 +102,23 @@ export function SaveProgressModal({
       const ovHms = secondsToHms(accumulatedOvertimeSeconds);
 
       setOvertimeValue(new Time(ovHms.hours, ovHms.minutes, ovHms.seconds));
+
+      // Load distinct tags used in past sessions
+      const history = storageAdapter.getItem<SessionRecord[]>(
+        STORAGE_KEYS.SESSIONS_HISTORY,
+        [],
+      );
+      const customSet = new Set<string>();
+
+      history?.forEach((session) => {
+        if (
+          session.tag &&
+          !PRESET_TAGS.some((presetTag) => presetTag.id === session.tag?.toLowerCase())
+        ) {
+          customSet.add(session.tag.toLowerCase());
+        }
+      });
+      setSessionTags(Array.from(customSet));
     }
   }, [
     isOpen,
@@ -102,6 +127,62 @@ export function SaveProgressModal({
     durations.focus,
     cyclesDone,
   ]);
+
+  // Combine preset and stored custom tags with filtering
+  const filteredTags = useMemo(() => {
+    const query = customTagInput.trim().toLowerCase().replace(/^#/, "");
+    const all = [
+      ...PRESET_TAGS.map((presetTag) => ({
+        id: presetTag.id,
+        label: presetTag.label,
+        icon: getTagIcon(presetTag.id),
+        isPreset: true,
+        dotColor: presetTag.dotColor,
+      })),
+      ...sessionTags.map((tagItem) => ({
+        id: tagItem,
+        label: getTagInfo(tagItem)?.label || tagItem,
+        icon: getTagIcon(tagItem),
+        isPreset: false,
+        dotColor: getTagInfo(tagItem)?.dotColor || "bg-accent",
+      })),
+    ];
+
+    if (!query) return all;
+
+    return all.filter(
+      (item) =>
+        item.id.toLowerCase().includes(query) ||
+        item.label.toLowerCase().includes(query),
+    );
+  }, [customTagInput, sessionTags]);
+
+  const showCreateOption = useMemo(() => {
+    const query = customTagInput.trim().toLowerCase().replace(/^#/, "");
+
+    if (!query) return false;
+
+    return !filteredTags.some(
+      (tagItem) => tagItem.id === query || tagItem.label.toLowerCase() === query,
+    );
+  }, [customTagInput, filteredTags]);
+
+  const handleSelectTag = (selectedTagId?: string) => {
+    setTag(selectedTagId);
+    setCustomTagInput("");
+    setIsTagPopoverOpen(false);
+  };
+
+  const handleCreateCustomTag = () => {
+    const clean = customTagInput.trim().toLowerCase().replace(/^#/, "");
+
+    if (clean) {
+      handleSelectTag(clean);
+    }
+  };
+
+  const activeTagMeta = tag ? getTagInfo(tag) : null;
+  const ActiveTagIcon = tag ? getTagIcon(tag) : Tag;
 
   const handleSave = async () => {
     const totalSecs = timeValue
@@ -190,44 +271,175 @@ export function SaveProgressModal({
               </InputGroup>
             </TextField>
 
-            {/* Tag Selection */}
+            {/* Category Tag Dropdown */}
             <div className="flex flex-col gap-1.5">
               <Label className="flex items-center gap-1.5">
                 <Tag className="size-3.5" />
                 <span>Category Tag</span>
               </Label>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <button
-                  className={`px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                    !tag
-                      ? "bg-accent text-accent-foreground border-accent font-semibold"
-                      : "bg-surface-secondary/40 text-muted border-separator/30 hover:text-foreground"
-                  }`}
-                  type="button"
-                  onClick={() => setTag(undefined)}
-                >
-                  None
-                </button>
-                {PRESET_TAGS.map((t) => {
-                  const TagIconComp = getTagIcon(t.id);
+              <Popover
+                isOpen={isTagPopoverOpen}
+                onOpenChange={setIsTagPopoverOpen}
+              >
+                <Popover.Trigger>
+                  <button
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer text-left ${
+                      tag
+                        ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
+                        : "bg-surface-secondary/40 text-muted border-separator/40 hover:bg-surface-secondary/70 hover:text-foreground"
+                    }`}
+                    type="button"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ActiveTagIcon className="size-3.5 shrink-0 opacity-80" />
+                      <span className="truncate">
+                        {tag
+                          ? activeTagMeta?.label || tag
+                          : "Select or create category tag..."}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {tag && (
+                        <span
+                          aria-label="Clear tag"
+                          className="p-0.5 rounded hover:bg-black/20 text-muted hover:text-foreground transition-colors cursor-pointer"
+                          role="button"
+                          tabIndex={0}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setTag(undefined);
+                          }}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.stopPropagation();
+                              setTag(undefined);
+                            }
+                          }}
+                        >
+                          <X className="size-3.5" />
+                        </span>
+                      )}
+                      <ChevronDown className="size-3.5 opacity-60" />
+                    </div>
+                  </button>
+                </Popover.Trigger>
+                <Popover.Content placement="bottom start">
+                  <Popover.Dialog className="p-2 rounded-2xl bg-surface border border-separator shadow-xl flex flex-col gap-2 w-72 max-w-[90vw] z-50">
+                    {/* Custom Tag Input & Search */}
+                    <div className="flex items-center gap-1.5 p-1 bg-surface-secondary/60 rounded-xl border border-separator/40 focus-within:border-accent transition-colors">
+                      <Tag className="size-3.5 text-muted ml-1.5 shrink-0" />
+                      <input
+                        className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted/60 focus:outline-none px-1 py-0.5 font-sans"
+                        placeholder="Search or custom tag..."
+                        value={customTagInput}
+                        onChange={(event) => setCustomTagInput(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            event.preventDefault();
+                            if (showCreateOption) {
+                              handleCreateCustomTag();
+                            } else if (filteredTags.length > 0) {
+                              handleSelectTag(filteredTags[0].id);
+                            }
+                          }
+                        }}
+                      />
+                      {showCreateOption && (
+                        <Button
+                          className="h-6 px-2 text-[11px] rounded-lg bg-accent text-accent-foreground cursor-pointer shrink-0 font-medium"
+                          size="sm"
+                          variant="secondary"
+                          onPress={handleCreateCustomTag}
+                        >
+                          <Plus className="size-3" />
+                          <span>Add</span>
+                        </Button>
+                      )}
+                    </div>
 
-                  return (
-                    <button
-                      key={t.id}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-medium border transition-colors cursor-pointer ${
-                        tag === t.id
-                          ? `${t.color} font-semibold`
-                          : "bg-surface-secondary/40 text-muted/80 border-separator/30 hover:text-foreground hover:bg-surface-secondary"
-                      }`}
-                      type="button"
-                      onClick={() => setTag(t.id)}
+                    {/* Scrollable list */}
+                    <ScrollShadow
+                      className="max-h-52 overflow-y-auto flex flex-col gap-0.5 no-scrollbar pr-0.5"
+                      orientation="vertical"
+                      size={20}
                     >
-                      <TagIconComp className="size-3.5 opacity-80" />
-                      <span>{t.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+                      {/* Create Custom Tag Row */}
+                      {showCreateOption && (
+                        <button
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 mb-1"
+                          type="button"
+                          onClick={handleCreateCustomTag}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Plus className="size-3.5 shrink-0" />
+                            <span className="truncate">
+                              Create &quot;
+                              {customTagInput.trim().replace(/^#/, "")}&quot;
+                            </span>
+                          </div>
+                          <span className="text-[10px] uppercase font-semibold text-accent/70 shrink-0">
+                            Custom
+                          </span>
+                        </button>
+                      )}
+
+                      {/* No Tag Option */}
+                      <button
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors ${
+                          !tag
+                            ? "bg-accent/15 text-accent font-semibold"
+                            : "hover:bg-surface-secondary/60 text-foreground"
+                        }`}
+                        type="button"
+                        onClick={() => handleSelectTag(undefined)}
+                      >
+                        <Tag className="size-3.5 opacity-60 text-muted shrink-0" />
+                        <span>No Tag (None)</span>
+                      </button>
+
+                      {filteredTags.map((item) => {
+                        const ItemIcon = item.icon;
+                        const isSelected =
+                          tag?.toLowerCase() === item.id.toLowerCase();
+
+                        return (
+                          <button
+                            key={item.id}
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors ${
+                              isSelected
+                                ? "bg-accent/15 text-accent font-semibold"
+                                : "hover:bg-surface-secondary/60 text-foreground"
+                            }`}
+                            type="button"
+                            onClick={() => handleSelectTag(item.id)}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <ItemIcon className="size-3.5 opacity-80 shrink-0" />
+                              <span className="truncate">{item.label}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {!item.isPreset && (
+                                <span className="text-[10px] text-muted/50 font-mono">
+                                  #{item.id}
+                                </span>
+                              )}
+                              <span
+                                className={`size-2 rounded-full ${item.dotColor}`}
+                              />
+                            </div>
+                          </button>
+                        );
+                      })}
+
+                      {filteredTags.length === 0 && !showCreateOption && (
+                        <div className="py-3 text-center text-xs text-muted">
+                          No matching tags found.
+                        </div>
+                      )}
+                    </ScrollShadow>
+                  </Popover.Dialog>
+                </Popover.Content>
+              </Popover>
             </div>
 
             {/* Total Focus Time TimeField with hh:mm:ss editing */}

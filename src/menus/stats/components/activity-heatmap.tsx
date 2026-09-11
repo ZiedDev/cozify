@@ -77,14 +77,14 @@ function ActivityHeatmapComponent({
     visibleWeeks.forEach((week, weekIdx) => {
       const firstOfMonth = week.find((day) => {
         if (!day) return false;
-        const d = new Date(`${day.dateStr}T12:00:00`);
+        const dateObj = new Date(`${day.dateStr}T12:00:00`);
 
-        return d.getDate() <= 7;
+        return dateObj.getDate() <= 7;
       });
 
       if (firstOfMonth) {
-        const d = new Date(`${firstOfMonth.dateStr}T12:00:00`);
-        const mLabel = d.toLocaleDateString("en-US", { month: "short" });
+        const dateObj = new Date(`${firstOfMonth.dateStr}T12:00:00`);
+        const mLabel = dateObj.toLocaleDateString("en-US", { month: "short" });
 
         if (mLabel !== lastMonth) {
           headers.push({ label: mLabel, weekIndex: weekIdx });
@@ -129,15 +129,15 @@ function ActivityHeatmapComponent({
     let activeDays = 0;
     let pastDays = 0;
 
-    visibleWeeks.forEach((w) => {
-      w.forEach((d) => {
-        if (d && !d.isFuture) {
+    visibleWeeks.forEach((week) => {
+      week.forEach((dayActivity) => {
+        if (dayActivity && !dayActivity.isFuture) {
           pastDays++;
-          focusMinutes += d.focusMinutes;
-          overtimeMinutes += d.overtimeMinutes || 0;
+          focusMinutes += dayActivity.focusMinutes;
+          overtimeMinutes += dayActivity.overtimeMinutes || 0;
           if (
-            d.focusMinutes > 0 ||
-            (d.overtimeMinutes && d.overtimeMinutes > 0)
+            dayActivity.focusMinutes > 0 ||
+            (dayActivity.overtimeMinutes && dayActivity.overtimeMinutes > 0)
           ) {
             activeDays++;
           }
@@ -226,7 +226,9 @@ function ActivityHeatmapComponent({
         {/* Heatmap View Mode Switcher */}
         <Tabs
           selectedKey={viewMode}
-          onSelectionChange={(k) => setViewMode(k as ViewMode)}
+          onSelectionChange={(selectedKey) =>
+            setViewMode(selectedKey as ViewMode)
+          }
         >
           <Tabs.ListContainer className="rounded-full">
             <Tabs.List
@@ -275,13 +277,15 @@ function ActivityHeatmapComponent({
                 }}
               >
                 {visibleWeeks.map((_, weekIdx) => {
-                  const m = monthHeaders.find((h) => h.weekIndex === weekIdx);
+                  const monthHeader = monthHeaders.find(
+                    (header) => header.weekIndex === weekIdx,
+                  );
 
                   return (
                     <div key={weekIdx} className="relative w-full h-full">
-                      {m && (
+                      {monthHeader && (
                         <span className="absolute top-0 left-0 text-[10px] text-muted/85 font-medium whitespace-nowrap leading-none pointer-events-none">
-                          {m.label}
+                          {monthHeader.label}
                         </span>
                       )}
                     </div>
@@ -299,19 +303,15 @@ function ActivityHeatmapComponent({
               { label: "Thu", show: false },
               { label: "Fri", show: true },
               { label: "Sat", show: false },
-            ].map((dayMeta, dayIdx) => (
+            ].map(({ label, show }, dayOfWeek) => (
               <div
-                key={dayMeta.label}
+                key={dayOfWeek}
                 className={`flex items-center ${gridGapClass} w-full`}
               >
                 {/* Day Label on Left (Mon, Wed, Fri) */}
-                <span
-                  className={`w-5 sm:w-6 shrink-0 text-[9px] text-muted/70 font-medium text-right pr-1 leading-none select-none pointer-events-none ${
-                    dayMeta.show ? "" : "opacity-0"
-                  }`}
-                >
-                  {dayMeta.label}
-                </span>
+                <div className="w-5 sm:w-6 text-[9px] text-muted/70 font-semibold text-right select-none shrink-0 pr-0.5 leading-none">
+                  {show ? label : ""}
+                </div>
 
                 {/* Week Cells for this specific Day */}
                 <div
@@ -321,40 +321,36 @@ function ActivityHeatmapComponent({
                   }}
                 >
                   {visibleWeeks.map((week, weekIdx) => {
-                    const day = week[dayIdx];
+                    const day = week[dayOfWeek];
 
                     if (!day) {
                       return (
                         <div
-                          key={`empty-${weekIdx}-${dayIdx}`}
-                          className="w-full aspect-square rounded-sm opacity-0 pointer-events-none"
+                          key={`empty-${weekIdx}-${dayOfWeek}`}
+                          className="w-full aspect-square opacity-0 pointer-events-none"
                         />
                       );
                     }
 
                     const isSelected = selectedDay?.dateStr === day.dateStr;
-                    const tooltip = day.isFuture
-                      ? `${day.fullDateLabel} (Upcoming)`
-                      : day.focusMinutes > 0 ||
-                          (day.overtimeMinutes && day.overtimeMinutes > 0)
-                        ? `${formatMinutesDisplay(day.focusMinutes)}${day.overtimeMinutes ? ` +${formatMinutesDisplay(day.overtimeMinutes)}` : ""} of focus on ${day.fullDateLabel}`
-                        : `No focus activity on ${day.fullDateLabel}`;
 
                     return (
                       <button
                         key={day.dateStr}
-                        aria-label={tooltip}
-                        className={`w-full aspect-square rounded-sm sm:rounded-md border transition-transform duration-75 hover:scale-125 ${
-                          day.isFuture ? "cursor-default" : "cursor-pointer"
-                        } ${getContributionColor(day, isSelected)}`}
+                        aria-label={`${day.fullDateLabel}: ${day.focusMinutes} focus minutes, ${day.cycleCount} sessions`}
+                        className={`w-full aspect-square rounded-[3px] sm:rounded-sm border transition-all duration-150 relative cursor-pointer ${getContributionColor(
+                          day,
+                          isSelected,
+                        )}`}
                         type="button"
                         onClick={() => {
                           if (!day.isFuture) {
                             setSelectedDay(isSelected ? null : day);
                           }
                         }}
-                        onMouseEnter={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
+                        onMouseEnter={(event) => {
+                          const rect =
+                            event.currentTarget.getBoundingClientRect();
 
                           setHoveredDay({
                             day,
@@ -460,7 +456,7 @@ function ActivityHeatmapComponent({
               isDisabled={page6m <= 1}
               size="sm"
               variant="secondary"
-              onPress={() => setPage6m((p) => Math.max(1, p - 1))}
+              onPress={() => setPage6m((prevPage) => Math.max(1, prevPage - 1))}
             >
               <ArrowLeft className="size-3.5" />
               Earlier 6 Months
@@ -470,7 +466,9 @@ function ActivityHeatmapComponent({
               isDisabled={page6m >= total6mPages}
               size="sm"
               variant="secondary"
-              onPress={() => setPage6m((p) => Math.min(total6mPages, p + 1))}
+              onPress={() =>
+                setPage6m((prevPage) => Math.min(total6mPages, prevPage + 1))
+              }
             >
               Recent 6 Months
               <ArrowRight className="size-3.5" />
@@ -483,7 +481,9 @@ function ActivityHeatmapComponent({
               isDisabled={page12m <= 1}
               size="sm"
               variant="secondary"
-              onPress={() => setPage12m((p) => Math.max(1, p - 1))}
+              onPress={() =>
+                setPage12m((prevPage) => Math.max(1, prevPage - 1))
+              }
             >
               <ArrowLeft className="size-3.5" />
               Earlier Year
@@ -493,7 +493,9 @@ function ActivityHeatmapComponent({
               isDisabled={page12m >= total12mPages}
               size="sm"
               variant="secondary"
-              onPress={() => setPage12m((p) => Math.min(total12mPages, p + 1))}
+              onPress={() =>
+                setPage12m((prevPage) => Math.min(total12mPages, prevPage + 1))
+              }
             >
               Recent Year
               <ArrowRight className="size-3.5" />

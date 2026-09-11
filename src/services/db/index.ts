@@ -36,12 +36,12 @@ export const db = {
     },
     getByTag(tag: string): SessionRecord[] {
       return this.getAll().filter(
-        (s) => s.tag?.toLowerCase() === tag.toLowerCase(),
+        (session) => session.tag?.toLowerCase() === tag.toLowerCase(),
       );
     },
     getByDateRange(startMs: number, endMs: number): SessionRecord[] {
       return this.getAll().filter(
-        (s) => s.createdAt >= startMs && s.createdAt <= endMs,
+        (session) => session.createdAt >= startMs && session.createdAt <= endMs,
       );
     },
     clear(): void {
@@ -57,14 +57,14 @@ export const db = {
       return cacheManager.getMemoryItem("todos", id);
     },
     getActive(): TodoItem[] {
-      return this.getAll().filter((t) => !t.completed && !t.archived);
+      return this.getAll().filter((todo) => !todo.completed && !todo.archived);
     },
     getCompleted(): TodoItem[] {
-      return this.getAll().filter((t) => t.completed && !t.archived);
+      return this.getAll().filter((todo) => todo.completed && !todo.archived);
     },
     getByTag(tag: string): TodoItem[] {
       return this.getAll().filter(
-        (t) => t.tag?.toLowerCase() === tag.toLowerCase(),
+        (todo) => todo.tag?.toLowerCase() === tag.toLowerCase(),
       );
     },
     save(todo: TodoItem): void {

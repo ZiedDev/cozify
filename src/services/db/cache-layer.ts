@@ -217,8 +217,8 @@ class DatabaseCacheManager {
 
     const pending = this.pendingWrites.get(storeName)!;
 
-    for (const [k, v] of storeMap.entries()) {
-      pending.set(k, v);
+    for (const [entryKey, entryValue] of storeMap.entries()) {
+      pending.set(entryKey, entryValue);
     }
 
     // Mirror to legacy localStorage for instant cross-tab compatibility
@@ -310,8 +310,8 @@ class DatabaseCacheManager {
         await idb.putBatch(storeName, itemsToPut);
       }
 
-      for (const k of keysToDelete) {
-        await idb.delete(storeName, k);
+      for (const keyToDelete of keysToDelete) {
+        await idb.delete(storeName, keyToDelete);
       }
     }
   }

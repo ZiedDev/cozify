@@ -20,6 +20,6 @@ export const SECRET_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 1,
     badgeColor: "text-pink-400",
     borderHighlight: "border-pink-500 shadow-[0_0_18px_rgba(236,72,153,0.45)]",
-    getValue: (m) => (m.isKonamiUnlocked ? 1 : 0),
+    getValue: (metrics) => (metrics.isKonamiUnlocked ? 1 : 0),
   },
 ];

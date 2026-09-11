@@ -48,8 +48,8 @@ export function useAchievementTracker() {
       if (knownRaw === null) {
         // First run on browser: record currently unlocked without spamming
         const initialUnlocked = currentMilestones
-          .filter((m) => m.unlocked)
-          .map((m) => m.id);
+          .filter((milestone) => milestone.unlocked)
+          .map((milestone) => milestone.id);
 
         localStorage.setItem(
           KNOWN_UNLOCKED_KEY,
@@ -67,14 +67,14 @@ export function useAchievementTracker() {
 
       let updated = false;
 
-      currentMilestones.forEach((m) => {
-        if (m.unlocked && !knownSet.has(m.id)) {
-          showAchievementToast(m);
+      currentMilestones.forEach((milestone) => {
+        if (milestone.unlocked && !knownSet.has(milestone.id)) {
+          showAchievementToast(milestone);
           playSound("achievement");
-          knownSet.add(m.id);
+          knownSet.add(milestone.id);
           updated = true;
-        } else if (!m.unlocked && knownSet.has(m.id)) {
-          knownSet.delete(m.id);
+        } else if (!milestone.unlocked && knownSet.has(milestone.id)) {
+          knownSet.delete(milestone.id);
           updated = true;
         }
       });
@@ -93,8 +93,8 @@ export function useAchievementTracker() {
     // Global Konami Code sequence listener: ↑ ↑ ↓ ↓ ← → ← → B A
     const konamiBuffer: string[] = [];
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement;
 
       if (
         target &&
@@ -107,7 +107,7 @@ export function useAchievementTracker() {
         return;
       }
 
-      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
 
       konamiBuffer.push(key);
       if (konamiBuffer.length > KONAMI_CODE.length) {
@@ -116,10 +116,12 @@ export function useAchievementTracker() {
 
       const isMatch =
         konamiBuffer.length === KONAMI_CODE.length &&
-        konamiBuffer.every((k, idx) => k === KONAMI_CODE[idx]);
+        konamiBuffer.every(
+          (bufferedKey, index) => bufferedKey === KONAMI_CODE[index],
+        );
 
       if (isMatch) {
-        e.preventDefault();
+        event.preventDefault();
         konamiBuffer.length = 0;
         const alreadyUnlocked =
           localStorage.getItem(KONAMI_STORAGE_KEY) === "true";

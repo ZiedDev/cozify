@@ -16,7 +16,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-emerald-400",
     borderHighlight:
       "border-emerald-500/80 shadow-[0_0_12px_rgba(16,185,129,0.25)]",
-    getValue: (m) => m.completedTodosCount,
+    getValue: (metrics) => metrics.completedTodosCount,
   },
   {
     id: "task_starter_5",
@@ -30,7 +30,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-emerald-400",
     borderHighlight:
       "border-emerald-500/80 shadow-[0_0_12px_rgba(16,185,129,0.25)]",
-    getValue: (m) => m.completedTodosCount,
+    getValue: (metrics) => metrics.completedTodosCount,
   },
   {
     id: "task_crusher_10",
@@ -44,7 +44,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-emerald-400",
     borderHighlight:
       "border-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.3)]",
-    getValue: (m) => m.completedTodosCount,
+    getValue: (metrics) => metrics.completedTodosCount,
   },
   {
     id: "task_slayer_25",
@@ -58,7 +58,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-emerald-400",
     borderHighlight:
       "border-emerald-400 shadow-[0_0_16px_rgba(52,211,153,0.35)]",
-    getValue: (m) => m.completedTodosCount,
+    getValue: (metrics) => metrics.completedTodosCount,
   },
   {
     id: "task_machine_50",
@@ -72,7 +72,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-emerald-400",
     borderHighlight:
       "border-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.4)]",
-    getValue: (m) => m.completedTodosCount,
+    getValue: (metrics) => metrics.completedTodosCount,
   },
   {
     id: "task_centurion_100",
@@ -86,7 +86,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-emerald-400",
     borderHighlight:
       "border-emerald-300 shadow-[0_0_20px_rgba(110,231,183,0.45)]",
-    getValue: (m) => m.completedTodosCount,
+    getValue: (metrics) => metrics.completedTodosCount,
   },
 
   // High Priority Chain
@@ -102,7 +102,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-rose-400",
     borderHighlight:
       "border-rose-500/80 shadow-[0_0_12px_rgba(244,63,94,0.25)]",
-    getValue: (m) => m.completedHighPriority,
+    getValue: (metrics) => metrics.completedHighPriority,
   },
   {
     id: "priority_pilot_5",
@@ -115,7 +115,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 5,
     badgeColor: "text-rose-400",
     borderHighlight: "border-rose-400 shadow-[0_0_14px_rgba(251,113,133,0.3)]",
-    getValue: (m) => m.completedHighPriority,
+    getValue: (metrics) => metrics.completedHighPriority,
   },
   {
     id: "priority_master_15",
@@ -128,7 +128,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 15,
     badgeColor: "text-rose-400",
     borderHighlight: "border-rose-400 shadow-[0_0_16px_rgba(251,113,133,0.35)]",
-    getValue: (m) => m.completedHighPriority,
+    getValue: (metrics) => metrics.completedHighPriority,
   },
 
   // Tag Diversity Chain
@@ -143,7 +143,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 3,
     badgeColor: "text-teal-400",
     borderHighlight: "border-teal-400 shadow-[0_0_14px_rgba(45,212,191,0.3)]",
-    getValue: (m) => m.completedTagsCount,
+    getValue: (metrics) => metrics.completedTagsCount,
   },
   {
     id: "tag_master_5",
@@ -156,7 +156,7 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     maxProgress: 5,
     badgeColor: "text-teal-400",
     borderHighlight: "border-teal-400 shadow-[0_0_16px_rgba(45,212,191,0.35)]",
-    getValue: (m) => m.completedTagsCount,
+    getValue: (metrics) => metrics.completedTagsCount,
   },
 
   // Special Feats
@@ -172,6 +172,6 @@ export const TASK_ACHIEVEMENTS: AchievementDefinition[] = [
     badgeColor: "text-fuchsia-400",
     borderHighlight:
       "border-fuchsia-500/80 shadow-[0_0_12px_rgba(217,70,239,0.25)]",
-    getValue: (m) => m.completedWithNotes,
+    getValue: (metrics) => metrics.completedWithNotes,
   },
 ];

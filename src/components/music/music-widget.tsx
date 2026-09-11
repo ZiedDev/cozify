@@ -63,8 +63,11 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
   // Click outside to smoothly close audio deck
   useEffect(() => {
     if (!isDeckOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (widgetRef.current && !widgetRef.current.contains(e.target as Node)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        widgetRef.current &&
+        !widgetRef.current.contains(event.target as Node)
+      ) {
         setIsDeckOpen(false);
       }
     };
@@ -86,8 +89,8 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
     }
   }, [tracklist.length, isDrawerActive]);
 
-  const handleLoad = (e?: SubmitEvent) => {
-    if (e) e.preventDefault();
+  const handleLoad = (event?: SubmitEvent) => {
+    if (event) event.preventDefault();
     if (!inputUrl.trim()) return;
     const success = loadUrl(inputUrl.trim(), undefined, undefined, true);
 
@@ -582,7 +585,7 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
                   className="text-xs"
                   placeholder="Paste Spotify or YouTube link..."
                   value={inputUrl}
-                  onChange={(e) => setInputUrl(e.target.value)}
+                  onChange={(event) => setInputUrl(event.target.value)}
                 />
               </InputGroup>
             </TextField>

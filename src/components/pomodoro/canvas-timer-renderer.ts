@@ -34,15 +34,17 @@ const canvasSlots = new Map<string, CanvasSlotState>();
 let lastFormattedTime: string | null = null;
 let lastCanvasMode: string | null = null;
 
-function easeOutBack(t: number): number {
+function easeOutBack(progress: number): number {
   const c1 = 1.15;
   const c3 = c1 + 1;
 
-  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  return 1 + c3 * Math.pow(progress - 1, 3) + c1 * Math.pow(progress - 1, 2);
 }
 
-function easeInOutQuad(t: number): number {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+function easeInOutQuad(progress: number): number {
+  return progress < 0.5
+    ? 2 * progress * progress
+    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
 }
 
 let cachedBlurCanvas: HTMLCanvasElement | null = null;
@@ -51,125 +53,143 @@ let cachedBlurKey = "";
 function drawCoverImage(
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
-  w: number,
-  h: number,
+  canvasWidth: number,
+  canvasHeight: number,
 ) {
   const imgRatio = img.naturalWidth / img.naturalHeight;
-  const targetRatio = w / h;
-  let sx = 0;
-  let sy = 0;
-  let sw = img.naturalWidth;
-  let sh = img.naturalHeight;
+  const targetRatio = canvasWidth / canvasHeight;
+  let sourceX = 0;
+  let sourceY = 0;
+  let sourceWidth = img.naturalWidth;
+  let sourceHeight = img.naturalHeight;
 
   if (imgRatio > targetRatio) {
-    sw = img.naturalHeight * targetRatio;
-    sx = (img.naturalWidth - sw) / 2;
+    sourceWidth = img.naturalHeight * targetRatio;
+    sourceX = (img.naturalWidth - sourceWidth) / 2;
   } else {
-    sh = img.naturalWidth / targetRatio;
-    sy = (img.naturalHeight - sh) / 2;
+    sourceHeight = img.naturalWidth / targetRatio;
+    sourceY = (img.naturalHeight - sourceHeight) / 2;
   }
 
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+  ctx.drawImage(
+    img,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    0,
+    0,
+    canvasWidth,
+    canvasHeight,
+  );
 }
 
 function fastBoxBlur(
   ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
+  canvasWidth: number,
+  canvasHeight: number,
   radius: number,
 ) {
-  const r = Math.min(25, Math.max(1, Math.round(radius)));
-  const imgData = ctx.getImageData(0, 0, w, h);
+  const blurRadius = Math.min(25, Math.max(1, Math.round(radius)));
+  const imgData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
   const pixels = imgData.data;
   const temp = new Uint8ClampedArray(pixels.length);
-  const windowSize = 2 * r + 1;
+  const windowSize = 2 * blurRadius + 1;
 
   // 2 passes of box blur = smooth Gaussian approximation
   for (let pass = 0; pass < 2; pass++) {
     // Horizontal pass: pixels -> temp
-    for (let y = 0; y < h; y++) {
-      let rSum = 0;
-      let gSum = 0;
-      let bSum = 0;
-      let aSum = 0;
-      const rowOffset = y * w * 4;
+    for (let pixelY = 0; pixelY < canvasHeight; pixelY++) {
+      let redSum = 0;
+      let greenSum = 0;
+      let blueSum = 0;
+      let alphaSum = 0;
+      const rowOffset = pixelY * canvasWidth * 4;
 
-      for (let x = -r; x < r; x++) {
-        const clampedX = Math.min(w - 1, Math.max(0, x));
-        const idx = rowOffset + clampedX * 4;
+      for (
+        let offsetX = -blurRadius;
+        offsetX < blurRadius;
+        offsetX++
+      ) {
+        const clampedX = Math.min(canvasWidth - 1, Math.max(0, offsetX));
+        const pixelIndex = rowOffset + clampedX * 4;
 
-        rSum += pixels[idx];
-        gSum += pixels[idx + 1];
-        bSum += pixels[idx + 2];
-        aSum += pixels[idx + 3];
+        redSum += pixels[pixelIndex];
+        greenSum += pixels[pixelIndex + 1];
+        blueSum += pixels[pixelIndex + 2];
+        alphaSum += pixels[pixelIndex + 3];
       }
 
-      for (let x = 0; x < w; x++) {
-        const inX = Math.min(w - 1, x + r);
-        const inIdx = rowOffset + inX * 4;
+      for (let pixelX = 0; pixelX < canvasWidth; pixelX++) {
+        const inX = Math.min(canvasWidth - 1, pixelX + blurRadius);
+        const inIndex = rowOffset + inX * 4;
 
-        rSum += pixels[inIdx];
-        gSum += pixels[inIdx + 1];
-        bSum += pixels[inIdx + 2];
-        aSum += pixels[inIdx + 3];
+        redSum += pixels[inIndex];
+        greenSum += pixels[inIndex + 1];
+        blueSum += pixels[inIndex + 2];
+        alphaSum += pixels[inIndex + 3];
 
-        const targetIdx = rowOffset + x * 4;
+        const targetIndex = rowOffset + pixelX * 4;
 
-        temp[targetIdx] = (rSum / windowSize) | 0;
-        temp[targetIdx + 1] = (gSum / windowSize) | 0;
-        temp[targetIdx + 2] = (bSum / windowSize) | 0;
-        temp[targetIdx + 3] = (aSum / windowSize) | 0;
+        temp[targetIndex] = (redSum / windowSize) | 0;
+        temp[targetIndex + 1] = (greenSum / windowSize) | 0;
+        temp[targetIndex + 2] = (blueSum / windowSize) | 0;
+        temp[targetIndex + 3] = (alphaSum / windowSize) | 0;
 
-        const outX = Math.max(0, x - r);
-        const outIdx = rowOffset + outX * 4;
+        const outX = Math.max(0, pixelX - blurRadius);
+        const outIndex = rowOffset + outX * 4;
 
-        rSum -= pixels[outIdx];
-        gSum -= pixels[outIdx + 1];
-        bSum -= pixels[outIdx + 2];
-        aSum -= pixels[outIdx + 3];
+        redSum -= pixels[outIndex];
+        greenSum -= pixels[outIndex + 1];
+        blueSum -= pixels[outIndex + 2];
+        alphaSum -= pixels[outIndex + 3];
       }
     }
 
     // Vertical pass: temp -> pixels
-    for (let x = 0; x < w; x++) {
-      let rSum = 0;
-      let gSum = 0;
-      let bSum = 0;
-      let aSum = 0;
+    for (let pixelX = 0; pixelX < canvasWidth; pixelX++) {
+      let redSum = 0;
+      let greenSum = 0;
+      let blueSum = 0;
+      let alphaSum = 0;
 
-      for (let y = -r; y < r; y++) {
-        const clampedY = Math.min(h - 1, Math.max(0, y));
-        const idx = (clampedY * w + x) * 4;
+      for (
+        let offsetY = -blurRadius;
+        offsetY < blurRadius;
+        offsetY++
+      ) {
+        const clampedY = Math.min(canvasHeight - 1, Math.max(0, offsetY));
+        const pixelIndex = (clampedY * canvasWidth + pixelX) * 4;
 
-        rSum += temp[idx];
-        gSum += temp[idx + 1];
-        bSum += temp[idx + 2];
-        aSum += temp[idx + 3];
+        redSum += temp[pixelIndex];
+        greenSum += temp[pixelIndex + 1];
+        blueSum += temp[pixelIndex + 2];
+        alphaSum += temp[pixelIndex + 3];
       }
 
-      for (let y = 0; y < h; y++) {
-        const inY = Math.min(h - 1, y + r);
-        const inIdx = (inY * w + x) * 4;
+      for (let pixelY = 0; pixelY < canvasHeight; pixelY++) {
+        const inY = Math.min(canvasHeight - 1, pixelY + blurRadius);
+        const inIndex = (inY * canvasWidth + pixelX) * 4;
 
-        rSum += temp[inIdx];
-        gSum += temp[inIdx + 1];
-        bSum += temp[inIdx + 2];
-        aSum += temp[inIdx + 3];
+        redSum += temp[inIndex];
+        greenSum += temp[inIndex + 1];
+        blueSum += temp[inIndex + 2];
+        alphaSum += temp[inIndex + 3];
 
-        const targetIdx = (y * w + x) * 4;
+        const targetIndex = (pixelY * canvasWidth + pixelX) * 4;
 
-        pixels[targetIdx] = (rSum / windowSize) | 0;
-        pixels[targetIdx + 1] = (gSum / windowSize) | 0;
-        pixels[targetIdx + 2] = (bSum / windowSize) | 0;
-        pixels[targetIdx + 3] = (aSum / windowSize) | 0;
+        pixels[targetIndex] = (redSum / windowSize) | 0;
+        pixels[targetIndex + 1] = (greenSum / windowSize) | 0;
+        pixels[targetIndex + 2] = (blueSum / windowSize) | 0;
+        pixels[targetIndex + 3] = (alphaSum / windowSize) | 0;
 
-        const outY = Math.max(0, y - r);
-        const outIdx = (outY * w + x) * 4;
+        const outY = Math.max(0, pixelY - blurRadius);
+        const outIndex = (outY * canvasWidth + pixelX) * 4;
 
-        rSum -= temp[outIdx];
-        gSum -= temp[outIdx + 1];
-        bSum -= temp[outIdx + 2];
-        aSum -= temp[outIdx + 3];
+        redSum -= temp[outIndex];
+        greenSum -= temp[outIndex + 1];
+        blueSum -= temp[outIndex + 2];
+        alphaSum -= temp[outIndex + 3];
       }
     }
   }
@@ -180,10 +200,10 @@ function fastBoxBlur(
 function getBlurredBg(
   img: HTMLImageElement,
   blurPx: number,
-  w: number,
-  h: number,
+  canvasWidth: number,
+  canvasHeight: number,
 ): HTMLCanvasElement | HTMLImageElement {
-  const key = `${img.src}_${blurPx}_${w}_${h}`;
+  const key = `${img.src}_${blurPx}_${canvasWidth}_${canvasHeight}`;
 
   if (cachedBlurCanvas && cachedBlurKey === key) return cachedBlurCanvas;
 
@@ -191,14 +211,14 @@ function getBlurredBg(
     cachedBlurCanvas = document.createElement("canvas");
   }
   cachedBlurKey = key;
-  cachedBlurCanvas.width = w;
-  cachedBlurCanvas.height = h;
+  cachedBlurCanvas.width = canvasWidth;
+  cachedBlurCanvas.height = canvasHeight;
   const bctx = cachedBlurCanvas.getContext("2d", { willReadFrequently: true });
 
   if (!bctx) return img;
 
   if (blurPx <= 0) {
-    drawCoverImage(bctx, img, w, h);
+    drawCoverImage(bctx, img, canvasWidth, canvasHeight);
 
     return cachedBlurCanvas;
   }
@@ -208,7 +228,7 @@ function getBlurredBg(
     if ("filter" in bctx) {
       bctx.filter = `blur(${blurPx}px)`;
       if (bctx.filter && bctx.filter !== "none") {
-        drawCoverImage(bctx, img, w, h);
+        drawCoverImage(bctx, img, canvasWidth, canvasHeight);
         bctx.filter = "none";
 
         return cachedBlurCanvas;
@@ -217,8 +237,8 @@ function getBlurredBg(
   } catch {}
 
   // 2. High-performance box blur fallback (smooth full-res blur adhering strictly to blurPx)
-  drawCoverImage(bctx, img, w, h);
-  fastBoxBlur(bctx, w, h, blurPx);
+  drawCoverImage(bctx, img, canvasWidth, canvasHeight);
+  fastBoxBlur(bctx, canvasWidth, canvasHeight, blurPx);
 
   return cachedBlurCanvas;
 }
@@ -375,10 +395,10 @@ export function drawTimerToCanvas(
 
     lastFormattedTime = formattedTime;
 
-    chars.forEach((char, i) => {
-      const fromRight = totalChars - 1 - i;
+    chars.forEach((char, charIndex) => {
+      const fromRight = totalChars - 1 - charIndex;
       const isColon = char === ":";
-      const key = isColon ? `colon-${i}` : `slot-${fromRight}`;
+      const key = isColon ? `colon-${charIndex}` : `slot-${fromRight}`;
       let slot = canvasSlots.get(key);
 
       if (!slot) {
@@ -392,7 +412,7 @@ export function drawTimerToCanvas(
       } else if (isModeChanged) {
         slot.prevChar = slot.char;
         slot.char = char;
-        slot.startTime = now + i * 45;
+        slot.startTime = now + charIndex * 45;
         slot.duration = 450;
       } else if (isTimeChanged && slot.char !== char) {
         if (!isColon) {
@@ -417,23 +437,23 @@ export function drawTimerToCanvas(
     const clipHeight = 104;
 
     // Fixed-width monospace slots preventing horizontal jitter
-    const charWidths = chars.map((c) =>
-      c === ":" ? 24 : c === "+" || c === "-" ? 36 : 52,
+    const charWidths = chars.map((charItem) =>
+      charItem === ":" ? 24 : charItem === "+" || charItem === "-" ? 36 : 52,
     );
-    const totalW = charWidths.reduce((sum, w) => sum + w, 0);
-    let startX = cx - totalW / 2;
+    const totalWidth = charWidths.reduce((sum, width) => sum + width, 0);
+    let startX = cx - totalWidth / 2;
 
     ctx.save();
     ctx.beginPath();
-    ctx.rect(cx - totalW / 2 - 12, clipTop, totalW + 24, clipHeight);
+    ctx.rect(cx - totalWidth / 2 - 12, clipTop, totalWidth + 24, clipHeight);
     ctx.clip();
 
-    chars.forEach((char, i) => {
-      const fromRight = totalChars - 1 - i;
+    chars.forEach((char, charIndex) => {
+      const fromRight = totalChars - 1 - charIndex;
       const isColon = char === ":";
-      const key = isColon ? `colon-${i}` : `slot-${fromRight}`;
+      const key = isColon ? `colon-${charIndex}` : `slot-${fromRight}`;
       const slot = canvasSlots.get(key);
-      const slotW = charWidths[i];
+      const slotW = charWidths[charIndex];
       const charX = startX + slotW / 2;
 
       startX += slotW;
@@ -513,9 +533,9 @@ export function drawTimerToCanvas(
     let startCapsuleX = cx - totalBarW / 2;
     const capsuleY = 200;
 
-    for (let i = 1; i <= totalCycles; i++) {
-      const isCurrent = i === currentCycle;
-      const isCompleted = i < currentCycle;
+    for (let cycleIndex = 1; cycleIndex <= totalCycles; cycleIndex++) {
+      const isCurrent = cycleIndex === currentCycle;
+      const isCompleted = cycleIndex < currentCycle;
 
       if (isCurrent) {
         // Active cycle: highlight outer halo ring

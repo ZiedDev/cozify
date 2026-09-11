@@ -1,5 +1,12 @@
 import { useMemo } from "react";
-import { SearchField, Tabs, Typography, Popover, Button } from "@heroui/react";
+import {
+  SearchField,
+  Tabs,
+  Typography,
+  Popover,
+  Button,
+  ScrollShadow,
+} from "@heroui/react";
 import {
   LayoutList,
   CheckSquare,
@@ -125,7 +132,7 @@ export function TodoHeader() {
             aria-label="Search tasks"
             className="w-28 xs:w-36 md:w-44"
             value={searchQuery}
-            onChange={(val) => setSearchQuery(val)}
+            onChange={(query) => setSearchQuery(query)}
           >
             <SearchField.Group className="h-7 md:h-8 rounded-full bg-surface/90 border border-separator/40 text-xs px-2 md:px-2.5">
               <SearchField.SearchIcon className="size-3 text-muted" />
@@ -140,7 +147,9 @@ export function TodoHeader() {
           {/* View Mode Switcher */}
           <Tabs
             selectedKey={viewMode}
-            onSelectionChange={(k) => setViewMode(k as TodoViewMode)}
+            onSelectionChange={(selectedMode) =>
+              setViewMode(selectedMode as TodoViewMode)
+            }
           >
             <Tabs.ListContainer className="rounded-full">
               <Tabs.List
@@ -203,7 +212,9 @@ export function TodoHeader() {
         <div className="shrink-0">
           <Tabs
             selectedKey={filter}
-            onSelectionChange={(key) => setFilter(key as TodoFilter)}
+            onSelectionChange={(selectedFilter) =>
+              setFilter(selectedFilter as TodoFilter)
+            }
           >
             <Tabs.ListContainer className="rounded-full">
               <Tabs.List
@@ -263,40 +274,46 @@ export function TodoHeader() {
             </Popover.Trigger>
             <Popover.Content>
               <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">
-                <button
-                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                    !selectedTag
-                      ? "bg-accent/15 text-accent font-semibold"
-                      : "hover:bg-surface-secondary/60 text-foreground"
-                  }`}
-                  type="button"
-                  onClick={() => setSelectedTag(null)}
+                <ScrollShadow
+                  className="max-h-52 overflow-y-auto flex flex-col gap-1 no-scrollbar pr-0.5"
+                  orientation="vertical"
+                  size={20}
                 >
-                  <TagIcon className="size-3.5 opacity-80 shrink-0 text-muted" />
-                  <span>All Tags</span>
-                </button>
-                {tagOptions.map((item) => {
-                  const isSelected =
-                    selectedTag?.toLowerCase() === item.id.toLowerCase();
+                  <button
+                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                      !selectedTag
+                        ? "bg-accent/15 text-accent font-semibold"
+                        : "hover:bg-surface-secondary/60 text-foreground"
+                    }`}
+                    type="button"
+                    onClick={() => setSelectedTag(null)}
+                  >
+                    <TagIcon className="size-3.5 opacity-80 shrink-0 text-muted" />
+                    <span>All Tags</span>
+                  </button>
+                  {tagOptions.map((item) => {
+                    const isSelected =
+                      selectedTag?.toLowerCase() === item.id.toLowerCase();
 
-                  return (
-                    <button
-                      key={item.id}
-                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                        isSelected
-                          ? "bg-accent/15 text-accent font-semibold"
-                          : "hover:bg-surface-secondary/60 text-foreground"
-                      }`}
-                      type="button"
-                      onClick={() =>
-                        setSelectedTag(isSelected ? null : item.id)
-                      }
-                    >
-                      <item.icon className="size-3.5 opacity-80 shrink-0" />
-                      <span>{item.name}</span>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={item.id}
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                          isSelected
+                            ? "bg-accent/15 text-accent font-semibold"
+                            : "hover:bg-surface-secondary/60 text-foreground"
+                        }`}
+                        type="button"
+                        onClick={() =>
+                          setSelectedTag(isSelected ? null : item.id)
+                        }
+                      >
+                        <item.icon className="size-3.5 opacity-80 shrink-0" />
+                        <span>{item.name}</span>
+                      </button>
+                    );
+                  })}
+                </ScrollShadow>
               </Popover.Dialog>
             </Popover.Content>
           </Popover>
@@ -323,41 +340,47 @@ export function TodoHeader() {
             </Popover.Trigger>
             <Popover.Content>
               <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">
-                <button
-                  className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                    !selectedPriority || selectedPriority === "all"
-                      ? "bg-accent/15 text-accent font-semibold"
-                      : "hover:bg-surface-secondary/60 text-foreground"
-                  }`}
-                  type="button"
-                  onClick={() => setSelectedPriority(null)}
+                <ScrollShadow
+                  className="max-h-52 overflow-y-auto flex flex-col gap-1 no-scrollbar pr-0.5"
+                  orientation="vertical"
+                  size={20}
                 >
-                  <Flag className="size-3.5 opacity-80 shrink-0 text-muted" />
-                  <span>All Priorities</span>
-                </button>
-                {priorityOptions.map((item) => {
-                  const isSelected = selectedPriority === item.id;
+                  <button
+                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                      !selectedPriority || selectedPriority === "all"
+                        ? "bg-accent/15 text-accent font-semibold"
+                        : "hover:bg-surface-secondary/60 text-foreground"
+                    }`}
+                    type="button"
+                    onClick={() => setSelectedPriority(null)}
+                  >
+                    <Flag className="size-3.5 opacity-80 shrink-0 text-muted" />
+                    <span>All Priorities</span>
+                  </button>
+                  {priorityOptions.map((item) => {
+                    const isSelected = selectedPriority === item.id;
 
-                  return (
-                    <button
-                      key={item.id}
-                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                        isSelected
-                          ? "bg-accent/15 text-accent font-semibold"
-                          : "hover:bg-surface-secondary/60 text-foreground"
-                      }`}
-                      type="button"
-                      onClick={() =>
-                        setSelectedPriority(
-                          isSelected ? null : (item.id as TodoPriority),
-                        )
-                      }
-                    >
-                      <span className={`size-2 rounded-full ${item.dot}`} />
-                      <span className={item.color}>{item.name}</span>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={item.id}
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                          isSelected
+                            ? "bg-accent/15 text-accent font-semibold"
+                            : "hover:bg-surface-secondary/60 text-foreground"
+                        }`}
+                        type="button"
+                        onClick={() =>
+                          setSelectedPriority(
+                            isSelected ? null : (item.id as TodoPriority),
+                          )
+                        }
+                      >
+                        <span className={`size-2 rounded-full ${item.dot}`} />
+                        <span className={item.color}>{item.name}</span>
+                      </button>
+                    );
+                  })}
+                </ScrollShadow>
               </Popover.Dialog>
             </Popover.Content>
           </Popover>

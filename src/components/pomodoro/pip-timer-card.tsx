@@ -53,21 +53,21 @@ export function PipTimerCard() {
       {/* 1. Mode Switcher (Matching original TimerTabs pill style - only appears on hover) */}
       <div className="absolute top-2.5 left-0 right-0 flex justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
         <div className="inline-flex items-center rounded-full bg-surface/85 backdrop-blur-md p-0.5 border border-separator/40 text-xs shadow-md">
-          {TIMER_MODES.map((m) => {
-            const isSelected = mode === m.id;
+          {TIMER_MODES.map((timerMode) => {
+            const isSelected = mode === timerMode.id;
 
             return (
               <button
-                key={m.id}
+                key={timerMode.id}
                 className={`h-7 rounded-full px-3.5 text-xs font-medium cursor-pointer transition-all duration-150 ${
                   isSelected
                     ? "bg-accent text-accent-foreground font-semibold shadow-xs"
                     : "text-muted hover:text-foreground hover:bg-surface/60"
                 }`}
                 type="button"
-                onClick={() => switchMode(m.id as TimerMode)}
+                onClick={() => switchMode(timerMode.id as TimerMode)}
               >
-                {m.label}
+                {timerMode.label}
               </button>
             );
           })}

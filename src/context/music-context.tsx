@@ -434,7 +434,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       if (
         idsKey === prevIdsKey &&
         tracklist.length === videoIds.length &&
-        tracklist.some((t) => !t.title.startsWith("Track "))
+        tracklist.some((track) => !track.title.startsWith("Track "))
       ) {
         return;
       }
@@ -475,22 +475,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           if (currentVideoIdsRef.current.join(",") !== idsKey) return;
 
           setTracklist((prev) =>
-            prev.map((t, i) => {
-              const relIdx = i - startIdx;
+            prev.map((track, trackIndex) => {
+              const relIdx = trackIndex - startIdx;
 
               if (relIdx >= 0 && relIdx < results.length) {
                 const meta = results[relIdx];
 
                 if (meta?.title) {
                   return {
-                    ...t,
+                    ...track,
                     title: meta.title,
                     author: meta.author || "",
                   };
                 }
               }
 
-              return t;
+              return track;
             }),
           );
 
@@ -670,7 +670,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       };
 
       // Trigger container element remount with new key
-      setPlayerKey((k) => k + 1);
+      setPlayerKey((prevKey) => prevKey + 1);
 
       // Arm watchdog for this retry attempt as well
       bufferingWatchdogRef.current = setTimeout(() => {
@@ -1220,10 +1220,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       if (playlistId !== undefined) {
         setActivePlaylistId(playlistId);
       } else {
-        const matching = [...customPlaylists, ...PRESET_PLAYLISTS].find((p) => {
-          if (p.url === trimmed) return true;
-          if (parsed.videoId && p.url.includes(parsed.videoId)) return true;
-          if (parsed.id && p.url.includes(parsed.id)) return true;
+        const matching = [...customPlaylists, ...PRESET_PLAYLISTS].find((playlist) => {
+          if (playlist.url === trimmed) return true;
+          if (parsed.videoId && playlist.url.includes(parsed.videoId)) return true;
+          if (parsed.id && playlist.url.includes(parsed.id)) return true;
 
           return false;
         });
@@ -1493,7 +1493,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   );
 
   const removeCustomPlaylist = useCallback((id: string) => {
-    setCustomPlaylists((prev) => prev.filter((p) => p.id !== id));
+    setCustomPlaylists((prev) => prev.filter((playlist) => playlist.id !== id));
     toast("Playlist Removed", {
       variant: "default",
       timeout: 2000,
@@ -1505,7 +1505,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     if (!trimmed) return;
     setCustomPlaylists((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, title: trimmed } : p)),
+      prev.map((playlist) => (playlist.id === id ? { ...playlist, title: trimmed } : playlist)),
     );
     toast("Playlist Renamed", {
       variant: "default",
@@ -1516,7 +1516,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const moveCustomPlaylist = useCallback(
     (id: string, direction: "up" | "down") => {
       setCustomPlaylists((prev) => {
-        const index = prev.findIndex((p) => p.id === id);
+        const index = prev.findIndex((playlist) => playlist.id === id);
 
         if (index === -1) return prev;
         const targetIndex = direction === "up" ? index - 1 : index + 1;

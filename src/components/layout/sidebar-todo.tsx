@@ -99,8 +99,8 @@ export function SidebarTodoItem({
               : "border-muted/50 hover:border-accent hover:scale-110 bg-surface/50"
           }`}
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
+          onClick={(event) => {
+            event.stopPropagation();
             onToggle(todo.id);
           }}
         >
@@ -132,13 +132,13 @@ export function SidebarTodoItem({
           className="flex-1 min-w-0 overflow-hidden flex items-center justify-between gap-1 py-0.5 text-left"
           role="button"
           tabIndex={0}
-          onClick={(e) => {
-            e.stopPropagation();
+          onClick={(event) => {
+            event.stopPropagation();
             onToggleExpand();
           }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
               onToggleExpand();
             }
           }}
@@ -191,15 +191,15 @@ export function SidebarTodoItem({
                 rows={2}
                 value={noteDraft}
                 onBlur={handleSaveNotes}
-                onChange={(e) => setNoteDraft(e.target.value)}
-                onKeyDown={(e) => {
+                onChange={(event) => setNoteDraft(event.target.value)}
+                onKeyDown={(event) => {
                   if (
-                    e.key === "Enter" &&
-                    (e.metaKey || e.ctrlKey || !e.shiftKey)
+                    event.key === "Enter" &&
+                    (event.metaKey || event.ctrlKey || !event.shiftKey)
                   ) {
-                    e.preventDefault();
+                    event.preventDefault();
                     handleSaveNotes();
-                  } else if (e.key === "Escape") {
+                  } else if (event.key === "Escape") {
                     setNoteDraft(todo.notes || "");
                     if (todo.notes) {
                       setIsEditingNotes(false);
@@ -350,7 +350,7 @@ export function SidebarTodoWidget({
   );
 
   const allActiveTodos = useMemo(
-    () => todos.filter((t) => !t.completed && !t.archived),
+    () => todos.filter((todo) => !todo.completed && !todo.archived),
     [todos],
   );
 
@@ -364,9 +364,9 @@ export function SidebarTodoWidget({
         return false;
       }
       if (selectedPriority && selectedPriority !== "all") {
-        const p = todo.priority || "none";
+        const taskPriority = todo.priority || "none";
 
-        if (p !== selectedPriority) return false;
+        if (taskPriority !== selectedPriority) return false;
       }
 
       return true;
@@ -499,41 +499,47 @@ export function SidebarTodoWidget({
             </Popover.Trigger>
             <Popover.Content placement="bottom end">
               <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-0.5 min-w-36 z-50">
-                <button
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                    !selectedTag
-                      ? "bg-accent/15 text-accent font-semibold"
-                      : "hover:bg-surface-secondary/60 text-foreground"
-                  }`}
-                  type="button"
-                  onClick={() => setSelectedTag(null)}
+                <ScrollShadow
+                  className="max-h-52 overflow-y-auto flex flex-col gap-0.5 no-scrollbar pr-0.5"
+                  orientation="vertical"
+                  size={20}
                 >
-                  <TagIcon className="size-3.5 opacity-60 shrink-0 text-muted" />
-                  <span>All Tags</span>
-                </button>
-                {tagOptions.map((item) => {
-                  const isSelected =
-                    selectedTag?.toLowerCase() === item.id.toLowerCase();
-                  const ItemIcon = item.icon;
+                  <button
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                      !selectedTag
+                        ? "bg-accent/15 text-accent font-semibold"
+                        : "hover:bg-surface-secondary/60 text-foreground"
+                    }`}
+                    type="button"
+                    onClick={() => setSelectedTag(null)}
+                  >
+                    <TagIcon className="size-3.5 opacity-60 shrink-0 text-muted" />
+                    <span>All Tags</span>
+                  </button>
+                  {tagOptions.map((item) => {
+                    const isSelected =
+                      selectedTag?.toLowerCase() === item.id.toLowerCase();
+                    const ItemIcon = item.icon;
 
-                  return (
-                    <button
-                      key={item.id}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                        isSelected
-                          ? "bg-accent/15 text-accent font-semibold"
-                          : "hover:bg-surface-secondary/60 text-foreground"
-                      }`}
-                      type="button"
-                      onClick={() =>
-                        setSelectedTag(isSelected ? null : item.id)
-                      }
-                    >
-                      <ItemIcon className="size-3.5 opacity-80 shrink-0" />
-                      <span>{item.name}</span>
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={item.id}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                          isSelected
+                            ? "bg-accent/15 text-accent font-semibold"
+                            : "hover:bg-surface-secondary/60 text-foreground"
+                        }`}
+                        type="button"
+                        onClick={() =>
+                          setSelectedTag(isSelected ? null : item.id)
+                        }
+                      >
+                        <ItemIcon className="size-3.5 opacity-80 shrink-0" />
+                        <span>{item.name}</span>
+                      </button>
+                    );
+                  })}
+                </ScrollShadow>
               </Popover.Dialog>
             </Popover.Content>
           </Popover>
@@ -595,8 +601,8 @@ export function SidebarTodoWidget({
           >
             <SortableList onReorder={reorderTodos}>
               <div className="flex flex-col gap-1.5 w-full">
-                {displayedTodos.map((todo, idx) => (
-                  <SortableItem key={todo.id} id={todo.id} index={idx}>
+                {displayedTodos.map((todo, index) => (
+                  <SortableItem key={todo.id} id={todo.id} index={index}>
                     <SidebarTodoItem
                       isExpanded={expandedIds.has(todo.id)}
                       todo={todo}
@@ -614,7 +620,7 @@ export function SidebarTodoWidget({
             <button
               className="w-full py-1.5 px-2 rounded-xl text-center text-xs font-medium text-accent hover:bg-accent/10 border border-accent/20 transition-[background-color,border-color] duration-200 cursor-pointer shrink-0"
               type="button"
-              onClick={() => setVisibleCount((prev) => prev + 10)}
+              onClick={() => setVisibleCount((prevCount) => prevCount + 10)}
             >
               Load more ({totalFiltered - visibleCount} remaining)
             </button>

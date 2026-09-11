@@ -46,8 +46,8 @@ type ThemeContextValue = {
   moveCustomBackground: (id: string, direction: "left" | "right") => void;
   setOverlayOpacity: (opacity: number) => void;
   setBlur: (blur: number) => void;
-  setPositionX: (x: number) => void;
-  setPositionY: (y: number) => void;
+  setPositionX: (posX: number) => void;
+  setPositionY: (posY: number) => void;
   setZoom: (zoom: number) => void;
   setAppThemeColor: (hue: number) => void;
   resetTheme: () => void;
@@ -83,12 +83,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Apply OKLCH palette changes across the entire app
   useEffect(() => {
     const root = document.documentElement;
-    const h = config.hue ?? DEFAULT_HUE;
+    const activeHue = config.hue ?? DEFAULT_HUE;
 
-    if (h === DEFAULT_HUE) {
+    if (activeHue === DEFAULT_HUE) {
       root.style.removeProperty("--theme-hue");
     } else {
-      root.style.setProperty("--theme-hue", String(h));
+      root.style.setProperty("--theme-hue", String(activeHue));
     }
   }, [config.hue]);
 
@@ -270,17 +270,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  const setPositionX = useCallback((x: number) => {
+  const setPositionX = useCallback((posX: number) => {
     setConfig((prev) => ({
       ...prev,
-      positionX: Math.max(0, Math.min(100, x)),
+      positionX: Math.max(0, Math.min(100, posX)),
     }));
   }, []);
 
-  const setPositionY = useCallback((y: number) => {
+  const setPositionY = useCallback((posY: number) => {
     setConfig((prev) => ({
       ...prev,
-      positionY: Math.max(0, Math.min(100, y)),
+      positionY: Math.max(0, Math.min(100, posY)),
     }));
   }, []);
 

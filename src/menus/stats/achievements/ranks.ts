@@ -39,7 +39,7 @@ export const ACHIEVEMENT_RANKS = [
 
 export function getRankFromXp(xp: number) {
   return (
-    ACHIEVEMENT_RANKS.find((r) => xp >= r.minXp) ||
+    ACHIEVEMENT_RANKS.find((rank) => xp >= rank.minXp) ||
     ACHIEVEMENT_RANKS[ACHIEVEMENT_RANKS.length - 1]
   );
 }

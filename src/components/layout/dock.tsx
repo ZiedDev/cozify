@@ -13,7 +13,9 @@ export function Dock({
     <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-fit max-w-[95vw]">
       <Tabs
         selectedKey={activeMode}
-        onSelectionChange={(k) => onSelectMode(k as AppMode)}
+        onSelectionChange={(selectedKey) =>
+          onSelectMode(selectedKey as AppMode)
+        }
       >
         <Tabs.ListContainer className="rounded-full">
           <Tabs.List

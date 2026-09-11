@@ -28,13 +28,19 @@ function FocusChartComponent({
   const isMonthly = periodType === "monthly";
 
   const totalFocusInChart = data.reduce(
-    (acc, d) => acc + (d.totalPeriodMinutes ?? d.focusMinutes),
+    (totalMinutes, dayActivity) =>
+      totalMinutes +
+      (dayActivity.totalPeriodMinutes ?? dayActivity.focusMinutes),
     0,
   );
   const avgFocusInChart =
     data.length > 0
       ? Math.round(
-          data.reduce((acc, d) => acc + d.focusMinutes, 0) / data.length,
+          data.reduce(
+            (totalMinutes, dayActivity) =>
+              totalMinutes + dayActivity.focusMinutes,
+            0,
+          ) / data.length,
         )
       : 0;
 
@@ -113,24 +119,26 @@ function FocusChartComponent({
         >
           <BarChart.Grid />
           <BarChart.YAxis
-            tickFormatter={(v) => (v === 0 ? "0m" : `${v}m`)}
+            tickFormatter={(minutesValue) =>
+              minutesValue === 0 ? "0m" : `${minutesValue}m`
+            }
             ticksCount={4}
           />
           <BarChart.XAxis
             dataKey="dayLabel"
-            tickFormatter={(val, idx) => {
+            tickFormatter={(tickValue, itemIndex) => {
               if (isHourly) {
-                const str = String(val);
+                const hourString = String(tickValue);
 
                 if (
-                  str === "12 AM" ||
-                  str === "4 AM" ||
-                  str === "8 AM" ||
-                  str === "12 PM" ||
-                  str === "4 PM" ||
-                  str === "8 PM"
+                  hourString === "12 AM" ||
+                  hourString === "4 AM" ||
+                  hourString === "8 AM" ||
+                  hourString === "12 PM" ||
+                  hourString === "4 PM" ||
+                  hourString === "8 PM"
                 ) {
-                  return str;
+                  return hourString;
                 }
 
                 return "";
@@ -148,11 +156,11 @@ function FocusChartComponent({
               }
 
               if (
-                idx % step === 0 ||
-                (idx === count - 1 &&
+                itemIndex % step === 0 ||
+                (itemIndex === count - 1 &&
                   (count - 1) % step >= Math.floor(step / 2))
               ) {
-                return String(val);
+                return String(tickValue);
               }
 
               return "";
@@ -268,14 +276,14 @@ function FocusChartComponent({
                   ? selectedDay.dayLabel
                   : (() => {
                       if (!selectedDay.dateStr) return selectedDay.dayLabel;
-                      const d = new Date(
+                      const parsedDate = new Date(
                         selectedDay.dateStr.includes("T")
                           ? selectedDay.dateStr
                           : `${selectedDay.dateStr}T12:00:00`,
                       );
-                      const num = d.getDate();
+                      const dayNumber = parsedDate.getDate();
 
-                      return isNaN(num) ? selectedDay.dayLabel : num;
+                      return isNaN(dayNumber) ? selectedDay.dayLabel : dayNumber;
                     })()}
               </span>
             </div>

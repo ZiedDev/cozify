@@ -79,25 +79,25 @@ export function DurationsPopover({
           </div>
           <Separator />
 
-          {TIMER_MODES.map((m) => {
-            const totalSec = durations[m.id];
-            const mMin = Math.floor(totalSec / 60);
-            const mSec = totalSec % 60;
+          {TIMER_MODES.map((timerMode) => {
+            const totalSeconds = durations[timerMode.id];
+            const modeMinutes = Math.floor(totalSeconds / 60);
+            const modeSeconds = totalSeconds % 60;
 
             return (
               <div
-                key={m.id}
+                key={timerMode.id}
                 className="flex items-center justify-between gap-3"
               >
                 <Typography color="muted" type="body-sm" weight="medium">
-                  {TIMER_MODE_LABELS[m.id]}
+                  {TIMER_MODE_LABELS[timerMode.id]}
                 </Typography>
 
                 <div className="flex items-center gap-2">
                   {/* Minutes NumberField */}
                   <div className="flex items-center gap-1">
                     <NumberField
-                      aria-label={`${TIMER_MODE_LABELS[m.id]} Minutes`}
+                      aria-label={`${TIMER_MODE_LABELS[timerMode.id]} Minutes`}
                       className="w-24 h-7"
                       formatOptions={{
                         style: "unit",
@@ -107,13 +107,19 @@ export function DurationsPopover({
                       maxValue={180}
                       minValue={0}
                       step={1}
-                      value={mMin}
-                      onChange={(val) => {
-                        if (typeof val === "number" && !isNaN(val)) {
-                          handleGuardedChange(`min_${m.id}`, () => {
-                            const newTotal = Math.max(5, val * 60 + mSec);
+                      value={modeMinutes}
+                      onChange={(minuteValue) => {
+                        if (
+                          typeof minuteValue === "number" &&
+                          !isNaN(minuteValue)
+                        ) {
+                          handleGuardedChange(`min_${timerMode.id}`, () => {
+                            const newTotal = Math.max(
+                              5,
+                              minuteValue * 60 + modeSeconds,
+                            );
 
-                            setCustomDurations({ [m.id]: newTotal });
+                            setCustomDurations({ [timerMode.id]: newTotal });
                           });
                         }
                       }}
@@ -129,7 +135,7 @@ export function DurationsPopover({
                   {/* Seconds NumberField */}
                   <div className="flex items-center gap-1">
                     <NumberField
-                      aria-label={`${TIMER_MODE_LABELS[m.id]} Seconds`}
+                      aria-label={`${TIMER_MODE_LABELS[timerMode.id]} Seconds`}
                       className="w-24 h-7"
                       formatOptions={{
                         style: "unit",
@@ -139,13 +145,19 @@ export function DurationsPopover({
                       maxValue={55}
                       minValue={0}
                       step={5}
-                      value={mSec}
-                      onChange={(val) => {
-                        if (typeof val === "number" && !isNaN(val)) {
-                          handleGuardedChange(`sec_${m.id}`, () => {
-                            const newTotal = Math.max(5, mMin * 60 + val);
+                      value={modeSeconds}
+                      onChange={(secondValue) => {
+                        if (
+                          typeof secondValue === "number" &&
+                          !isNaN(secondValue)
+                        ) {
+                          handleGuardedChange(`sec_${timerMode.id}`, () => {
+                            const newTotal = Math.max(
+                              5,
+                              modeMinutes * 60 + secondValue,
+                            );
 
-                            setCustomDurations({ [m.id]: newTotal });
+                            setCustomDurations({ [timerMode.id]: newTotal });
                           });
                         }
                       }}

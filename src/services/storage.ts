@@ -21,12 +21,16 @@ const DB_GETTERS: Record<string, () => any> = {
 };
 
 const DB_SETTERS: Record<string, (val: any) => void> = {
-  [STORAGE_KEYS.SESSIONS_HISTORY]: (v) =>
-    Array.isArray(v) && db.sessions.saveAll(v),
-  [STORAGE_KEYS.TODOS]: (v) => Array.isArray(v) && db.todos.saveAll(v),
-  [STORAGE_KEYS.THEME_CONFIG]: (v) => typeof v === "object" && db.theme.save(v),
-  [STORAGE_KEYS.TIMER_STATE]: (v) => typeof v === "object" && db.timer.save(v),
-  [STORAGE_KEYS.SETTINGS]: (v) => typeof v === "object" && db.settings.save(v),
+  [STORAGE_KEYS.SESSIONS_HISTORY]: (value) =>
+    Array.isArray(value) && db.sessions.saveAll(value),
+  [STORAGE_KEYS.TODOS]: (value) =>
+    Array.isArray(value) && db.todos.saveAll(value),
+  [STORAGE_KEYS.THEME_CONFIG]: (value) =>
+    typeof value === "object" && db.theme.save(value),
+  [STORAGE_KEYS.TIMER_STATE]: (value) =>
+    typeof value === "object" && db.timer.save(value),
+  [STORAGE_KEYS.SETTINGS]: (value) =>
+    typeof value === "object" && db.settings.save(value),
 };
 
 const DB_CLEARERS: Record<string, () => void> = {
