@@ -17,7 +17,7 @@ function SidebarWidget({
 }) {
   return (
     <div
-      className={`grid w-full transition-[grid-template-rows,opacity,transform] duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+      className={`grid w-full transition-all duration-300 ease-out ${
         show
           ? "grid-rows-[1fr] opacity-100 translate-x-0"
           : "grid-rows-[0fr] opacity-0 translate-x-4 pointer-events-none"

@@ -6,8 +6,6 @@ import {
   Tooltip,
   Button,
 } from "@heroui/react";
-import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
 import {
   Check,
   CheckCircle2,
@@ -386,33 +384,9 @@ export function SidebarTodoWidget({
 
   const ActiveTagIcon = selectedTag ? getTagIcon(selectedTag) : TagIcon;
   const activeTagMeta = selectedTag ? getTagInfo(selectedTag) : null;
-  const widgetRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(
-    () => {
-      if (!widgetRef.current) return;
-      const header = widgetRef.current.querySelector(".sidebar-todo-header");
-      const items = widgetRef.current.querySelectorAll(".sidebar-todo-item");
-
-      gsap.fromTo(
-        [header, ...items].filter(Boolean),
-        { opacity: 0, x: -14, scale: 0.98 },
-        {
-          opacity: 1,
-          x: 0,
-          scale: 1,
-          duration: 0.4,
-          stagger: 0.04,
-          ease: "power3.out",
-        },
-      );
-    },
-    { dependencies: [displayedTodos.length], scope: widgetRef },
-  );
 
   return (
     <div
-      ref={widgetRef}
       className={`flex flex-col gap-1.5 sm:gap-2 w-full h-full flex-1 min-h-0 ${
         align === "center" ? "max-w-xs items-center" : "max-w-full items-start"
       } pointer-events-auto`}
