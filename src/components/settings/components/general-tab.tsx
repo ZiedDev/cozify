@@ -37,7 +37,7 @@ export function GeneralTab() {
       <Card>
         <Card.Content className="space-y-5">
           {/* Music Volume Control */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <Card.Header>
               <Card.Title className="flex items-center gap-2">
                 <Music className="text-accent size-4" />
@@ -59,7 +59,7 @@ export function GeneralTab() {
               </Button>
               <Slider
                 aria-label="Music volume"
-                className="w-full sm:w-32"
+                className="w-full md:w-32"
                 maxValue={100}
                 minValue={0}
                 value={musicVolume}
@@ -83,7 +83,7 @@ export function GeneralTab() {
           <Separator />
 
           {/* Sound Effects Volume Control */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <Card.Header>
               <Card.Title className="flex items-center gap-2">
                 <Bell className="text-accent size-4" />
@@ -105,7 +105,7 @@ export function GeneralTab() {
               </Button>
               <Slider
                 aria-label="Sound effects volume"
-                className="w-full sm:w-32"
+                className="w-full md:w-32"
                 maxValue={100}
                 minValue={0}
                 value={soundVolume}

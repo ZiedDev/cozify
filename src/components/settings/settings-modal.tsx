@@ -76,28 +76,28 @@ export function SettingsModal({
                       className="sm:flex-col space-y-5"
                     >
                       <Tabs.Tab
-                        className="sm:justify-start gap-2 transition-colors"
+                        className="p-6 sm:justify-start gap-2"
                         id="general"
                       >
-                        <Sliders className="size-4 shrink-0 transition-colors" />
+                        <Sliders className="size-4 shrink-0" />
                         <Typography type="body">General</Typography>
                         <Tabs.Indicator className="bg-accent" />
                       </Tabs.Tab>
 
                       <Tabs.Tab
-                        className="sm:justify-start gap-2 transition-colors"
+                        className="p-6 sm:justify-start gap-2"
                         id="data"
                       >
-                        <Database className="size-4 shrink-0 transition-colors" />
-                        <Typography type="body">Data & Storage</Typography>
+                        <Database className="size-4 shrink-0" />
+                        <Typography type="body">Data</Typography>
                         <Tabs.Indicator className="bg-accent" />
                       </Tabs.Tab>
 
                       <Tabs.Tab
-                        className="sm:justify-start gap-2 transition-colors"
+                        className="p-6 sm:justify-start gap-2"
                         id="about"
                       >
-                        <Info className="size-4 transition-colors" />
+                        <Info className="size-4" />
                         <Typography type="body">About</Typography>
                         <Tabs.Indicator className="bg-accent" />
                       </Tabs.Tab>

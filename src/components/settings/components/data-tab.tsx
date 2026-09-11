@@ -220,7 +220,7 @@ export function DataTab({
           </Card.Header>
           <Card.Footer>
             <Button
-              className="max-sm:w-full"
+              className="max-md:w-full"
               size="sm"
               variant="secondary"
               onPress={onOpenSessionsLog}
@@ -248,7 +248,7 @@ export function DataTab({
 
           <Card.Footer>
             <Button
-              className="max-sm:w-full"
+              className="max-md:w-full"
               size="sm"
               variant="secondary"
               onPress={onOpenTasksLog}
@@ -273,7 +273,7 @@ export function DataTab({
           </Card.Description>
         </Card.Header>
 
-        <Card.Footer className="flex gap-2">
+        <Card.Footer className="w-full flex flex-wrap gap-2">
           <Button
             className="flex-1"
             size="sm"
