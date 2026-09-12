@@ -1,6 +1,8 @@
 import { ThemeConfig } from "@/config/themes";
 import { TodoItem } from "@/menus/todo/types";
 
+export type AppSettings = Record<string, any>;
+
 export type SessionRecord = {
   id: string;
   createdAt: number;
@@ -17,16 +19,46 @@ export type SessionRecord = {
   updatedAt?: number;
 };
 
-export type AppSettings = {
-  todo?: {
-    mode?: "minimal" | "detailed";
-  };
-  [key: string]: unknown;
+export type DailyRollupRecord = {
+  date: string; // YYYY-MM-DD
+  focusMinutes: number;
+  overtimeMinutes: number;
+  sessionCount: number;
+  cyclesCompleted: number;
+  targetCycles: number;
+  longestSessionMinutes: number;
+  hourlyMinutes: Record<string, number>; // "00"-"23" -> minutes
+  tagMinutes: Record<string, number>; // tagId -> minutes
+  tagOvertimeMinutes: Record<string, number>;
+  tasksCompletedCount: number;
+  taskTagsCompleted: Record<string, number>;
+  taskPriorityCompleted: Record<string, number>;
+  updatedAt: number;
+};
+
+export type AllTimeStatsRecord = {
+  totalFocusMinutes: number;
+  totalOvertimeMinutes: number;
+  totalSessions: number;
+  totalCycles: number;
+  targetCyclesTotal: number;
+  longestSessionMinutes: number;
+  currentStreakDays: number;
+  bestStreakDays: number;
+  lastActiveDate: string; // YYYY-MM-DD
+  totalActiveDays: number;
+  tasksTotal: number;
+  tasksCompleted: number;
+  tagMinutes: Record<string, number>;
+  hourlyMinutes: Record<string, number>;
+  updatedAt: number;
 };
 
 export type DBStoreMap = {
   sessions: SessionRecord;
   todos: TodoItem;
+  dailyRollups: DailyRollupRecord;
+  statsSummary: AllTimeStatsRecord & { key: string };
   theme: Partial<ThemeConfig> & { key: string };
   timer: Record<string, unknown> & { key: string };
   settings: AppSettings & { key: string };

@@ -29,7 +29,7 @@ export const PRESET_TAGS: readonly TagDefinition[] = [
     label: "Work",
     iconName: "briefcase-business",
     color: "text-blue-400 bg-blue-500/10 border-blue-500/30",
-    dotColor: "bg-blue-400",
+    dotColor: "text-blue-400",
     bgClass: "bg-blue-500/10",
     borderClass: "border-blue-500/30",
     textClass: "text-blue-400",
@@ -40,7 +40,7 @@ export const PRESET_TAGS: readonly TagDefinition[] = [
     label: "Study",
     iconName: "graduation-cap",
     color: "text-purple-400 bg-purple-500/10 border-purple-500/30",
-    dotColor: "bg-purple-400",
+    dotColor: "text-purple-400",
     bgClass: "bg-purple-500/10",
     borderClass: "border-purple-500/30",
     textClass: "text-purple-400",
@@ -51,7 +51,7 @@ export const PRESET_TAGS: readonly TagDefinition[] = [
     label: "Personal",
     iconName: "user",
     color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-    dotColor: "bg-emerald-400",
+    dotColor: "text-emerald-400",
     bgClass: "bg-emerald-500/10",
     borderClass: "border-emerald-500/30",
     textClass: "text-emerald-400",
@@ -62,7 +62,7 @@ export const PRESET_TAGS: readonly TagDefinition[] = [
     label: "Creative",
     iconName: "brush",
     color: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-    dotColor: "bg-amber-400",
+    dotColor: "text-amber-400",
     bgClass: "bg-amber-500/10",
     borderClass: "border-amber-500/30",
     textClass: "text-amber-400",
@@ -107,9 +107,12 @@ export const PRIORITY_THEMES: Record<
 };
 
 // Uniform color scheme for all custom or dynamic tags
-export const CUSTOM_TAG_PALETTE: Omit<TagDefinition, "id" | "label" | "iconName"> = {
+export const CUSTOM_TAG_PALETTE: Omit<
+  TagDefinition,
+  "id" | "label" | "iconName"
+> = {
   color: "text-accent bg-accent/10 border-accent/30",
-  dotColor: "bg-accent",
+  dotColor: "text-accent",
   bgClass: "bg-accent/10",
   borderClass: "border-accent/30",
   textClass: "text-accent",

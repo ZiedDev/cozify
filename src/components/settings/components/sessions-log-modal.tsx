@@ -28,7 +28,8 @@ import {
   STORAGE_KEYS,
   SessionRecord,
 } from "@/services/storage";
-import { PRESET_TAGS } from "@/menus/todo/types";
+import { StatsRollupEngine } from "@/services/stats-rollup-engine";
+import { PRESET_TAGS, TodoItem } from "@/menus/todo/types";
 import { getTagIcon } from "@/config/tags";
 import { formatMinutesDisplay } from "@/menus/stats/logic/stats-calculator";
 
@@ -78,9 +79,11 @@ export function SessionsLogModal({
 
   const handleDeleteSession = (sessionId: string) => {
     const next = sessions.filter((session) => session.id !== sessionId);
+    const todos = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
 
     setSessions(next);
     storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
+    StatsRollupEngine.rebuildAll(next, todos);
     setConfirmDeleteId(null);
     if (editingSessionId === sessionId) setEditingSessionId(null);
     window.dispatchEvent(new Event("storage"));
@@ -120,8 +123,11 @@ export function SessionsLogModal({
       };
     });
 
+    const todos = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
+
     setSessions(next);
     storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
+    StatsRollupEngine.rebuildAll(next, todos);
     setEditingSessionId(null);
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));

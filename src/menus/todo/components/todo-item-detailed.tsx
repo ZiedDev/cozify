@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, DragEvent, memo } from "react";
-import { Button, Tooltip, Typography, TextArea } from "@heroui/react";
+import { Button, Tooltip, Typography, TextArea, Chip, cn } from "@heroui/react";
 import gsap from "gsap";
 import {
   Archive,
@@ -252,20 +252,25 @@ function TodoItemDetailedComponent({
         </div>
       </div>
 
-      {/* 2. New Dedicated Line: Tag & Priority Badge + Due Date Badge */}
+      {/* 2. Dedicated Line: Tag & Priority Chip + Due Date Chip */}
       <div className="flex items-center gap-2 flex-wrap pl-7 pt-0.5">
-        {/* Integrated Tag & Priority Badge on New Line */}
+        {/* Integrated Tag & Priority Chip on New Line */}
         {(integratedMeta.hasTag || integratedMeta.hasPriority) && (
           <Tooltip delay={200}>
             <Tooltip.Trigger>
-              <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border shrink-0 transition-colors cursor-default ${integratedMeta.badgeClass}`}
+              <Chip
+                className={cn(
+                  "gap-1.5 h-6 px-2 text-xs font-medium cursor-default shrink-0",
+                  integratedMeta.hasPriority ? "bg-accent-soft" : "text-muted",
+                )}
+                size="sm"
+                variant="secondary"
               >
                 <integratedMeta.Icon
-                  className={`size-4 shrink-0 ${integratedMeta.iconColor}`}
+                  className={cn("size-3.5 shrink-0", integratedMeta.iconColor)}
                 />
-                <span>{integratedMeta.label}</span>
-              </span>
+                <Chip.Label>{integratedMeta.tooltipText}</Chip.Label>
+              </Chip>
             </Tooltip.Trigger>
             <Tooltip.Content className="text-xs px-2.5 py-1.5 rounded-xl bg-surface text-foreground border border-separator shadow-lg">
               {integratedMeta.tooltipText}
@@ -273,30 +278,33 @@ function TodoItemDetailedComponent({
           </Tooltip>
         )}
 
-        {/* Due Date Badge on the same metadata line */}
+        {/* Due Date Chip on the same metadata line */}
         {todo.dueDate && (
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${
+          <Chip
+            className={cn(
+              "gap-1.5 h-6 px-2 text-xs font-medium cursor-default shrink-0",
               isOverdue
-                ? "bg-danger/10 text-danger border-danger/30"
+                ? "bg-danger-soft text-danger font-semibold"
                 : isDueToday
-                  ? "bg-accent/15 text-accent border-accent/40 font-semibold"
-                  : "bg-surface-secondary/50 text-muted/90 border-separator/30"
-            }`}
+                  ? "bg-accent-soft text-accent font-semibold"
+                  : "text-muted",
+            )}
+            size="sm"
+            variant="secondary"
           >
             {isOverdue ? (
               <AlertCircle className="size-3.5 text-danger shrink-0" />
             ) : (
               <Calendar className="size-3.5 opacity-70 shrink-0" />
             )}
-            <span>
+            <Chip.Label>
               {isDueToday
                 ? "Today"
                 : isOverdue
                   ? `Overdue (${todo.dueDate})`
                   : todo.dueDate}
-            </span>
-          </span>
+            </Chip.Label>
+          </Chip>
         )}
       </div>
 

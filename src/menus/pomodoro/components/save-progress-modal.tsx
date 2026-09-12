@@ -12,6 +12,7 @@ import {
   toast,
   Popover,
   ScrollShadow,
+  cn,
 } from "@heroui/react";
 import { Time } from "@internationalized/date";
 import {
@@ -36,6 +37,7 @@ import {
   STORAGE_KEYS,
   SessionRecord,
 } from "@/services/storage";
+import { StatsRollupEngine } from "@/services/stats-rollup-engine";
 
 export function SaveProgressModal({
   isOpen,
@@ -113,7 +115,9 @@ export function SaveProgressModal({
       history?.forEach((session) => {
         if (
           session.tag &&
-          !PRESET_TAGS.some((presetTag) => presetTag.id === session.tag?.toLowerCase())
+          !PRESET_TAGS.some(
+            (presetTag) => presetTag.id === session.tag?.toLowerCase(),
+          )
         ) {
           customSet.add(session.tag.toLowerCase());
         }
@@ -163,7 +167,8 @@ export function SaveProgressModal({
     if (!query) return false;
 
     return !filteredTags.some(
-      (tagItem) => tagItem.id === query || tagItem.label.toLowerCase() === query,
+      (tagItem) =>
+        tagItem.id === query || tagItem.label.toLowerCase() === query,
     );
   }, [customTagInput, filteredTags]);
 
@@ -221,6 +226,8 @@ export function SaveProgressModal({
       ...existingHistory,
     ]);
 
+    StatsRollupEngine.recordSession(record);
+
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
 
@@ -263,7 +270,10 @@ export function SaveProgressModal({
             {/* Session Goal / Title */}
             <TextField fullWidth name="title" value={title} onChange={setTitle}>
               <Label>Session Goal / Title</Label>
-              <InputGroup fullWidth>
+              <InputGroup
+                fullWidth
+                className="border-transparent bg-surface-secondary hover:bg-surface-tertiary"
+              >
                 <InputGroup.Prefix>
                   <Bookmark className="size-4 text-muted" />
                 </InputGroup.Prefix>
@@ -283,14 +293,17 @@ export function SaveProgressModal({
               >
                 <Popover.Trigger>
                   <button
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer text-left ${
+                    className={cn(
+                      "w-full flex items-center justify-between px-3 py-2 rounded-xl cursor-pointer transition-colors",
                       tag
-                        ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
-                        : "bg-surface-secondary/40 text-muted border-separator/40 hover:bg-surface-secondary/70 hover:text-foreground"
-                    }`}
-                    type="button"
+                        ? "bg-accent-soft text-accent font-semibold"
+                        : "bg-surface-secondary text-muted hover:bg-surface-tertiary",
+                    )}
                   >
                     <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className={`size-2 rounded-full shrink-0 ${activeTagMeta?.dotColor || (tag ? "bg-accent" : "bg-muted/40")}`}
+                      />
                       <ActiveTagIcon className="size-3.5 shrink-0 opacity-80" />
                       <span className="truncate">
                         {tag
@@ -302,7 +315,7 @@ export function SaveProgressModal({
                       {tag && (
                         <span
                           aria-label="Clear tag"
-                          className="p-0.5 rounded hover:bg-black/20 text-muted hover:text-foreground transition-colors cursor-pointer"
+                          className="p-0.5 rounded-md hover:bg-foreground/10 text-muted hover:text-foreground transition-colors cursor-pointer"
                           role="button"
                           tabIndex={0}
                           onClick={(event) => {
@@ -324,15 +337,17 @@ export function SaveProgressModal({
                   </button>
                 </Popover.Trigger>
                 <Popover.Content placement="bottom start">
-                  <Popover.Dialog className="p-2 rounded-2xl bg-surface border border-separator shadow-xl flex flex-col gap-2 w-72 max-w-[90vw] z-50">
+                  <Popover.Dialog className="p-2 rounded-2xl bg-surface/98 backdrop-blur-xl border border-separator/50 shadow-xl flex flex-col gap-2 w-72 max-w-[90vw] z-50">
                     {/* Custom Tag Input & Search */}
-                    <div className="flex items-center gap-1.5 p-1 bg-surface-secondary/60 rounded-xl border border-separator/40 focus-within:border-accent transition-colors">
-                      <Tag className="size-3.5 text-muted ml-1.5 shrink-0" />
+                    <div className="flex items-center gap-2 px-2.5 py-1.5 bg-surface-secondary/40 rounded-xl border border-separator/30 focus-within:border-accent focus-within:bg-surface-secondary/70 transition-colors">
+                      <Tag className="size-3.5 text-muted shrink-0" />
                       <input
-                        className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted/60 focus:outline-none px-1 py-0.5 font-sans"
-                        placeholder="Search or custom tag..."
+                        className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted/60 focus:outline-none font-sans"
+                        placeholder="Search or create custom tag..."
                         value={customTagInput}
-                        onChange={(event) => setCustomTagInput(event.target.value)}
+                        onChange={(event) =>
+                          setCustomTagInput(event.target.value)
+                        }
                         onKeyDown={(event) => {
                           if (event.key === "Enter") {
                             event.preventDefault();
@@ -346,7 +361,7 @@ export function SaveProgressModal({
                       />
                       {showCreateOption && (
                         <Button
-                          className="h-6 px-2 text-[11px] rounded-lg bg-accent text-accent-foreground cursor-pointer shrink-0 font-medium"
+                          className="h-6 px-2.5 text-[11px] rounded-lg bg-accent text-accent-foreground cursor-pointer shrink-0 font-medium shadow-2xs hover:bg-accent/90 transition-colors"
                           size="sm"
                           variant="secondary"
                           onPress={handleCreateCustomTag}
@@ -359,14 +374,14 @@ export function SaveProgressModal({
 
                     {/* Scrollable list */}
                     <ScrollShadow
-                      className="max-h-52 overflow-y-auto flex flex-col gap-0.5 no-scrollbar pr-0.5"
+                      className="max-h-52 overflow-y-auto flex flex-col gap-1 no-scrollbar pr-0.5"
                       orientation="vertical"
                       size={20}
                     >
                       {/* Create Custom Tag Row */}
                       {showCreateOption && (
                         <button
-                          className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors bg-accent/10 hover:bg-accent/20 text-accent border border-accent/20 mb-1"
+                          className="flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors bg-accent/15 hover:bg-accent/25 text-accent border border-accent/30 mb-1 shadow-2xs"
                           type="button"
                           onClick={handleCreateCustomTag}
                         >
@@ -377,7 +392,7 @@ export function SaveProgressModal({
                               {customTagInput.trim().replace(/^#/, "")}&quot;
                             </span>
                           </div>
-                          <span className="text-[10px] uppercase font-semibold text-accent/70 shrink-0">
+                          <span className="text-[10px] uppercase font-semibold text-accent/80 shrink-0">
                             Custom
                           </span>
                         </button>
@@ -385,16 +400,19 @@ export function SaveProgressModal({
 
                       {/* No Tag Option */}
                       <button
-                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors ${
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors border ${
                           !tag
-                            ? "bg-accent/15 text-accent font-semibold"
-                            : "hover:bg-surface-secondary/60 text-foreground"
+                            ? "bg-accent/20 border-accent text-accent font-semibold shadow-xs"
+                            : "border-transparent bg-surface-secondary/40 text-muted hover:text-foreground hover:bg-surface-secondary/70"
                         }`}
                         type="button"
                         onClick={() => handleSelectTag(undefined)}
                       >
-                        <Tag className="size-3.5 opacity-60 text-muted shrink-0" />
-                        <span>No Tag (None)</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="size-2 rounded-full bg-muted/40 shrink-0" />
+                          <Tag className="size-3.5 opacity-60 text-muted shrink-0" />
+                          <span>No Tag (None)</span>
+                        </div>
                       </button>
 
                       {filteredTags.map((item) => {
@@ -405,15 +423,18 @@ export function SaveProgressModal({
                         return (
                           <button
                             key={item.id}
-                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors ${
+                            className={`flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-medium text-left cursor-pointer transition-colors border ${
                               isSelected
-                                ? "bg-accent/15 text-accent font-semibold"
-                                : "hover:bg-surface-secondary/60 text-foreground"
+                                ? "bg-accent/20 border-accent text-accent font-semibold shadow-xs"
+                                : "border-transparent bg-surface-secondary/40 text-muted hover:text-foreground hover:bg-surface-secondary/70"
                             }`}
                             type="button"
                             onClick={() => handleSelectTag(item.id)}
                           >
                             <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`size-2 rounded-full ${item.dotColor} shrink-0`}
+                              />
                               <ItemIcon className="size-3.5 opacity-80 shrink-0" />
                               <span className="truncate">{item.label}</span>
                             </div>
@@ -423,9 +444,6 @@ export function SaveProgressModal({
                                   #{item.id}
                                 </span>
                               )}
-                              <span
-                                className={`size-2 rounded-full ${item.dotColor}`}
-                              />
                             </div>
                           </button>
                         );
@@ -452,9 +470,9 @@ export function SaveProgressModal({
               onChange={setTimeValue}
             >
               <Label>Focus Time</Label>
-              <TimeField.Group>
+              <TimeField.Group className="border-transparent bg-surface-secondary hover:bg-surface-tertiary">
                 <TimeField.Prefix>
-                  <Clock className="size-4 text-muted" />
+                  <Clock className="size-4 text-blue-400" />
                 </TimeField.Prefix>
                 <TimeField.Input>
                   {(segment) => <TimeField.Segment segment={segment} />}
@@ -474,7 +492,7 @@ export function SaveProgressModal({
               <Label className="flex items-center gap-1.5">
                 <span>Overtime Duration</span>
               </Label>
-              <TimeField.Group>
+              <TimeField.Group className="border-transparent bg-surface-secondary hover:bg-surface-tertiary">
                 <TimeField.Prefix>
                   <Zap className="size-4 text-amber-400" />
                 </TimeField.Prefix>
@@ -487,7 +505,10 @@ export function SaveProgressModal({
             {/* Session Notes with InputGroup.TextArea */}
             <TextField fullWidth name="notes" value={notes} onChange={setNotes}>
               <Label>Session Notes (Optional)</Label>
-              <InputGroup fullWidth>
+              <InputGroup
+                fullWidth
+                className="border-transparent bg-surface-secondary hover:bg-surface-tertiary"
+              >
                 <InputGroup.Prefix>
                   <FileText className="size-4 text-muted" />
                 </InputGroup.Prefix>

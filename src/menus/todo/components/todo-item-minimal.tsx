@@ -1,5 +1,5 @@
 import { DragEvent, useState, useRef, memo } from "react";
-import { Button, Tooltip } from "@heroui/react";
+import { Button, Tooltip, Chip, cn } from "@heroui/react";
 import gsap from "gsap";
 import {
   Archive,
@@ -144,7 +144,7 @@ function TodoItemMinimalComponent({
         {todo.completed && <Check className="size-2.5 md:size-3 stroke-3" />}
       </button>
 
-      {/* Tag / Priority Icon in place of the old dot */}
+      {/* Tag / Priority Icon */}
       {(integratedMeta.hasTag || integratedMeta.hasPriority) && (
         <Tooltip delay={200}>
           <Tooltip.Trigger>
@@ -188,18 +188,21 @@ function TodoItemMinimalComponent({
 
         {/* Compact Due Date Indicator */}
         {todo.dueDate && (
-          <span
-            className={`hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium border shrink-0 ${
+          <Chip
+            className={cn(
+              "hidden md:inline-flex gap-1 h-5 px-1.5 text-[10px] font-medium shrink-0",
               isOverdue
-                ? "bg-danger/10 text-danger border-danger/30"
+                ? "bg-danger-soft text-danger font-semibold"
                 : isDueToday
-                  ? "bg-accent/15 text-accent border-accent/40 font-semibold"
-                  : "bg-surface-secondary/50 text-muted/80 border-separator/30"
-            }`}
+                  ? "bg-accent-soft text-accent font-semibold"
+                  : "text-muted",
+            )}
+            size="sm"
+            variant="secondary"
           >
             <CalendarIcon className="size-3 opacity-70" />
-            <span>{isDueToday ? "Today" : todo.dueDate}</span>
-          </span>
+            <Chip.Label>{isDueToday ? "Today" : todo.dueDate}</Chip.Label>
+          </Chip>
         )}
       </div>
 

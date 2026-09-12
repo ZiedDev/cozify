@@ -17,6 +17,7 @@ import {
   TodoViewMode,
 } from "@/menus/todo/types";
 import { storageAdapter, STORAGE_KEYS, AppSettings } from "@/services/storage";
+import { StatsRollupEngine } from "@/services/stats-rollup-engine";
 
 type TodoContextType = {
   todos: TodoItem[];
@@ -111,9 +112,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     storageAdapter.setItem("cozify_todo_filter", nextFilter);
   }, []);
 
-  // Sync todos to localStorage
+  // Sync todos to localStorage & update stats rollups
   useEffect(() => {
     storageAdapter.setItem(STORAGE_KEYS.TODOS, todos);
+    StatsRollupEngine.recordTodoChange(todos);
   }, [todos]);
 
   // Sync viewMode to settings in localStorage

@@ -8,16 +8,11 @@ import {
   SessionRecord,
 } from "@/services/storage";
 import { TodoItem } from "@/menus/todo/types";
+import { StatsRollupEngine } from "@/services/stats-rollup-engine";
+import { db } from "@/services/db";
 import {
   filterSessionsByRange,
   filterTodosByRange,
-  calculateOverallStats,
-  calculateDailyChartData,
-  calculateHeatmapData,
-  calculateTimeOfDayStats,
-  calculateTagStats,
-  calculatePriorityStats,
-  calculateMilestones,
   formatMinutesDisplay,
 } from "@/menus/stats/logic/stats-calculator";
 
@@ -54,20 +49,50 @@ export function useStats() {
       [],
     );
 
-    setSessions(Array.isArray(savedSessions) ? savedSessions : []);
-    setTodos(Array.isArray(savedTodos) ? savedTodos : []);
+    const s = Array.isArray(savedSessions) ? savedSessions : [];
+    const t = Array.isArray(savedTodos) ? savedTodos : [];
+
+    setSessions(s);
+    setTodos(t);
+
+    // Self-healing check: if rollups are empty or session count diverges, rebuild immediately
+    const summary = StatsRollupEngine.getAllTimeSummary();
+    if (
+      (db.dailyRollups.getAll().length === 0 && s.length > 0) ||
+      (s.length > 0 && summary.totalSessions !== s.length)
+    ) {
+      StatsRollupEngine.rebuildAll(s, t);
+    }
+
     setRevision((prevRevision) => prevRevision + 1);
   }, []);
 
-  // Listen to window focus & storage updates
+  // Initial migration / rebuild check on mount
+  useEffect(() => {
+    const summary = StatsRollupEngine.getAllTimeSummary();
+    if (
+      (db.dailyRollups.getAll().length === 0 && sessions.length > 0) ||
+      (sessions.length > 0 && summary.totalSessions !== sessions.length)
+    ) {
+      StatsRollupEngine.rebuildAll(sessions, todos);
+    }
+  }, [sessions, todos]);
+
+  // Listen to window focus, storage updates, & stats rollup updates
   useEffect(() => {
     const handleStorageChange = () => {
       reloadFromStorage();
     };
 
+    const handleStatsUpdated = () => {
+      setRevision((prev) => prev + 1);
+    };
+
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("focus", handleStorageChange);
     window.addEventListener("cozify_achievements_changed", handleStorageChange);
+    window.addEventListener("cozify_remote_synced", handleStorageChange);
+    window.addEventListener("cozify_stats_updated", handleStatsUpdated);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -76,10 +101,12 @@ export function useStats() {
         "cozify_achievements_changed",
         handleStorageChange,
       );
+      window.removeEventListener("cozify_remote_synced", handleStorageChange);
+      window.removeEventListener("cozify_stats_updated", handleStatsUpdated);
     };
   }, [reloadFromStorage]);
 
-  // Derived filtered data
+  // Derived filtered data for table / raw logs
   const filteredSessions = useMemo(
     () => filterSessionsByRange(sessions, range, customDateRange),
     [sessions, range, customDateRange],
@@ -90,49 +117,62 @@ export function useStats() {
     [todos, range, customDateRange],
   );
 
+  const activeTodos = useMemo(() => todos.filter((t) => !t.archived), [todos]);
+  const completedTodosCount = useMemo(
+    () => activeTodos.filter((t) => t.completed).length,
+    [activeTodos],
+  );
+
+  // Pre-aggregated O(1) / O(K) stats queries
   const allTimeStats = useMemo(
-    () => calculateOverallStats(sessions, todos),
-    [sessions, todos],
+    () =>
+      StatsRollupEngine.calculateOverallStats(
+        "all",
+        null,
+        activeTodos.length,
+        completedTodosCount,
+      ),
+    [activeTodos.length, completedTodosCount, revision],
   );
 
   const overallStats = useMemo(
-    () => calculateOverallStats(filteredSessions, filteredTodos),
-    [filteredSessions, filteredTodos],
+    () =>
+      StatsRollupEngine.calculateOverallStats(
+        range,
+        customDateRange,
+        activeTodos.length,
+        completedTodosCount,
+      ),
+    [range, customDateRange, activeTodos.length, completedTodosCount, revision],
   );
 
   const dailyChartData = useMemo(
-    () =>
-      calculateDailyChartData(
-        filteredSessions,
-        filteredTodos,
-        range,
-        customDateRange,
-      ),
-    [filteredSessions, filteredTodos, range, customDateRange],
+    () => StatsRollupEngine.calculateDailyChartData(range, customDateRange),
+    [range, customDateRange, revision],
   );
 
   const heatmapData = useMemo(
-    () => calculateHeatmapData(sessions, todos),
-    [sessions, todos],
+    () => StatsRollupEngine.calculateHeatmapData(),
+    [revision],
   );
 
   const timeOfDayStats = useMemo(
-    () => calculateTimeOfDayStats(filteredSessions),
-    [filteredSessions],
+    () => StatsRollupEngine.calculateTimeOfDayStats(range, customDateRange),
+    [range, customDateRange, revision],
   );
 
   const tagStats = useMemo(
-    () => calculateTagStats(filteredSessions, filteredTodos),
-    [filteredSessions, filteredTodos],
+    () => StatsRollupEngine.calculateTagStats(range, customDateRange, todos),
+    [range, customDateRange, todos, revision],
   );
 
   const priorityStats = useMemo(
-    () => calculatePriorityStats(filteredTodos),
-    [filteredTodos],
+    () => StatsRollupEngine.calculatePriorityStats(todos),
+    [todos, revision],
   );
 
   const milestones = useMemo(
-    () => calculateMilestones(sessions, todos, allTimeStats),
+    () => StatsRollupEngine.calculateMilestones(sessions, todos, allTimeStats),
     [sessions, todos, allTimeStats, revision],
   );
 
@@ -143,9 +183,10 @@ export function useStats() {
 
       setSessions(nextSessions);
       storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, nextSessions);
+      StatsRollupEngine.rebuildAll(nextSessions, todos);
       toast("Session deleted");
     },
-    [sessions],
+    [sessions, todos],
   );
 
   const updateSession = useCallback(
@@ -156,16 +197,18 @@ export function useStats() {
 
       setSessions(nextSessions);
       storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, nextSessions);
+      StatsRollupEngine.rebuildAll(nextSessions, todos);
       toast("Session updated");
     },
-    [sessions],
+    [sessions, todos],
   );
 
   const clearAllSessions = useCallback(() => {
     setSessions([]);
     storageAdapter.removeItem(STORAGE_KEYS.SESSIONS_HISTORY);
+    StatsRollupEngine.rebuildAll([], todos);
     toast("All session history cleared");
-  }, []);
+  }, [todos]);
 
   const copySummaryToClipboard = useCallback(() => {
     const summary =

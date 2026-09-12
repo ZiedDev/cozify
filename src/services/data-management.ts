@@ -1,4 +1,6 @@
 import { storageAdapter, STORAGE_KEYS, SessionRecord } from "./storage";
+import { StatsRollupEngine } from "./stats-rollup-engine";
+import { db } from "./db";
 
 import { ThemeConfig } from "@/config/themes";
 
@@ -281,6 +283,17 @@ export function importBackupFromJson(jsonString: string): ImportResult {
       };
     }
 
+    // Rebuild Stats Rollups
+    const finalSessions = storageAdapter.getItem<SessionRecord[]>(
+      STORAGE_KEYS.SESSIONS_HISTORY,
+      [],
+    );
+    const finalTodos = storageAdapter.getItem<any[]>(STORAGE_KEYS.TODOS, []);
+    StatsRollupEngine.rebuildAll(
+      Array.isArray(finalSessions) ? finalSessions : [],
+      Array.isArray(finalTodos) ? finalTodos : [],
+    );
+
     return {
       success: true,
       message: "Data imported successfully!",
@@ -302,11 +315,13 @@ export function importBackupFromJson(jsonString: string): ImportResult {
 }
 
 /**
- * Resets all Cozify data by clearing localStorage entirely
+ * Resets all Cozify data by clearing localStorage and databases entirely
  */
 export function resetAllCozifyData(): void {
   try {
     storageAdapter.clear();
+    db.dailyRollups.clear();
+    db.statsSummary.clear();
   } catch {
     // Storage access issue fallback
   }

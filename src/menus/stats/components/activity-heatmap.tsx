@@ -211,7 +211,7 @@ function ActivityHeatmapComponent({
           >
             {formatMinutesDisplay(visibleStats.focusMinutes)}
             {visibleStats.overtimeMinutes > 0 && (
-              <span className="text-accent text-xs font-medium ml-1.5">
+              <span className="text-accent font-medium ml-1.5">
                 +{formatMinutesDisplay(visibleStats.overtimeMinutes)}
               </span>
             )}{" "}
@@ -338,7 +338,7 @@ function ActivityHeatmapComponent({
                       <button
                         key={day.dateStr}
                         aria-label={`${day.fullDateLabel}: ${day.focusMinutes} focus minutes, ${day.cycleCount} sessions`}
-                        className={`w-full aspect-square rounded-[3px] sm:rounded-sm border transition-all duration-150 relative cursor-pointer ${getContributionColor(
+                        className={`w-full aspect-square rounded-md sm:rounded-sm border transition-all duration-150 relative cursor-pointer ${getContributionColor(
                           day,
                           isSelected,
                         )}`}

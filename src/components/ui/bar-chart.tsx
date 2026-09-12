@@ -5,7 +5,9 @@ import {
   ReactNode,
   isValidElement,
   Children,
+  RefObject,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   ResponsiveContainer,
   BarChart as RechartsBarChart,
@@ -26,6 +28,7 @@ type TooltipRenderFn = (props: {
 interface BarChartContextValue {
   onItemClick?: (item: Record<string, any>, index: number) => void;
   tooltipContent?: TooltipRenderFn | null;
+  containerRef?: RefObject<HTMLDivElement | null>;
 }
 
 const BarChartContext = createContext<BarChartContextValue>({});
@@ -49,6 +52,8 @@ export function BarChartRoot({
   className = "",
   onItemClick,
 }: BarChartProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
   const lastClickRef = useRef<{ key: string; time: number }>({
     key: "",
     time: 0,
@@ -83,10 +88,15 @@ export function BarChartRoot({
 
   return (
     <BarChartContext.Provider
-      value={{ onItemClick: handleItemClick, tooltipContent: customTooltipFn }}
+      value={{
+        onItemClick: handleItemClick,
+        tooltipContent: customTooltipFn,
+        containerRef,
+      }}
     >
       <div
-        className={`w-full relative overflow-visible outline-none focus:outline-none focus-visible:outline-none [&_*]:outline-none [&_svg]:outline-none [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none select-none ${onItemClick ? "cursor-pointer" : ""} ${className}`}
+        ref={containerRef}
+        className={`w-full relative overflow-visible outline-none focus:outline-none focus-visible:outline-none **:outline-none [&_svg]:outline-none [&_.recharts-wrapper]:outline-none [&_.recharts-surface]:outline-none select-none ${onItemClick ? "cursor-pointer" : ""} ${className}`}
         style={{ height }}
         tabIndex={-1}
       >
@@ -287,7 +297,7 @@ export const BarChartCell = RechartsCell;
 
 export function BarChartTooltip({
   content,
-  allowEscapeViewBox = { x: true, y: true },
+  allowEscapeViewBox = true,
   offset = 8,
   ...props
 }: {
@@ -296,24 +306,59 @@ export function BarChartTooltip({
   offset?: number;
   [key: string]: any;
 }) {
+  const { containerRef } = useContext(BarChartContext);
+
   return (
     <RechartsTooltip
       allowEscapeViewBox={allowEscapeViewBox as any}
-      content={({ active: isTooltipActive, payload }: any) => {
-        if (!isTooltipActive || !payload?.length) return null;
+      content={({ active: isTooltipActive, payload, coordinate }: any) => {
+        if (
+          !isTooltipActive ||
+          !payload?.length ||
+          typeof document === "undefined"
+        )
+          return null;
         const raw = payload[0].payload;
         const item = raw?.payload ?? raw;
 
-        return (
-          <div className="hidden sm:block z-50 pointer-events-none">
+        const rect = containerRef?.current?.getBoundingClientRect();
+        const posX = (rect ? rect.left : 0) + (coordinate?.x ?? 0);
+        const posY = (rect ? rect.top : 0) + (coordinate?.y ?? 0);
+
+        const safeX = Math.max(
+          90,
+          Math.min(
+            typeof window !== "undefined" ? window.innerWidth - 90 : 9999,
+            posX,
+          ),
+        );
+        const isNearTop = posY < 130;
+        const safeY = isNearTop ? posY + 20 : posY;
+
+        return createPortal(
+          <div
+            className={`fixed z-9999 pointer-events-none hidden sm:block -translate-x-1/2 animate-in fade-in zoom-in-95 duration-100 ${
+              isNearTop ? "translate-y-2 mt-1" : "-translate-y-full -mt-2.5"
+            }`}
+            style={{
+              left: safeX,
+              top: safeY,
+            }}
+          >
             {content({ item, index: 0 })}
-          </div>
+          </div>,
+          document.body,
         );
       }}
       cursor={{ fill: "var(--separator)", opacity: 0.12 }}
       isAnimationActive={false}
       offset={offset}
-      wrapperStyle={{ pointerEvents: "none", zIndex: 50, outline: "none" }}
+      wrapperStyle={{
+        pointerEvents: "none",
+        zIndex: 9999,
+        outline: "none",
+        visibility: "hidden",
+      }}
       {...props}
     />
   );

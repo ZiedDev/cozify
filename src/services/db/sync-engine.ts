@@ -99,6 +99,11 @@ class RemoteSyncEngine {
           cacheManager.setMemoryStore("todos", remoteData.todos, true);
         }
         this.lastSyncedAt = remoteData.timestamp || Date.now();
+
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("cozify_remote_synced"));
+          window.dispatchEvent(new Event("storage"));
+        }
       }
 
       return true;

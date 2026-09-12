@@ -2,10 +2,7 @@ import { useEffect } from "react";
 
 import { useSound } from "@/context/sound-context";
 import { showAchievementToast } from "@/components/stats";
-import {
-  calculateMilestones,
-  calculateOverallStats,
-} from "@/menus/stats/logic/stats-calculator";
+import { StatsRollupEngine } from "@/services/stats-rollup-engine";
 import { TodoItem } from "@/menus/todo/types";
 import {
   SessionRecord,
@@ -39,8 +36,7 @@ export function useAchievementTracker() {
         [],
       );
       const todos = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
-      const overall = calculateOverallStats(sessions, todos);
-      const currentMilestones = calculateMilestones(sessions, todos, overall);
+      const currentMilestones = StatsRollupEngine.calculateMilestones(sessions, todos);
 
       const knownRaw = localStorage.getItem(KNOWN_UNLOCKED_KEY);
       let knownSet: Set<string>;

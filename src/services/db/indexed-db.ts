@@ -12,11 +12,13 @@ import { TodoItem } from "@/menus/todo/types";
 import { ThemeConfig } from "@/config/themes";
 
 export const DB_NAME = "cozify_idb";
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export class CozifyDexieDB extends Dexie {
   sessions!: EntityTable<SessionRecord, "id">;
   todos!: EntityTable<TodoItem, "id">;
+  dailyRollups!: EntityTable<DBStoreMap["dailyRollups"], "date">;
+  statsSummary!: EntityTable<DBStoreMap["statsSummary"], "key">;
   theme!: EntityTable<Partial<ThemeConfig> & { key: string }, "key">;
   timer!: EntityTable<Record<string, unknown> & { key: string }, "key">;
   settings!: EntityTable<AppSettings & { key: string }, "key">;
@@ -39,6 +41,19 @@ export class CozifyDexieDB extends Dexie {
       sessions: "id, createdAt, tag, focusMinutes, [tag+createdAt]",
       todos:
         "id, createdAt, completed, tag, dueDate, priority, archived, [completed+dueDate], [completed+priority]",
+      theme: "key",
+      timer: "key",
+      settings: "key",
+      syncQueue: "id, timestamp, store, action",
+    });
+
+    // Version 3: Incremental rollups and pre-computed stats summaries
+    this.version(3).stores({
+      sessions: "id, createdAt, tag, focusMinutes, [tag+createdAt]",
+      todos:
+        "id, createdAt, completed, tag, dueDate, priority, archived, [completed+dueDate], [completed+priority]",
+      dailyRollups: "date, updatedAt",
+      statsSummary: "key",
       theme: "key",
       timer: "key",
       settings: "key",

@@ -4,11 +4,23 @@ import { idb } from "./indexed-db";
 const STORES: StoreName[] = [
   "sessions",
   "todos",
+  "dailyRollups",
+  "statsSummary",
   "theme",
   "timer",
   "settings",
   "syncQueue",
 ];
+
+function getItemKey<K extends StoreName>(storeName: K, item: any): string {
+  if (!item) return "default";
+  if (storeName === "dailyRollups") return item.date || "default";
+  if (storeName === "statsSummary") return "summary";
+  if (storeName === "theme" || storeName === "timer" || storeName === "settings") {
+    return item.key || "current";
+  }
+  return item.id || item.date || item.key || "default";
+}
 
 class DatabaseCacheManager {
   private cache = new Map<StoreName, Map<string, unknown>>();
@@ -72,11 +84,7 @@ class DatabaseCacheManager {
       if (records && records.length > 0) {
         storeMap.clear();
         for (const item of records) {
-          const key =
-            (item as { id?: string; key?: string }).id ||
-            (item as { key?: string }).key ||
-            "default";
-
+          const key = getItemKey(storeName, item);
           storeMap.set(key, item);
         }
       } else {
@@ -99,6 +107,8 @@ class DatabaseCacheManager {
     const legacyKeyMap: Record<StoreName, string> = {
       sessions: "history",
       todos: "todos",
+      dailyRollups: "cozify_daily_rollups",
+      statsSummary: "cozify_stats_summary",
       theme: "theme",
       timer: "timer",
       settings: "settings",
@@ -120,15 +130,15 @@ class DatabaseCacheManager {
       if (Array.isArray(parsed)) {
         storeMap.clear();
         for (const item of parsed) {
-          const key = item.id || `item_${Date.now()}_${Math.random()}`;
-
+          const key = getItemKey(storeName, item);
           storeMap.set(key, item);
         }
         idb.putBatch(storeName, parsed);
       } else if (parsed && typeof parsed === "object") {
-        const itemWithKey = { ...parsed, key: "current" };
+        const key = getItemKey(storeName, parsed);
+        const itemWithKey = { ...parsed, key };
 
-        storeMap.set("current", itemWithKey as DBStoreMap[K]);
+        storeMap.set(key, itemWithKey as DBStoreMap[K]);
         idb.put(storeName, itemWithKey as DBStoreMap[K]);
       }
     } catch {
@@ -202,11 +212,7 @@ class DatabaseCacheManager {
     storeMap.clear();
 
     for (const item of items) {
-      const key =
-        (item as { id?: string; key?: string }).id ||
-        (item as { key?: string }).key ||
-        "default";
-
+      const key = getItemKey(storeName, item);
       storeMap.set(key, item);
     }
 
@@ -341,6 +347,8 @@ class DatabaseCacheManager {
     const legacyKeyMap: Record<StoreName, string> = {
       sessions: "history",
       todos: "todos",
+      dailyRollups: "cozify_daily_rollups",
+      statsSummary: "cozify_stats_summary",
       theme: "theme",
       timer: "timer",
       settings: "settings",
@@ -355,7 +363,8 @@ class DatabaseCacheManager {
       if (
         storeName === "theme" ||
         storeName === "timer" ||
-        storeName === "settings"
+        storeName === "settings" ||
+        storeName === "statsSummary"
       ) {
         const item = Array.isArray(data) ? data[0] : data;
 

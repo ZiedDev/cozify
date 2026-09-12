@@ -6,6 +6,7 @@ import {
   Popover,
   Button,
   ScrollShadow,
+  cn,
 } from "@heroui/react";
 import {
   LayoutList,
@@ -260,57 +261,73 @@ export function TodoHeader() {
           <Popover>
             <Popover.Trigger>
               <Button
-                className={`h-6.5 md:h-7 px-2.5 md:px-3 rounded-full text-[11px] md:text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                className={cn(
+                  "h-6.5 md:h-7 px-2.5 md:px-3 text-[11px] md:text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer",
                   selectedTag
-                    ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
-                    : "bg-surface/80 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"
-                }`}
+                    ? "bg-accent-soft text-accent font-semibold"
+                    : "text-muted",
+                )}
                 size="sm"
-                variant="ghost"
+                variant="secondary"
               >
-                <ActiveTagIcon className="size-3 shrink-0 opacity-80" />
+                <ActiveTagIcon
+                  className={cn(
+                    "size-3 shrink-0",
+                    selectedTag
+                      ? activeTagMeta?.textClass || "text-accent"
+                      : "text-muted",
+                  )}
+                />
                 <span>{activeTagMeta?.label || selectedTag || "Tags"}</span>
               </Button>
             </Popover.Trigger>
             <Popover.Content>
-              <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">
+              <Popover.Dialog className="flex flex-col gap-1 min-w-40 z-50">
                 <ScrollShadow
                   className="max-h-52 overflow-y-auto flex flex-col gap-1 no-scrollbar pr-0.5"
                   orientation="vertical"
                   size={20}
                 >
-                  <button
-                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                      !selectedTag
-                        ? "bg-accent/15 text-accent font-semibold"
-                        : "hover:bg-surface-secondary/60 text-foreground"
-                    }`}
-                    type="button"
+                  <Button
+                    className={cn(
+                      "w-full justify-start text-muted shrink-0",
+                      !selectedTag &&
+                        "bg-accent-soft text-accent font-semibold",
+                    )}
+                    size="sm"
+                    variant="secondary"
                     onClick={() => setSelectedTag(null)}
                   >
-                    <TagIcon className="size-3.5 opacity-80 shrink-0 text-muted" />
+                    <TagIcon className="size-3.5" />
                     <span>All Tags</span>
-                  </button>
+                  </Button>
                   {tagOptions.map((item) => {
                     const isSelected =
                       selectedTag?.toLowerCase() === item.id.toLowerCase();
+                    const info = getTagInfo(item.id);
 
                     return (
-                      <button
+                      <Button
                         key={item.id}
-                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                          isSelected
-                            ? "bg-accent/15 text-accent font-semibold"
-                            : "hover:bg-surface-secondary/60 text-foreground"
-                        }`}
-                        type="button"
+                        className={cn(
+                          "w-full justify-start text-muted shrink-0",
+                          isSelected &&
+                            "bg-accent-soft text-accent font-semibold",
+                        )}
+                        size="sm"
+                        variant="secondary"
                         onClick={() =>
                           setSelectedTag(isSelected ? null : item.id)
                         }
                       >
-                        <item.icon className="size-3.5 opacity-80 shrink-0" />
+                        <item.icon
+                          className={cn(
+                            "size-3.5 shrink-0",
+                            info?.textClass || "text-accent",
+                          )}
+                        />
                         <span>{item.name}</span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </ScrollShadow>
@@ -322,16 +339,30 @@ export function TodoHeader() {
           <Popover>
             <Popover.Trigger>
               <Button
-                className={`h-6.5 md:h-7 px-2.5 md:px-3 rounded-full text-[11px] md:text-xs font-medium border flex items-center gap-1.5 transition-colors cursor-pointer ${
+                className={cn(
+                  "h-6.5 md:h-7 px-2.5 md:px-3 text-[11px] md:text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer",
                   selectedPriority && selectedPriority !== "all"
-                    ? `${PRIORITY_THEMES[selectedPriority]?.badgeClass || "bg-accent/15 text-accent border-accent/40"} font-semibold shadow-2xs`
-                    : "bg-surface/80 text-muted/80 border-separator/30 hover:border-separator hover:text-foreground"
-                }`}
+                    ? "bg-accent-soft font-semibold"
+                    : "text-muted",
+                )}
                 size="sm"
-                variant="ghost"
+                variant="secondary"
               >
-                <Flag className="size-3 shrink-0 opacity-80" />
-                <span>
+                <Flag
+                  className={cn(
+                    "size-3 shrink-0",
+                    selectedPriority && selectedPriority !== "all"
+                      ? PRIORITY_THEMES[selectedPriority]?.textColor
+                      : "text-muted",
+                  )}
+                />
+                <span
+                  className={cn(
+                    selectedPriority &&
+                      selectedPriority !== "all" &&
+                      PRIORITY_THEMES[selectedPriority]?.textColor,
+                  )}
+                >
                   {!selectedPriority || selectedPriority === "all"
                     ? "Priority"
                     : PRIORITY_THEMES[selectedPriority]?.label || "Priority"}
@@ -339,45 +370,47 @@ export function TodoHeader() {
               </Button>
             </Popover.Trigger>
             <Popover.Content>
-              <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-1 min-w-36 z-50">
+              <Popover.Dialog className="flex flex-col gap-1 min-w-40 z-50">
                 <ScrollShadow
                   className="max-h-52 overflow-y-auto flex flex-col gap-1 no-scrollbar pr-0.5"
                   orientation="vertical"
                   size={20}
                 >
-                  <button
-                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                      !selectedPriority || selectedPriority === "all"
-                        ? "bg-accent/15 text-accent font-semibold"
-                        : "hover:bg-surface-secondary/60 text-foreground"
-                    }`}
-                    type="button"
+                  <Button
+                    className={cn(
+                      "w-full justify-start text-muted shrink-0",
+                      (!selectedPriority || selectedPriority === "all") &&
+                        "bg-accent-soft text-accent font-semibold",
+                    )}
+                    size="sm"
+                    variant="secondary"
                     onClick={() => setSelectedPriority(null)}
                   >
-                    <Flag className="size-3.5 opacity-80 shrink-0 text-muted" />
+                    <Flag className="size-3.5" />
                     <span>All Priorities</span>
-                  </button>
+                  </Button>
                   {priorityOptions.map((item) => {
                     const isSelected = selectedPriority === item.id;
 
                     return (
-                      <button
+                      <Button
                         key={item.id}
-                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
-                          isSelected
-                            ? "bg-accent/15 text-accent font-semibold"
-                            : "hover:bg-surface-secondary/60 text-foreground"
-                        }`}
-                        type="button"
+                        className={cn(
+                          "w-full justify-start text-muted shrink-0",
+                          isSelected && "bg-accent-soft font-semibold",
+                        )}
+                        size="sm"
+                        variant="secondary"
                         onClick={() =>
                           setSelectedPriority(
                             isSelected ? null : (item.id as TodoPriority),
                           )
                         }
                       >
-                        <span className={`size-2 rounded-full ${item.dot}`} />
-                        <span className={item.color}>{item.name}</span>
-                      </button>
+                        <span className={cn(isSelected && item.color)}>
+                          {item.name}
+                        </span>
+                      </Button>
                     );
                   })}
                 </ScrollShadow>

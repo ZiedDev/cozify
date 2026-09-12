@@ -784,6 +784,7 @@ export function calculateFocusTrendChartData(
   }
 
   // C. MONTHLY GROUPING (> 120 days, ~4+ months to years)
+  const spansMultipleYears = startDate.getFullYear() !== endDate.getFullYear();
   let currentMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
   const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
 
@@ -805,6 +806,7 @@ export function calculateFocusTrendChartData(
       23,
       59,
       59,
+      808,
     );
     const monthEnd = new Date(
       Math.min(endDate.getTime(), lastDayOfMonth.getTime()),
@@ -842,7 +844,9 @@ export function calculateFocusTrendChartData(
       totalOvertimeMinutes / daysInBucket,
     );
     const monthIndex = currentMonth.getMonth();
-    const shortLabel = MONTH_NAMES[monthIndex];
+    const shortLabel = spansMultipleYears
+      ? `${MONTH_NAMES[monthIndex]} ${currentMonth.getFullYear()}`
+      : MONTH_NAMES[monthIndex];
     const fullLabel = `${FULL_MONTH_NAMES[monthIndex]} ${currentMonth.getFullYear()}`;
 
     const totalPeriodMinutes = totalFocusMinutes + totalOvertimeMinutes;

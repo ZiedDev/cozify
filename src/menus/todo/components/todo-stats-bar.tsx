@@ -54,28 +54,22 @@ export function TodoStatsBar() {
         onOpenChange={(open) => !open && setIsConfirmOpen(false)}
       >
         <Modal.Container>
-          <Modal.Dialog className="sm:max-w-96 rounded-2xl bg-surface border border-separator shadow-2xl p-4 sm:p-5">
-            <Modal.CloseTrigger />
-            <Modal.Header className="flex items-center gap-2.5 pb-2">
-              <Modal.Icon className="bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-xl p-2 shrink-0">
-                <Archive className="size-4" />
+          <Modal.Dialog className="sm:max-w-96 space-y-5">
+            <Modal.Header className="flex-row items-center gap-3">
+              <Modal.Icon>
+                <Archive className="text-accent" />
               </Modal.Icon>
               <div>
-                <Modal.Heading className="text-sm sm:text-base font-semibold text-foreground">
-                  Archive Completed Tasks?
-                </Modal.Heading>
-                <Typography
-                  className="text-xs font-normal mt-0.5"
-                  color="muted"
-                  type="body-xs"
-                >
+                <Modal.Heading>Archive Completed Tasks?</Modal.Heading>
+                <Typography color="muted" type="body-xs">
                   Move tasks to the archive log
                 </Typography>
               </div>
             </Modal.Header>
+            <Modal.CloseTrigger />
 
-            <Modal.Body className="py-2.5">
-              <Typography className="text-xs text-muted" type="body-xs">
+            <Modal.Body>
+              <Typography color="muted" type="body-xs">
                 Are you sure you want to archive{" "}
                 <strong className="text-foreground font-semibold">
                   {stats.completed}{" "}
@@ -86,18 +80,14 @@ export function TodoStatsBar() {
               </Typography>
             </Modal.Body>
 
-            <Modal.Footer className="flex items-center justify-end gap-2 pt-3 border-t border-separator/30">
+            <Modal.Footer className="flex items-center justify-end gap-2">
               <Button
-                className="h-7.5 px-3 rounded-full text-xs font-medium cursor-pointer"
-                size="sm"
                 variant="secondary"
                 onPress={() => setIsConfirmOpen(false)}
               >
                 Cancel
               </Button>
               <Button
-                className="h-7.5 px-3.5 rounded-full text-xs font-semibold cursor-pointer shadow-2xs flex items-center gap-1.5"
-                size="sm"
                 variant="primary"
                 onPress={() => {
                   clearCompleted();
