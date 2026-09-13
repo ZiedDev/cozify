@@ -17,10 +17,28 @@ export type ThemeConfig = {
   hue: number; // 0 to 360 (default 291)
 };
 
+export type WallpaperTuning = {
+  overlayOpacity: number; // 0 to 100 (%)
+  blur: number; // 0 to 20 (px)
+  positionX: number; // 0 to 100 (% horizontal shift)
+  positionY: number; // 0 to 100 (% vertical shift)
+  zoom: number; // 100 to 200 (% scale)
+  hue: number; // 0 to 360 (theme hue)
+};
+
 export const DEFAULT_HUE = 291;
 export const DEFAULT_CHROMA = 0.1;
 export const DEFAULT_LIGHTNESS = 71;
 export const DEFAULT_SATURATION = 50;
+
+export const DEFAULT_WALLPAPER_TUNING: WallpaperTuning = {
+  overlayOpacity: 35,
+  blur: 0,
+  positionX: 50,
+  positionY: 50,
+  zoom: 100,
+  hue: DEFAULT_HUE,
+};
 
 export const DEFAULT_THEME_CONFIG: ThemeConfig = {
   activeBackgroundId: null, // default clean backdrop

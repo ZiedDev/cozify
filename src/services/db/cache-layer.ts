@@ -4,11 +4,10 @@ import { idb } from "./indexed-db";
 const STORES: StoreName[] = [
   "sessions",
   "todos",
+  "customBackgrounds",
+  "customPlaylists",
   "dailyRollups",
   "statsSummary",
-  "theme",
-  "timer",
-  "settings",
   "syncQueue",
 ];
 
@@ -16,9 +15,6 @@ function getItemKey<K extends StoreName>(storeName: K, item: any): string {
   if (!item) return "default";
   if (storeName === "dailyRollups") return item.date || "default";
   if (storeName === "statsSummary") return "summary";
-  if (storeName === "theme" || storeName === "timer" || storeName === "settings") {
-    return item.key || "current";
-  }
   return item.id || item.date || item.key || "default";
 }
 
@@ -104,14 +100,13 @@ class DatabaseCacheManager {
   public migrateFromLocalStorage<K extends StoreName>(storeName: K) {
     if (typeof localStorage === "undefined") return;
 
-    const legacyKeyMap: Record<StoreName, string> = {
+    const legacyKeyMap: Partial<Record<StoreName, string>> = {
       sessions: "history",
       todos: "todos",
+      customBackgrounds: "cozify_custom_backgrounds",
+      customPlaylists: "cozify_custom_playlists",
       dailyRollups: "cozify_daily_rollups",
       statsSummary: "cozify_stats_summary",
-      theme: "theme",
-      timer: "timer",
-      settings: "settings",
       syncQueue: "cozify_sync_queue",
     };
 
@@ -246,11 +241,7 @@ class DatabaseCacheManager {
 
     storeMap.delete(key);
 
-    if (
-      storeName === "timer" ||
-      storeName === "theme" ||
-      storeName === "settings"
-    ) {
+    if (storeName === "statsSummary") {
       this.mirrorToLocalStorage(storeName, null as any);
     } else {
       this.mirrorToLocalStorage(storeName, Array.from(storeMap.values()));
@@ -347,11 +338,10 @@ class DatabaseCacheManager {
     const legacyKeyMap: Record<StoreName, string> = {
       sessions: "history",
       todos: "todos",
+      customBackgrounds: "cozify_custom_backgrounds",
+      customPlaylists: "cozify_custom_playlists",
       dailyRollups: "cozify_daily_rollups",
       statsSummary: "cozify_stats_summary",
-      theme: "theme",
-      timer: "timer",
-      settings: "settings",
       syncQueue: "cozify_sync_queue",
     };
 
@@ -360,12 +350,7 @@ class DatabaseCacheManager {
     if (!key) return;
 
     try {
-      if (
-        storeName === "theme" ||
-        storeName === "timer" ||
-        storeName === "settings" ||
-        storeName === "statsSummary"
-      ) {
+      if (storeName === "statsSummary") {
         const item = Array.isArray(data) ? data[0] : data;
 
         if (item) {

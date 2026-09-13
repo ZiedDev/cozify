@@ -4,24 +4,23 @@ import {
   StoreName,
   DBStoreMap,
   SessionRecord,
-  AppSettings,
   SyncQueueItem,
 } from "./types";
 
 import { TodoItem } from "@/menus/todo/types";
-import { ThemeConfig } from "@/config/themes";
+import { ThemeBackground } from "@/config/themes";
+import { Playlist } from "@/config/playlists";
 
 export const DB_NAME = "cozify_idb";
-export const DB_VERSION = 3;
+export const DB_VERSION = 4;
 
 export class CozifyDexieDB extends Dexie {
   sessions!: EntityTable<SessionRecord, "id">;
   todos!: EntityTable<TodoItem, "id">;
+  customBackgrounds!: EntityTable<ThemeBackground, "id">;
+  customPlaylists!: EntityTable<Playlist, "id">;
   dailyRollups!: EntityTable<DBStoreMap["dailyRollups"], "date">;
   statsSummary!: EntityTable<DBStoreMap["statsSummary"], "key">;
-  theme!: EntityTable<Partial<ThemeConfig> & { key: string }, "key">;
-  timer!: EntityTable<Record<string, unknown> & { key: string }, "key">;
-  settings!: EntityTable<AppSettings & { key: string }, "key">;
   syncQueue!: EntityTable<SyncQueueItem, "id">;
 
   constructor() {
@@ -58,6 +57,22 @@ export class CozifyDexieDB extends Dexie {
       timer: "key",
       settings: "key",
       syncQueue: "id, timestamp, store, action",
+    });
+
+    // Version 4: Pure persistent & syncable tables only. Dropped device-local tables.
+    this.version(4).stores({
+      sessions: "id, createdAt, tag, focusMinutes, [tag+createdAt]",
+      todos:
+        "id, createdAt, completed, tag, dueDate, priority, archived, [completed+dueDate], [completed+priority]",
+      customBackgrounds: "id, name",
+      customPlaylists: "id, title, platform",
+      dailyRollups: "date, updatedAt",
+      statsSummary: "key",
+      syncQueue: "id, timestamp, store, action",
+      // Drop device-local tables from IDB
+      theme: null,
+      timer: null,
+      settings: null,
     });
   }
 }

@@ -1,4 +1,5 @@
-import { ThemeConfig } from "@/config/themes";
+import { ThemeBackground } from "@/config/themes";
+import { Playlist } from "@/config/playlists";
 import { TodoItem } from "@/menus/todo/types";
 
 export type AppSettings = Record<string, any>;
@@ -57,11 +58,10 @@ export type AllTimeStatsRecord = {
 export type DBStoreMap = {
   sessions: SessionRecord;
   todos: TodoItem;
+  customBackgrounds: ThemeBackground;
+  customPlaylists: Playlist;
   dailyRollups: DailyRollupRecord;
   statsSummary: AllTimeStatsRecord & { key: string };
-  theme: Partial<ThemeConfig> & { key: string };
-  timer: Record<string, unknown> & { key: string };
-  settings: AppSettings & { key: string };
   syncQueue: SyncQueueItem;
 };
 
@@ -94,8 +94,8 @@ export type RemoteDatabaseProvider = {
   pullChanges(sinceTimestamp: number): Promise<{
     sessions?: SessionRecord[];
     todos?: TodoItem[];
-    theme?: Partial<ThemeConfig>;
-    settings?: AppSettings;
+    customBackgrounds?: ThemeBackground[];
+    customPlaylists?: Playlist[];
     timestamp: number;
   }>;
 };

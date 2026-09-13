@@ -13,15 +13,12 @@ export const STORAGE_KEYS = {
   STATS_SUMMARY: "stats_summary",
 } as const;
 
-// Storage engine dispatch maps
+// Storage engine dispatch maps for IndexedDB-backed stores
 const DB_GETTERS: Record<string, () => any> = {
   [STORAGE_KEYS.SESSIONS_HISTORY]: () => db.sessions.getAll(),
   [STORAGE_KEYS.TODOS]: () => db.todos.getAll(),
   [STORAGE_KEYS.DAILY_ROLLUPS]: () => db.dailyRollups.getAll(),
   [STORAGE_KEYS.STATS_SUMMARY]: () => db.statsSummary.get(),
-  [STORAGE_KEYS.THEME_CONFIG]: () => db.theme.get(),
-  [STORAGE_KEYS.TIMER_STATE]: () => db.timer.get(),
-  [STORAGE_KEYS.SETTINGS]: () => db.settings.get(),
 };
 
 const DB_SETTERS: Record<string, (val: any) => void> = {
@@ -33,12 +30,6 @@ const DB_SETTERS: Record<string, (val: any) => void> = {
     Array.isArray(value) && db.dailyRollups.saveAll(value),
   [STORAGE_KEYS.STATS_SUMMARY]: (value) =>
     typeof value === "object" && value !== null && db.statsSummary.save(value),
-  [STORAGE_KEYS.THEME_CONFIG]: (value) =>
-    typeof value === "object" && db.theme.save(value),
-  [STORAGE_KEYS.TIMER_STATE]: (value) =>
-    typeof value === "object" && db.timer.save(value),
-  [STORAGE_KEYS.SETTINGS]: (value) =>
-    typeof value === "object" && db.settings.save(value),
 };
 
 const DB_CLEARERS: Record<string, () => void> = {
@@ -46,9 +37,6 @@ const DB_CLEARERS: Record<string, () => void> = {
   [STORAGE_KEYS.TODOS]: () => db.todos.clear(),
   [STORAGE_KEYS.DAILY_ROLLUPS]: () => db.dailyRollups.clear(),
   [STORAGE_KEYS.STATS_SUMMARY]: () => db.statsSummary.clear(),
-  [STORAGE_KEYS.THEME_CONFIG]: () => db.theme.clear(),
-  [STORAGE_KEYS.TIMER_STATE]: () => db.timer.clear(),
-  [STORAGE_KEYS.SETTINGS]: () => db.settings.clear(),
 };
 
 /**

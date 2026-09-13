@@ -7,13 +7,13 @@ import { cacheManager } from "./cache-layer";
 import { syncEngine } from "./sync-engine";
 import {
   SessionRecord,
-  AppSettings,
   DBStoreMap,
   AllTimeStatsRecord,
 } from "./types";
 
 import { TodoItem } from "@/menus/todo/types";
-import { ThemeConfig } from "@/config/themes";
+import { ThemeBackground } from "@/config/themes";
+import { Playlist } from "@/config/playlists";
 
 /**
  * High-level Database & Repository interface for Cozify
@@ -88,6 +88,57 @@ export const db = {
     },
   },
 
+  customBackgrounds: {
+    getAll(): ThemeBackground[] {
+      return cacheManager.getMemoryStore("customBackgrounds");
+    },
+    get(id: string): ThemeBackground | null {
+      return cacheManager.getMemoryItem("customBackgrounds", id);
+    },
+    save(bg: ThemeBackground): void {
+      cacheManager.setMemoryItem("customBackgrounds", bg.id, bg, true);
+      syncEngine.queueChange("customBackgrounds", "create", bg.id, bg);
+    },
+    saveAll(bgs: ThemeBackground[]): void {
+      cacheManager.setMemoryStore("customBackgrounds", bgs, true);
+    },
+    delete(id: string): void {
+      cacheManager.deleteMemoryItem("customBackgrounds", id, true);
+      syncEngine.queueChange("customBackgrounds", "delete", id);
+    },
+    clear(): void {
+      cacheManager.clearMemoryStore("customBackgrounds");
+    },
+  },
+
+  customPlaylists: {
+    getAll(): Playlist[] {
+      return cacheManager.getMemoryStore("customPlaylists");
+    },
+    get(id: string): Playlist | null {
+      return cacheManager.getMemoryItem("customPlaylists", id);
+    },
+    save(playlist: Playlist): void {
+      cacheManager.setMemoryItem(
+        "customPlaylists",
+        playlist.id,
+        playlist,
+        true,
+      );
+      syncEngine.queueChange("customPlaylists", "create", playlist.id, playlist);
+    },
+    saveAll(playlists: Playlist[]): void {
+      cacheManager.setMemoryStore("customPlaylists", playlists, true);
+    },
+    delete(id: string): void {
+      cacheManager.deleteMemoryItem("customPlaylists", id, true);
+      syncEngine.queueChange("customPlaylists", "delete", id);
+    },
+    clear(): void {
+      cacheManager.clearMemoryStore("customPlaylists");
+    },
+  },
+
   dailyRollups: {
     getAll(): DBStoreMap["dailyRollups"][] {
       return cacheManager.getMemoryStore("dailyRollups");
@@ -131,63 +182,6 @@ export const db = {
     },
     clear(): void {
       cacheManager.clearMemoryStore("statsSummary");
-    },
-  },
-
-  theme: {
-    get(): Partial<ThemeConfig> | null {
-      const item = cacheManager.getMemoryItem("theme", "current");
-
-      return item || null;
-    },
-    save(theme: Partial<ThemeConfig>): void {
-      cacheManager.setMemoryItem(
-        "theme",
-        "current",
-        { ...theme, key: "current" },
-        false,
-      );
-    },
-    clear(): void {
-      cacheManager.clearMemoryStore("theme");
-    },
-  },
-
-  timer: {
-    get(): Record<string, unknown> | null {
-      const item = cacheManager.getMemoryItem("timer", "current");
-
-      return item || null;
-    },
-    save(timer: Record<string, unknown>): void {
-      cacheManager.setMemoryItem(
-        "timer",
-        "current",
-        { ...timer, key: "current" },
-        false,
-      );
-    },
-    clear(): void {
-      cacheManager.clearMemoryStore("timer");
-    },
-  },
-
-  settings: {
-    get(): AppSettings {
-      const item = cacheManager.getMemoryItem("settings", "current");
-
-      return item || {};
-    },
-    save(settings: AppSettings): void {
-      cacheManager.setMemoryItem(
-        "settings",
-        "current",
-        { ...settings, key: "current" },
-        false,
-      );
-    },
-    clear(): void {
-      cacheManager.clearMemoryStore("settings");
     },
   },
 

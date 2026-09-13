@@ -11,24 +11,16 @@ import { toast } from "@heroui/react";
 
 import {
   ThemeBackground,
-  ThemeConfig,
-  DEFAULT_THEME_CONFIG,
   DEFAULT_HUE,
   PRESET_BACKGROUNDS,
+  WallpaperTuning,
+  DEFAULT_WALLPAPER_TUNING,
   normalizeImageUrl,
 } from "@/config/themes";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
 
-type SparseThemeConfig = {
-  activeBackgroundId?: string | null;
-  customBackgrounds?: { id: string; name: string; url: string }[];
-  overlayOpacity?: number;
-  blur?: number;
-  positionX?: number;
-  positionY?: number;
-  zoom?: number;
-  hue?: number;
-};
+const LOCAL_STORAGE_ACTIVE_BG_KEY = "cozify_active_wallpaper_id";
+const LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY = "cozify_wallpaper_tunings";
 
 type ThemeContextValue = {
   activeBackground: ThemeBackground | null;
@@ -62,104 +54,152 @@ type ThemeContextValue = {
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<ThemeConfig>(() => {
-    const saved = storageAdapter.getItem<SparseThemeConfig | null>(
+  // 1. Custom Wallpapers list (Persistent in IDB / syncable)
+  const [customBackgrounds, setCustomBackgrounds] = useState<
+    ThemeBackground[]
+  >(() => {
+    const saved = storageAdapter.getItem<{ customBackgrounds?: ThemeBackground[] } | null>(
       STORAGE_KEYS.THEME_CONFIG,
       null,
     );
 
-    if (!saved) return DEFAULT_THEME_CONFIG;
+    if (saved && Array.isArray(saved.customBackgrounds)) {
+      return saved.customBackgrounds.map((bg) => ({
+        ...bg,
+        url: normalizeImageUrl(bg.url),
+        isCustom: true,
+      }));
+    }
+
+    return [];
+  });
+
+  // 2. Active Background ID (Device-local in localStorage)
+  const [activeBackgroundId, setActiveBackgroundId] = useState<string | null>(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem(LOCAL_STORAGE_ACTIVE_BG_KEY);
+      if (saved !== null) {
+        try {
+          return JSON.parse(saved);
+        } catch {
+          return saved;
+        }
+      }
+    }
+    return null;
+  });
+
+  // 3. Per-Wallpaper Fine-Tuning & Hue Map (Device-local in localStorage)
+  const [wallpaperTunings, setWallpaperTunings] = useState<
+    Record<string, Partial<WallpaperTuning>>
+  >(() => {
+    if (typeof localStorage !== "undefined") {
+      const saved = localStorage.getItem(LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY);
+      if (saved) {
+        try {
+          return JSON.parse(saved) || {};
+        } catch {}
+      }
+    }
+    return {};
+  });
+
+  // Sync customBackgrounds to IndexedDB (syncable store)
+  useEffect(() => {
+    if (customBackgrounds.length > 0) {
+      storageAdapter.setItem(STORAGE_KEYS.THEME_CONFIG, {
+        customBackgrounds: customBackgrounds.map((bg) => ({
+          id: bg.id,
+          name: bg.name,
+          url: bg.url,
+          isCustom: true,
+        })),
+      });
+    } else {
+      storageAdapter.removeItem(STORAGE_KEYS.THEME_CONFIG);
+    }
+  }, [customBackgrounds]);
+
+  // Sync activeBackgroundId to device localStorage
+  useEffect(() => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(
+        LOCAL_STORAGE_ACTIVE_BG_KEY,
+        JSON.stringify(activeBackgroundId),
+      );
+    }
+  }, [activeBackgroundId]);
+
+  // Sync wallpaperTunings map to device localStorage
+  useEffect(() => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(
+        LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY,
+        JSON.stringify(wallpaperTunings),
+      );
+    }
+  }, [wallpaperTunings]);
+
+  // Active Key for current tuning lookup
+  const activeKey = activeBackgroundId || "clean_slate";
+
+  // Current active tuning profile (with safe fallback defaults)
+  const currentTuning: WallpaperTuning = useMemo(() => {
+    const saved = wallpaperTunings[activeKey] || {};
 
     return {
-      activeBackgroundId:
-        saved.activeBackgroundId ?? DEFAULT_THEME_CONFIG.activeBackgroundId,
-      customBackgrounds: Array.isArray(saved.customBackgrounds)
-        ? saved.customBackgrounds.map((bg) => ({
-            ...bg,
-            url: normalizeImageUrl(bg.url),
-            isCustom: true,
-          }))
-        : [],
       overlayOpacity:
-        saved.overlayOpacity ?? DEFAULT_THEME_CONFIG.overlayOpacity,
-      blur: saved.blur ?? DEFAULT_THEME_CONFIG.blur,
-      positionX: saved.positionX ?? DEFAULT_THEME_CONFIG.positionX,
-      positionY: saved.positionY ?? DEFAULT_THEME_CONFIG.positionY,
-      zoom: saved.zoom ?? DEFAULT_THEME_CONFIG.zoom,
-      hue: saved.hue ?? DEFAULT_THEME_CONFIG.hue,
+        saved.overlayOpacity ?? DEFAULT_WALLPAPER_TUNING.overlayOpacity,
+      blur: saved.blur ?? DEFAULT_WALLPAPER_TUNING.blur,
+      positionX: saved.positionX ?? DEFAULT_WALLPAPER_TUNING.positionX,
+      positionY: saved.positionY ?? DEFAULT_WALLPAPER_TUNING.positionY,
+      zoom: saved.zoom ?? DEFAULT_WALLPAPER_TUNING.zoom,
+      hue: saved.hue ?? DEFAULT_WALLPAPER_TUNING.hue,
     };
-  });
+  }, [wallpaperTunings, activeKey]);
 
   // Apply OKLCH palette changes across the entire app
   useEffect(() => {
     const root = document.documentElement;
-    const activeHue = config.hue ?? DEFAULT_HUE;
+    const activeHue = currentTuning.hue ?? DEFAULT_HUE;
 
     if (activeHue === DEFAULT_HUE) {
       root.style.removeProperty("--theme-hue");
     } else {
       root.style.setProperty("--theme-hue", String(activeHue));
     }
-  }, [config.hue]);
-
-  // Sync with storage on config changes (sparse/minimal serialization)
-  useEffect(() => {
-    const sparse: SparseThemeConfig = {};
-
-    if (config.activeBackgroundId !== DEFAULT_THEME_CONFIG.activeBackgroundId) {
-      sparse.activeBackgroundId = config.activeBackgroundId;
-    }
-    if (config.customBackgrounds && config.customBackgrounds.length > 0) {
-      sparse.customBackgrounds = config.customBackgrounds.map((bg) => ({
-        id: bg.id,
-        name: bg.name,
-        url: bg.url,
-      }));
-    }
-    if (config.overlayOpacity !== DEFAULT_THEME_CONFIG.overlayOpacity) {
-      sparse.overlayOpacity = config.overlayOpacity;
-    }
-    if (config.blur !== DEFAULT_THEME_CONFIG.blur) {
-      sparse.blur = config.blur;
-    }
-    if (config.positionX !== DEFAULT_THEME_CONFIG.positionX) {
-      sparse.positionX = config.positionX;
-    }
-    if (config.positionY !== DEFAULT_THEME_CONFIG.positionY) {
-      sparse.positionY = config.positionY;
-    }
-    if (config.zoom !== DEFAULT_THEME_CONFIG.zoom) {
-      sparse.zoom = config.zoom;
-    }
-    if (config.hue !== DEFAULT_THEME_CONFIG.hue) {
-      sparse.hue = config.hue;
-    }
-
-    if (Object.keys(sparse).length === 0) {
-      storageAdapter.removeItem(STORAGE_KEYS.THEME_CONFIG);
-    } else {
-      storageAdapter.setItem(STORAGE_KEYS.THEME_CONFIG, sparse);
-    }
-  }, [config]);
+  }, [currentTuning.hue]);
 
   const allBackgrounds = useMemo(() => {
-    return [...PRESET_BACKGROUNDS, ...config.customBackgrounds];
-  }, [config.customBackgrounds]);
+    return [...PRESET_BACKGROUNDS, ...customBackgrounds];
+  }, [customBackgrounds]);
 
   const activeBackground = useMemo(() => {
-    if (!config.activeBackgroundId) return null;
+    if (!activeBackgroundId) return null;
 
-    return (
-      allBackgrounds.find((bg) => bg.id === config.activeBackgroundId) || null
-    );
-  }, [config.activeBackgroundId, allBackgrounds]);
+    return allBackgrounds.find((bg) => bg.id === activeBackgroundId) || null;
+  }, [activeBackgroundId, allBackgrounds]);
 
   const selectBackground = useCallback((bg: ThemeBackground | null) => {
-    setConfig((prev) => ({
-      ...prev,
-      activeBackgroundId: bg ? bg.id : null,
-    }));
+    setActiveBackgroundId(bg ? bg.id : null);
   }, []);
+
+  const updateActiveTuning = useCallback(
+    (updates: Partial<WallpaperTuning>) => {
+      setWallpaperTunings((prev) => {
+        const existing = prev[activeKey] || {};
+
+        return {
+          ...prev,
+          [activeKey]: {
+            ...existing,
+            ...updates,
+          },
+        };
+      });
+    },
+    [activeKey],
+  );
 
   const addCustomBackground = useCallback(
     (name: string, url: string): boolean => {
@@ -188,11 +228,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         isCustom: true,
       };
 
-      setConfig((prev) => ({
-        ...prev,
-        customBackgrounds: [newBg, ...prev.customBackgrounds],
-        activeBackgroundId: newBg.id,
-      }));
+      setCustomBackgrounds((prev) => [newBg, ...prev]);
+      setActiveBackgroundId(newBg.id);
 
       toast("Wallpaper Added! 🎨", {
         description: `"${trimmedName}" is now active.`,
@@ -210,12 +247,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     if (!trimmed) return;
 
-    setConfig((prev) => ({
-      ...prev,
-      customBackgrounds: prev.customBackgrounds.map((bg) =>
-        bg.id === id ? { ...bg, name: trimmed } : bg,
-      ),
-    }));
+    setCustomBackgrounds((prev) =>
+      prev.map((bg) => (bg.id === id ? { ...bg, name: trimmed } : bg)),
+    );
 
     toast("Wallpaper Renamed", {
       description: `Updated name to "${trimmed}".`,
@@ -248,9 +282,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           ? normalizeImageUrl(trimmedUrl)
           : undefined;
 
-      setConfig((prev) => ({
-        ...prev,
-        customBackgrounds: prev.customBackgrounds.map((bg) => {
+      setCustomBackgrounds((prev) =>
+        prev.map((bg) => {
           if (bg.id !== id) return bg;
           return {
             ...bg,
@@ -264,7 +297,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
                 : bg.url,
           };
         }),
-      }));
+      );
 
       toast("Wallpaper Updated", {
         description: "Custom wallpaper details have been saved.",
@@ -275,45 +308,42 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const removeCustomBackground = useCallback((id: string) => {
-    setConfig((prev) => {
-      const updated = prev.customBackgrounds.filter((bg) => bg.id !== id);
-      const newActive =
-        prev.activeBackgroundId === id ? null : prev.activeBackgroundId;
+  const removeCustomBackground = useCallback(
+    (id: string) => {
+      setCustomBackgrounds((prev) => prev.filter((bg) => bg.id !== id));
+      setActiveBackgroundId((prev) => (prev === id ? null : prev));
 
-      return {
-        ...prev,
-        customBackgrounds: updated,
-        activeBackgroundId: newActive,
-      };
-    });
+      setWallpaperTunings((prev) => {
+        if (!prev[id]) return prev;
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
 
-    toast("Wallpaper Removed", {
-      variant: "default",
-      timeout: 2000,
-    });
-  }, []);
+      toast("Wallpaper Removed", {
+        variant: "default",
+        timeout: 2000,
+      });
+    },
+    [],
+  );
 
   const moveCustomBackground = useCallback(
     (id: string, direction: "left" | "right") => {
-      setConfig((prev) => {
-        const index = prev.customBackgrounds.findIndex((bg) => bg.id === id);
+      setCustomBackgrounds((prev) => {
+        const index = prev.findIndex((bg) => bg.id === id);
 
         if (index === -1) return prev;
         const targetIndex = direction === "left" ? index - 1 : index + 1;
 
-        if (targetIndex < 0 || targetIndex >= prev.customBackgrounds.length)
-          return prev;
+        if (targetIndex < 0 || targetIndex >= prev.length) return prev;
 
-        const next = [...prev.customBackgrounds];
+        const next = [...prev];
         const [moved] = next.splice(index, 1);
 
         next.splice(targetIndex, 0, moved);
 
-        return {
-          ...prev,
-          customBackgrounds: next,
-        };
+        return next;
       });
     },
     [],
@@ -321,87 +351,85 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const reorderCustomBackgrounds = useCallback(
     (activeId: string, overId: string) => {
-      setConfig((prev) => {
-        const oldIndex = prev.customBackgrounds.findIndex(
-          (bg) => bg.id === activeId,
-        );
-        const newIndex = prev.customBackgrounds.findIndex(
-          (bg) => bg.id === overId,
-        );
+      setCustomBackgrounds((prev) => {
+        const oldIndex = prev.findIndex((bg) => bg.id === activeId);
+        const newIndex = prev.findIndex((bg) => bg.id === overId);
 
         if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
           return prev;
         }
 
-        const next = [...prev.customBackgrounds];
+        const next = [...prev];
         const [moved] = next.splice(oldIndex, 1);
         next.splice(newIndex, 0, moved);
 
-        return {
-          ...prev,
-          customBackgrounds: next,
-        };
+        return next;
       });
     },
     [],
   );
 
-  const setOverlayOpacity = useCallback((opacity: number) => {
-    setConfig((prev) => ({
-      ...prev,
-      overlayOpacity: Math.max(0, Math.min(100, opacity)),
-    }));
-  }, []);
+  const setOverlayOpacity = useCallback(
+    (opacity: number) => {
+      updateActiveTuning({ overlayOpacity: Math.max(0, Math.min(100, opacity)) });
+    },
+    [updateActiveTuning],
+  );
 
-  const setBlur = useCallback((blur: number) => {
-    setConfig((prev) => ({
-      ...prev,
-      blur: Math.max(0, Math.min(20, blur)),
-    }));
-  }, []);
+  const setBlur = useCallback(
+    (blur: number) => {
+      updateActiveTuning({ blur: Math.max(0, Math.min(20, blur)) });
+    },
+    [updateActiveTuning],
+  );
 
-  const setPositionX = useCallback((posX: number) => {
-    setConfig((prev) => ({
-      ...prev,
-      positionX: Math.max(0, Math.min(100, posX)),
-    }));
-  }, []);
+  const setPositionX = useCallback(
+    (posX: number) => {
+      updateActiveTuning({ positionX: Math.max(0, Math.min(100, posX)) });
+    },
+    [updateActiveTuning],
+  );
 
-  const setPositionY = useCallback((posY: number) => {
-    setConfig((prev) => ({
-      ...prev,
-      positionY: Math.max(0, Math.min(100, posY)),
-    }));
-  }, []);
+  const setPositionY = useCallback(
+    (posY: number) => {
+      updateActiveTuning({ positionY: Math.max(0, Math.min(100, posY)) });
+    },
+    [updateActiveTuning],
+  );
 
-  const setZoom = useCallback((zoom: number) => {
-    setConfig((prev) => ({
-      ...prev,
-      zoom: Math.max(100, Math.min(200, zoom)),
-    }));
-  }, []);
+  const setZoom = useCallback(
+    (zoom: number) => {
+      updateActiveTuning({ zoom: Math.max(100, Math.min(200, zoom)) });
+    },
+    [updateActiveTuning],
+  );
 
-  const setAppThemeColor = useCallback((hue: number) => {
-    setConfig((prev) => ({
-      ...prev,
-      hue: Math.max(0, Math.min(360, Math.round(hue))),
-    }));
-  }, []);
+  const setAppThemeColor = useCallback(
+    (hue: number) => {
+      updateActiveTuning({
+        hue: Math.max(0, Math.min(360, Math.round(hue))),
+      });
+    },
+    [updateActiveTuning],
+  );
 
   const resetTheme = useCallback(() => {
-    setConfig(DEFAULT_THEME_CONFIG);
-  }, []);
+    setWallpaperTunings((prev) => ({
+      ...prev,
+      [activeKey]: DEFAULT_WALLPAPER_TUNING,
+    }));
+  }, [activeKey]);
 
   const value: ThemeContextValue = {
     activeBackground,
     allBackgrounds,
-    customBackgrounds: config.customBackgrounds,
-    overlayOpacity: config.overlayOpacity,
-    blur: config.blur,
-    positionX: config.positionX ?? 50,
-    positionY: config.positionY ?? 50,
-    zoom: config.zoom ?? 100,
-    hue: config.hue ?? DEFAULT_HUE,
+    customBackgrounds,
+    overlayOpacity: currentTuning.overlayOpacity,
+    blur: currentTuning.blur,
+    positionX: currentTuning.positionX,
+    positionY: currentTuning.positionY,
+    zoom: currentTuning.zoom,
+    hue: currentTuning.hue,
     selectBackground,
     addCustomBackground,
     renameCustomBackground,
