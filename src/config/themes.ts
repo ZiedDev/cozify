@@ -49,44 +49,74 @@ export const PRESET_BACKGROUNDS: ThemeBackground[] = [
   {
     id: "tree",
     name: "Tree",
-    url: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=75&w=1920&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=100&w=1920&auto=format&fit=crop",
     thumbnail:
-      "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=60&w=320&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=30&w=320&auto=format&fit=crop",
   },
   {
     id: "window",
     name: "Window",
-    url: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=75&w=1920&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=100&w=1920&auto=format&fit=crop",
     thumbnail:
-      "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=60&w=320&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=30&w=320&auto=format&fit=crop",
   },
   {
     id: "galaxy",
     name: "Galaxy",
-    url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=75&w=1920&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=100&w=1920&auto=format&fit=crop",
     thumbnail:
-      "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=60&w=320&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?q=30&w=320&auto=format&fit=crop",
   },
   {
     id: "cafe",
     name: "Cafe",
-    url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=75&w=1920&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=100&w=1920&auto=format&fit=crop",
     thumbnail:
-      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=60&w=320&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?q=30&w=320&auto=format&fit=crop",
   },
   {
     id: "forest",
     name: "Forest",
-    url: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=75&w=1920&auto=format&fit=crop",
+    url: "https://images.unsplash.com/photo-1448375240586-882707db888b?q=100&w=1920&auto=format&fit=crop",
     thumbnail:
-      "https://images.unsplash.com/photo-1448375240586-882707db888b?q=60&w=320&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1448375240586-882707db888b?q=30&w=320&auto=format&fit=crop",
   },
   {
-    id: "sea",
-    name: "Sea",
-    url: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=75&w=1920&auto=format&fit=crop",
+    id: "mountain",
+    name: "Mountain",
+    url: "https://images.unsplash.com/photo-1511300636408-a63a89df3482?q=100&w=1920&auto=format&fit=crop",
     thumbnail:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=60&w=320&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511300636408-a63a89df3482?q=30&w=320&auto=format&fit=crop",
+  },
+  {
+    id: "flower",
+    name: "flower",
+    url: "./public/wallpapers/full/flower.jpg",
+    thumbnail: "./public/wallpapers/thumbnail/flower.jpg",
+  },
+  {
+    id: "foliage",
+    name: "Foliage",
+    url: "./public/wallpapers/full/foliage.jpg",
+    thumbnail: "./public/wallpapers/thumbnail/foliage.jpg",
+  },
+  {
+    id: "sea_foam",
+    name: "Sea Foam",
+    url: "./public/wallpapers/full/sea_foam.jpg",
+    thumbnail: "./public/wallpapers/thumbnail/sea_foam.jpg",
+  },
+  {
+    id: "sunset_sea",
+    name: "Sunset Sea",
+    url: "./public/wallpapers/full/sunset_sea.jpg",
+    thumbnail: "./public/wallpapers/thumbnail/sunset_sea.jpg",
+  },
+  {
+    id: "sunset_silhouette",
+    name: "Sunset Silhouette",
+    url: "./public/wallpapers/full/sunset_silhouette.jpg",
+    thumbnail: "./public/wallpapers/thumbnail/sunset_silhouette.jpg",
   },
 ];
 
@@ -95,12 +125,14 @@ export const PRESET_BACKGROUNDS: ThemeBackground[] = [
  */
 export function normalizeImageUrl(url: string): string {
   const trimmed = url.trim();
+
   if (!trimmed) return "";
 
   // 1. Google Drive / Google Docs file sharing link (e.g., /file/d/ID/view...)
   const driveFileMatch = trimmed.match(
     /(?:drive|docs)\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i,
   );
+
   if (driveFileMatch && driveFileMatch[1]) {
     return `https://lh3.googleusercontent.com/d/${driveFileMatch[1]}`;
   }
@@ -109,6 +141,7 @@ export function normalizeImageUrl(url: string): string {
   const driveParamMatch = trimmed.match(
     /drive\.google\.com\/(?:open|uc|thumbnail)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/i,
   );
+
   if (driveParamMatch && driveParamMatch[1]) {
     return `https://lh3.googleusercontent.com/d/${driveParamMatch[1]}`;
   }
@@ -117,6 +150,7 @@ export function normalizeImageUrl(url: string): string {
   const googleUserContentMatch = trimmed.match(
     /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/i,
   );
+
   if (googleUserContentMatch && googleUserContentMatch[1]) {
     return `https://lh3.googleusercontent.com/d/${googleUserContentMatch[1]}`;
   }
