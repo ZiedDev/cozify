@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { AlertDialog, ScrollShadow, Typography, Button } from "@heroui/react";
+import {
+  AlertDialog,
+  ScrollShadow,
+  Typography,
+  Button,
+  Card,
+} from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { CheckCircle2, Coffee, Search } from "lucide-react";
@@ -114,8 +120,8 @@ export function TodoList() {
   return (
     <div className="flex flex-col w-full h-full min-h-0 overflow-hidden">
       {filteredTodos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center my-auto py-8 px-4 rounded-2xl bg-surface/30 border border-separator/30 text-center gap-3">
-          <div className="size-12 rounded-2xl bg-surface flex items-center justify-center text-muted border border-separator/40 shadow-xs">
+        <Card className="items-center py-8 px-4 gap-3" variant="transparent">
+          <div className="size-12 rounded-2xl bg-surface flex items-center justify-center">
             {searchQuery ? (
               <Search className="size-5 text-accent" />
             ) : filter === "completed" ? (
@@ -126,7 +132,7 @@ export function TodoList() {
           </div>
           <div className="flex flex-col gap-1">
             <Typography
-              className="text-sm md:text-base text-foreground font-medium"
+              className="text-sm md:text-base text-foreground font-medium text-center"
               type="h4"
               weight="medium"
             >
@@ -139,7 +145,7 @@ export function TodoList() {
                     : "Your list is clean and cozy"}
             </Typography>
             <Typography
-              className="text-xs max-w-xs leading-relaxed font-light"
+              className="text-xs max-w-xs leading-relaxed font-light text-center"
               color="muted"
               type="body-xs"
             >
@@ -150,7 +156,7 @@ export function TodoList() {
                   : "Add your first task above to start organizing your day."}
             </Typography>
           </div>
-        </div>
+        </Card>
       ) : (
         <ScrollShadow
           ref={listRef}

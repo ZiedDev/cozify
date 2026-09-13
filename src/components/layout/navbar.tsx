@@ -23,7 +23,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40">
       <div className="mx-auto flex h-20 md:h-24 items-center justify-between px-6 sm:px-8 md:px-12">
         <Typography
-          className="font-serif font-black text-3xl md:text-4xl tracking-tight text-foreground select-none"
+          className="font-serif italic font-black text-3xl md:text-4xl tracking-wide text-foreground select-none"
           type="h1"
         >
           Cozify

@@ -106,6 +106,7 @@ type MusicContextValue = {
   removeCustomPlaylist: (id: string) => void;
   renameCustomPlaylist: (id: string, newTitle: string) => void;
   moveCustomPlaylist: (id: string, direction: "up" | "down") => void;
+  reorderCustomPlaylists: (activeId: string, overId: string) => void;
 
   bindYTPlayerElement: (el: HTMLDivElement | null) => void;
 };
@@ -1714,6 +1715,26 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const reorderCustomPlaylists = useCallback(
+    (activeId: string, overId: string) => {
+      if (activeId === overId) return;
+      setCustomPlaylists((prev) => {
+        const oldIndex = prev.findIndex((playlist) => playlist.id === activeId);
+        const newIndex = prev.findIndex((playlist) => playlist.id === overId);
+
+        if (oldIndex === -1 || newIndex === -1) return prev;
+
+        const next = [...prev];
+        const [moved] = next.splice(oldIndex, 1);
+
+        next.splice(newIndex, 0, moved);
+
+        return next;
+      });
+    },
+    [],
+  );
+
   const toggleDeck = useCallback(() => setIsDeckOpen((prev) => !prev), []);
   const togglePicker = useCallback(() => setIsPickerOpen((prev) => !prev), []);
   const togglePosterPreview = useCallback(
@@ -1767,6 +1788,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       removeCustomPlaylist,
       renameCustomPlaylist,
       moveCustomPlaylist,
+      reorderCustomPlaylists,
       bindYTPlayerElement,
     }),
     [
@@ -1814,6 +1836,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       removeCustomPlaylist,
       renameCustomPlaylist,
       moveCustomPlaylist,
+      reorderCustomPlaylists,
       bindYTPlayerElement,
     ],
   );

@@ -62,9 +62,6 @@ export function BreakModal({
                 </Typography>
               </div>
               <div className="text-right space-y-0.5">
-                <Typography className="text-muted text-[11px]" type="body-xs">
-                  Saves as 100%
-                </Typography>
                 <Typography
                   className="text-accent font-mono text-sm"
                   weight="bold"
