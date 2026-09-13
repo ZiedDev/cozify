@@ -25,6 +25,7 @@ import {
   ListMusic,
   Disc3,
   Loader2,
+  WifiOff,
 } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -42,6 +43,7 @@ export function CozyMusicCard() {
     isLive,
     isPlaying,
     isBuffering,
+    isOnline,
     volume,
     currentTime,
     duration,
@@ -203,11 +205,13 @@ export function CozyMusicCard() {
         <div className="flex items-center gap-2 min-w-0">
           <span
             className={`size-2.5 rounded-full shrink-0 transition-colors duration-300 ${
-              isBuffering
-                ? "bg-amber-400 animate-ping"
-                : isPlaying
-                  ? "bg-accent"
-                  : "bg-muted/50"
+              !isOnline
+                ? "bg-danger"
+                : isBuffering
+                  ? "bg-amber-400 animate-ping"
+                  : isPlaying
+                    ? "bg-accent"
+                    : "bg-muted/50"
             }`}
           />
           <Typography
@@ -215,7 +219,13 @@ export function CozyMusicCard() {
             className="text-xs font-bold uppercase text-foreground"
             type="body-xs"
           >
-            {isBuffering ? "Loading..." : isPlaying ? "Now Playing" : "Paused"}
+            {!isOnline
+              ? "Offline"
+              : isBuffering
+                ? "Loading..."
+                : isPlaying
+                  ? "Now Playing"
+                  : "Paused"}
           </Typography>
         </div>
 
@@ -268,6 +278,7 @@ export function CozyMusicCard() {
       {isSpotify && spotifyEmbedUrl ? (
         <div className="w-full h-72 sm:h-80 md:h-84 rounded-2xl overflow-hidden border border-separator/40 bg-surface-secondary/60 shadow-xl my-0.5">
           <iframe
+            key={`spotify-${playerKey}`}
             allow="encrypted-media; fullscreen; picture-in-picture"
             className="w-full h-full border-none block"
             src={spotifyEmbedUrl}
@@ -353,7 +364,9 @@ export function CozyMusicCard() {
 
               {/* Central Spindle Hole with metallic rim and 100% transparent cutout or loading spinner */}
               <div className="absolute size-8 rounded-full border-2 border-white/40 shadow-inner flex items-center justify-center bg-black/40 backdrop-blur-xs transition-[transform,opacity] pointer-events-none">
-                {isBuffering ? (
+                {!isOnline ? (
+                  <WifiOff className="size-3.5 text-danger" />
+                ) : isBuffering ? (
                   <Spinner color="accent" size="sm" />
                 ) : (
                   <div className="size-3.5 rounded-full border border-white/25 bg-transparent" />
@@ -370,15 +383,19 @@ export function CozyMusicCard() {
             <MarqueeTitle
               align="center"
               className="text-sm sm:text-base font-bold text-foreground text-center leading-snug"
-              isPlaying={isPlaying}
-              text={title || "Now Playing"}
+              isPlaying={isPlaying && isOnline}
+              text={
+                !isOnline
+                  ? "Offline - Audio Streaming Paused"
+                  : title || "Now Playing"
+              }
             />
             <Typography
               truncate
               className="w-full text-[11px] sm:text-xs text-muted mt-0.5 text-center leading-tight"
               type="body-xs"
             >
-              {author}
+              {!isOnline ? "Connect to internet to stream audio" : author}
             </Typography>
           </div>
 
@@ -400,7 +417,7 @@ export function CozyMusicCard() {
               <Slider
                 aria-label="Timeline scrubber"
                 className="w-full"
-                isDisabled={duration <= 0}
+                isDisabled={!isOnline || duration <= 0}
                 maxValue={100}
                 minValue={0}
                 step={0.1}
@@ -475,11 +492,11 @@ export function CozyMusicCard() {
                   isIconOnly
                   aria-label="Previous track"
                   className={`size-7 sm:size-8 rounded-full transition-colors duration-150 ${
-                    currentTrackIndex <= 0
+                    !isOnline || currentTrackIndex <= 0
                       ? "opacity-30 cursor-not-allowed text-muted"
                       : "text-muted hover:text-foreground cursor-pointer"
                   }`}
-                  isDisabled={currentTrackIndex <= 0}
+                  isDisabled={!isOnline || currentTrackIndex <= 0}
                   size="sm"
                   variant="ghost"
                   onClick={prevTrack}
@@ -491,7 +508,12 @@ export function CozyMusicCard() {
               <Button
                 isIconOnly
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="size-9 sm:size-10 rounded-full bg-accent text-accent-foreground shadow-lg hover:bg-accent/90 active:scale-95 transition-all duration-150 cursor-pointer"
+                className={`size-9 sm:size-10 rounded-full shadow-lg transition-all duration-150 ${
+                  !isOnline
+                    ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                    : "bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 cursor-pointer"
+                }`}
+                isDisabled={!isOnline}
                 size="md"
                 variant="primary"
                 onClick={togglePlay}
@@ -510,11 +532,13 @@ export function CozyMusicCard() {
                   isIconOnly
                   aria-label="Next track"
                   className={`size-7 sm:size-8 rounded-full transition-colors duration-150 ${
-                    currentTrackIndex >= tracklist.length - 1
+                    !isOnline || currentTrackIndex >= tracklist.length - 1
                       ? "opacity-30 cursor-not-allowed text-muted"
                       : "text-muted hover:text-foreground cursor-pointer"
                   }`}
-                  isDisabled={currentTrackIndex >= tracklist.length - 1}
+                  isDisabled={
+                    !isOnline || currentTrackIndex >= tracklist.length - 1
+                  }
                   size="sm"
                   variant="ghost"
                   onClick={nextTrack}
@@ -616,7 +640,12 @@ export function CozyMusicCard() {
           >
             <InputGroup.Input
               className="text-xs"
-              placeholder="Paste Spotify or YouTube link..."
+              disabled={!isOnline}
+              placeholder={
+                !isOnline
+                  ? "Offline - Reconnect to play music..."
+                  : "Paste Spotify or YouTube link..."
+              }
               value={inputUrl}
               onChange={(event) => setInputUrl(event.target.value)}
             />
@@ -624,7 +653,7 @@ export function CozyMusicCard() {
         </TextField>
         <Button
           className="h-7.5 sm:h-8 px-3 rounded-xl text-xs font-semibold bg-accent text-accent-foreground cursor-pointer shadow-xs"
-          isDisabled={!inputUrl.trim()}
+          isDisabled={!isOnline || !inputUrl.trim()}
           size="sm"
           type="submit"
           variant="primary"

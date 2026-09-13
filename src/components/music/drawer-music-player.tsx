@@ -41,12 +41,14 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
     spotifyEmbedUrl,
     isPlaying,
     isBuffering,
+    isOnline,
     isLive,
     currentTime,
     duration,
     volume,
     tracklist,
     currentTrackIndex,
+    playerKey,
     togglePlay,
     prevTrack,
     nextTrack,
@@ -76,18 +78,26 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
         <div className="flex items-center gap-1.5 min-w-0">
           <span
             className={`size-2 rounded-full ${
-              isBuffering
-                ? "bg-amber-400 animate-ping"
-                : isPlaying
-                  ? "bg-accent"
-                  : "bg-muted/50"
+              !isOnline
+                ? "bg-danger"
+                : isBuffering
+                  ? "bg-amber-400 animate-ping"
+                  : isPlaying
+                    ? "bg-accent"
+                    : "bg-muted/50"
             }`}
           />
           <Typography
             className="text-[10px] uppercase font-bold text-foreground tracking-wider"
             type="body-xs"
           >
-            {isBuffering ? "Loading..." : isPlaying ? "Now Playing" : "Paused"}
+            {!isOnline
+              ? "Offline"
+              : isBuffering
+                ? "Loading..."
+                : isPlaying
+                  ? "Now Playing"
+                  : "Paused"}
           </Typography>
         </div>
 
@@ -125,6 +135,7 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
       {activePlatform === "spotify" && spotifyEmbedUrl ? (
         <div className="w-full h-36 rounded-xl overflow-hidden border border-separator/40 bg-surface-secondary/60 shrink-0">
           <iframe
+            key={`drawer-spotify-${playerKey}`}
             allow="encrypted-media; fullscreen; picture-in-picture"
             className="w-full h-full border-none block"
             src={spotifyEmbedUrl}
@@ -151,15 +162,15 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
                 <div className="min-w-0 flex flex-col flex-1 overflow-hidden">
                   <MarqueeTitle
                     className="text-xs sm:text-sm font-bold text-foreground leading-tight"
-                    isPlaying={isPlaying}
-                    text={title}
+                    isPlaying={isPlaying && isOnline}
+                    text={!isOnline ? "Offline - Audio Player Paused" : title}
                   />
                   <Typography
                     truncate
                     className="text-[11px] text-muted mt-0.5"
                     type="body-xs"
                   >
-                    {author}
+                    {!isOnline ? "Connect to internet to stream" : author}
                   </Typography>
                 </div>
 
@@ -224,7 +235,7 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
               <Slider
                 aria-label="Timeline scrubber"
                 className="w-full"
-                isDisabled={duration <= 0}
+                isDisabled={!isOnline || duration <= 0}
                 maxValue={100}
                 minValue={0}
                 step={0.1}
@@ -268,11 +279,11 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
                 <button
                   aria-label="Previous track"
                   className={`p-1 rounded-full transition-colors duration-150 ${
-                    currentTrackIndex <= 0
+                    !isOnline || currentTrackIndex <= 0
                       ? "opacity-30 cursor-not-allowed text-muted"
                       : "text-muted hover:text-foreground cursor-pointer"
                   }`}
-                  disabled={currentTrackIndex <= 0}
+                  disabled={!isOnline || currentTrackIndex <= 0}
                   type="button"
                   onClick={prevTrack}
                 >
@@ -282,7 +293,12 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
 
               <button
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="size-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center hover:bg-accent/90 active:scale-95 transition-all duration-150 cursor-pointer shadow-md"
+                className={`size-8 rounded-full flex items-center justify-center transition-all duration-150 shadow-md ${
+                  !isOnline
+                    ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                    : "bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 cursor-pointer"
+                }`}
+                disabled={!isOnline}
                 type="button"
                 onClick={togglePlay}
               >
@@ -299,11 +315,13 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
                 <button
                   aria-label="Next track"
                   className={`p-1 rounded-full transition-colors duration-150 ${
-                    currentTrackIndex >= tracklist.length - 1
+                    !isOnline || currentTrackIndex >= tracklist.length - 1
                       ? "opacity-30 cursor-not-allowed text-muted"
                       : "text-muted hover:text-foreground cursor-pointer"
                   }`}
-                  disabled={currentTrackIndex >= tracklist.length - 1}
+                  disabled={
+                    !isOnline || currentTrackIndex >= tracklist.length - 1
+                  }
                   type="button"
                   onClick={nextTrack}
                 >
@@ -422,7 +440,12 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
           >
             <InputGroup.Input
               className="text-xs"
-              placeholder="Paste Spotify or YouTube link..."
+              disabled={!isOnline}
+              placeholder={
+                !isOnline
+                  ? "Offline - Reconnect to play..."
+                  : "Paste Spotify or YouTube link..."
+              }
               value={inputUrl}
               onChange={(event) => setInputUrl(event.target.value)}
             />
@@ -430,7 +453,7 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
         </TextField>
         <Button
           className="h-8 px-3 rounded-xl text-xs font-semibold"
-          isDisabled={!inputUrl.trim()}
+          isDisabled={!isOnline || !inputUrl.trim()}
           size="sm"
           type="submit"
           variant="primary"

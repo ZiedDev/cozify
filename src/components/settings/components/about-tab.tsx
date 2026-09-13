@@ -1,8 +1,19 @@
-import { Card, Link, Separator, Surface, Typography } from "@heroui/react";
+import {
+  Card,
+  Link,
+  Separator,
+  Surface,
+  Typography,
+  Button,
+} from "@heroui/react";
+import { Download, CheckCircle2 } from "lucide-react";
 
 import { siteConfig } from "@/config/site";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 export function AboutTab() {
+  const { isInstallable, isInstalled, installApp } = usePwaInstall();
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -12,6 +23,41 @@ export function AboutTab() {
           Your ideal cozy focus & study environment.
         </Typography>
       </Surface>
+
+      {/* PWA Install Card */}
+      {(isInstallable || isInstalled) && (
+        <Card>
+          <Card.Content className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <Typography className="font-semibold text-sm" type="h6">
+                {isInstalled ? "Cozify is NOT Installed" : "Install Cozify App"}
+              </Typography>
+              <Typography color="muted" type="body-xs">
+                {isInstalled
+                  ? "You are using the installed standalone application."
+                  : "Install on your device for fast offline access and a native desktop/mobile experience."}
+              </Typography>
+            </div>
+            {isInstallable && (
+              <Button
+                className="shrink-0 gap-1.5"
+                size="sm"
+                variant="primary"
+                onPress={installApp}
+              >
+                <Download className="size-3.5" />
+                <span>Install</span>
+              </Button>
+            )}
+            {isInstalled && !isInstallable && (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400 shrink-0 font-medium">
+                <CheckCircle2 className="size-3.5" />
+                <span>Installed</span>
+              </div>
+            )}
+          </Card.Content>
+        </Card>
+      )}
 
       <Card>
         <Card.Content className="space-y-3">

@@ -59,6 +59,7 @@ type MusicContextValue = {
   isLive: boolean;
   isPlaying: boolean;
   isBuffering: boolean;
+  isOnline: boolean;
   volume: number;
   currentTime: number;
   duration: number;
@@ -181,6 +182,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       : parsed?.videoId || "rFZHOHl-L8A";
   });
   const [isPosterHidden, setIsPosterHidden] = useState<boolean>(false);
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    return typeof navigator !== "undefined" ? navigator.onLine : true;
+  });
+  const isOnlineRef = useRef<boolean>(
+    typeof navigator !== "undefined" ? navigator.onLine : true,
+  );
+  isOnlineRef.current = isOnline;
 
   const [customPlaylists, setCustomPlaylists] = useState<Playlist[]>(() => {
     return storageAdapter.getItem<Playlist[]>(CUSTOM_PLAYLISTS_STORAGE_KEY, []);
@@ -248,6 +256,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setIsBuffering(buffering);
   }, []);
 
+  // Cancel any active buffering watchdog timer
+  const clearBufferingWatchdog = useCallback(() => {
+    if (bufferingWatchdogRef.current) {
+      clearTimeout(bufferingWatchdogRef.current);
+      bufferingWatchdogRef.current = null;
+    }
+  }, []);
+
   // Sync custom playlists to storage
   useEffect(() => {
     storageAdapter.setItem(CUSTOM_PLAYLISTS_STORAGE_KEY, customPlaylists);
@@ -283,6 +299,91 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     tracklist,
     currentTime,
   ]);
+
+  // Initial offline check and event listeners for network transitions
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      const online = typeof navigator !== "undefined" ? navigator.onLine : true;
+
+      setIsOnline(online);
+      isOnlineRef.current = online;
+      if (!online) {
+        isPlayingRef.current = false;
+        setIsPlaying(false);
+        setBuffering(false);
+      }
+    };
+
+    updateOnlineStatus();
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      isOnlineRef.current = false;
+      clearBufferingWatchdog();
+      isPlayingRef.current = false;
+      setIsPlaying(false);
+      setBuffering(false);
+      pendingActionRef.current = null;
+
+      try {
+        if (
+          playerRef.current &&
+          typeof playerRef.current.pauseVideo === "function"
+        ) {
+          playerRef.current.pauseVideo();
+        }
+      } catch {}
+
+      toast("Offline Mode", {
+        description:
+          "You are currently offline. Music player is paused and disabled.",
+        variant: "danger",
+        timeout: 3500,
+      });
+    };
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      isOnlineRef.current = true;
+
+      toast("Back Online 🌐", {
+        description: "Reconnected. Re-adding and refreshing music player...",
+        variant: "accent",
+        timeout: 3000,
+      });
+
+      // If YouTube API script was not loaded yet, remove any failed script tag
+      if (!window.YT || !window.YT.Player) {
+        const oldScript = document.getElementById("yt-iframe-api");
+
+        if (oldScript) {
+          oldScript.remove();
+        }
+      }
+
+      // Safely tear down existing player instance to prepare for fresh re-attachment
+      try {
+        if (playerRef.current) {
+          playerRef.current.destroy?.();
+        }
+      } catch {}
+      playerRef.current = null;
+      isReadyRef.current = false;
+      setIsReady(false);
+      setBuffering(false);
+
+      // Increment playerKey to trigger container & iframe remounting
+      setPlayerKey((prevKey) => prevKey + 1);
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [clearBufferingWatchdog, setBuffering]);
 
   // Derive Spotify Embed URL
   const spotifyEmbedUrl = useMemo(() => {
@@ -606,14 +707,6 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }, 250);
   }, [syncPlayerTrackMeta, setCurrentTime]);
 
-  // Cancel any active buffering watchdog timer
-  const clearBufferingWatchdog = useCallback(() => {
-    if (bufferingWatchdogRef.current) {
-      clearTimeout(bufferingWatchdogRef.current);
-      bufferingWatchdogRef.current = null;
-    }
-  }, []);
-
   // Re-render and re-instantiate the YouTube iframe if stuck buffering or broken
   const retryPlayer = useCallback(
     (_reason: string = "buffering_timeout") => {
@@ -715,6 +808,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   // Initialize YouTube Iframe API Player
   const initYTPlayer = useCallback(() => {
+    if (!isOnlineRef.current) return;
     if (!ytContainerRef.current || playerRef.current) return;
 
     const createPlayer = () => {
@@ -950,15 +1044,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (window.YT && window.YT.Player) {
       createPlayer();
     } else {
+      // Remove any previously failed or stale script tag before re-requesting
       const existingScript = document.getElementById("yt-iframe-api");
 
-      if (!existingScript) {
-        const tag = document.createElement("script");
-
-        tag.id = "yt-iframe-api";
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.head.appendChild(tag);
+      if (existingScript) {
+        existingScript.remove();
       }
+
+      const tag = document.createElement("script");
+
+      tag.id = "yt-iframe-api";
+      tag.src = "https://www.youtube.com/iframe_api";
+      tag.async = true;
 
       const pollTimer = setInterval(() => {
         if (window.YT && window.YT.Player) {
@@ -973,6 +1070,18 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         if (typeof oldCallback === "function") oldCallback();
         createPlayer();
       };
+
+      tag.onerror = () => {
+        clearInterval(pollTimer);
+        tag.remove();
+        setIsOnline(false);
+        isOnlineRef.current = false;
+        isPlayingRef.current = false;
+        setIsPlaying(false);
+        setBuffering(false);
+      };
+
+      document.head.appendChild(tag);
     }
   }, [
     fetchMetadata,
@@ -1001,7 +1110,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (!playerRef.current || !isPlayerAttached()) {
+      if (isOnlineRef.current && (!playerRef.current || !isPlayerAttached())) {
         initYTPlayer();
       }
     },
@@ -1009,6 +1118,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   );
 
   const play = useCallback(() => {
+    if (!isOnlineRef.current) {
+      toast("Offline Mode", {
+        description: "Cannot start music playback while offline.",
+        variant: "danger",
+        timeout: 2500,
+      });
+
+      return;
+    }
+
     if (activePlatform === "youtube") {
       setBuffering(true);
       isPlayingRef.current = true;
@@ -1215,24 +1334,74 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       }
 
       setActiveUrl(trimmed);
+      activeUrlRef.current = trimmed;
       setActivePlatform(parsed.platform);
 
       if (playlistId !== undefined) {
         setActivePlaylistId(playlistId);
       } else {
-        const matching = [...customPlaylists, ...PRESET_PLAYLISTS].find((playlist) => {
-          if (playlist.url === trimmed) return true;
-          if (parsed.videoId && playlist.url.includes(parsed.videoId)) return true;
-          if (parsed.id && playlist.url.includes(parsed.id)) return true;
+        const matching = [...customPlaylists, ...PRESET_PLAYLISTS].find(
+          (playlist) => {
+            if (playlist.url === trimmed) return true;
+            if (parsed.videoId && playlist.url.includes(parsed.videoId))
+              return true;
+            if (parsed.id && playlist.url.includes(parsed.id)) return true;
 
-          return false;
-        });
+            return false;
+          },
+        );
 
         setActivePlaylistId(matching ? matching.id : null);
       }
 
       if (customTitle) setTitle(customTitle);
       if (customAuthor) setAuthor(customAuthor);
+
+      if (parsed.platform === "youtube") {
+        if (parsed.type === "playlist") {
+          mediaTypeRef.current = "playlist";
+          targetFirstVideoIdRef.current = parsed.videoId || "";
+          setIsLive(false);
+          const initialVid = parsed.videoId || "rFZHOHl-L8A";
+
+          setCurrentVideoId(initialVid);
+          currentVideoIdRef.current = initialVid;
+          setPosterUrl(`https://img.youtube.com/vi/${initialVid}/hqdefault.jpg`);
+        } else {
+          mediaTypeRef.current = "video";
+          targetFirstVideoIdRef.current = "";
+          currentVideoIdsRef.current = [];
+          setCurrentVideoId(parsed.id);
+          currentVideoIdRef.current = parsed.id;
+          setPosterUrl(`https://img.youtube.com/vi/${parsed.id}/hqdefault.jpg`);
+        }
+      } else {
+        mediaTypeRef.current = "spotify";
+        targetFirstVideoIdRef.current = "";
+        currentVideoIdsRef.current = [];
+      }
+
+      setTracklist([]);
+      setCurrentTrackIndex(0);
+      currentTrackIndexRef.current = 0;
+      setCurrentTime(0);
+      currentTimeRef.current = 0;
+
+      if (!isOnlineRef.current) {
+        clearBufferingWatchdog();
+        pendingActionRef.current = null;
+        isPlayingRef.current = false;
+        setIsPlaying(false);
+        setBuffering(false);
+
+        toast("Playlist Selected 💿", {
+          description: `${customTitle || "Playlist"} selected. Will play when reconnected.`,
+          variant: "default",
+          timeout: 2500,
+        });
+
+        return true;
+      }
 
       if (parsed.platform === "youtube") {
         const executeLoad = () => {
@@ -1261,6 +1430,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
             if (parsed.videoId) {
               setCurrentVideoId(parsed.videoId);
+              currentVideoIdRef.current = parsed.videoId;
               setPosterUrl(
                 `https://img.youtube.com/vi/${parsed.videoId}/hqdefault.jpg`,
               );
@@ -1450,6 +1620,16 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const addCustomPlaylist = useCallback(
     async (urlStr: string): Promise<boolean> => {
+      if (!isOnlineRef.current) {
+        toast("Offline Mode", {
+          description: "Cannot add custom playlists while offline.",
+          variant: "danger",
+          timeout: 2500,
+        });
+
+        return false;
+      }
+
       const trimmed = urlStr.trim();
       const parsed = parseAudioUrl(trimmed);
 
@@ -1551,6 +1731,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       isLive,
       isPlaying,
       isBuffering,
+      isOnline,
       volume,
       currentTime,
       duration,
@@ -1597,6 +1778,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       isLive,
       isPlaying,
       isBuffering,
+      isOnline,
       volume,
       currentTime,
       duration,

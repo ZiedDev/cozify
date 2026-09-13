@@ -1,6 +1,10 @@
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import gsap from "gsap";
+import { registerSW } from "virtual:pwa-register";
+
+// Register Service Worker immediately for offline capability
+registerSW({ immediate: true });
 
 // Prevent animation teleporting/skipping when DevTools or console causes browser RAF throttling
 gsap.ticker.lagSmoothing(1000, 16);

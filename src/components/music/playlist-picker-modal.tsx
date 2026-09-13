@@ -32,6 +32,7 @@ export function PlaylistPickerModal() {
     activePlaylistId,
     isPlaying,
     isBuffering,
+    isOnline,
     customPlaylists,
     playPlaylist,
     addCustomPlaylist,
@@ -51,7 +52,7 @@ export function PlaylistPickerModal() {
 
   const handleAddPlaylist = async (event?: SubmitEvent) => {
     if (event) event.preventDefault();
-    if (!newUrl.trim() || isAdding) return;
+    if (!newUrl.trim() || isAdding || !isOnline) return;
 
     setIsAdding(true);
     try {
@@ -103,8 +104,9 @@ export function PlaylistPickerModal() {
               </Modal.Heading>
             </div>
             <Typography className="text-xs text-muted" type="body-xs">
-              Select a curated background stream or paste your own YouTube /
-              Spotify link below.
+              {!isOnline
+                ? "You are currently offline. You can select a playlist and it will play when reconnected."
+                : "Select a curated background stream or paste your own YouTube / Spotify link below."}
             </Typography>
 
             {/* Direct URL Input Bar */}
@@ -122,8 +124,12 @@ export function PlaylistPickerModal() {
                   </InputGroup.Prefix>
                   <InputGroup.Input
                     className="text-xs"
-                    disabled={isAdding}
-                    placeholder="Paste Spotify or YouTube link (details auto-fetched)..."
+                    disabled={isAdding || !isOnline}
+                    placeholder={
+                      !isOnline
+                        ? "Offline - Reconnect to add new streams..."
+                        : "Paste Spotify or YouTube link (details auto-fetched)..."
+                    }
                     type="url"
                     value={newUrl}
                     onChange={(event) => setNewUrl(event.target.value)}
@@ -133,7 +139,7 @@ export function PlaylistPickerModal() {
 
               <Button
                 className="h-8.5 px-4 rounded-full text-xs font-semibold shrink-0 cursor-pointer shadow-xs"
-                isDisabled={!newUrl.trim() || isAdding}
+                isDisabled={!newUrl.trim() || isAdding || !isOnline}
                 size="sm"
                 type="submit"
                 variant="primary"
@@ -403,10 +409,10 @@ export function PlaylistPickerModal() {
                         <Button
                           isIconOnly
                           aria-label={`Play ${item.title}`}
-                          className={`size-7 rounded-full cursor-pointer transition-transform duration-150 ${
+                          className={`size-7 rounded-full transition-transform duration-150 ${
                             isActive
-                              ? "bg-accent/20 text-accent ring-1 ring-accent"
-                              : "bg-surface text-muted hover:text-foreground border border-separator/40 hover:scale-105"
+                              ? "bg-accent/20 text-accent ring-1 ring-accent cursor-pointer"
+                              : "bg-surface text-muted hover:text-foreground border border-separator/40 hover:scale-105 cursor-pointer"
                           }`}
                           size="sm"
                           variant="ghost"
