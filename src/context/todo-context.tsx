@@ -63,37 +63,41 @@ type TodoContextType = {
 
 const TodoContext = createContext<TodoContextType | null>(null);
 
-const DEFAULT_TODOS: TodoItem[] = [
-  {
-    id: "todo-welcome-1",
-    title: "Welcome to Cozify To-Do ✨",
-    completed: false,
-    createdAt: Date.now() - 3600000,
-    priority: "high",
-    tag: "personal",
-    notes: "Switch between Minimalist and Detailed modes to find your flow.",
-  },
-  {
-    id: "todo-welcome-2",
-    title: "Drag and drop tasks to reorder your priorities 📌",
-    completed: false,
-    createdAt: Date.now() - 7200000,
-    priority: "medium",
-    tag: "study",
-    notes: "Your top tasks will instantly appear on your cozy sidebar widget!",
-  },
-];
+function createDefaultTodos(): TodoItem[] {
+  return [
+    {
+      id: crypto.randomUUID(),
+      title: "Welcome to Cozify To-Do ✨",
+      completed: false,
+      createdAt: Date.now(),
+      priority: "high",
+      tag: "personal",
+      notes: "Switch between Minimalist and Detailed modes to find your flow.",
+    },
+    {
+      id: crypto.randomUUID(),
+      title: "Drag and drop tasks to reorder your priorities 📌",
+      completed: false,
+      createdAt: Date.now(),
+      priority: "medium",
+      tag: "study",
+      notes:
+        "Your top tasks will instantly appear on your cozy sidebar widget!",
+    },
+  ];
+}
 
 export function TodoProvider({ children }: { children: ReactNode }) {
   const { playSound } = useSound();
   const [todos, setTodos] = useState<TodoItem[]>(() => {
+    const defaultList = createDefaultTodos();
     const saved = storageAdapter.getItem<TodoItem[]>(
       STORAGE_KEYS.TODOS,
-      DEFAULT_TODOS,
+      defaultList,
     );
 
     if (!Array.isArray(saved) || saved.length === 0) {
-      return DEFAULT_TODOS;
+      return defaultList;
     }
 
     return saved;
@@ -154,7 +158,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       notes?: string;
     }) => {
       const newTodo: TodoItem = {
-        id: `todo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: crypto.randomUUID(),
         title: data.title.trim(),
         completed: false,
         createdAt: Date.now(),
@@ -195,7 +199,9 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
   const updateTodo = useCallback((id: string, updates: Partial<TodoItem>) => {
     setTodos((prevTodos) =>
-      prevTodos.map((todo) => (todo.id === id ? { ...todo, ...updates } : todo)),
+      prevTodos.map((todo) =>
+        todo.id === id ? { ...todo, ...updates } : todo,
+      ),
     );
   }, []);
 
@@ -247,7 +253,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetToDefaultTodos = useCallback(() => {
-    setTodos(DEFAULT_TODOS);
+    setTodos(createDefaultTodos());
   }, []);
 
   const moveTodoToPosition = useCallback(

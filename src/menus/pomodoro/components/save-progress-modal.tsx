@@ -204,7 +204,7 @@ export function SaveProgressModal({
     const overtimeMinutes = Math.round(overtimeSecs / 60);
 
     const record: SessionRecord = {
-      id: `session_${Date.now()}`,
+      id: crypto.randomUUID(),
       createdAt: Date.now(),
       title: title.trim() || "Focus Session",
       tag,

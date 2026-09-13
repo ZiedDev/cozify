@@ -182,7 +182,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const normalizedUrl = normalizeImageUrl(trimmedUrl);
 
       const newBg: ThemeBackground = {
-        id: `custom_${Date.now()}`,
+        id: crypto.randomUUID(),
         name: trimmedName,
         url: normalizedUrl,
         isCustom: true,

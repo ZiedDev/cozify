@@ -1646,7 +1646,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       const details = await fetchMediaDetails(trimmed);
 
       const newPlaylist: Playlist = {
-        id: `custom_playlist_${Date.now()}`,
+        id: crypto.randomUUID(),
         title:
           details?.title ||
           (parsed.type === "playlist" ? "Custom Playlist" : "Custom Track"),

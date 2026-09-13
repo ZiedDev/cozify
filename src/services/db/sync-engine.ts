@@ -44,7 +44,7 @@ class RemoteSyncEngine {
     payload?: T,
   ) {
     const item: SyncQueueItem = {
-      id: `sync_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      id: crypto.randomUUID(),
       store,
       action,
       entityId,

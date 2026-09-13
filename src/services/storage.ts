@@ -65,15 +65,18 @@ export const storageAdapter = {
           // Check if localStorage has non-empty legacy data
           if (typeof localStorage !== "undefined") {
             const raw = localStorage.getItem(key);
+
             if (raw) {
               try {
                 const parsed = JSON.parse(raw);
+
                 if (Array.isArray(parsed) && parsed.length > 0) {
                   return parsed as T;
                 }
               } catch {}
             }
           }
+
           return fallback;
         }
 
