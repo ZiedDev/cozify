@@ -595,7 +595,7 @@ export function SidebarTodoWidget({
       ) : (
         <div className="flex-1 min-h-0 flex flex-col gap-1.5 w-full">
           <ScrollShadow
-            className="flex-1 min-h-0 max-h-full w-full flex flex-col gap-1.5 pr-0.5 overflow-y-auto no-scrollbar"
+            className="flex-1 min-h-0 max-h-full w-full flex flex-col gap-1.5 px-1"
             orientation="vertical"
             size={32}
           >

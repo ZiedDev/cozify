@@ -276,30 +276,31 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
           <div className="flex items-center justify-between gap-1.5 pt-0.5">
             <div className="flex items-center gap-1.5 shrink-0">
               {hasMultipleTracks && (
-                <button
+                <Button
+                  isIconOnly
                   aria-label="Previous track"
-                  className={`p-1 rounded-full transition-colors duration-150 ${
+                  className={`transition-colors ${
                     !isOnline || currentTrackIndex <= 0
                       ? "opacity-30 cursor-not-allowed text-muted"
                       : "text-muted hover:text-foreground cursor-pointer"
                   }`}
-                  disabled={!isOnline || currentTrackIndex <= 0}
-                  type="button"
+                  isDisabled={!isOnline || currentTrackIndex <= 0}
+                  variant="ghost"
                   onClick={prevTrack}
                 >
                   <SkipBack className="size-4 fill-current" />
-                </button>
+                </Button>
               )}
 
-              <button
+              <Button
+                isIconOnly
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className={`size-8 rounded-full flex items-center justify-center transition-all duration-150 shadow-md ${
+                className={`size-9 transition-colors ${
                   !isOnline
                     ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
                     : "bg-accent text-accent-foreground hover:bg-accent/90 active:scale-95 cursor-pointer"
                 }`}
-                disabled={!isOnline}
-                type="button"
+                isDisabled={!isOnline}
                 onClick={togglePlay}
               >
                 {isBuffering ? (
@@ -309,59 +310,62 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
                 ) : (
                   <Play className="size-3.5 fill-current" />
                 )}
-              </button>
+              </Button>
 
               {hasMultipleTracks && (
-                <button
+                <Button
+                  isIconOnly
                   aria-label="Next track"
-                  className={`p-1 rounded-full transition-colors duration-150 ${
+                  className={`transition-colors ${
                     !isOnline || currentTrackIndex >= tracklist.length - 1
-                      ? "opacity-30 cursor-not-allowed text-muted"
+                      ? "opacity-35 cursor-not-allowed text-muted"
                       : "text-muted hover:text-foreground cursor-pointer"
                   }`}
-                  disabled={
+                  isDisabled={
                     !isOnline || currentTrackIndex >= tracklist.length - 1
                   }
-                  type="button"
+                  variant="ghost"
                   onClick={nextTrack}
                 >
                   <SkipForward className="size-4 fill-current" />
-                </button>
+                </Button>
               )}
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <button
+            <div className="flex items-center shrink-0">
+              <Button
+                isIconOnly
                 aria-label="Toggle tracklist"
-                className={`p-1 rounded-md transition-colors duration-150 ${
+                className={`transition-colors ${
                   !hasMultipleTracks
                     ? "opacity-35 cursor-not-allowed text-muted"
                     : isTracklistOpen
                       ? "text-accent bg-accent/15 cursor-pointer"
                       : "text-muted hover:text-foreground cursor-pointer"
                 }`}
-                disabled={!hasMultipleTracks}
-                type="button"
+                isDisabled={!hasMultipleTracks}
+                variant="ghost"
                 onClick={() =>
                   hasMultipleTracks && setIsTracklistOpen((prev) => !prev)
                 }
               >
                 <ListMusic className="size-4" />
-              </button>
+              </Button>
 
-              <div className="flex items-center gap-1.5 w-20 sm:w-24">
-                <button
+              <div className="flex items-center gap-1.5 w-30">
+                <Button
+                  isIconOnly
                   aria-label="Mute toggle"
                   className="text-muted hover:text-foreground cursor-pointer shrink-0 transition-colors duration-150"
-                  type="button"
+                  variant="ghost"
                   onClick={toggleMute}
                 >
                   {volume === 0 ? (
-                    <VolumeX className="size-3" />
+                    <VolumeX className="size-4" />
                   ) : (
-                    <Volume2 className="size-3" />
+                    <Volume2 className="size-4" />
                   )}
-                </button>
+                </Button>
                 <Slider
                   aria-label="Volume slider"
                   className="w-full"
@@ -395,7 +399,6 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
                         ? "bg-accent/20 text-accent font-semibold"
                         : "text-foreground hover:bg-surface"
                     }`}
-                    type="button"
                     onClick={() => playTrackAt(idx)}
                   >
                     <div className="flex items-center gap-2.5 truncate">

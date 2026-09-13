@@ -89,3 +89,37 @@ export const PRESET_BACKGROUNDS: ThemeBackground[] = [
       "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=60&w=320&auto=format&fit=crop",
   },
 ];
+
+/**
+ * Detects Google Drive photo/image links and converts them to direct viewable CDN URLs.
+ */
+export function normalizeImageUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  // 1. Google Drive / Google Docs file sharing link (e.g., /file/d/ID/view...)
+  const driveFileMatch = trimmed.match(
+    /(?:drive|docs)\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/i,
+  );
+  if (driveFileMatch && driveFileMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveFileMatch[1]}`;
+  }
+
+  // 2. Google Drive open / uc / thumbnail link with id parameter
+  const driveParamMatch = trimmed.match(
+    /drive\.google\.com\/(?:open|uc|thumbnail)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/i,
+  );
+  if (driveParamMatch && driveParamMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${driveParamMatch[1]}`;
+  }
+
+  // 3. Direct Google user content CDN link
+  const googleUserContentMatch = trimmed.match(
+    /lh3\.googleusercontent\.com\/d\/([a-zA-Z0-9_-]+)/i,
+  );
+  if (googleUserContentMatch && googleUserContentMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${googleUserContentMatch[1]}`;
+  }
+
+  return trimmed;
+}

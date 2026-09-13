@@ -23,12 +23,11 @@ import {
   Tag,
   Pencil,
   Check,
+  X,
   Sliders,
   Move,
   RotateCcw,
   Image,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 
 import { useTheme } from "@/hooks/use-theme";
@@ -39,7 +38,9 @@ import {
   DEFAULT_CHROMA,
   DEFAULT_LIGHTNESS,
   DEFAULT_SATURATION,
+  ThemeBackground,
 } from "@/config/themes";
+import { SortableList, SortableItem } from "@/components/ui/sortable-list";
 
 export function ThemePopover() {
   const {
@@ -47,9 +48,9 @@ export function ThemePopover() {
     customBackgrounds,
     selectBackground,
     addCustomBackground,
-    renameCustomBackground,
+    updateCustomBackground,
     removeCustomBackground,
-    moveCustomBackground,
+    reorderCustomBackgrounds,
     overlayOpacity,
     setOverlayOpacity,
     blur,
@@ -68,6 +69,7 @@ export function ThemePopover() {
   const [imageName, setImageName] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [editingUrl, setEditingUrl] = useState("");
   const [activeTab, setActiveTab] = useState<string>("gallery");
 
   const currentColor = useMemo(() => {
@@ -100,11 +102,30 @@ export function ThemePopover() {
     }
   };
 
-  const handleSaveRename = (id: string) => {
-    if (editingName.trim()) {
-      renameCustomBackground(id, editingName.trim());
-    }
+  const handleStartEdit = (bg: ThemeBackground) => {
+    setEditingId(bg.id);
+    setEditingName(bg.name);
+    setEditingUrl(bg.url);
+  };
+
+  const handleCancelEdit = () => {
     setEditingId(null);
+    setEditingName("");
+    setEditingUrl("");
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingId) return;
+    if (!editingUrl.trim()) return;
+
+    updateCustomBackground(editingId, {
+      name: editingName.trim() || "Custom Wallpaper",
+      url: editingUrl.trim(),
+    });
+
+    setEditingId(null);
+    setEditingName("");
+    setEditingUrl("");
   };
 
   const handleRecenter = () => {
@@ -193,44 +214,58 @@ export function ThemePopover() {
               </Tabs.List>
             </Tabs.ListContainer>
 
-            {/* Tab 1: Wallpapers Gallery & Custom Add */}
+            {/* Tab 1: Wallpapers Gallery & Custom Add/Edit */}
             <Tabs.Panel className="space-y-3 pt-2" id="gallery">
-              {/* Add Custom Wallpaper via Link & Name */}
-              <form
-                className="p-2.5 bg-surface-secondary/70 rounded-2xl border border-separator/60 space-y-2"
-                onSubmit={handleAddCustom}
-              >
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                  <Image className="size-3.5 text-accent" />
-                  <span>Add Image Link</span>
-                </div>
+              {/* Add or Edit Custom Wallpaper Form */}
+              {editingId ? (
+                <form
+                  className="p-2.5 bg-surface-secondary/80 rounded-2xl border border-accent/60 space-y-2 shadow-xs transition-colors"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    handleSaveEdit();
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <Pencil className="size-3.5 text-accent" />
+                      <span>Edit Wallpaper</span>
+                    </div>
+                    <Button
+                      className="h-5 px-1.5 text-[10px] text-muted hover:text-foreground"
+                      size="sm"
+                      variant="ghost"
+                      onPress={handleCancelEdit}
+                    >
+                      <X className="size-3" />
+                      Cancel
+                    </Button>
+                  </div>
 
-                <div className="space-y-1.5">
-                  <TextField
-                    fullWidth
-                    aria-label="Wallpaper name"
-                    name="imageName"
-                    value={imageName}
-                    onChange={setImageName}
-                  >
-                    <InputGroup fullWidth>
-                      <InputGroup.Prefix>
-                        <Tag className="size-3.5 text-muted" />
-                      </InputGroup.Prefix>
-                      <InputGroup.Input
-                        className="text-xs"
-                        placeholder="Name (optional)"
-                      />
-                    </InputGroup>
-                  </TextField>
-
-                  <div className="flex gap-1.5">
+                  <div className="space-y-1.5">
                     <TextField
                       fullWidth
-                      aria-label="Wallpaper image URL"
-                      name="imageUrl"
-                      value={imageUrl}
-                      onChange={setImageUrl}
+                      aria-label="Edit wallpaper name"
+                      name="editingName"
+                      value={editingName}
+                      onChange={setEditingName}
+                    >
+                      <InputGroup fullWidth>
+                        <InputGroup.Prefix>
+                          <Tag className="size-3.5 text-muted" />
+                        </InputGroup.Prefix>
+                        <InputGroup.Input
+                          className="text-xs"
+                          placeholder="Wallpaper name"
+                        />
+                      </InputGroup>
+                    </TextField>
+
+                    <TextField
+                      fullWidth
+                      aria-label="Edit wallpaper image URL"
+                      name="editingUrl"
+                      value={editingUrl}
+                      onChange={setEditingUrl}
                     >
                       <InputGroup fullWidth>
                         <InputGroup.Prefix>
@@ -238,24 +273,97 @@ export function ThemePopover() {
                         </InputGroup.Prefix>
                         <InputGroup.Input
                           className="text-xs"
-                          placeholder="Paste image URL (https://...)"
+                          placeholder="Image URL (https://...)"
                           type="url"
                         />
                       </InputGroup>
                     </TextField>
 
-                    <Button
-                      className="shrink-0 font-medium px-3 text-xs"
-                      isDisabled={!imageUrl.trim()}
-                      size="sm"
-                      type="submit"
-                      variant="primary"
-                    >
-                      Add
-                    </Button>
+                    <div className="flex justify-end gap-1.5 pt-0.5">
+                      <Button
+                        className="font-medium px-2.5 text-xs h-7"
+                        size="sm"
+                        type="button"
+                        variant="ghost"
+                        onPress={handleCancelEdit}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        className="font-medium px-3 text-xs h-7"
+                        isDisabled={!editingUrl.trim()}
+                        size="sm"
+                        type="submit"
+                        variant="primary"
+                      >
+                        <Check className="size-3" />
+                        Save Changes
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </form>
+                </form>
+              ) : (
+                <form
+                  className="p-2.5 bg-surface-secondary/70 rounded-2xl border border-separator/60 space-y-2"
+                  onSubmit={handleAddCustom}
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                    <Image className="size-3.5 text-accent" />
+                    <span>Add Image Link</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <TextField
+                      fullWidth
+                      aria-label="Wallpaper name"
+                      name="imageName"
+                      value={imageName}
+                      onChange={setImageName}
+                    >
+                      <InputGroup fullWidth>
+                        <InputGroup.Prefix>
+                          <Tag className="size-3.5 text-muted" />
+                        </InputGroup.Prefix>
+                        <InputGroup.Input
+                          className="text-xs"
+                          placeholder="Name (optional)"
+                        />
+                      </InputGroup>
+                    </TextField>
+
+                    <div className="flex gap-1.5">
+                      <TextField
+                        fullWidth
+                        aria-label="Wallpaper image URL"
+                        name="imageUrl"
+                        value={imageUrl}
+                        onChange={setImageUrl}
+                      >
+                        <InputGroup fullWidth>
+                          <InputGroup.Prefix>
+                            <LinkIcon className="size-3.5 text-muted" />
+                          </InputGroup.Prefix>
+                          <InputGroup.Input
+                            className="text-xs"
+                            placeholder="Paste image URL (https://...)"
+                            type="url"
+                          />
+                        </InputGroup>
+                      </TextField>
+
+                      <Button
+                        className="shrink-0 font-medium px-3 text-xs"
+                        isDisabled={!imageUrl.trim()}
+                        size="sm"
+                        type="submit"
+                        variant="primary"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                </form>
+              )}
 
               {/* Gallery Grid */}
               <div className="space-y-1">
@@ -266,223 +374,199 @@ export function ThemePopover() {
                   </span>
                 </div>
 
-                <ScrollShadow className="grid grid-cols-3 gap-2 max-h-56 overflow-y-auto p-2">
-                  {/* Clean Slate Minimal Option */}
-                  <button
-                    className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-colors border cursor-pointer overflow-hidden ${
-                      activeBackground === null
-                        ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 bg-surface"
-                        : "border-separator/80 hover:border-muted bg-surface-secondary/70"
-                    }`}
-                    type="button"
-                    onClick={() => selectBackground(null)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <Layers className="size-3.5 text-muted group-hover:text-foreground transition-colors" />
-                    </div>
-                    <span className="text-[10px] font-medium text-foreground truncate">
-                      Clean Slate
-                    </span>
-                  </button>
+                <ScrollShadow className="max-h-56 overflow-y-auto p-2 space-y-2.5">
+                  {/* Clean Slate & Preset Wallpapers */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Clean Slate Minimal Option */}
+                    <button
+                      className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-colors border cursor-pointer overflow-hidden ${
+                        activeBackground === null
+                          ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 bg-surface"
+                          : "border-separator/80 hover:border-muted bg-surface-secondary/70"
+                      }`}
+                      type="button"
+                      onClick={() => selectBackground(null)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <Layers className="size-3.5 text-muted group-hover:text-foreground transition-colors" />
+                      </div>
+                      <span className="text-[10px] font-medium text-foreground truncate">
+                        Clean Slate
+                      </span>
+                    </button>
 
-                  {/* Preset Wallpapers */}
-                  {PRESET_BACKGROUNDS.map((bg) => {
-                    const isSelected = activeBackground?.id === bg.id;
+                    {/* Preset Wallpapers */}
+                    {PRESET_BACKGROUNDS.map((bg) => {
+                      const isSelected = activeBackground?.id === bg.id;
 
-                    return (
-                      <button
-                        key={bg.id}
-                        className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-[border-color,transform] border cursor-pointer overflow-hidden bg-cover bg-center ${
-                          isSelected
-                            ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
-                            : "border-separator/80 hover:border-muted hover:scale-[1.02]"
-                        }`}
-                        style={{ backgroundImage: `url(${bg.url})` }}
-                        type="button"
-                        onClick={() => selectBackground(bg)}
-                      >
-                        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
-                        <div className="relative z-10 flex items-center justify-between w-full">
-                          <ImageIcon className="size-3 text-white/80" />
-                        </div>
-                        <span className="relative z-10 text-[10px] font-medium text-white truncate drop-shadow-sm">
-                          {bg.name}
-                        </span>
-                      </button>
-                    );
-                  })}
-
-                  {/* Custom Wallpapers */}
-                  {customBackgrounds.map((bg) => {
-                    const isSelected = activeBackground?.id === bg.id;
-                    const isEditing = editingId === bg.id;
-
-                    return (
-                      <div
-                        key={bg.id}
-                        className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-[border-color,transform] border overflow-hidden bg-cover bg-center cursor-pointer ${
-                          isSelected
-                            ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
-                            : "border-separator/80 hover:border-muted hover:scale-[1.02]"
-                        }`}
-                        role="button"
-                        style={{ backgroundImage: `url(${bg.url})` }}
-                        tabIndex={0}
-                        onClick={() => {
-                          if (!isEditing) selectBackground(bg);
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            if (!isEditing) selectBackground(bg);
-                          }
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
-
-                        <div className="relative z-10 flex items-center justify-between w-full">
-                          <span className="text-[8px] px-1 py-0.5 rounded bg-black/60 text-white/90">
-                            Custom
+                      return (
+                        <button
+                          key={bg.id}
+                          className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-[border-color,transform] border cursor-pointer overflow-hidden bg-cover bg-center ${
+                            isSelected
+                              ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
+                              : "border-separator/80 hover:border-muted hover:scale-[1.02]"
+                          }`}
+                          style={{ backgroundImage: `url(${bg.url})` }}
+                          type="button"
+                          onClick={() => selectBackground(bg)}
+                        >
+                          <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
+                          <div className="relative z-10 flex items-center justify-between w-full">
+                            <ImageIcon className="size-3 text-white/80" />
+                          </div>
+                          <span className="relative z-10 text-[10px] font-medium text-white truncate drop-shadow-sm">
+                            {bg.name}
                           </span>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-                          <div
-                            className="flex items-center gap-1"
-                            role="presentation"
-                            onClick={(event) => event.stopPropagation()}
-                            onKeyDown={(event) => event.stopPropagation()}
-                            onPointerDown={(event) => event.stopPropagation()}
-                          >
-                            {/* Move Left */}
-                            <Tooltip delay={150}>
-                              <Tooltip.Trigger>
-                                <button
-                                  aria-label="Move left"
-                                  className="size-4.5 rounded-full bg-black/70 hover:bg-surface text-white flex items-center justify-center cursor-pointer transition-colors"
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    moveCustomBackground(bg.id, "left");
-                                  }}
-                                >
-                                  <ChevronLeft className="size-2.5" />
-                                </button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
-                                Move Left
-                              </Tooltip.Content>
-                            </Tooltip>
+                  {/* Custom Wallpapers Sortable List */}
+                  {customBackgrounds.length > 0 && (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center justify-between text-[10px] font-semibold text-muted px-0.5">
+                        <span>Custom Wallpapers</span>
+                        <span className="text-[9px] text-muted/70">
+                          Drag to reorder
+                        </span>
+                      </div>
 
-                            {/* Move Right */}
-                            <Tooltip delay={150}>
-                              <Tooltip.Trigger>
-                                <button
-                                  aria-label="Move right"
-                                  className="size-4.5 rounded-full bg-black/70 hover:bg-surface text-white flex items-center justify-center cursor-pointer transition-colors"
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    moveCustomBackground(bg.id, "right");
-                                  }}
-                                >
-                                  <ChevronRight className="size-2.5" />
-                                </button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
-                                Move Right
-                              </Tooltip.Content>
-                            </Tooltip>
+                      <SortableList
+                        items={customBackgrounds}
+                        onReorder={reorderCustomBackgrounds}
+                      >
+                        <div className="grid grid-cols-3 gap-2">
+                          {customBackgrounds.map((bg, index) => {
+                            const isSelected = activeBackground?.id === bg.id;
+                            const isEditing = editingId === bg.id;
 
-                            {/* Rename toggle button */}
-                            <Tooltip delay={150}>
-                              <Tooltip.Trigger>
-                                <button
-                                  aria-label={
-                                    isEditing
-                                      ? `Save ${bg.name}`
-                                      : `Rename ${bg.name}`
-                                  }
-                                  className={`size-4.5 rounded-full text-white flex items-center justify-center cursor-pointer transition-colors ${
-                                    isEditing
-                                      ? "bg-accent text-accent-foreground"
-                                      : "bg-black/70 hover:bg-surface"
+                            return (
+                              <SortableItem
+                                key={bg.id}
+                                id={bg.id}
+                                index={index}
+                              >
+                                <div
+                                  className={`group relative rounded-xl aspect-16/11 p-2 text-left flex flex-col justify-between transition-[border-color,transform] border overflow-hidden bg-cover bg-center cursor-pointer select-none ${
+                                    isSelected
+                                      ? "border-accent ring-2 ring-accent ring-offset-2 ring-offset-background shadow-md shadow-accent/20 scale-[1.02]"
+                                      : isEditing
+                                        ? "border-accent ring-2 ring-accent/60 shadow-md scale-[1.02]"
+                                        : "border-separator/80 hover:border-muted hover:scale-[1.02]"
                                   }`}
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    if (isEditing) {
-                                      handleSaveRename(bg.id);
-                                    } else {
-                                      setEditingId(bg.id);
-                                      setEditingName(bg.name);
+                                  role="button"
+                                  style={{ backgroundImage: `url(${bg.url})` }}
+                                  tabIndex={0}
+                                  onClick={() => selectBackground(bg)}
+                                  onKeyDown={(event) => {
+                                    if (
+                                      event.key === "Enter" ||
+                                      event.key === " "
+                                    ) {
+                                      selectBackground(bg);
                                     }
                                   }}
                                 >
-                                  {isEditing ? (
-                                    <Check className="size-2.5" />
-                                  ) : (
-                                    <Pencil className="size-2.5" />
-                                  )}
-                                </button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
-                                {isEditing ? "Save Name" : "Rename"}
-                              </Tooltip.Content>
-                            </Tooltip>
+                                  <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/10 group-hover:opacity-85 transition-opacity" />
 
-                            {/* Delete button */}
-                            <Tooltip delay={150}>
-                              <Tooltip.Trigger>
-                                <button
-                                  aria-label={`Delete ${bg.name}`}
-                                  className="size-4.5 rounded-full bg-black/70 hover:bg-danger text-white flex items-center justify-center cursor-pointer transition-colors"
-                                  type="button"
-                                  onClick={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    removeCustomBackground(bg.id);
-                                  }}
-                                >
-                                  <Trash2 className="size-2.5" />
-                                </button>
-                              </Tooltip.Trigger>
-                              <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
-                                Delete
-                              </Tooltip.Content>
-                            </Tooltip>
-                          </div>
+                                  <div className="relative z-10 flex items-center justify-between w-full">
+                                    <span
+                                      className={`text-[8px] px-1 py-0.5 rounded font-medium ${
+                                        isEditing
+                                          ? "bg-accent text-accent-foreground shadow-xs"
+                                          : "bg-black/60 text-white/90"
+                                      }`}
+                                    >
+                                      {isEditing ? "Editing" : "Custom"}
+                                    </span>
+
+                                    <div
+                                      className="flex items-center gap-1"
+                                      role="presentation"
+                                      onClick={(event) =>
+                                        event.stopPropagation()
+                                      }
+                                      onKeyDown={(event) =>
+                                        event.stopPropagation()
+                                      }
+                                      onPointerDown={(event) =>
+                                        event.stopPropagation()
+                                      }
+                                    >
+                                      {/* Edit button */}
+                                      <Tooltip delay={150}>
+                                        <Tooltip.Trigger>
+                                          <button
+                                            aria-label={
+                                              isEditing
+                                                ? `Cancel editing ${bg.name}`
+                                                : `Edit ${bg.name}`
+                                            }
+                                            className={`size-4.5 rounded-full text-white flex items-center justify-center cursor-pointer transition-colors ${
+                                              isEditing
+                                                ? "bg-accent text-accent-foreground"
+                                                : "bg-black/70 hover:bg-surface"
+                                            }`}
+                                            type="button"
+                                            onClick={(event) => {
+                                              event.preventDefault();
+                                              event.stopPropagation();
+                                              if (isEditing) {
+                                                handleCancelEdit();
+                                              } else {
+                                                handleStartEdit(bg);
+                                              }
+                                            }}
+                                          >
+                                            <Pencil className="size-2.5" />
+                                          </button>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
+                                          {isEditing
+                                            ? "Cancel Edit"
+                                            : "Edit Details"}
+                                        </Tooltip.Content>
+                                      </Tooltip>
+
+                                      {/* Delete button */}
+                                      <Tooltip delay={150}>
+                                        <Tooltip.Trigger>
+                                          <button
+                                            aria-label={`Delete ${bg.name}`}
+                                            className="size-4.5 rounded-full bg-black/70 hover:bg-danger text-white flex items-center justify-center cursor-pointer transition-colors"
+                                            type="button"
+                                            onClick={(event) => {
+                                              event.preventDefault();
+                                              event.stopPropagation();
+                                              if (editingId === bg.id) {
+                                                handleCancelEdit();
+                                              }
+                                              removeCustomBackground(bg.id);
+                                            }}
+                                          >
+                                            <Trash2 className="size-2.5" />
+                                          </button>
+                                        </Tooltip.Trigger>
+                                        <Tooltip.Content className="text-xs px-2 py-0.5 rounded-lg bg-surface border border-separator shadow-md">
+                                          Delete
+                                        </Tooltip.Content>
+                                      </Tooltip>
+                                    </div>
+                                  </div>
+
+                                  <span className="relative z-10 text-[10px] font-medium text-white truncate drop-shadow-sm w-full block">
+                                    {bg.name}
+                                  </span>
+                                </div>
+                              </SortableItem>
+                            );
+                          })}
                         </div>
-
-                        {isEditing ? (
-                          <div
-                            className="relative z-20"
-                            role="presentation"
-                            onClick={(event) => event.stopPropagation()}
-                            onKeyDown={(event) => event.stopPropagation()}
-                          >
-                            <input
-                              className="text-[10px] font-medium text-foreground bg-surface px-1 py-0.5 rounded border border-accent w-full outline-none"
-                              value={editingName}
-                              onBlur={() => handleSaveRename(bg.id)}
-                              onChange={(event) =>
-                                setEditingName(event.target.value)
-                              }
-                              onKeyDown={(event) => {
-                                if (event.key === "Enter")
-                                  handleSaveRename(bg.id);
-                                if (event.key === "Escape") setEditingId(null);
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <span className="relative z-10 text-[10px] font-medium text-white truncate drop-shadow-sm w-full block">
-                            {bg.name}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
+                      </SortableList>
+                    </div>
+                  )}
                 </ScrollShadow>
               </div>
             </Tabs.Panel>

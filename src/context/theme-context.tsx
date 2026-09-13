@@ -15,6 +15,7 @@ import {
   DEFAULT_THEME_CONFIG,
   DEFAULT_HUE,
   PRESET_BACKGROUNDS,
+  normalizeImageUrl,
 } from "@/config/themes";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
 
@@ -42,8 +43,13 @@ type ThemeContextValue = {
   selectBackground: (bg: ThemeBackground | null) => void;
   addCustomBackground: (name: string, url: string) => boolean;
   renameCustomBackground: (id: string, newName: string) => void;
+  updateCustomBackground: (
+    id: string,
+    updates: { name?: string; url?: string },
+  ) => void;
   removeCustomBackground: (id: string) => void;
   moveCustomBackground: (id: string, direction: "left" | "right") => void;
+  reorderCustomBackgrounds: (activeId: string, overId: string) => void;
   setOverlayOpacity: (opacity: number) => void;
   setBlur: (blur: number) => void;
   setPositionX: (posX: number) => void;
@@ -68,7 +74,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       activeBackgroundId:
         saved.activeBackgroundId ?? DEFAULT_THEME_CONFIG.activeBackgroundId,
       customBackgrounds: Array.isArray(saved.customBackgrounds)
-        ? saved.customBackgrounds.map((bg) => ({ ...bg, isCustom: true }))
+        ? saved.customBackgrounds.map((bg) => ({
+            ...bg,
+            url: normalizeImageUrl(bg.url),
+            isCustom: true,
+          }))
         : [],
       overlayOpacity:
         saved.overlayOpacity ?? DEFAULT_THEME_CONFIG.overlayOpacity,
@@ -169,10 +179,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
+      const normalizedUrl = normalizeImageUrl(trimmedUrl);
+
       const newBg: ThemeBackground = {
         id: `custom_${Date.now()}`,
         name: trimmedName,
-        url: trimmedUrl,
+        url: normalizedUrl,
         isCustom: true,
       };
 
@@ -212,6 +224,57 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateCustomBackground = useCallback(
+    (id: string, updates: { name?: string; url?: string }) => {
+      const trimmedName = updates.name?.trim();
+      const trimmedUrl = updates.url?.trim();
+
+      if (trimmedUrl !== undefined && trimmedUrl !== "") {
+        if (
+          !trimmedUrl.startsWith("http://") &&
+          !trimmedUrl.startsWith("https://")
+        ) {
+          toast("Invalid Image URL", {
+            description:
+              "Please enter a valid web image URL starting with http:// or https://",
+            variant: "danger",
+          });
+          return;
+        }
+      }
+
+      const normalizedUrl =
+        trimmedUrl !== undefined && trimmedUrl !== ""
+          ? normalizeImageUrl(trimmedUrl)
+          : undefined;
+
+      setConfig((prev) => ({
+        ...prev,
+        customBackgrounds: prev.customBackgrounds.map((bg) => {
+          if (bg.id !== id) return bg;
+          return {
+            ...bg,
+            name:
+              trimmedName !== undefined && trimmedName !== ""
+                ? trimmedName
+                : bg.name,
+            url:
+              normalizedUrl !== undefined && normalizedUrl !== ""
+                ? normalizedUrl
+                : bg.url,
+          };
+        }),
+      }));
+
+      toast("Wallpaper Updated", {
+        description: "Custom wallpaper details have been saved.",
+        variant: "default",
+        timeout: 2000,
+      });
+    },
+    [],
+  );
+
   const removeCustomBackground = useCallback((id: string) => {
     setConfig((prev) => {
       const updated = prev.customBackgrounds.filter((bg) => bg.id !== id);
@@ -246,6 +309,33 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         const [moved] = next.splice(index, 1);
 
         next.splice(targetIndex, 0, moved);
+
+        return {
+          ...prev,
+          customBackgrounds: next,
+        };
+      });
+    },
+    [],
+  );
+
+  const reorderCustomBackgrounds = useCallback(
+    (activeId: string, overId: string) => {
+      setConfig((prev) => {
+        const oldIndex = prev.customBackgrounds.findIndex(
+          (bg) => bg.id === activeId,
+        );
+        const newIndex = prev.customBackgrounds.findIndex(
+          (bg) => bg.id === overId,
+        );
+
+        if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) {
+          return prev;
+        }
+
+        const next = [...prev.customBackgrounds];
+        const [moved] = next.splice(oldIndex, 1);
+        next.splice(newIndex, 0, moved);
 
         return {
           ...prev,
@@ -315,8 +405,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     selectBackground,
     addCustomBackground,
     renameCustomBackground,
+    updateCustomBackground,
     removeCustomBackground,
     moveCustomBackground,
+    reorderCustomBackgrounds,
     setOverlayOpacity,
     setBlur,
     setPositionX,

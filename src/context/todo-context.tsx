@@ -46,6 +46,7 @@ type TodoContextType = {
   permanentlyDeleteTodo: (id: string) => void;
   restoreTodo: (id: string) => void;
   clearCompleted: () => void;
+  resetToDefaultTodos: () => void;
   moveTodoToPosition: (
     sourceId: string,
     targetId: string,
@@ -85,9 +86,18 @@ const DEFAULT_TODOS: TodoItem[] = [
 
 export function TodoProvider({ children }: { children: ReactNode }) {
   const { playSound } = useSound();
-  const [todos, setTodos] = useState<TodoItem[]>(() =>
-    storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, DEFAULT_TODOS),
-  );
+  const [todos, setTodos] = useState<TodoItem[]>(() => {
+    const saved = storageAdapter.getItem<TodoItem[]>(
+      STORAGE_KEYS.TODOS,
+      DEFAULT_TODOS,
+    );
+
+    if (!Array.isArray(saved) || saved.length === 0) {
+      return DEFAULT_TODOS;
+    }
+
+    return saved;
+  });
 
   const [viewMode, setViewModeState] = useState<TodoViewMode>(() => {
     const settings = storageAdapter.getItem<AppSettings>(
@@ -236,6 +246,10 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const resetToDefaultTodos = useCallback(() => {
+    setTodos(DEFAULT_TODOS);
+  }, []);
+
   const moveTodoToPosition = useCallback(
     (sourceId: string, targetId: string, position: "top" | "bottom") => {
       setTodos((prevTodos) => {
@@ -364,6 +378,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       permanentlyDeleteTodo,
       restoreTodo,
       clearCompleted,
+      resetToDefaultTodos,
       moveTodoToPosition,
       reorderTodos,
       reorderList,
@@ -389,6 +404,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       permanentlyDeleteTodo,
       restoreTodo,
       clearCompleted,
+      resetToDefaultTodos,
       moveTodoToPosition,
       reorderTodos,
       reorderList,

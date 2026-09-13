@@ -160,7 +160,7 @@ export function TodoList() {
       ) : (
         <ScrollShadow
           ref={listRef}
-          className="w-full h-full pr-1.5 scroll-smooth py-1 overflow-x-hidden"
+          className="w-full h-full pr-1.5 scroll-smooth py-2 px-4 overflow-x-hidden"
           orientation="vertical"
           size={32}
         >
@@ -196,7 +196,7 @@ export function TodoList() {
               {hasMore && (
                 <div className="flex justify-center pt-2 pb-3">
                   <Button
-                    className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary border border-separator/50 hover:bg-surface-secondary/80 hover:border-separator text-muted hover:text-foreground transition-colors cursor-pointer shadow-xs"
+                    className="text-xs font-medium px-4 py-1.5 rounded-full bg-surface-secondary hover:bg-surface-secondary/80 text-muted hover:text-foreground transition-colors cursor-pointer shadow-xs"
                     size="sm"
                     variant="secondary"
                     onPress={() =>
