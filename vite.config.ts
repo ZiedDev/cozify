@@ -75,6 +75,7 @@ export default defineConfig({
         globPatterns: [
           "**/*.{js,css,html,ico,png,jpg,svg,mp3,ogg,wav,woff,woff2}",
         ],
+        globIgnores: ["**/wallpapers/full/**"],
         navigateFallback: "index.html",
         cleanupOutdatedCaches: true,
         clientsClaim: true,

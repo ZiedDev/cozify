@@ -91,32 +91,32 @@ export const PRESET_BACKGROUNDS: ThemeBackground[] = [
   {
     id: "flower",
     name: "flower",
-    url: "./public/wallpapers/full/flower.jpg",
-    thumbnail: "./public/wallpapers/thumbnail/flower.jpg",
+    url: "/wallpapers/full/flower.jpg",
+    thumbnail: "/wallpapers/thumbnail/flower.jpg",
   },
   {
     id: "foliage",
     name: "Foliage",
-    url: "./public/wallpapers/full/foliage.jpg",
-    thumbnail: "./public/wallpapers/thumbnail/foliage.jpg",
+    url: "/wallpapers/full/foliage.jpg",
+    thumbnail: "/wallpapers/thumbnail/foliage.jpg",
   },
   {
     id: "sea_foam",
     name: "Sea Foam",
-    url: "./public/wallpapers/full/sea_foam.jpg",
-    thumbnail: "./public/wallpapers/thumbnail/sea_foam.jpg",
+    url: "/wallpapers/full/sea_foam.jpg",
+    thumbnail: "/wallpapers/thumbnail/sea_foam.jpg",
   },
   {
     id: "sunset_sea",
     name: "Sunset Sea",
-    url: "./public/wallpapers/full/sunset_sea.jpg",
-    thumbnail: "./public/wallpapers/thumbnail/sunset_sea.jpg",
+    url: "/wallpapers/full/sunset_sea.jpg",
+    thumbnail: "/wallpapers/thumbnail/sunset_sea.jpg",
   },
   {
     id: "sunset_silhouette",
     name: "Sunset Silhouette",
-    url: "./public/wallpapers/full/sunset_silhouette.jpg",
-    thumbnail: "./public/wallpapers/thumbnail/sunset_silhouette.jpg",
+    url: "/wallpapers/full/sunset_silhouette.jpg",
+    thumbnail: "/wallpapers/thumbnail/sunset_silhouette.jpg",
   },
 ];
 
