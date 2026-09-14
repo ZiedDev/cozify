@@ -281,7 +281,7 @@ class RemoteSyncEngine {
   }
 
   /**
-   * Periodic background sync (every 5 mins)
+   * Periodic background sync (every 60 seconds)
    */
   private setupAutoSync() {
     if (typeof window === "undefined") return;
@@ -290,12 +290,9 @@ class RemoteSyncEngine {
       this.syncWithRemote();
     });
 
-    this.syncIntervalTimer = setInterval(
-      () => {
-        this.syncWithRemote();
-      },
-      5 * 60 * 1000,
-    );
+    this.syncIntervalTimer = setInterval(() => {
+      this.syncWithRemote();
+    }, 60 * 1000);
   }
 
   public dispose() {
