@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Modal, Button, Typography, toast, Spinner } from "@heroui/react";
-import { Cloud, AlertCircle, HardDrive, Zap, LogIn } from "lucide-react";
+import { Cloud, HardDrive, Zap } from "lucide-react";
 
 import { useAuth } from "@/services/supabase/auth-context";
 

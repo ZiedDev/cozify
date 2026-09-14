@@ -44,7 +44,7 @@ export function DataTab({
   onOpenSessionsLog?: () => void;
   onOpenTasksLog?: () => void;
 }) {
-  const { user, profile, syncNow } = useAuth();
+  const { user, syncNow } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [stats, setStats] = useState<StorageOverview>(() =>

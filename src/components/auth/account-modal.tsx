@@ -6,7 +6,6 @@ import {
   Avatar,
   Card,
   Surface,
-  Separator,
   toast,
 } from "@heroui/react";
 import {
