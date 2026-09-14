@@ -140,7 +140,7 @@ export function ThemePopover() {
         <Button
           isIconOnly
           aria-label="Wallpapers & Themes"
-          className="size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 text-foreground transition-[background-color,border-color] duration-200 cursor-pointer shadow-2xs"
+          className="size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface"
           size="md"
           variant="ghost"
         >

@@ -2,8 +2,6 @@ import { useState } from "react";
 import { Typography, Button, Drawer, Avatar } from "@heroui/react";
 import { Settings, LayoutGrid, User } from "lucide-react";
 
-import { useTodos } from "@/hooks/use-todos";
-import { useTimer } from "@/hooks/use-timer";
 import { useAuth } from "@/services/supabase/auth-context";
 import { SettingsModal } from "@/components/settings";
 import { AuthModal, AccountModal } from "@/components/auth";
@@ -17,15 +15,11 @@ export function Navbar() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const { todos } = useTodos();
-  const { hasActiveSession } = useTimer();
   const { user, profile } = useAuth();
 
-  const activeTodoCount = todos.filter((todo) => !todo.completed).length;
-
   return (
-    <header className="sticky top-0 z-40">
-      <div className="mx-auto flex h-20 md:h-24 items-center justify-between px-6 sm:px-8 md:px-12">
+    <header className="sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top,0px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
+      <div className="mx-auto flex h-16 sm:h-20 md:h-24 items-center justify-between px-4 sm:px-8 md:px-12">
         <Typography
           className="font-serif italic font-black text-3xl md:text-4xl tracking-wide text-foreground select-none"
           type="h1"
@@ -38,15 +32,12 @@ export function Navbar() {
           <Button
             isIconOnly
             aria-label="Open Workspace Widgets"
-            className="flex min-[951px]:hidden size-9 md:size-10 rounded-2xl bg-surface/80 border text-foreground duration-200 cursor-pointer shadow-2xs relative"
+            className="flex size-9 min-[951px]:hidden md:size-10 rounded-2xl bg-surface/80 hover:bg-surface relative"
             size="md"
             variant="ghost"
             onClick={() => setIsDrawerOpen(true)}
           >
             <LayoutGrid className="size-4 md:size-5" />
-            {(activeTodoCount > 0 || hasActiveSession) && (
-              <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-accent ring-2 ring-background" />
-            )}
           </Button>
 
           {/* Theme & Wallpapers (Appearance) Trigger */}
@@ -56,7 +47,7 @@ export function Navbar() {
           <Button
             isIconOnly
             aria-label="Account & Cloud Sync"
-            className="size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 text-foreground transition-[background-color,border-color] duration-200 cursor-pointer shadow-2xs relative"
+            className="size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface relative"
             size="md"
             variant="ghost"
             onClick={() => setIsAuthOpen(true)}
@@ -83,7 +74,7 @@ export function Navbar() {
           <Button
             isIconOnly
             aria-label="Settings"
-            className="size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 text-foreground transition-[background-color,border-color] duration-200 cursor-pointer shadow-2xs"
+            className="size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface"
             size="md"
             variant="ghost"
             onClick={() => setIsSettingsOpen(true)}
@@ -106,7 +97,7 @@ export function Navbar() {
       {/* Mobile Glance Drawer */}
       <Drawer.Backdrop isOpen={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <Drawer.Content placement="right">
-          <Drawer.Dialog className="h-full max-h-dvh flex flex-col justify-between p-4 sm:p-5 max-w-xs sm:max-w-sm w-full bg-surface/98 backdrop-blur-xl border-l border-separator shadow-2xl overflow-hidden">
+          <Drawer.Dialog className="h-full max-h-dvh flex flex-col justify-between p-4 sm:p-5 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] max-w-xs sm:max-w-sm w-full bg-surface/98 backdrop-blur-xl border-l border-separator shadow-2xl overflow-hidden">
             <Drawer.Header className="shrink-0 flex items-center justify-between pb-2 border-b border-separator/30">
               <Drawer.Heading className="text-base font-semibold flex items-center gap-2 text-foreground">
                 <LayoutGrid className="size-4 text-accent" />

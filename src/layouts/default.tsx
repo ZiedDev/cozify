@@ -10,12 +10,12 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
   useAchievementTracker();
 
   return (
-    <div className="relative flex flex-col h-screen overflow-hidden bg-background">
+    <div className="relative flex flex-col h-dvh max-h-dvh w-full overflow-hidden bg-background select-none">
       <BackgroundView />
       <Toast.Provider className="z-9999" placement="bottom end" />
       <AchievementToastProvider />
       <Navbar />
-      <main className="relative z-10 max-w-8xl mx-auto px-4 sm:px-8 md:px-12 flex-1 w-full flex flex-col items-center justify-between pb-18 sm:pb-20 overflow-hidden min-h-0 h-full">
+      <main className="relative z-10 max-w-8xl mx-auto px-4 sm:px-8 md:px-12 pl-[calc(1rem+env(safe-area-inset-left,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] flex-1 w-full flex flex-col items-center justify-between pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))] sm:pb-20 overflow-hidden min-h-0 h-full">
         {children}
       </main>
     </div>
