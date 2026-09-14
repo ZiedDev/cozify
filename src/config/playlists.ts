@@ -24,6 +24,9 @@ export type Playlist = {
   category: "lofi" | "synthwave" | "piano" | "ambient" | "spotify" | "custom";
   isLive?: boolean;
   isCustom?: boolean;
+  isDeleted?: boolean;
+  updatedAt?: number;
+  version?: number;
 };
 
 export type ParsedMedia = {

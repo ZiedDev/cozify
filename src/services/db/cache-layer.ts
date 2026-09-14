@@ -15,6 +15,7 @@ function getItemKey<K extends StoreName>(storeName: K, item: any): string {
   if (!item) return "default";
   if (storeName === "dailyRollups") return item.date || "default";
   if (storeName === "statsSummary") return "summary";
+
   return item.id || item.date || item.key || "default";
 }
 
@@ -81,6 +82,7 @@ class DatabaseCacheManager {
         storeMap.clear();
         for (const item of records) {
           const key = getItemKey(storeName, item);
+
           storeMap.set(key, item);
         }
       } else {
@@ -126,6 +128,7 @@ class DatabaseCacheManager {
         storeMap.clear();
         for (const item of parsed) {
           const key = getItemKey(storeName, item);
+
           storeMap.set(key, item);
         }
         idb.putBatch(storeName, parsed);
@@ -208,6 +211,7 @@ class DatabaseCacheManager {
 
     for (const item of items) {
       const key = getItemKey(storeName, item);
+
       storeMap.set(key, item);
     }
 
@@ -358,15 +362,60 @@ class DatabaseCacheManager {
         } else {
           localStorage.removeItem(key);
         }
-      } else {
-        if (data) {
-          localStorage.setItem(key, JSON.stringify(data));
-        } else {
-          localStorage.removeItem(key);
-        }
       }
     } catch {
       // Storage quota exceeded
+    }
+  }
+
+  /**
+   * Completely resets and clears all client data (memory cache, IndexedDB, and localStorage) on logout
+   */
+  public async clearAllClientData() {
+    this.pendingWrites.clear();
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+
+    // 1. Clear memory caches
+    for (const store of STORES) {
+      const storeMap = this.cache.get(store);
+
+      if (storeMap) {
+        storeMap.clear();
+      }
+    }
+
+    // 2. Clear IndexedDB stores
+    for (const store of STORES) {
+      await idb.clear(store);
+    }
+
+    // 3. Clear LocalStorage legacy keys
+    if (typeof localStorage !== "undefined") {
+      const legacyKeys = [
+        "history",
+        "todos",
+        "cozify_custom_backgrounds",
+        "cozify_custom_playlists",
+        "cozify_daily_rollups",
+        "cozify_stats_summary",
+        "cozify_sync_queue",
+      ];
+
+      for (const key of legacyKeys) {
+        try {
+          localStorage.removeItem(key);
+        } catch {}
+      }
+    }
+
+    // 4. Notify UI stores and components
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cozify_remote_synced"));
+      window.dispatchEvent(new CustomEvent("cozify_data_reset"));
+      window.dispatchEvent(new Event("storage"));
     }
   }
 }

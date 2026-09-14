@@ -49,23 +49,7 @@ export const storageAdapter = {
         const item = DB_GETTERS[key]();
 
         if (Array.isArray(item)) {
-          if (item.length > 0) return item as T;
-          // Check if localStorage has non-empty legacy data
-          if (typeof localStorage !== "undefined") {
-            const raw = localStorage.getItem(key);
-
-            if (raw) {
-              try {
-                const parsed = JSON.parse(raw);
-
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                  return parsed as T;
-                }
-              } catch {}
-            }
-          }
-
-          return fallback;
+          return item as T;
         }
 
         if (item !== null && item !== undefined) {
@@ -75,7 +59,7 @@ export const storageAdapter = {
       const raw =
         typeof localStorage !== "undefined" ? localStorage.getItem(key) : null;
 
-      return raw ? (JSON.parse(raw) as T) : fallback;
+      return raw !== null ? (JSON.parse(raw) as T) : fallback;
     } catch {
       return fallback;
     }

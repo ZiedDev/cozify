@@ -33,6 +33,9 @@ export type TodoItem = {
   notes?: string;
   archived?: boolean;
   archivedAt?: number;
+  isDeleted?: boolean;
+  updatedAt?: number;
+  version?: number;
 };
 
 export type TagOption = TagDefinition;

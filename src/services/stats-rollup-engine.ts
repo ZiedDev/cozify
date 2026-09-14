@@ -1,5 +1,10 @@
 import { db } from "./db";
-import { DailyRollupRecord, AllTimeStatsRecord, SessionRecord } from "./db/types";
+import {
+  DailyRollupRecord,
+  AllTimeStatsRecord,
+  SessionRecord,
+} from "./db/types";
+
 import {
   TimeRangeFilter,
   CustomDateRange,
@@ -125,9 +130,13 @@ class StatsRollupEngineService {
    */
   public recordSession(session: SessionRecord): void {
     const dateStr = toDateString(session.createdAt);
-    const sessionHour = String(new Date(session.createdAt).getHours()).padStart(2, "0");
+    const sessionHour = String(new Date(session.createdAt).getHours()).padStart(
+      2,
+      "0",
+    );
 
-    const existingRollup = db.dailyRollups.get(dateStr) || createEmptyDailyRollup(dateStr);
+    const existingRollup =
+      db.dailyRollups.get(dateStr) || createEmptyDailyRollup(dateStr);
 
     const focusMins = session.focusMinutes || 0;
     const overtimeMins = session.overtimeMinutes || 0;
@@ -142,17 +151,22 @@ class StatsRollupEngineService {
       sessionCount: existingRollup.sessionCount + 1,
       cyclesCompleted: existingRollup.cyclesCompleted + cycles,
       targetCycles: existingRollup.targetCycles + target,
-      longestSessionMinutes: Math.max(existingRollup.longestSessionMinutes, focusMins),
+      longestSessionMinutes: Math.max(
+        existingRollup.longestSessionMinutes,
+        focusMins,
+      ),
       hourlyMinutes: {
         ...existingRollup.hourlyMinutes,
-        [sessionHour]: (existingRollup.hourlyMinutes[sessionHour] || 0) + focusMins,
+        [sessionHour]:
+          (existingRollup.hourlyMinutes[sessionHour] || 0) + focusMins,
       },
       tagMinutes: {
         ...existingRollup.tagMinutes,
         ...(session.tag
           ? {
               [session.tag.toLowerCase()]:
-                (existingRollup.tagMinutes[session.tag.toLowerCase()] || 0) + focusMins,
+                (existingRollup.tagMinutes[session.tag.toLowerCase()] || 0) +
+                focusMins,
             }
           : {}),
       },
@@ -161,8 +175,8 @@ class StatsRollupEngineService {
         ...(session.tag && overtimeMins > 0
           ? {
               [session.tag.toLowerCase()]:
-                (existingRollup.tagOvertimeMinutes[session.tag.toLowerCase()] || 0) +
-                overtimeMins,
+                (existingRollup.tagOvertimeMinutes[session.tag.toLowerCase()] ||
+                  0) + overtimeMins,
             }
           : {}),
       },
@@ -173,7 +187,8 @@ class StatsRollupEngineService {
 
     // Update All-Time Summary
     const summary = this.getAllTimeSummary();
-    const isNewActiveDay = !existingRollup.sessionCount && !existingRollup.tasksCompletedCount;
+    const isNewActiveDay =
+      !existingRollup.sessionCount && !existingRollup.tasksCompletedCount;
 
     // Streaks calculation
     let currentStreak = summary.currentStreakDays;
@@ -183,6 +198,7 @@ class StatsRollupEngineService {
       // Already active today, streak unchanged
     } else {
       const yesterday = new Date();
+
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = toDateString(yesterday);
 
@@ -212,7 +228,8 @@ class StatsRollupEngineService {
         ...(session.tag
           ? {
               [session.tag.toLowerCase()]:
-                (summary.tagMinutes[session.tag.toLowerCase()] || 0) + focusMins,
+                (summary.tagMinutes[session.tag.toLowerCase()] || 0) +
+                focusMins,
             }
           : {}),
       },
@@ -253,15 +270,19 @@ class StatsRollupEngineService {
       if (todo.completed && todo.completedAt) {
         totalCompleted += 1;
         const dateStr = toDateString(todo.completedAt);
-        const rollup = rollupsMap.get(dateStr) || createEmptyDailyRollup(dateStr);
+        const rollup =
+          rollupsMap.get(dateStr) || createEmptyDailyRollup(dateStr);
 
         const nextTags = { ...rollup.taskTagsCompleted };
+
         if (todo.tag) {
           const t = todo.tag.toLowerCase();
+
           nextTags[t] = (nextTags[t] || 0) + 1;
         }
 
         const nextPriority = { ...rollup.taskPriorityCompleted };
+
         if (todo.priority && todo.priority !== "none") {
           nextPriority[todo.priority] = (nextPriority[todo.priority] || 0) + 1;
         }
@@ -279,6 +300,7 @@ class StatsRollupEngineService {
     db.dailyRollups.saveAll(Array.from(rollupsMap.values()));
 
     const summary = this.getAllTimeSummary();
+
     db.statsSummary.save({
       ...summary,
       tasksTotal: activeTodos.length,
@@ -310,7 +332,9 @@ class StatsRollupEngineService {
     // 1. Process Sessions
     for (const session of sessions) {
       const dateStr = toDateString(session.createdAt);
-      const sessionHour = String(new Date(session.createdAt).getHours()).padStart(2, "0");
+      const sessionHour = String(
+        new Date(session.createdAt).getHours(),
+      ).padStart(2, "0");
 
       activeDatesSet.add(dateStr);
 
@@ -326,10 +350,13 @@ class StatsRollupEngineService {
       targetCyclesTotal += target;
       longestSessionMins = Math.max(longestSessionMins, focusMins);
 
-      allTimeHourlyMinutes[sessionHour] = (allTimeHourlyMinutes[sessionHour] || 0) + focusMins;
+      allTimeHourlyMinutes[sessionHour] =
+        (allTimeHourlyMinutes[sessionHour] || 0) + focusMins;
       if (session.tag) {
         const tagKey = session.tag.toLowerCase();
-        allTimeTagMinutes[tagKey] = (allTimeTagMinutes[tagKey] || 0) + focusMins;
+
+        allTimeTagMinutes[tagKey] =
+          (allTimeTagMinutes[tagKey] || 0) + focusMins;
       }
 
       const rollup = rollupsMap.get(dateStr) || createEmptyDailyRollup(dateStr);
@@ -339,12 +366,18 @@ class StatsRollupEngineService {
       rollup.sessionCount += 1;
       rollup.cyclesCompleted += cycles;
       rollup.targetCycles += target;
-      rollup.longestSessionMinutes = Math.max(rollup.longestSessionMinutes, focusMins);
-      rollup.hourlyMinutes[sessionHour] = (rollup.hourlyMinutes[sessionHour] || 0) + focusMins;
+      rollup.longestSessionMinutes = Math.max(
+        rollup.longestSessionMinutes,
+        focusMins,
+      );
+      rollup.hourlyMinutes[sessionHour] =
+        (rollup.hourlyMinutes[sessionHour] || 0) + focusMins;
 
       if (session.tag) {
         const tagKey = session.tag.toLowerCase();
-        rollup.tagMinutes[tagKey] = (rollup.tagMinutes[tagKey] || 0) + focusMins;
+
+        rollup.tagMinutes[tagKey] =
+          (rollup.tagMinutes[tagKey] || 0) + focusMins;
         if (overtimeMins > 0) {
           rollup.tagOvertimeMinutes[tagKey] =
             (rollup.tagOvertimeMinutes[tagKey] || 0) + overtimeMins;
@@ -363,13 +396,17 @@ class StatsRollupEngineService {
       if (todo.completed && todo.completedAt) {
         totalCompleted += 1;
         const dateStr = toDateString(todo.completedAt);
+
         activeDatesSet.add(dateStr);
 
-        const rollup = rollupsMap.get(dateStr) || createEmptyDailyRollup(dateStr);
+        const rollup =
+          rollupsMap.get(dateStr) || createEmptyDailyRollup(dateStr);
+
         rollup.tasksCompletedCount += 1;
 
         if (todo.tag) {
           const t = todo.tag.toLowerCase();
+
           rollup.taskTagsCompleted[t] = (rollup.taskTagsCompleted[t] || 0) + 1;
         }
 
@@ -395,6 +432,7 @@ class StatsRollupEngineService {
 
       if (prevDateTs !== null) {
         const diffDays = Math.round((currentTs - prevDateTs) / 86400000);
+
         if (diffDays === 1) {
           tempStreak += 1;
         } else {
@@ -412,6 +450,7 @@ class StatsRollupEngineService {
     const now = new Date();
     const todayStr = toDateString(now);
     const yesterday = new Date(now);
+
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = toDateString(yesterday);
 
@@ -480,11 +519,13 @@ class StatsRollupEngineService {
       endDate = todayStr;
     } else if (range === "week") {
       const past = new Date(now);
+
       past.setDate(past.getDate() - 6);
       startDate = toDateString(past);
       endDate = todayStr;
     } else if (range === "month") {
       const past = new Date(now);
+
       past.setDate(past.getDate() - 29);
       startDate = toDateString(past);
       endDate = todayStr;
@@ -507,7 +548,9 @@ class StatsRollupEngineService {
 
     for (let curTs = startTs; curTs <= endTs; curTs += 86400000) {
       const curDateStr = toDateString(curTs);
-      const existing = rollupsMap.get(curDateStr) || createEmptyDailyRollup(curDateStr);
+      const existing =
+        rollupsMap.get(curDateStr) || createEmptyDailyRollup(curDateStr);
+
       filtered.push(existing);
     }
 
@@ -528,7 +571,12 @@ class StatsRollupEngineService {
     if (range === "all") {
       const cycleRate =
         summary.targetCyclesTotal > 0
-          ? Math.min(100, Math.round((summary.totalCycles / summary.targetCyclesTotal) * 100))
+          ? Math.min(
+              100,
+              Math.round(
+                (summary.totalCycles / summary.targetCyclesTotal) * 100,
+              ),
+            )
           : summary.totalCycles > 0
             ? 100
             : 0;
@@ -540,7 +588,10 @@ class StatsRollupEngineService {
 
       const taskRate =
         activeTodosCount > 0
-          ? Math.min(100, Math.round((completedTodosCount / activeTodosCount) * 100))
+          ? Math.min(
+              100,
+              Math.round((completedTodosCount / activeTodosCount) * 100),
+            )
           : 0;
 
       const todayRollup = db.dailyRollups.get(toDateString(new Date()));
@@ -561,7 +612,9 @@ class StatsRollupEngineService {
         tasksCompleted: completedTodosCount,
         taskCompletionRate: taskRate,
         tasksCompletedToday: todayRollup?.tasksCompletedCount || 0,
-        peakProductivePeriod: this.getPeakPeriodFromHourly(summary.hourlyMinutes),
+        peakProductivePeriod: this.getPeakPeriodFromHourly(
+          summary.hourlyMinutes,
+        ),
       };
     }
 
@@ -582,7 +635,10 @@ class StatsRollupEngineService {
       totalSessions += r.sessionCount;
       totalCycles += r.cyclesCompleted;
       targetCyclesTotal += r.targetCycles;
-      longestSessionMinutes = Math.max(longestSessionMinutes, r.longestSessionMinutes);
+      longestSessionMinutes = Math.max(
+        longestSessionMinutes,
+        r.longestSessionMinutes,
+      );
       tasksCompleted += r.tasksCompletedCount;
 
       for (const [h, mins] of Object.entries(r.hourlyMinutes)) {
@@ -648,7 +704,8 @@ class StatsRollupEngineService {
           ? customRange.start
           : toDateString(now);
 
-      const todayRollup = rollupsMap.get(targetDateStr) || createEmptyDailyRollup(targetDateStr);
+      const todayRollup =
+        rollupsMap.get(targetDateStr) || createEmptyDailyRollup(targetDateStr);
       const hourlyActivities: DayActivity[] = [];
       const currentHour = now.getHours();
 
@@ -661,6 +718,7 @@ class StatsRollupEngineService {
         const fullLabel = `${displayHour}:00 ${ampm} - ${displayHour}:59 ${ampm}`;
 
         let intensity: 0 | 1 | 2 | 3 | 4 = 0;
+
         if (mins >= 45) intensity = 4;
         else if (mins >= 25) intensity = 3;
         else if (mins >= 10) intensity = 2;
@@ -703,6 +761,7 @@ class StatsRollupEngineService {
         ) {
           const [y, m, d] = dateStr.split("-").map(Number);
           const ts = new Date(y, m - 1, d).getTime();
+
           if (ts < earliestTs) {
             earliestTs = ts;
           }
@@ -738,6 +797,7 @@ class StatsRollupEngineService {
     if (diffDays <= 31) {
       for (let dayIndex = 0; dayIndex < diffDays; dayIndex++) {
         const currentDate = new Date(startDate);
+
         currentDate.setDate(currentDate.getDate() + dayIndex);
 
         const year = currentDate.getFullYear();
@@ -757,6 +817,7 @@ class StatsRollupEngineService {
         const totalPeriodMinutes = focusMinutes + overtimeMinutes;
 
         let intensity: 0 | 1 | 2 | 3 | 4 = 0;
+
         if (totalPeriodMinutes >= 120) intensity = 4;
         else if (totalPeriodMinutes >= 60) intensity = 3;
         else if (totalPeriodMinutes >= 25) intensity = 2;
@@ -787,6 +848,7 @@ class StatsRollupEngineService {
 
       while (currentWeekStart <= endDate) {
         const currentWeekEnd = new Date(currentWeekStart);
+
         currentWeekEnd.setDate(currentWeekEnd.getDate() + 6);
         if (currentWeekEnd > endDate) {
           currentWeekEnd.setTime(endDate.getTime());
@@ -807,6 +869,7 @@ class StatsRollupEngineService {
 
         for (let dayOffset = 0; dayOffset < daysInBucket; dayOffset++) {
           const dayDate = new Date(currentWeekStart);
+
           dayDate.setDate(dayDate.getDate() + dayOffset);
           const dateStr = toDateString(dayDate);
           const rollup = rollupsMap.get(dateStr);
@@ -866,8 +929,13 @@ class StatsRollupEngineService {
     }
 
     // C. MONTHLY GROUPING (> 120 days, ~4+ months to years, e.g. "All-Time")
-    const spansMultipleYears = startDate.getFullYear() !== endDate.getFullYear();
-    let currentMonth = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    const spansMultipleYears =
+      startDate.getFullYear() !== endDate.getFullYear();
+    let currentMonth = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      1,
+    );
     const endMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
 
     while (currentMonth <= endMonth) {
@@ -907,6 +975,7 @@ class StatsRollupEngineService {
 
       for (let dayOffset = 0; dayOffset < daysInBucket; dayOffset++) {
         const dayDate = new Date(monthStart);
+
         dayDate.setDate(dayDate.getDate() + dayOffset);
         const dateStr = toDateString(dayDate);
         const rollup = rollupsMap.get(dateStr);
@@ -986,8 +1055,14 @@ class StatsRollupEngineService {
     const rangeTitle = "Year-Round Consistency & Focus Momentum";
 
     for (const [dateStr, rollup] of rollupsMap.entries()) {
-      if (rollup.focusMinutes > 0 || rollup.overtimeMinutes > 0 || rollup.cyclesCompleted > 0 || rollup.tasksCompletedCount > 0) {
+      if (
+        rollup.focusMinutes > 0 ||
+        rollup.overtimeMinutes > 0 ||
+        rollup.cyclesCompleted > 0 ||
+        rollup.tasksCompletedCount > 0
+      ) {
         const year = parseInt(dateStr.split("-")[0], 10);
+
         if (!isNaN(year) && year < earliestYear) {
           earliestYear = year;
         }
@@ -1013,6 +1088,7 @@ class StatsRollupEngineService {
     for (let year = startYear; year <= currentYear; year++) {
       const jan1 = new Date(year, 0, 1);
       const startSunday = new Date(jan1);
+
       startSunday.setDate(startSunday.getDate() - jan1.getDay());
 
       for (let weekIndex = 0; weekIndex < 52; weekIndex++) {
@@ -1020,6 +1096,7 @@ class StatsRollupEngineService {
 
         for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
           const dayDate = new Date(startSunday);
+
           dayDate.setDate(dayDate.getDate() + weekIndex * 7 + dayOffset);
 
           const isFuture = dayDate.getTime() > todayEndTimestamp;
@@ -1040,11 +1117,13 @@ class StatsRollupEngineService {
           const totalProductiveMins = focusMins + otMins;
 
           let intensityLevel: 0 | 1 | 2 | 3 | 4 = 0;
+
           if (!isFuture) {
             if (totalProductiveMins >= 120) intensityLevel = 4;
             else if (totalProductiveMins >= 60) intensityLevel = 3;
             else if (totalProductiveMins >= 25) intensityLevel = 2;
-            else if (totalProductiveMins > 0 || taskCount > 0) intensityLevel = 1;
+            else if (totalProductiveMins > 0 || taskCount > 0)
+              intensityLevel = 1;
           }
 
           weekDays.push({
@@ -1062,6 +1141,7 @@ class StatsRollupEngineService {
         }
 
         const globalWeekIndex = weeks.length;
+
         weeks.push(weekDays);
 
         if (weekDays.length > 0) {
@@ -1161,7 +1241,8 @@ class StatsRollupEngineService {
 
     return configs.map((cfg) => {
       const data = periods[cfg.period];
-      const pct = totalMins > 0 ? Math.round((data.minutes / totalMins) * 100) : 0;
+      const pct =
+        totalMins > 0 ? Math.round((data.minutes / totalMins) * 100) : 0;
 
       return {
         period: cfg.period,
@@ -1204,9 +1285,11 @@ class StatsRollupEngineService {
     }
 
     const tagTaskTotalMap: Record<string, number> = {};
+
     for (const todo of allTodos) {
       if (todo.tag && !todo.archived) {
         const t = todo.tag.toLowerCase();
+
         tagTaskTotalMap[t] = (tagTaskTotalMap[t] || 0) + 1;
       }
     }
@@ -1225,12 +1308,19 @@ class StatsRollupEngineService {
       const completedCount = tagCompletedTasksMap[tagId] || 0;
       const totalTasks = tagTaskTotalMap[tagId] || completedCount;
 
-      if (mins === 0 && totalTasks === 0 && !PRESET_TAGS.some((p) => p.id.toLowerCase() === tagId)) {
+      if (
+        mins === 0 &&
+        totalTasks === 0 &&
+        !PRESET_TAGS.some((p) => p.id.toLowerCase() === tagId)
+      ) {
         continue;
       }
 
       const info = getTagInfo(tagId);
-      const pct = totalRangeMinutes > 0 ? Math.round((mins / totalRangeMinutes) * 100) : 0;
+      const pct =
+        totalRangeMinutes > 0
+          ? Math.round((mins / totalRangeMinutes) * 100)
+          : 0;
 
       result.push({
         id: tagId,
@@ -1273,7 +1363,8 @@ class StatsRollupEngineService {
     return (["high", "medium", "low"] as const).map((p) => {
       const data = counts[p];
       const cfg = PRIORITY_CONFIG[p];
-      const pct = totalTasks > 0 ? Math.round((data.total / totalTasks) * 100) : 0;
+      const pct =
+        totalTasks > 0 ? Math.round((data.total / totalTasks) * 100) : 0;
 
       return {
         id: p,
@@ -1306,7 +1397,8 @@ class StatsRollupEngineService {
 
     const sortedSessions = [...sessions].sort(
       (sessionA, sessionB) =>
-        new Date(sessionA.createdAt).getTime() - new Date(sessionB.createdAt).getTime(),
+        new Date(sessionA.createdAt).getTime() -
+        new Date(sessionB.createdAt).getTime(),
     );
 
     const sortedCompletedTodos = todos
@@ -1314,6 +1406,7 @@ class StatsRollupEngineService {
       .sort((todoA, todoB) => {
         const timeA = new Date(todoA.completedAt || todoA.createdAt).getTime();
         const timeB = new Date(todoB.completedAt || todoB.createdAt).getTime();
+
         return timeA - timeB;
       });
 
@@ -1337,7 +1430,11 @@ class StatsRollupEngineService {
     let hadSunday = false;
     const dayCounts = new Map<string, number>();
 
-    for (let sessionIndex = 0; sessionIndex < sortedSessions.length; sessionIndex++) {
+    for (
+      let sessionIndex = 0;
+      sessionIndex < sortedSessions.length;
+      sessionIndex++
+    ) {
       const session = sortedSessions[sessionIndex];
       const sessionIso = new Date(session.createdAt).toISOString();
       const sessionDate = new Date(session.createdAt);
@@ -1345,26 +1442,42 @@ class StatsRollupEngineService {
       const dayOfWeek = sessionDate.getDay();
       const dateStr = `${sessionDate.getFullYear()}-${String(sessionDate.getMonth() + 1).padStart(2, "0")}-${String(sessionDate.getDate()).padStart(2, "0")}`;
 
-      if (sessionIndex === 0 && !unlockTimes.first_focus) unlockTimes.first_focus = sessionIso;
+      if (sessionIndex === 0 && !unlockTimes.first_focus)
+        unlockTimes.first_focus = sessionIso;
 
-      const cycles = Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
+      const cycles =
+        Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
+
       cumulativeCycles += cycles;
-      if (cumulativeCycles >= 3 && !unlockTimes.focus_novice) unlockTimes.focus_novice = sessionIso;
-      if (cumulativeCycles >= 10 && !unlockTimes.flow_starter) unlockTimes.flow_starter = sessionIso;
-      if (cumulativeCycles >= 25 && !unlockTimes.focus_adept) unlockTimes.focus_adept = sessionIso;
-      if (cumulativeCycles >= 50 && !unlockTimes.marathon_runner) unlockTimes.marathon_runner = sessionIso;
-      if (cumulativeCycles >= 100 && !unlockTimes.grand_centurion) unlockTimes.grand_centurion = sessionIso;
+      if (cumulativeCycles >= 3 && !unlockTimes.focus_novice)
+        unlockTimes.focus_novice = sessionIso;
+      if (cumulativeCycles >= 10 && !unlockTimes.flow_starter)
+        unlockTimes.flow_starter = sessionIso;
+      if (cumulativeCycles >= 25 && !unlockTimes.focus_adept)
+        unlockTimes.focus_adept = sessionIso;
+      if (cumulativeCycles >= 50 && !unlockTimes.marathon_runner)
+        unlockTimes.marathon_runner = sessionIso;
+      if (cumulativeCycles >= 100 && !unlockTimes.grand_centurion)
+        unlockTimes.grand_centurion = sessionIso;
 
       const mins = Number(session.focusMinutes) || 0;
-      cumulativeMinutes += mins;
-      if (cumulativeMinutes >= 100 && !unlockTimes.century_club) unlockTimes.century_club = sessionIso;
-      if (cumulativeMinutes >= 300 && !unlockTimes.half_day_focus) unlockTimes.half_day_focus = sessionIso;
-      if (cumulativeMinutes >= 480 && !unlockTimes.workday_master) unlockTimes.workday_master = sessionIso;
-      if (cumulativeMinutes >= 1000 && !unlockTimes.kilo_focus) unlockTimes.kilo_focus = sessionIso;
 
-      if (mins >= 45 && !unlockTimes.deep_session_45) unlockTimes.deep_session_45 = sessionIso;
-      if (mins >= 60 && !unlockTimes.deep_session_60) unlockTimes.deep_session_60 = sessionIso;
-      if (mins >= 90 && !unlockTimes.deep_session_90) unlockTimes.deep_session_90 = sessionIso;
+      cumulativeMinutes += mins;
+      if (cumulativeMinutes >= 100 && !unlockTimes.century_club)
+        unlockTimes.century_club = sessionIso;
+      if (cumulativeMinutes >= 300 && !unlockTimes.half_day_focus)
+        unlockTimes.half_day_focus = sessionIso;
+      if (cumulativeMinutes >= 480 && !unlockTimes.workday_master)
+        unlockTimes.workday_master = sessionIso;
+      if (cumulativeMinutes >= 1000 && !unlockTimes.kilo_focus)
+        unlockTimes.kilo_focus = sessionIso;
+
+      if (mins >= 45 && !unlockTimes.deep_session_45)
+        unlockTimes.deep_session_45 = sessionIso;
+      if (mins >= 60 && !unlockTimes.deep_session_60)
+        unlockTimes.deep_session_60 = sessionIso;
+      if (mins >= 90 && !unlockTimes.deep_session_90)
+        unlockTimes.deep_session_90 = sessionIso;
 
       if (hour >= 5 && hour < 9) {
         hasEarlyMorningSession = true;
@@ -1372,11 +1485,13 @@ class StatsRollupEngineService {
       }
       if (hour >= 5 && hour < 12) {
         morningSessionsCount++;
-        if (morningSessionsCount >= 2 && !unlockTimes.morning_clarity) unlockTimes.morning_clarity = sessionIso;
+        if (morningSessionsCount >= 2 && !unlockTimes.morning_clarity)
+          unlockTimes.morning_clarity = sessionIso;
       }
       if (hour >= 12 && hour < 17) {
         hasAfternoonSession = true;
-        if (!unlockTimes.afternoon_surge) unlockTimes.afternoon_surge = sessionIso;
+        if (!unlockTimes.afternoon_surge)
+          unlockTimes.afternoon_surge = sessionIso;
       }
       if (hour >= 22 || hour < 4) {
         hasLateNightSession = true;
@@ -1387,12 +1502,14 @@ class StatsRollupEngineService {
       if (dayOfWeek === 0) hadSunday = true;
 
       const target = Number(session.targetCycles ?? session.targetSprints) || 1;
+
       if (cycles >= target && target > 0) {
         hasPerfectSession = true;
         if (!unlockTimes.perfect_cycle) unlockTimes.perfect_cycle = sessionIso;
       }
 
       const ot = Number(session.overtimeMinutes) || 0;
+
       if (ot > 0) {
         totalOvertimeMins += ot;
         if (ot >= 5) {
@@ -1407,26 +1524,34 @@ class StatsRollupEngineService {
       }
 
       const countForDay = (dayCounts.get(dateStr) || 0) + 1;
+
       dayCounts.set(dateStr, countForDay);
-      if (countForDay >= 3 && !unlockTimes.triple_threat) unlockTimes.triple_threat = sessionIso;
-      if (countForDay >= 5 && !unlockTimes.daily_pentagon) unlockTimes.daily_pentagon = sessionIso;
+      if (countForDay >= 3 && !unlockTimes.triple_threat)
+        unlockTimes.triple_threat = sessionIso;
+      if (countForDay >= 5 && !unlockTimes.daily_pentagon)
+        unlockTimes.daily_pentagon = sessionIso;
     }
 
     const hasWeekendSession = hadSaturday && hadSunday;
     let maxSessionsInSingleDay = 0;
+
     for (const count of dayCounts.values()) {
       if (count > maxSessionsInSingleDay) maxSessionsInSingleDay = count;
     }
 
     const latestSessionDate =
       sortedSessions.length > 0
-        ? new Date(sortedSessions[sortedSessions.length - 1].createdAt).toISOString()
+        ? new Date(
+            sortedSessions[sortedSessions.length - 1].createdAt,
+          ).toISOString()
         : new Date().toISOString();
 
-    if (overall.bestStreakDays >= 2) unlockTimes.first_streak = latestSessionDate;
+    if (overall.bestStreakDays >= 2)
+      unlockTimes.first_streak = latestSessionDate;
     if (overall.bestStreakDays >= 3) unlockTimes.streak_3 = latestSessionDate;
     if (overall.bestStreakDays >= 5) unlockTimes.streak_5 = latestSessionDate;
-    if (overall.bestStreakDays >= 7) unlockTimes.week_of_fire = latestSessionDate;
+    if (overall.bestStreakDays >= 7)
+      unlockTimes.week_of_fire = latestSessionDate;
     if (overall.bestStreakDays >= 10) unlockTimes.streak_10 = latestSessionDate;
     if (overall.bestStreakDays >= 14) unlockTimes.streak_14 = latestSessionDate;
     if (overall.bestStreakDays >= 21) unlockTimes.streak_21 = latestSessionDate;
@@ -1436,34 +1561,52 @@ class StatsRollupEngineService {
     let completedWithNotes = 0;
     const completedTags = new Set<string>();
 
-    for (let todoIndex = 0; todoIndex < sortedCompletedTodos.length; todoIndex++) {
+    for (
+      let todoIndex = 0;
+      todoIndex < sortedCompletedTodos.length;
+      todoIndex++
+    ) {
       const todo = sortedCompletedTodos[todoIndex];
       const rawTime = todo.completedAt || todo.createdAt;
-      const taskTime = rawTime ? new Date(rawTime).toISOString() : new Date().toISOString();
+      const taskTime = rawTime
+        ? new Date(rawTime).toISOString()
+        : new Date().toISOString();
 
-      if (todoIndex === 0 && !unlockTimes.first_todo) unlockTimes.first_todo = taskTime;
-      if (todoIndex + 1 >= 5 && !unlockTimes.task_starter_5) unlockTimes.task_starter_5 = taskTime;
-      if (todoIndex + 1 >= 10 && !unlockTimes.task_crusher_10) unlockTimes.task_crusher_10 = taskTime;
-      if (todoIndex + 1 >= 25 && !unlockTimes.task_slayer_25) unlockTimes.task_slayer_25 = taskTime;
-      if (todoIndex + 1 >= 50 && !unlockTimes.task_machine_50) unlockTimes.task_machine_50 = taskTime;
-      if (todoIndex + 1 >= 100 && !unlockTimes.task_centurion_100) unlockTimes.task_centurion_100 = taskTime;
+      if (todoIndex === 0 && !unlockTimes.first_todo)
+        unlockTimes.first_todo = taskTime;
+      if (todoIndex + 1 >= 5 && !unlockTimes.task_starter_5)
+        unlockTimes.task_starter_5 = taskTime;
+      if (todoIndex + 1 >= 10 && !unlockTimes.task_crusher_10)
+        unlockTimes.task_crusher_10 = taskTime;
+      if (todoIndex + 1 >= 25 && !unlockTimes.task_slayer_25)
+        unlockTimes.task_slayer_25 = taskTime;
+      if (todoIndex + 1 >= 50 && !unlockTimes.task_machine_50)
+        unlockTimes.task_machine_50 = taskTime;
+      if (todoIndex + 1 >= 100 && !unlockTimes.task_centurion_100)
+        unlockTimes.task_centurion_100 = taskTime;
 
       if (todo.priority === "high") {
         completedHighPriority++;
-        if (completedHighPriority >= 1 && !unlockTimes.priority_first) unlockTimes.priority_first = taskTime;
-        if (completedHighPriority >= 5 && !unlockTimes.priority_pilot_5) unlockTimes.priority_pilot_5 = taskTime;
-        if (completedHighPriority >= 15 && !unlockTimes.priority_master_15) unlockTimes.priority_master_15 = taskTime;
+        if (completedHighPriority >= 1 && !unlockTimes.priority_first)
+          unlockTimes.priority_first = taskTime;
+        if (completedHighPriority >= 5 && !unlockTimes.priority_pilot_5)
+          unlockTimes.priority_pilot_5 = taskTime;
+        if (completedHighPriority >= 15 && !unlockTimes.priority_master_15)
+          unlockTimes.priority_master_15 = taskTime;
       }
 
       if (todo.tag && !completedTags.has(todo.tag)) {
         completedTags.add(todo.tag);
-        if (completedTags.size >= 3 && !unlockTimes.tag_polymath_3) unlockTimes.tag_polymath_3 = taskTime;
-        if (completedTags.size >= 5 && !unlockTimes.tag_master_5) unlockTimes.tag_master_5 = taskTime;
+        if (completedTags.size >= 3 && !unlockTimes.tag_polymath_3)
+          unlockTimes.tag_polymath_3 = taskTime;
+        if (completedTags.size >= 5 && !unlockTimes.tag_master_5)
+          unlockTimes.tag_master_5 = taskTime;
       }
 
       if (todo.notes && todo.notes.trim().length > 0) {
         completedWithNotes++;
-        if (completedWithNotes >= 3 && !unlockTimes.note_taker) unlockTimes.note_taker = taskTime;
+        if (completedWithNotes >= 3 && !unlockTimes.note_taker)
+          unlockTimes.note_taker = taskTime;
       }
     }
 
@@ -1494,8 +1637,11 @@ class StatsRollupEngineService {
     const milestones: Milestone[] = ACHIEVEMENT_DEFINITIONS.map((def) => {
       const rawVal = def.getValue(metrics);
       const progress = Math.min(def.maxProgress, rawVal);
-      const unlocked = def.maxProgress > 0 ? progress >= def.maxProgress : false;
-      const unlockedAt = unlocked ? unlockTimes[def.id] || latestSessionDate : undefined;
+      const unlocked =
+        def.maxProgress > 0 ? progress >= def.maxProgress : false;
+      const unlockedAt = unlocked
+        ? unlockTimes[def.id] || latestSessionDate
+        : undefined;
 
       return {
         id: def.id,
@@ -1533,38 +1679,52 @@ class StatsRollupEngineService {
     return milestones.map((milestone) => {
       if (milestone.id === "trophy_hunter_bronze") {
         const progress = Math.min(5, unlockedBaseCount);
+
         return {
           ...milestone,
           progress,
           unlocked: progress >= 5,
-          unlockedAt: progress >= 5 ? milestone.unlockedAt || latestSessionDate : undefined,
+          unlockedAt:
+            progress >= 5
+              ? milestone.unlockedAt || latestSessionDate
+              : undefined,
         };
       }
       if (milestone.id === "trophy_hunter_silver") {
         const progress = Math.min(10, unlockedBaseCount);
+
         return {
           ...milestone,
           progress,
           unlocked: progress >= 10,
-          unlockedAt: progress >= 10 ? milestone.unlockedAt || latestSessionDate : undefined,
+          unlockedAt:
+            progress >= 10
+              ? milestone.unlockedAt || latestSessionDate
+              : undefined,
         };
       }
       if (milestone.id === "trophy_hunter_gold") {
         const progress = Math.min(20, unlockedBaseCount);
+
         return {
           ...milestone,
           progress,
           unlocked: progress >= 20,
-          unlockedAt: progress >= 20 ? milestone.unlockedAt || latestSessionDate : undefined,
+          unlockedAt:
+            progress >= 20
+              ? milestone.unlockedAt || latestSessionDate
+              : undefined,
         };
       }
       if (milestone.id === "cozy_legend") {
         const progress = Math.min(baseDefinitionsCount, unlockedBaseCount);
+
         return {
           ...milestone,
           progress,
           maxProgress: baseDefinitionsCount,
-          unlocked: progress >= baseDefinitionsCount && baseDefinitionsCount > 0,
+          unlocked:
+            progress >= baseDefinitionsCount && baseDefinitionsCount > 0,
           unlockedAt:
             progress >= baseDefinitionsCount && baseDefinitionsCount > 0
               ? milestone.unlockedAt || latestSessionDate
@@ -1576,7 +1736,9 @@ class StatsRollupEngineService {
     });
   }
 
-  private getPeakPeriodFromHourly(hourlyMinutes: Record<string, number>): string {
+  private getPeakPeriodFromHourly(
+    hourlyMinutes: Record<string, number>,
+  ): string {
     let morning = 0;
     let afternoon = 0;
     let evening = 0;
@@ -1584,6 +1746,7 @@ class StatsRollupEngineService {
 
     for (const [hourStr, mins] of Object.entries(hourlyMinutes)) {
       const h = parseInt(hourStr, 10);
+
       if (h >= 5 && h < 12) morning += mins;
       else if (h >= 12 && h < 17) afternoon += mins;
       else if (h >= 17 && h < 22) evening += mins;

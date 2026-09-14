@@ -22,8 +22,13 @@ import {
   CheckSquare,
   ExternalLink,
   Trash,
+  Cloud,
+  ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
 
+import { useAuth } from "@/services/supabase/auth-context";
+import { AuthModal, AccountModal } from "@/components/auth";
 import {
   getStorageOverview,
   exportAndDownloadBackup,
@@ -39,6 +44,9 @@ export function DataTab({
   onOpenSessionsLog?: () => void;
   onOpenTasksLog?: () => void;
 }) {
+  const { user, profile, syncNow } = useAuth();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [stats, setStats] = useState<StorageOverview>(() =>
     getStorageOverview(),
   );
@@ -129,6 +137,66 @@ export function DataTab({
           restore anytime.
         </Typography>
       </Surface>
+
+      {/* Cloud Account & Multi-Device Sync Card */}
+      <Card className="md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="size-6 flex items-center justify-center text-accent shrink-0">
+            {user ? (
+              <ShieldCheck className="size-6" />
+            ) : (
+              <Cloud className="size-6" />
+            )}
+          </div>
+          <div>
+            <Typography className="font-semibold" type="h6">
+              {user ? "Connected Account" : "Cloud Synchronization"}
+            </Typography>
+            <Typography color="muted" type="body-xs">
+              {user
+                ? "Your focus sessions, tasks, and wallpapers sync automatically across devices."
+                : "Sign in to securely backup and sync your workspace across all your devices."}
+            </Typography>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 max-md:w-full">
+          {user ? (
+            <>
+              <Button
+                className="max-md:flex-1"
+                isDisabled={isSyncing}
+                size="sm"
+                variant="secondary"
+                onPress={async () => {
+                  setIsSyncing(true);
+                  try {
+                    await syncNow();
+                    toast.success("Synced successfully!");
+                  } finally {
+                    setIsSyncing(false);
+                  }
+                }}
+              >
+                <RefreshCw
+                  className={`size-3.5 ${isSyncing ? "animate-spin text-accent" : ""}`}
+                />
+                <span>Sync Now</span>
+              </Button>
+            </>
+          ) : (
+            <Button
+              className="max-md:w-full"
+              size="sm"
+              variant="primary"
+              onPress={() => setIsAuthOpen(true)}
+            >
+              <Cloud className="size-4" />
+              <span>Connect / Sign In</span>
+            </Button>
+          )}
+        </div>
+      </Card>
 
       {/* Storage Overview Stats Grid */}
       <Surface
@@ -306,7 +374,7 @@ export function DataTab({
       </Card>
 
       {/* Reset Data Section */}
-      <Card className="bg-danger-soft md:flex-row">
+      <Card className="justify-between bg-danger-soft md:flex-row">
         <Card.Header>
           <Card.Title className="flex items-center gap-2">
             <AlertTriangle className="text-danger size-4" />
@@ -391,6 +459,13 @@ export function DataTab({
           </Modal.Dialog>
         </Modal.Container>
       </Modal.Backdrop>
+
+      {/* Auth Modal for Guests / Account Modal for Logged in Users */}
+      {user ? (
+        <AccountModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
+      ) : (
+        <AuthModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
+      )}
     </div>
   );
 }

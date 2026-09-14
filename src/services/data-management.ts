@@ -66,7 +66,11 @@ export function getStorageOverview(): StorageOverview {
   const appKeys = new Set(Object.values(STORAGE_KEYS));
 
   try {
-    for (let storageIndex = 0; storageIndex < localStorage.length; storageIndex++) {
+    for (
+      let storageIndex = 0;
+      storageIndex < localStorage.length;
+      storageIndex++
+    ) {
       const key = localStorage.key(storageIndex);
 
       if (key && appKeys.has(key as any)) {
@@ -289,6 +293,7 @@ export function importBackupFromJson(jsonString: string): ImportResult {
       [],
     );
     const finalTodos = storageAdapter.getItem<any[]>(STORAGE_KEYS.TODOS, []);
+
     StatsRollupEngine.rebuildAll(
       Array.isArray(finalSessions) ? finalSessions : [],
       Array.isArray(finalTodos) ? finalTodos : [],

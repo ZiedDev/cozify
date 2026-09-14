@@ -4,6 +4,9 @@ import { TodoItem } from "@/menus/todo/types";
 
 export type AppSettings = Record<string, any>;
 
+/**
+ * Historical pomodoro/focus session record
+ */
 export type SessionRecord = {
   id: string;
   createdAt: number;
@@ -17,9 +20,14 @@ export type SessionRecord = {
   overtimeMinutes?: number;
   overtimeSeconds?: number;
   notes?: string;
+  isDeleted?: boolean;
+  version?: number;
   updatedAt?: number;
 };
 
+/**
+ * Daily pre-aggregated statistics for fast rendering
+ */
 export type DailyRollupRecord = {
   date: string; // YYYY-MM-DD
   focusMinutes: number;
@@ -37,6 +45,9 @@ export type DailyRollupRecord = {
   updatedAt: number;
 };
 
+/**
+ * All-time lifetime summary statistics record
+ */
 export type AllTimeStatsRecord = {
   totalFocusMinutes: number;
   totalOvertimeMinutes: number;
@@ -55,6 +66,9 @@ export type AllTimeStatsRecord = {
   updatedAt: number;
 };
 
+/**
+ * Mapping of all persistent table names to their corresponding record schemas
+ */
 export type DBStoreMap = {
   sessions: SessionRecord;
   todos: TodoItem;
@@ -67,6 +81,18 @@ export type DBStoreMap = {
 
 export type StoreName = keyof DBStoreMap;
 
+/**
+ * Syncable entity store names that participate in cloud replication
+ */
+export type SyncableStoreName =
+  | "sessions"
+  | "todos"
+  | "customBackgrounds"
+  | "customPlaylists";
+
+/**
+ * Single mutation entry in the append-only local outbox queue
+ */
 export type SyncQueueItem = {
   id: string;
   store: StoreName;
@@ -76,6 +102,9 @@ export type SyncQueueItem = {
   timestamp: number;
 };
 
+/**
+ * Synchronization engine state metrics
+ */
 export type SyncStats = {
   pendingCount: number;
   lastSyncedAt: number | null;
@@ -84,7 +113,7 @@ export type SyncStats = {
 };
 
 /**
- * Type for online cloud providers (e.g. Supabase, MongoDB, Firebase)
+ * Cloud database provider contract for replication and delta synchronization
  */
 export type RemoteDatabaseProvider = {
   name: string;
@@ -98,4 +127,16 @@ export type RemoteDatabaseProvider = {
     customPlaylists?: Playlist[];
     timestamp: number;
   }>;
+};
+
+/**
+ * Standard CRUD repository contract for domain entity stores
+ */
+export type EntityRepository<T extends { id: string }> = {
+  getAll(): T[];
+  get(id: string): T | null;
+  save(item: T): void;
+  saveAll(items: T[]): void;
+  delete(id: string): void;
+  clear(): void;
 };

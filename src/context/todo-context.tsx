@@ -63,45 +63,55 @@ type TodoContextType = {
 
 const TodoContext = createContext<TodoContextType | null>(null);
 
-function createDefaultTodos(): TodoItem[] {
-  return [
-    {
-      id: crypto.randomUUID(),
-      title: "Welcome to Cozify To-Do ✨",
-      completed: false,
-      createdAt: Date.now(),
-      priority: "high",
-      tag: "personal",
-      notes: "Switch between Minimalist and Detailed modes to find your flow.",
-    },
-    {
-      id: crypto.randomUUID(),
-      title: "Drag and drop tasks to reorder your priorities 📌",
-      completed: false,
-      createdAt: Date.now(),
-      priority: "medium",
-      tag: "study",
-      notes:
-        "Your top tasks will instantly appear on your cozy sidebar widget!",
-    },
-  ];
+const DEFAULT_INITIAL_TODOS: TodoItem[] = [
+  {
+    id: "cozify-welcome-task-1",
+    title: "Welcome to Cozify To-Do ✨",
+    completed: false,
+    createdAt: 1700000000000,
+    priority: "high",
+    tag: "personal",
+    notes: "Switch between Minimalist and Detailed modes to find your flow.",
+  },
+  {
+    id: "cozify-welcome-task-2",
+    title: "Drag and drop tasks to reorder your priorities 📌",
+    completed: false,
+    createdAt: 1700000001000,
+    priority: "medium",
+    tag: "study",
+    notes: "Your top tasks will instantly appear on your cozy sidebar widget!",
+  },
+];
+
+function getInitialTodos(): TodoItem[] {
+  if (typeof window === "undefined") return [];
+
+  const saved = storageAdapter.getItem<TodoItem[] | null>(
+    STORAGE_KEYS.TODOS,
+    null,
+  );
+
+  if (saved !== null && Array.isArray(saved)) {
+    return saved;
+  }
+
+  const hasInitialized = localStorage.getItem("cozify_has_initialized_todos");
+
+  if (!hasInitialized) {
+    try {
+      localStorage.setItem("cozify_has_initialized_todos", "true");
+    } catch {}
+
+    return DEFAULT_INITIAL_TODOS;
+  }
+
+  return [];
 }
 
 export function TodoProvider({ children }: { children: ReactNode }) {
   const { playSound } = useSound();
-  const [todos, setTodos] = useState<TodoItem[]>(() => {
-    const defaultList = createDefaultTodos();
-    const saved = storageAdapter.getItem<TodoItem[]>(
-      STORAGE_KEYS.TODOS,
-      defaultList,
-    );
-
-    if (!Array.isArray(saved) || saved.length === 0) {
-      return defaultList;
-    }
-
-    return saved;
-  });
+  const [todos, setTodos] = useState<TodoItem[]>(() => getInitialTodos());
 
   const [viewMode, setViewModeState] = useState<TodoViewMode>(() => {
     const settings = storageAdapter.getItem<AppSettings>(
@@ -124,6 +134,22 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   const setFilter = useCallback((nextFilter: TodoFilter) => {
     setFilterState(nextFilter);
     storageAdapter.setItem("cozify_todo_filter", nextFilter);
+  }, []);
+
+  // Listen to remote sync and data reset events to update local React state
+  useEffect(() => {
+    const handleSyncOrReset = () => {
+      const current = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
+      setTodos(current);
+    };
+
+    window.addEventListener("cozify_remote_synced", handleSyncOrReset);
+    window.addEventListener("cozify_data_reset", handleSyncOrReset);
+
+    return () => {
+      window.removeEventListener("cozify_remote_synced", handleSyncOrReset);
+      window.removeEventListener("cozify_data_reset", handleSyncOrReset);
+    };
   }, []);
 
   // Sync todos to localStorage & update stats rollups
@@ -253,7 +279,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetToDefaultTodos = useCallback(() => {
-    setTodos(createDefaultTodos());
+    setTodos(DEFAULT_INITIAL_TODOS);
   }, []);
 
   const moveTodoToPosition = useCallback(

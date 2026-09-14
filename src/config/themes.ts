@@ -4,6 +4,9 @@ export type ThemeBackground = {
   url: string;
   thumbnail?: string;
   isCustom?: boolean;
+  isDeleted?: boolean;
+  updatedAt?: number;
+  version?: number;
 };
 
 export type ThemeConfig = {

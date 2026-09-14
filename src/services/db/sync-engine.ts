@@ -6,6 +6,44 @@ import {
 } from "./types";
 import { cacheManager } from "./cache-layer";
 
+/**
+ * Reconciles incoming remote deltas with local records using Last-Write-Wins (LWW) & Tombstone preservation
+ */
+function reconcileEntityList<
+  T extends {
+    id: string;
+    updatedAt?: number;
+    createdAt?: number;
+    isDeleted?: boolean;
+  },
+>(localList: T[], remoteList: T[]): T[] {
+  const map = new Map<string, T>();
+
+  // 1. Populate map with local records
+  for (const item of localList) {
+    map.set(item.id, item);
+  }
+
+  // 2. Apply remote records based on logical/clock timestamps
+  for (const remoteItem of remoteList) {
+    const localItem = map.get(remoteItem.id);
+
+    if (!localItem) {
+      map.set(remoteItem.id, remoteItem);
+    } else {
+      const remoteTime = remoteItem.updatedAt || remoteItem.createdAt || 0;
+      const localTime = localItem.updatedAt || localItem.createdAt || 0;
+
+      // Remote wins if newer, or if remote is a tombstone deletion
+      if (remoteTime >= localTime || remoteItem.isDeleted) {
+        map.set(remoteItem.id, remoteItem);
+      }
+    }
+  }
+
+  return Array.from(map.values());
+}
+
 class RemoteSyncEngine {
   private provider: RemoteDatabaseProvider | null = null;
   private isSyncing = false;
@@ -17,7 +55,7 @@ class RemoteSyncEngine {
   }
 
   /**
-   * Register online database provider (e.g. Supabase, MongoDB, Firebase)
+   * Register online database provider (e.g. Supabase)
    */
   public registerProvider(provider: RemoteDatabaseProvider) {
     this.provider = provider;
@@ -35,7 +73,7 @@ class RemoteSyncEngine {
   }
 
   /**
-   * Enqueue a mutation for offline-first replication
+   * Enqueue a mutation into the append-only outbox
    */
   public queueChange<T>(
     store: StoreName,
@@ -43,6 +81,17 @@ class RemoteSyncEngine {
     entityId: string,
     payload?: T,
   ) {
+    // If deleting, purge earlier pending creations/updates for the same entity
+    if (action === "delete") {
+      const existingQueue = cacheManager.getMemoryStore("syncQueue");
+
+      for (const qItem of existingQueue) {
+        if (qItem.store === store && qItem.entityId === entityId) {
+          cacheManager.deleteMemoryItem("syncQueue", qItem.id, false);
+        }
+      }
+    }
+
     const item: SyncQueueItem = {
       id: crypto.randomUUID(),
       store,
@@ -56,7 +105,51 @@ class RemoteSyncEngine {
   }
 
   /**
-   * Performs an optimized batched sync to conserve quota and network bandwidth
+   * Ensures all local/offline data is queued for cloud replication upon login
+   */
+  public promoteLocalDataToSyncQueue() {
+    const queue = cacheManager.getMemoryStore("syncQueue");
+    const queuedEntityIds = new Set(queue.map((q) => q.entityId));
+
+    // 1. Sessions
+    const sessions = cacheManager.getMemoryStore("sessions");
+
+    for (const session of sessions) {
+      if (!queuedEntityIds.has(session.id) && !session.isDeleted) {
+        this.queueChange("sessions", "create", session.id, session);
+      }
+    }
+
+    // 2. Todos
+    const todos = cacheManager.getMemoryStore("todos");
+
+    for (const todo of todos) {
+      if (!queuedEntityIds.has(todo.id) && !todo.isDeleted) {
+        this.queueChange("todos", "create", todo.id, todo);
+      }
+    }
+
+    // 3. Custom Wallpapers
+    const backgrounds = cacheManager.getMemoryStore("customBackgrounds");
+
+    for (const bg of backgrounds) {
+      if (!queuedEntityIds.has(bg.id) && !bg.isDeleted) {
+        this.queueChange("customBackgrounds", "create", bg.id, bg);
+      }
+    }
+
+    // 4. Custom Playlists
+    const playlists = cacheManager.getMemoryStore("customPlaylists");
+
+    for (const pl of playlists) {
+      if (!queuedEntityIds.has(pl.id) && !pl.isDeleted) {
+        this.queueChange("customPlaylists", "create", pl.id, pl);
+      }
+    }
+  }
+
+  /**
+   * 4-Phase Pull-Before-Push Sync Protocol
    */
   public async syncWithRemote(): Promise<boolean> {
     if (!this.provider || this.isSyncing) return false;
@@ -69,14 +162,63 @@ class RemoteSyncEngine {
     this.isSyncing = true;
 
     try {
-      // 1. Flush any pending local writes to DB first
+      // 1. Promote local records to outbox & flush
+      this.promoteLocalDataToSyncQueue();
       await cacheManager.flushPending();
 
-      // 2. Fetch pending local mutations from sync queue
-      const queue = cacheManager.getMemoryStore("syncQueue");
+      // 2. PHASE 1 & 2: INBOUND DELTA PULL & RECONCILIATION
+      const pullTimestamp = this.lastSyncedAt || 0;
+      const remoteData = await this.provider.pullChanges(pullTimestamp);
 
-      if (queue.length > 0) {
-        // Send in batches of 50 to avoid request payload limits
+      if (remoteData) {
+        if (remoteData.sessions && remoteData.sessions.length > 0) {
+          const local = cacheManager.getMemoryStore("sessions");
+          const reconciled = reconcileEntityList(local, remoteData.sessions);
+
+          cacheManager.setMemoryStore("sessions", reconciled, true);
+        }
+
+        if (remoteData.todos && remoteData.todos.length > 0) {
+          const local = cacheManager.getMemoryStore("todos");
+          const reconciled = reconcileEntityList(local, remoteData.todos);
+
+          cacheManager.setMemoryStore("todos", reconciled, true);
+        }
+
+        if (
+          remoteData.customBackgrounds &&
+          remoteData.customBackgrounds.length > 0
+        ) {
+          const local = cacheManager.getMemoryStore("customBackgrounds");
+          const reconciled = reconcileEntityList(
+            local,
+            remoteData.customBackgrounds,
+          );
+
+          cacheManager.setMemoryStore("customBackgrounds", reconciled, true);
+        }
+
+        if (
+          remoteData.customPlaylists &&
+          remoteData.customPlaylists.length > 0
+        ) {
+          const local = cacheManager.getMemoryStore("customPlaylists");
+          const reconciled = reconcileEntityList(
+            local,
+            remoteData.customPlaylists,
+          );
+
+          cacheManager.setMemoryStore("customPlaylists", reconciled, true);
+        }
+
+        this.lastSyncedAt = remoteData.timestamp || Date.now();
+      }
+
+      // 3. PHASE 3 & 4: OUTBOUND MUTATION PUSH & EVICTION
+      let queue = cacheManager.getMemoryStore("syncQueue");
+      let pushSuccess = true;
+
+      while (queue.length > 0) {
         const batch = queue.slice(0, 50);
         const result = await this.provider.pushBatch(batch);
 
@@ -84,48 +226,46 @@ class RemoteSyncEngine {
           for (const syncedId of result.syncedIds) {
             cacheManager.deleteMemoryItem("syncQueue", syncedId, true);
           }
+          queue = cacheManager.getMemoryStore("syncQueue");
+        } else {
+          pushSuccess = false;
+          break;
         }
       }
 
-      // 3. Pull remote updates since last sync timestamp
-      const pullTimestamp = this.lastSyncedAt || 0;
-      const remoteData = await this.provider.pullChanges(pullTimestamp);
-
-      if (remoteData) {
-        if (remoteData.sessions) {
-          cacheManager.setMemoryStore("sessions", remoteData.sessions, true);
-        }
-        if (remoteData.todos) {
-          cacheManager.setMemoryStore("todos", remoteData.todos, true);
-        }
-        this.lastSyncedAt = remoteData.timestamp || Date.now();
-
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("cozify_remote_synced"));
-          window.dispatchEvent(new Event("storage"));
-        }
+      // 4. Notify UI components
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cozify_remote_synced"));
+        window.dispatchEvent(new Event("storage"));
       }
 
-      return true;
-    } catch {
+      return pushSuccess && queue.length === 0;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Sync protocol error:", err);
+
       return false;
     } finally {
       this.isSyncing = false;
     }
   }
 
+  public resetEngine() {
+    this.provider = null;
+    this.lastSyncedAt = 0;
+    this.isSyncing = false;
+  }
+
   /**
-   * Periodic background sync that respects quota (runs at a gentle interval like 5 mins)
+   * Periodic background sync (every 5 mins)
    */
   private setupAutoSync() {
     if (typeof window === "undefined") return;
 
-    // Sync when coming back online
     window.addEventListener("online", () => {
       this.syncWithRemote();
     });
 
-    // Gentle sync interval (every 5 minutes)
     this.syncIntervalTimer = setInterval(
       () => {
         this.syncWithRemote();

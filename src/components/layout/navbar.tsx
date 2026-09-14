@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Typography, Button, Drawer } from "@heroui/react";
-import { Settings, LayoutGrid } from "lucide-react";
+import { Typography, Button, Drawer, Avatar } from "@heroui/react";
+import { Settings, LayoutGrid, User } from "lucide-react";
 
 import { useTodos } from "@/hooks/use-todos";
 import { useTimer } from "@/hooks/use-timer";
+import { useAuth } from "@/services/supabase/auth-context";
 import { SettingsModal } from "@/components/settings";
+import { AuthModal, AccountModal } from "@/components/auth";
 import { SidebarTodoWidget } from "@/components/layout/sidebar-todo";
 import { SidebarClock, SidebarTimer } from "@/components/layout/sidebar";
 import { ThemePopover } from "@/components/theme/theme-popover";
@@ -12,10 +14,12 @@ import { DrawerMusicPlayer } from "@/components/music";
 
 export function Navbar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const { todos } = useTodos();
   const { hasActiveSession } = useTimer();
+  const { user, profile } = useAuth();
 
   const activeTodoCount = todos.filter((todo) => !todo.completed).length;
 
@@ -48,6 +52,33 @@ export function Navbar() {
           {/* Theme & Wallpapers (Appearance) Trigger */}
           <ThemePopover />
 
+          {/* User Account / Cloud Sync Trigger */}
+          <Button
+            isIconOnly
+            aria-label="Account & Cloud Sync"
+            className="size-9 md:size-10 rounded-2xl bg-surface/80 hover:bg-surface border border-separator/40 hover:border-separator/80 text-foreground transition-[background-color,border-color] duration-200 cursor-pointer shadow-2xs relative"
+            size="md"
+            variant="ghost"
+            onClick={() => setIsAuthOpen(true)}
+          >
+            {user ? (
+              <>
+                <Avatar className="size-6 rounded-lg text-[10px]">
+                  {profile?.avatarUrl && (
+                    <Avatar.Image src={profile.avatarUrl} />
+                  )}
+                  <Avatar.Fallback>
+                    {(profile?.displayName || user.email || "U")
+                      .charAt(0)
+                      .toUpperCase()}
+                  </Avatar.Fallback>
+                </Avatar>
+              </>
+            ) : (
+              <User className="size-4 md:size-5" />
+            )}
+          </Button>
+
           {/* Settings Trigger */}
           <Button
             isIconOnly
@@ -61,6 +92,13 @@ export function Navbar() {
           </Button>
         </div>
       </div>
+
+      {/* Auth Modal for Guests / Account Modal for Logged in Users */}
+      {user ? (
+        <AccountModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
+      ) : (
+        <AuthModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
+      )}
 
       {/* Settings Modal */}
       <SettingsModal isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} />

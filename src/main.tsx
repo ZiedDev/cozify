@@ -9,6 +9,7 @@ registerSW({ immediate: true });
 // Prevent animation teleporting/skipping when DevTools or console causes browser RAF throttling
 gsap.ticker.lagSmoothing(1000, 16);
 
+import { AuthProvider } from "@/services/supabase/auth-context";
 import { ThemeProvider } from "@/context/theme-context";
 import { SoundProvider } from "@/context/sound-context";
 import { TimerProvider } from "@/context/timer-context";
@@ -20,18 +21,20 @@ import "@/styles/globals.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeProvider>
-      <SoundProvider>
-        <TimerProvider>
-          <PipProvider>
-            <TodoProvider>
-              <MusicProvider>
-                <IndexPage />
-              </MusicProvider>
-            </TodoProvider>
-          </PipProvider>
-        </TimerProvider>
-      </SoundProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <SoundProvider>
+          <TimerProvider>
+            <PipProvider>
+              <TodoProvider>
+                <MusicProvider>
+                  <IndexPage />
+                </MusicProvider>
+              </TodoProvider>
+            </PipProvider>
+          </TimerProvider>
+        </SoundProvider>
+      </ThemeProvider>
+    </AuthProvider>
   </StrictMode>,
 );

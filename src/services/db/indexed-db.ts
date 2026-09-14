@@ -1,18 +1,13 @@
 import Dexie, { type EntityTable } from "dexie";
 
-import {
-  StoreName,
-  DBStoreMap,
-  SessionRecord,
-  SyncQueueItem,
-} from "./types";
+import { StoreName, DBStoreMap, SessionRecord, SyncQueueItem } from "./types";
 
 import { TodoItem } from "@/menus/todo/types";
 import { ThemeBackground } from "@/config/themes";
 import { Playlist } from "@/config/playlists";
 
 export const DB_NAME = "cozify_idb";
-export const DB_VERSION = 4;
+export const DB_VERSION = 5;
 
 export class CozifyDexieDB extends Dexie {
   sessions!: EntityTable<SessionRecord, "id">;
@@ -73,6 +68,19 @@ export class CozifyDexieDB extends Dexie {
       theme: null,
       timer: null,
       settings: null,
+    });
+
+    // Version 5: Offline-first tombstone & versioning support
+    this.version(5).stores({
+      sessions:
+        "id, createdAt, updatedAt, isDeleted, tag, focusMinutes, [tag+createdAt]",
+      todos:
+        "id, createdAt, updatedAt, isDeleted, completed, tag, dueDate, priority, archived, [completed+dueDate], [completed+priority]",
+      customBackgrounds: "id, name, isDeleted, updatedAt",
+      customPlaylists: "id, title, platform, isDeleted, updatedAt",
+      dailyRollups: "date, updatedAt",
+      statsSummary: "key",
+      syncQueue: "id, timestamp, store, action, entityId",
     });
   }
 }
