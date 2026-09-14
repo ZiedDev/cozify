@@ -89,14 +89,12 @@ export function useStats() {
     };
 
     window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("focus", handleStorageChange);
     window.addEventListener("cozify_achievements_changed", handleStorageChange);
     window.addEventListener("cozify_remote_synced", handleStorageChange);
     window.addEventListener("cozify_stats_updated", handleStatsUpdated);
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("focus", handleStorageChange);
       window.removeEventListener(
         "cozify_achievements_changed",
         handleStorageChange,

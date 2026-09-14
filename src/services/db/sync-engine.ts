@@ -19,9 +19,16 @@ function reconcileEntityList<
 >(localList: T[], remoteList: T[]): T[] {
   const map = new Map<string, T>();
 
-  // 1. Populate map with local records
+  const hasRemoteItems = remoteList.some((r) => !r.isDeleted);
+
+  // 1. Populate map with valid local records (omit demo welcome tasks if we have remote data)
   for (const item of localList) {
-    map.set(item.id, item);
+    if (hasRemoteItems && item.id.startsWith("cozify-welcome-task-")) {
+      continue;
+    }
+    if (!item.isDeleted) {
+      map.set(item.id, item);
+    }
   }
 
   // 2. Apply remote records based on logical/clock timestamps
@@ -29,24 +36,31 @@ function reconcileEntityList<
     const localItem = map.get(remoteItem.id);
 
     if (!localItem) {
-      map.set(remoteItem.id, remoteItem);
+      if (!remoteItem.isDeleted) {
+        map.set(remoteItem.id, remoteItem);
+      }
     } else {
       const remoteTime = remoteItem.updatedAt || remoteItem.createdAt || 0;
       const localTime = localItem.updatedAt || localItem.createdAt || 0;
 
-      // Remote wins if newer, or if remote is a tombstone deletion
-      if (remoteTime >= localTime || remoteItem.isDeleted) {
+      // Remote wins if newer or if deleted remotely
+      if (remoteItem.isDeleted) {
+        if (remoteTime >= localTime) {
+          map.delete(remoteItem.id);
+        }
+      } else if (remoteTime >= localTime) {
         map.set(remoteItem.id, remoteItem);
       }
     }
   }
 
-  return Array.from(map.values());
+  return Array.from(map.values()).filter((item) => !item.isDeleted);
 }
 
 class RemoteSyncEngine {
   private provider: RemoteDatabaseProvider | null = null;
   private isSyncing = false;
+  private hasCompletedInitialSync = false;
   private lastSyncedAt: number | null = null;
   private syncIntervalTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -59,6 +73,10 @@ class RemoteSyncEngine {
    */
   public registerProvider(provider: RemoteDatabaseProvider) {
     this.provider = provider;
+  }
+
+  public getHasCompletedInitialSync(): boolean {
+    return this.hasCompletedInitialSync;
   }
 
   public getStats(): SyncStats {
@@ -105,7 +123,7 @@ class RemoteSyncEngine {
   }
 
   /**
-   * Ensures all local/offline data is queued for cloud replication upon login
+   * Ensures all genuine local/offline data is queued for cloud replication upon login
    */
   public promoteLocalDataToSyncQueue() {
     const queue = cacheManager.getMemoryStore("syncQueue");
@@ -120,11 +138,15 @@ class RemoteSyncEngine {
       }
     }
 
-    // 2. Todos
+    // 2. Todos - NEVER promote demo welcome tasks or deleted tasks
     const todos = cacheManager.getMemoryStore("todos");
 
     for (const todo of todos) {
-      if (!queuedEntityIds.has(todo.id) && !todo.isDeleted) {
+      if (
+        !queuedEntityIds.has(todo.id) &&
+        !todo.isDeleted &&
+        !todo.id.startsWith("cozify-welcome-task-")
+      ) {
         this.queueChange("todos", "create", todo.id, todo);
       }
     }
@@ -160,35 +182,31 @@ class RemoteSyncEngine {
     }
 
     this.isSyncing = true;
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cozify_sync_start"));
+    }
 
     try {
-      // 1. Promote local records to outbox & flush
-      this.promoteLocalDataToSyncQueue();
-      await cacheManager.flushPending();
-
-      // 2. PHASE 1 & 2: INBOUND DELTA PULL & RECONCILIATION
+      // 1. PHASE 1 & 2: INBOUND DELTA PULL & RECONCILIATION
       const pullTimestamp = this.lastSyncedAt || 0;
       const remoteData = await this.provider.pullChanges(pullTimestamp);
 
       if (remoteData) {
-        if (remoteData.sessions && remoteData.sessions.length > 0) {
+        if (remoteData.sessions !== undefined) {
           const local = cacheManager.getMemoryStore("sessions");
           const reconciled = reconcileEntityList(local, remoteData.sessions);
 
           cacheManager.setMemoryStore("sessions", reconciled, true);
         }
 
-        if (remoteData.todos && remoteData.todos.length > 0) {
+        if (remoteData.todos !== undefined) {
           const local = cacheManager.getMemoryStore("todos");
           const reconciled = reconcileEntityList(local, remoteData.todos);
 
           cacheManager.setMemoryStore("todos", reconciled, true);
         }
 
-        if (
-          remoteData.customBackgrounds &&
-          remoteData.customBackgrounds.length > 0
-        ) {
+        if (remoteData.customBackgrounds !== undefined) {
           const local = cacheManager.getMemoryStore("customBackgrounds");
           const reconciled = reconcileEntityList(
             local,
@@ -198,10 +216,7 @@ class RemoteSyncEngine {
           cacheManager.setMemoryStore("customBackgrounds", reconciled, true);
         }
 
-        if (
-          remoteData.customPlaylists &&
-          remoteData.customPlaylists.length > 0
-        ) {
+        if (remoteData.customPlaylists !== undefined) {
           const local = cacheManager.getMemoryStore("customPlaylists");
           const reconciled = reconcileEntityList(
             local,
@@ -213,6 +228,10 @@ class RemoteSyncEngine {
 
         this.lastSyncedAt = remoteData.timestamp || Date.now();
       }
+
+      // 2. Promote any remaining local offline items to outbox & flush to IDB
+      this.promoteLocalDataToSyncQueue();
+      await cacheManager.flushPending();
 
       // 3. PHASE 3 & 4: OUTBOUND MUTATION PUSH & EVICTION
       let queue = cacheManager.getMemoryStore("syncQueue");
@@ -247,6 +266,10 @@ class RemoteSyncEngine {
       return false;
     } finally {
       this.isSyncing = false;
+      this.hasCompletedInitialSync = true;
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cozify_sync_end"));
+      }
     }
   }
 
@@ -254,6 +277,7 @@ class RemoteSyncEngine {
     this.provider = null;
     this.lastSyncedAt = 0;
     this.isSyncing = false;
+    this.hasCompletedInitialSync = false;
   }
 
   /**

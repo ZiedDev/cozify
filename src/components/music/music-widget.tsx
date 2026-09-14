@@ -110,7 +110,7 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
       ref={widgetRef}
       className={`hidden ${
         !isHidden ? "min-[951px]:flex" : ""
-      } absolute bottom-4 sm:bottom-6 left-4 md:left-6 lg:left-8 xl:left-12 z-40 select-none pointer-events-none`}
+      } fixed bottom-4 sm:bottom-6 left-4 md:left-6 lg:left-8 xl:left-12 z-40 select-none pointer-events-none`}
     >
       <div className="relative">
         {/* 1. Minimized Floating Miniplayer Pill (Exact dock matching styling, color, height, and padding) */}
@@ -316,11 +316,7 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
                   <MarqueeTitle
                     className="text-xs sm:text-sm font-bold text-foreground leading-tight"
                     isPlaying={isPlaying && isOnline}
-                    text={
-                      !isOnline
-                        ? "Offline - Audio Player Paused"
-                        : title
-                    }
+                    text={!isOnline ? "Offline - Audio Player Paused" : title}
                   />
                   <Typography
                     truncate

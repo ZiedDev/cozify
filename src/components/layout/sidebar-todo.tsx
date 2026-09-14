@@ -5,6 +5,7 @@ import {
   Popover,
   Tooltip,
   Button,
+  Skeleton,
 } from "@heroui/react";
 import {
   Check,
@@ -265,6 +266,7 @@ export function SidebarTodoWidget({
 }) {
   const {
     todos,
+    isLoading,
     toggleTodo,
     updateTodo,
     reorderTodos,
@@ -561,7 +563,23 @@ export function SidebarTodoWidget({
       </div>
 
       {/* List Container */}
-      {totalActive === 0 ? (
+      {isLoading ? (
+        <div className="flex-1 min-h-0 pr-1 flex flex-col gap-1.5 w-full animate-in fade-in duration-200">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <div
+              key={index}
+              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl bg-surface/70 border border-separator/30 h-8.5 shrink-0"
+            >
+              <Skeleton className="size-3.5 rounded-full shrink-0" />
+              <Skeleton
+                className={`h-2.5 rounded ${
+                  index === 0 ? "w-3/4" : index === 1 ? "w-1/2" : "w-2/3"
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+      ) : totalActive === 0 ? (
         <div className="flex-1 flex items-center justify-center gap-2 py-4 px-2.5 rounded-xl bg-surface/40 border border-separator/30 text-muted w-full">
           <CheckCircle2 className="size-3.5 text-accent shrink-0" />
           <Typography

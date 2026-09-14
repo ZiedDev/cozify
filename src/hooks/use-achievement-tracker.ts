@@ -41,24 +41,40 @@ export function useAchievementTracker() {
       const knownRaw = localStorage.getItem(KNOWN_UNLOCKED_KEY);
       let knownSet: Set<string>;
 
+      try {
+        const parsed = knownRaw ? JSON.parse(knownRaw) : [];
+        knownSet = new Set(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        knownSet = new Set();
+      }
+
+      // Also merge any existing stored unlocked achievements
+      try {
+        const storedAchievementsRaw = localStorage.getItem(
+          STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS,
+        );
+        if (storedAchievementsRaw) {
+          const parsedStored = JSON.parse(storedAchievementsRaw);
+          if (parsedStored && typeof parsedStored === "object") {
+            Object.keys(parsedStored).forEach((id) => knownSet.add(id));
+          }
+        }
+      } catch {}
+
       if (knownRaw === null) {
-        // First run on browser: record currently unlocked without spamming
+        // First run on browser: record currently unlocked without spamming toasts
         const initialUnlocked = currentMilestones
           .filter((milestone) => milestone.unlocked)
           .map((milestone) => milestone.id);
 
+        initialUnlocked.forEach((id) => knownSet.add(id));
+
         localStorage.setItem(
           KNOWN_UNLOCKED_KEY,
-          JSON.stringify(initialUnlocked),
+          JSON.stringify(Array.from(knownSet)),
         );
 
         return;
-      }
-
-      try {
-        knownSet = new Set(JSON.parse(knownRaw));
-      } catch {
-        knownSet = new Set();
       }
 
       let updated = false;
@@ -68,9 +84,6 @@ export function useAchievementTracker() {
           showAchievementToast(milestone);
           playSound("achievement");
           knownSet.add(milestone.id);
-          updated = true;
-        } else if (!milestone.unlocked && knownSet.has(milestone.id)) {
-          knownSet.delete(milestone.id);
           updated = true;
         }
       });

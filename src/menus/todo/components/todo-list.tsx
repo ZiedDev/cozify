@@ -5,6 +5,7 @@ import {
   Typography,
   Button,
   Card,
+  Skeleton,
 } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -24,6 +25,7 @@ const PAGE_SIZE = 20;
 export function TodoList() {
   const {
     filteredTodos,
+    isLoading,
     viewMode,
     filter,
     searchQuery,
@@ -119,7 +121,36 @@ export function TodoList() {
 
   return (
     <div className="flex flex-col w-full h-full min-h-0 overflow-hidden">
-      {filteredTodos.length === 0 ? (
+      {isLoading ? (
+        <div
+          className={`flex flex-col w-full py-2 px-4 ${
+            viewMode === "minimal" ? "gap-1.5" : "gap-2.5"
+          } animate-in fade-in duration-200`}
+        >
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className={`w-full flex items-center justify-between px-2 py-4 rounded-2xl bg-surface/70 border border-separator/30 ${
+                viewMode === "minimal" ? "h-13" : "h-16"
+              }`}
+            >
+              <div className="flex items-center gap-3 flex-1">
+                <Skeleton className="size-4.5 md:size-5 rounded-full shrink-0" />
+                <div className="flex flex-col gap-1.5 flex-1 max-w-sm">
+                  <Skeleton
+                    className={`h-3.5 rounded-md ${
+                      index % 2 === 0 ? "w-3/4" : "w-1/2"
+                    }`}
+                  />
+                  {viewMode === "detailed" && (
+                    <Skeleton className="h-2.5 w-1/3 rounded-md opacity-60" />
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : filteredTodos.length === 0 ? (
         <Card className="items-center py-8 px-4 gap-3" variant="transparent">
           <div className="size-12 rounded-2xl bg-surface flex items-center justify-center">
             {searchQuery ? (

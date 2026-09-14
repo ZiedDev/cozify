@@ -39,7 +39,7 @@ export function Sidebar({ activeMode }: { activeMode: AppMode }) {
   return (
     <aside
       aria-label="Workspace Right Sidebar"
-      className="hidden min-[951px]:flex absolute top-20 md:top-24 lg:top-28 right-4 md:right-6 lg:right-8 xl:right-12 z-30 select-none pointer-events-none flex-col items-end text-right w-56 md:w-60 lg:w-64 xl:w-72"
+      className="hidden min-[951px]:flex fixed top-20 md:top-24 lg:top-28 right-4 md:right-6 lg:right-8 xl:right-12 z-30 select-none pointer-events-none flex-col items-end text-right w-56 md:w-60 lg:w-64 xl:w-72"
     >
       <SidebarWidget show={showClock}>
         <SidebarClock />

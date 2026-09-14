@@ -135,17 +135,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // 1. Initial session check
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setSession(initialSession);
-      setUser(initialSession?.user ?? null);
+    supabase.auth
+      .getSession()
+      .then(async ({ data: { session: initialSession } }) => {
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
 
-      if (initialSession?.user) {
-        syncEngine.registerProvider(supabaseProvider);
-        fetchProfile(initialSession.user);
-        syncEngine.syncWithRemote();
-      }
-      setIsLoading(false);
-    });
+        if (initialSession?.user) {
+          syncEngine.registerProvider(supabaseProvider);
+          try {
+            await Promise.allSettled([
+              fetchProfile(initialSession.user),
+              syncEngine.syncWithRemote(),
+            ]);
+          } catch {
+            // Ignore network errors on initial sync
+          }
+        }
+        setIsLoading(false);
+      });
 
     // 2. Auth state change listener
     const {
@@ -156,14 +164,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (newSession?.user) {
         syncEngine.registerProvider(supabaseProvider);
-        fetchProfile(newSession.user);
         if (event === "SIGNED_IN") {
-          await syncEngine.syncWithRemote();
+          fetchProfile(newSession.user);
+          // Run background remote sync quietly without resetting UI loading state
+          syncEngine.syncWithRemote();
+        } else if (event === "USER_UPDATED") {
+          fetchProfile(newSession.user);
         }
       } else {
         setProfile(null);
       }
-      setIsLoading(false);
     });
 
     return () => {

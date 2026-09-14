@@ -10,8 +10,62 @@ import {
   OverallStats,
 } from "../types";
 
-import { SessionRecord } from "@/services/storage";
+import { SessionRecord, STORAGE_KEYS } from "@/services/storage";
 import { TodoItem, PRESET_TAGS, PRIORITY_CONFIG } from "@/menus/todo/types";
+
+export type StoredAchievement = {
+  unlockedAt: string;
+  progress?: number;
+};
+
+export type StoredAchievementsMap = Record<string, StoredAchievement>;
+
+export function getStoredUnlockedAchievements(): StoredAchievementsMap {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return {};
+
+    if (Array.isArray(parsed)) {
+      const map: StoredAchievementsMap = {};
+      parsed.forEach((id) => {
+        if (typeof id === "string") {
+          map[id] = { unlockedAt: new Date().toISOString() };
+        }
+      });
+      return map;
+    }
+
+    const result: StoredAchievementsMap = {};
+    for (const [id, val] of Object.entries(parsed)) {
+      if (typeof val === "string") {
+        result[id] = { unlockedAt: val };
+      } else if (val && typeof val === "object") {
+        result[id] = {
+          unlockedAt: (val as any).unlockedAt || new Date().toISOString(),
+          progress: (val as any).progress,
+        };
+      }
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
+
+export function saveStoredUnlockedAchievements(
+  map: StoredAchievementsMap,
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS,
+      JSON.stringify(map),
+    );
+  } catch {}
+}
 
 const MONTH_NAMES = [
   "Jan",
@@ -1586,13 +1640,26 @@ export function calculateMilestones(
     isKonamiUnlocked,
   };
 
+  const storedUnlockedMap = getStoredUnlockedAchievements();
+  let hasNewPersistedUnlocks = false;
+
   const milestones: Milestone[] = ACHIEVEMENT_DEFINITIONS.map((def) => {
+    const stored = storedUnlockedMap[def.id];
     const rawVal = def.getValue(metrics);
-    const progress = Math.min(def.maxProgress, rawVal);
-    const unlocked = def.maxProgress > 0 ? progress >= def.maxProgress : false;
-    const unlockedAt = unlocked
-      ? unlockTimes[def.id] || latestSessionDate
-      : undefined;
+    const calculatedProgress = Math.min(def.maxProgress, rawVal);
+    const calculatedUnlocked =
+      def.maxProgress > 0 ? calculatedProgress >= def.maxProgress : false;
+
+    const isUnlocked = Boolean(stored || calculatedUnlocked);
+    const progress = isUnlocked ? def.maxProgress : calculatedProgress;
+    const unlockedAt =
+      stored?.unlockedAt ||
+      (isUnlocked ? unlockTimes[def.id] || latestSessionDate : undefined);
+
+    if (isUnlocked && !stored && unlockedAt) {
+      storedUnlockedMap[def.id] = { unlockedAt, progress: def.maxProgress };
+      hasNewPersistedUnlocks = true;
+    }
 
     return {
       id: def.id,
@@ -1602,7 +1669,7 @@ export function calculateMilestones(
       tier: def.tier,
       xp: def.xp,
       icon: def.icon,
-      unlocked,
+      unlocked: isUnlocked,
       unlockedAt,
       progress,
       maxProgress: def.maxProgress,
@@ -1623,40 +1690,63 @@ export function calculateMilestones(
       milestone.unlocked,
   ).length;
 
-  const trophyHunter10 = milestones.find((milestone) => milestone.id === "trophy_hunter_10");
+  const trophyMetaDefs = [
+    { id: "trophy_hunter_10", target: 10 },
+    { id: "trophy_hunter_20", target: 20 },
+    { id: "trophy_hunter_30", target: 30 },
+  ];
 
-  if (trophyHunter10) {
-    trophyHunter10.progress = Math.min(10, unlockedBaseCount);
-    trophyHunter10.unlocked = unlockedBaseCount >= 10;
-    if (trophyHunter10.unlocked) trophyHunter10.unlockedAt = latestSessionDate;
+  for (const { id, target } of trophyMetaDefs) {
+    const meta = milestones.find((milestone) => milestone.id === id);
+
+    if (meta) {
+      const stored = storedUnlockedMap[id];
+      const calculatedUnlocked = unlockedBaseCount >= target;
+      const isUnlocked = Boolean(stored || calculatedUnlocked);
+
+      meta.progress = isUnlocked ? target : Math.min(target, unlockedBaseCount);
+      meta.unlocked = isUnlocked;
+      meta.unlockedAt =
+        stored?.unlockedAt || (isUnlocked ? latestSessionDate : undefined);
+
+      if (isUnlocked && !stored && meta.unlockedAt) {
+        storedUnlockedMap[id] = {
+          unlockedAt: meta.unlockedAt,
+          progress: target,
+        };
+        hasNewPersistedUnlocks = true;
+      }
+    }
   }
 
-  const trophyHunter20 = milestones.find((milestone) => milestone.id === "trophy_hunter_20");
-
-  if (trophyHunter20) {
-    trophyHunter20.progress = Math.min(20, unlockedBaseCount);
-    trophyHunter20.unlocked = unlockedBaseCount >= 20;
-    if (trophyHunter20.unlocked) trophyHunter20.unlockedAt = latestSessionDate;
-  }
-
-  const trophyHunter30 = milestones.find((milestone) => milestone.id === "trophy_hunter_30");
-
-  if (trophyHunter30) {
-    trophyHunter30.progress = Math.min(30, unlockedBaseCount);
-    trophyHunter30.unlocked = unlockedBaseCount >= 30;
-    if (trophyHunter30.unlocked) trophyHunter30.unlockedAt = latestSessionDate;
-  }
-
-  const cozyLegend = milestones.find((milestone) => milestone.id === "cozy_legend");
+  const cozyLegend = milestones.find(
+    (milestone) => milestone.id === "cozy_legend",
+  );
 
   if (cozyLegend) {
+    const stored = storedUnlockedMap["cozy_legend"];
     const totalUnlockedAll = milestones.filter(
       (milestone) => milestone.id !== "cozy_legend" && milestone.unlocked,
     ).length;
+    const calculatedUnlocked = totalUnlockedAll >= 40;
+    const isUnlocked = Boolean(stored || calculatedUnlocked);
 
-    cozyLegend.progress = Math.min(40, totalUnlockedAll);
-    cozyLegend.unlocked = totalUnlockedAll >= 40;
-    if (cozyLegend.unlocked) cozyLegend.unlockedAt = latestSessionDate;
+    cozyLegend.progress = isUnlocked ? 40 : Math.min(40, totalUnlockedAll);
+    cozyLegend.unlocked = isUnlocked;
+    cozyLegend.unlockedAt =
+      stored?.unlockedAt || (isUnlocked ? latestSessionDate : undefined);
+
+    if (isUnlocked && !stored && cozyLegend.unlockedAt) {
+      storedUnlockedMap["cozy_legend"] = {
+        unlockedAt: cozyLegend.unlockedAt,
+        progress: 40,
+      };
+      hasNewPersistedUnlocks = true;
+    }
+  }
+
+  if (hasNewPersistedUnlocks) {
+    saveStoredUnlockedAchievements(storedUnlockedMap);
   }
 
   return milestones;

@@ -121,6 +121,10 @@ export function createBackup(): CozifyBackup {
     STORAGE_KEYS.SETTINGS,
     null,
   );
+  const achievements = storageAdapter.getItem<any | null>(
+    STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS,
+    null,
+  );
 
   const overview = getStorageOverview();
 
@@ -140,6 +144,9 @@ export function createBackup(): CozifyBackup {
   }
   if (settings && Object.keys(settings).length > 0) {
     data.settings = settings;
+  }
+  if (achievements && typeof achievements === "object") {
+    data.achievements = achievements;
   }
 
   const backup: CozifyBackup = {
@@ -273,13 +280,22 @@ export function importBackupFromJson(jsonString: string): ImportResult {
       storageAdapter.setItem(STORAGE_KEYS.SETTINGS, settings);
     }
 
+    // 6. Achievements
+    const achievements =
+      payload.achievements || payload[STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS];
+
+    if (achievements && typeof achievements === "object") {
+      storageAdapter.setItem(STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS, achievements);
+    }
+
     // Check if anything was actually imported
     if (
       importedSessionsCount === 0 &&
       !hasTheme &&
       !hasTimer &&
       importedTodosCount === 0 &&
-      !settings
+      !settings &&
+      !achievements
     ) {
       return {
         success: false,
@@ -327,6 +343,11 @@ export function resetAllCozifyData(): void {
     storageAdapter.clear();
     db.dailyRollups.clear();
     db.statsSummary.clear();
+    if (typeof localStorage !== "undefined") {
+      localStorage.removeItem(STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS);
+      localStorage.removeItem("cozify_known_unlocked_achievements");
+      localStorage.removeItem("cozify_konami_code");
+    }
   } catch {
     // Storage access issue fallback
   }

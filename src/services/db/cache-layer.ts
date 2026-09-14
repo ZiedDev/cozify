@@ -354,7 +354,9 @@ class DatabaseCacheManager {
     if (!key) return;
 
     try {
-      if (storeName === "statsSummary") {
+      if (data === null || data === undefined) {
+        localStorage.removeItem(key);
+      } else if (storeName === "statsSummary") {
         const item = Array.isArray(data) ? data[0] : data;
 
         if (item) {
@@ -362,6 +364,8 @@ class DatabaseCacheManager {
         } else {
           localStorage.removeItem(key);
         }
+      } else {
+        localStorage.setItem(key, JSON.stringify(data));
       }
     } catch {
       // Storage quota exceeded

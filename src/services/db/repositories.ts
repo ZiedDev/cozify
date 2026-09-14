@@ -43,7 +43,7 @@ function createEntityRepository<K extends SyncableStoreName>(
       const withTimestamp = {
         ...item,
         isDeleted: false,
-        updatedAt: Date.now(),
+        updatedAt: (item as any).updatedAt || Date.now(),
       } as T;
 
       cacheManager.setMemoryItem(
@@ -52,51 +52,8 @@ function createEntityRepository<K extends SyncableStoreName>(
         withTimestamp,
         mirrorToLocalStorage,
       );
-      syncEngine.queueChange(
-        storeName,
-        "create",
-        (item as any).id,
-        withTimestamp,
-      );
-    },
 
-    saveAll(items: T[]): void {
-      const existing = cacheManager.getMemoryStore(storeName) as unknown as T[];
-      const newIds = new Set(items.map((i: any) => i.id));
-
-      // 1. Mark missing previous items as deleted tombstones
-      for (const old of existing) {
-        if (!newIds.has((old as any).id) && !(old as any).isDeleted) {
-          const tombstone = {
-            ...old,
-            isDeleted: true,
-            updatedAt: Date.now(),
-          } as T;
-
-          cacheManager.setMemoryItem(
-            storeName,
-            (old as any).id,
-            tombstone,
-            mirrorToLocalStorage,
-          );
-          syncEngine.queueChange(storeName, "delete", (old as any).id);
-        }
-      }
-
-      // 2. Upsert incoming items
-      for (const item of items) {
-        const withTimestamp = {
-          ...item,
-          isDeleted: false,
-          updatedAt: Date.now(),
-        } as T;
-
-        cacheManager.setMemoryItem(
-          storeName,
-          (item as any).id,
-          withTimestamp,
-          mirrorToLocalStorage,
-        );
+      if (!(item as any).id?.startsWith("cozify-welcome-task-")) {
         syncEngine.queueChange(
           storeName,
           "create",
@@ -104,6 +61,14 @@ function createEntityRepository<K extends SyncableStoreName>(
           withTimestamp,
         );
       }
+    },
+
+    saveAll(items: T[]): void {
+      cacheManager.setMemoryStore(
+        storeName,
+        items as any,
+        mirrorToLocalStorage,
+      );
     },
 
     delete(id: string): void {
@@ -127,36 +92,20 @@ function createEntityRepository<K extends SyncableStoreName>(
         );
       }
 
-      syncEngine.queueChange(storeName, "delete", id);
+      if (!id.startsWith("cozify-welcome-task-")) {
+        syncEngine.queueChange(storeName, "delete", id);
+      }
     },
 
     clear(): void {
-      const existing = cacheManager.getMemoryStore(storeName) as unknown as T[];
-
-      for (const old of existing) {
-        if (!(old as any).isDeleted) {
-          const tombstone = {
-            ...old,
-            isDeleted: true,
-            updatedAt: Date.now(),
-          } as T;
-
-          cacheManager.setMemoryItem(
-            storeName,
-            (old as any).id,
-            tombstone,
-            mirrorToLocalStorage,
-          );
-          syncEngine.queueChange(storeName, "delete", (old as any).id);
-        }
-      }
+      cacheManager.clearMemoryStore(storeName);
     },
   };
 }
 
 // Instantiate base entity stores
 const baseSessions = createEntityRepository("sessions", true);
-const baseTodos = createEntityRepository("todos", false);
+const baseTodos = createEntityRepository("todos", true);
 const baseCustomBackgrounds = createEntityRepository("customBackgrounds", true);
 const baseCustomPlaylists = createEntityRepository("customPlaylists", true);
 

@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   SETTINGS: "settings",
   DAILY_ROLLUPS: "daily_rollups",
   STATS_SUMMARY: "stats_summary",
+  UNLOCKED_ACHIEVEMENTS: "cozify_unlocked_achievements",
 } as const;
 
 // Storage engine dispatch maps for IndexedDB-backed stores

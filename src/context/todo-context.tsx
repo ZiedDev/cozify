@@ -10,6 +10,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 
 import { useSound } from "@/context/sound-context";
+import { useAuth } from "@/services/supabase/auth-context";
 import {
   TodoItem,
   TodoPriority,
@@ -18,10 +19,13 @@ import {
 } from "@/menus/todo/types";
 import { storageAdapter, STORAGE_KEYS, AppSettings } from "@/services/storage";
 import { StatsRollupEngine } from "@/services/stats-rollup-engine";
+import { syncEngine } from "@/services/db/sync-engine";
+import { db } from "@/services/db";
 
 type TodoContextType = {
   todos: TodoItem[];
   filteredTodos: TodoItem[];
+  isLoading: boolean;
   viewMode: TodoViewMode;
   filter: TodoFilter;
   selectedTag: string | null;
@@ -92,9 +96,21 @@ function getInitialTodos(): TodoItem[] {
     null,
   );
 
-  if (saved !== null && Array.isArray(saved)) {
-    return saved;
+  if (saved !== null && Array.isArray(saved) && saved.length > 0) {
+    return saved.filter((item) => !item.archived && !(item as any).isDeleted);
   }
+
+  try {
+    const raw = localStorage.getItem("todos");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.filter(
+          (item: any) => !item.archived && !item.isDeleted,
+        );
+      }
+    }
+  } catch {}
 
   const hasInitialized = localStorage.getItem("cozify_has_initialized_todos");
 
@@ -111,7 +127,11 @@ function getInitialTodos(): TodoItem[] {
 
 export function TodoProvider({ children }: { children: ReactNode }) {
   const { playSound } = useSound();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>(() => getInitialTodos());
+  const [isInitialSyncPending, setIsInitialSyncPending] = useState<boolean>(() => {
+    return !syncEngine.getHasCompletedInitialSync();
+  });
 
   const [viewMode, setViewModeState] = useState<TodoViewMode>(() => {
     const settings = storageAdapter.getItem<AppSettings>(
@@ -141,16 +161,32 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     const handleSyncOrReset = () => {
       const current = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
       setTodos(current);
+      setIsInitialSyncPending(false);
+    };
+
+    const handleSyncEnd = () => {
+      setIsInitialSyncPending(false);
     };
 
     window.addEventListener("cozify_remote_synced", handleSyncOrReset);
     window.addEventListener("cozify_data_reset", handleSyncOrReset);
+    window.addEventListener("cozify_sync_end", handleSyncEnd);
+
+    if (syncEngine.getHasCompletedInitialSync()) {
+      setIsInitialSyncPending(false);
+    }
 
     return () => {
       window.removeEventListener("cozify_remote_synced", handleSyncOrReset);
       window.removeEventListener("cozify_data_reset", handleSyncOrReset);
+      window.removeEventListener("cozify_sync_end", handleSyncEnd);
     };
   }, []);
+
+  // Show loading skeleton ONLY when we have 0 cached local items and initial auth/sync is still underway
+  const isLoading =
+    todos.length === 0 &&
+    (isAuthLoading || (Boolean(user) && isInitialSyncPending));
 
   // Sync todos to localStorage & update stats rollups
   useEffect(() => {
@@ -183,17 +219,20 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       tag?: string;
       notes?: string;
     }) => {
+      const now = Date.now();
       const newTodo: TodoItem = {
         id: crypto.randomUUID(),
         title: data.title.trim(),
         completed: false,
-        createdAt: Date.now(),
+        createdAt: now,
+        updatedAt: now,
         priority: data.priority || "none",
         dueDate: data.dueDate,
         tag: data.tag,
         notes: data.notes?.trim(),
       };
 
+      db.todos.save(newTodo);
       setTodos((prev) => [newTodo, ...prev]);
 
       return newTodo;
@@ -212,11 +251,16 @@ export function TodoProvider({ children }: { children: ReactNode }) {
             playSound("taskComplete");
           }
 
-          return {
+          const updated: TodoItem = {
             ...todo,
             completed: nextCompleted,
             completedAt: nextCompleted ? Date.now() : undefined,
+            updatedAt: Date.now(),
           };
+
+          db.todos.save(updated);
+
+          return updated;
         }),
       );
     },
@@ -225,56 +269,78 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
   const updateTodo = useCallback((id: string, updates: Partial<TodoItem>) => {
     setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === id ? { ...todo, ...updates } : todo,
-      ),
+      prevTodos.map((todo) => {
+        if (todo.id !== id) return todo;
+        const updated: TodoItem = {
+          ...todo,
+          ...updates,
+          updatedAt: Date.now(),
+        };
+
+        db.todos.save(updated);
+
+        return updated;
+      }),
     );
   }, []);
 
   // Archive task on delete instead of completely removing
   const deleteTodo = useCallback((id: string) => {
     setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === id
-          ? {
-              ...todo,
-              archived: true,
-              archivedAt: Date.now(),
-            }
-          : todo,
-      ),
+      prevTodos.map((todo) => {
+        if (todo.id !== id) return todo;
+        const updated: TodoItem = {
+          ...todo,
+          archived: true,
+          archivedAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+
+        db.todos.save(updated);
+
+        return updated;
+      }),
     );
   }, []);
 
   const permanentlyDeleteTodo = useCallback((id: string) => {
+    db.todos.delete(id);
     setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
   }, []);
 
   const restoreTodo = useCallback((id: string) => {
     setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.id === id
-          ? {
-              ...todo,
-              archived: false,
-              archivedAt: undefined,
-            }
-          : todo,
-      ),
+      prevTodos.map((todo) => {
+        if (todo.id !== id) return todo;
+        const updated: TodoItem = {
+          ...todo,
+          archived: false,
+          archivedAt: undefined,
+          updatedAt: Date.now(),
+        };
+
+        db.todos.save(updated);
+
+        return updated;
+      }),
     );
   }, []);
 
   const clearCompleted = useCallback(() => {
     setTodos((prevTodos) =>
-      prevTodos.map((todo) =>
-        todo.completed
-          ? {
-              ...todo,
-              archived: true,
-              archivedAt: Date.now(),
-            }
-          : todo,
-      ),
+      prevTodos.map((todo) => {
+        if (!todo.completed) return todo;
+        const updated: TodoItem = {
+          ...todo,
+          archived: true,
+          archivedAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+
+        db.todos.save(updated);
+
+        return updated;
+      }),
     );
   }, []);
 
@@ -397,6 +463,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     () => ({
       todos: activeTodos,
       filteredTodos,
+      isLoading,
       viewMode,
       filter,
       selectedTag,
@@ -423,6 +490,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     [
       activeTodos,
       filteredTodos,
+      isLoading,
       viewMode,
       filter,
       selectedTag,
