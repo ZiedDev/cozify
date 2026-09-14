@@ -63,3 +63,24 @@ textarea,
 .tabs__list-container > .tabs__list-container__scroll-next {
   display: none !important;
 }
+
+/* ==========================================================================
+   HeroUI Overlays & Modals Safe Area Margins
+   Ensures top modals, dialogs, drawers, and alert dialogs respect mobile safe areas (notch/dynamic island)
+   ========================================================================== */
+
+.modal__container,
+.alert-dialog__container,
+.drawer__container {
+  padding-top: max(1.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem)) !important;
+  padding-bottom: max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 0.75rem)) !important;
+  padding-left: max(1rem, env(safe-area-inset-left, 0px)) !important;
+  padding-right: max(1rem, env(safe-area-inset-right, 0px)) !important;
+  box-sizing: border-box !important;
+}
+
+.modal__dialog,
+.alert-dialog__dialog {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}

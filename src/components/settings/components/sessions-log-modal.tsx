@@ -210,7 +210,7 @@ export function SessionsLogModal({
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container size="lg">
-        <Modal.Dialog className="max-sm:mt-0! sm:max-w-195 md:max-w-210 w-full h-[85vh] sm:h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-separator/50 bg-surface shadow-2xl">
+        <Modal.Dialog className="sm:max-w-195 md:max-w-210 w-full h-[85vh] sm:h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-separator/50 bg-surface shadow-2xl">
           <Modal.CloseTrigger />
 
           {/* Modal Header */}

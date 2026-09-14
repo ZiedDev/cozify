@@ -94,7 +94,7 @@ export function AchievementsModal({
       <Modal.Container>
         <Modal.Dialog
           aria-label="Achievements & Trophies"
-          className="max-sm:mt-0! sm:max-w-3xl w-full h-[85vh] sm:h-145 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl bg-surface border border-separator/60 shadow-2xl"
+          className="sm:max-w-3xl w-full h-[85vh] sm:h-145 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl bg-surface border border-separator/60 shadow-2xl"
         >
           <Modal.CloseTrigger />
 

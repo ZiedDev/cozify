@@ -446,7 +446,7 @@ export function PlaylistPickerModal() {
         <Modal.Container>
           <Modal.Dialog
             aria-label="Audio Stream Library"
-            className="max-sm:mt-0! sm:max-w-3xl w-full h-[85vh] sm:h-140 max-h-[85vh] space-y-5"
+            className="sm:max-w-3xl w-full h-[85vh] sm:h-140 max-h-[85vh] space-y-5"
           >
             <Modal.Header className="flex-row items-center gap-3">
               <Modal.Icon>

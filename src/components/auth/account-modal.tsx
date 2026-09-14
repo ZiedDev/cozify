@@ -101,7 +101,7 @@ export function AccountModal({ isOpen, onOpenChange }: AccountModalProps) {
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container size="md">
-        <Modal.Dialog className="max-sm:mt-0! sm:max-w-120 shadow-2xl space-y-4">
+        <Modal.Dialog className="sm:max-w-120 shadow-2xl space-y-4">
           <Modal.Header className="flex-row items-center gap-3">
             <Modal.Icon>
               <ShieldCheck className="text-accent size-5" />

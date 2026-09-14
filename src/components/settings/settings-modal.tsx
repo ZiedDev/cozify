@@ -49,7 +49,7 @@ export function SettingsModal({
     <>
       <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
         <Modal.Container size="lg">
-          <Modal.Dialog className="max-sm:mt-0! md:max-w-250 sm:h-140 max-h-[88vh] shadow-2xl space-y-5">
+          <Modal.Dialog className="md:max-w-250 sm:h-140 max-h-[88vh] shadow-2xl space-y-5">
             <Modal.Header className="flex-row items-center gap-3">
               <Modal.Icon>
                 <Settings className="text-accent" />
