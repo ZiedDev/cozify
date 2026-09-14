@@ -18,8 +18,8 @@ export function Navbar() {
   const { user, profile } = useAuth();
 
   return (
-    <header className="sticky top-0 z-40 shrink-0 pt-[env(safe-area-inset-top,0px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
-      <div className="mx-auto flex h-16 sm:h-20 md:h-24 items-center justify-between px-4 sm:px-8 md:px-12">
+    <header className="sticky top-0 z-40 shrink-0">
+      <div className="mx-auto flex h-16 sm:h-20 md:h-24 items-center justify-between px-6 sm:px-8 md:px-12">
         <Typography
           className="font-serif italic font-black text-3xl md:text-4xl tracking-wide text-foreground select-none"
           type="h1"

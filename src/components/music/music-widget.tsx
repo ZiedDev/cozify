@@ -110,7 +110,7 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
       ref={widgetRef}
       className={`hidden ${
         !isHidden ? "min-[951px]:flex" : ""
-      } fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 left-4 md:left-6 lg:left-8 xl:left-12 z-40 select-none pointer-events-none`}
+      } absolute bottom-4 sm:bottom-6 left-4 md:left-6 lg:left-8 xl:left-12 z-40 select-none pointer-events-none`}
     >
       <div className="relative">
         {/* 1. Minimized Floating Miniplayer Pill (Exact dock matching styling, color, height, and padding) */}

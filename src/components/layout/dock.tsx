@@ -10,7 +10,7 @@ export function Dock({
   onSelectMode: (mode: AppMode) => void;
 }) {
   return (
-    <div className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-fit max-w-[95vw] select-none">
+    <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-40 w-fit max-w-[95vw] select-none">
       <Tabs
         selectedKey={activeMode}
         onSelectionChange={(selectedKey) =>
