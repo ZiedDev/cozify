@@ -47,25 +47,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const configured = isSupabaseConfigured();
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (currentUser: User) => {
     if (!supabase) return;
     try {
+      const oauthAvatar =
+        currentUser.user_metadata?.avatar_url ||
+        currentUser.user_metadata?.picture ||
+        currentUser.user_metadata?.avatar;
+      const oauthName =
+        currentUser.user_metadata?.custom_claims?.global_name ||
+        currentUser.user_metadata?.full_name ||
+        currentUser.user_metadata?.name ||
+        currentUser.user_metadata?.user_name ||
+        currentUser.email?.split("@")[0];
+
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("id", userId)
+        .eq("id", currentUser.id)
         .single();
 
       if (data) {
+        // If the active OAuth provider has an avatar and it differs, refresh it
+        const updatedAvatar = oauthAvatar || data.avatar_url;
+        const updatedDisplayName = data.display_name || oauthName;
+
+        if (oauthAvatar && oauthAvatar !== data.avatar_url) {
+          await supabase
+            .from("profiles")
+            .update({
+              avatar_url: updatedAvatar,
+              updated_at: Date.now(),
+            })
+            .eq("id", currentUser.id);
+        }
+
         setProfile({
           id: data.id,
-          email: data.email,
-          displayName: data.display_name,
-          avatarUrl: data.avatar_url,
+          email: data.email || currentUser.email,
+          displayName: updatedDisplayName,
+          avatarUrl: updatedAvatar,
+        });
+      } else {
+        // Create initial profile row with current OAuth metadata
+        const newProfile = {
+          id: currentUser.id,
+          email: currentUser.email,
+          display_name: oauthName || "Cozify Member",
+          avatar_url: oauthAvatar || null,
+          created_at: Date.now(),
+          updated_at: Date.now(),
+        };
+
+        await supabase.from("profiles").upsert(newProfile);
+
+        setProfile({
+          id: currentUser.id,
+          email: currentUser.email,
+          displayName: newProfile.display_name,
+          avatarUrl: newProfile.avatar_url || undefined,
         });
       }
     } catch {
-      // Ignore offline profile fetch errors
+      // Fallback directly to user_metadata if profiles query fails
+      const oauthAvatar =
+        currentUser.user_metadata?.avatar_url ||
+        currentUser.user_metadata?.picture;
+      const oauthName =
+        currentUser.user_metadata?.full_name ||
+        currentUser.user_metadata?.name ||
+        currentUser.email?.split("@")[0];
+
+      setProfile({
+        id: currentUser.id,
+        email: currentUser.email,
+        displayName: oauthName || "Cozify Member",
+        avatarUrl: oauthAvatar,
+      });
     }
   }, []);
 
@@ -83,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (initialSession?.user) {
         syncEngine.registerProvider(supabaseProvider);
-        fetchProfile(initialSession.user.id);
+        fetchProfile(initialSession.user);
         syncEngine.syncWithRemote();
       }
       setIsLoading(false);
@@ -98,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (newSession?.user) {
         syncEngine.registerProvider(supabaseProvider);
-        fetchProfile(newSession.user.id);
+        fetchProfile(newSession.user);
         if (event === "SIGNED_IN") {
           await syncEngine.syncWithRemote();
         }
