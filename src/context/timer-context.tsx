@@ -70,7 +70,15 @@ export function TimerProvider({ children }: { children: ReactNode }) {
   const remainingOnPauseRef = useRef<number>(DEFAULT_TIMER_DURATIONS.focus);
   const hasTriggeredToastRef = useRef<boolean>(false);
 
-  const completedCycles = countCompletedCycles(cycleStates);
+  const completedCycles = useMemo(() => {
+    return countCompletedCycles(
+      cycleStates,
+      currentCycle,
+      mode,
+      timeLeft,
+      durations.focus,
+    );
+  }, [cycleStates, currentCycle, mode, timeLeft, durations.focus]);
 
   // Exact epoch-derived accumulated focus & overtime seconds (100% in sync with timer)
   const accumulatedFocusSeconds = useMemo(() => {

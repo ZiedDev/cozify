@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 
 import { secondsToHms } from "../logic/time-utils";
-import { calculateCyclesDone } from "../logic/cycle-rules";
 
 import { useTimer } from "@/hooks/use-timer";
 import { useIsMobile } from "@/hooks/use-is-mobile";
@@ -49,9 +48,6 @@ export function SaveProgressModal({
   onOpenChange: (open: boolean) => void;
 }) {
   const {
-    mode,
-    isCycleActive,
-    currentCycle,
     completedCycles,
     targetCycles,
     durations,
@@ -61,12 +57,8 @@ export function SaveProgressModal({
     discardSession,
   } = useTimer();
 
-  const cyclesDone = calculateCyclesDone(
-    mode,
-    isCycleActive,
-    currentCycle,
-    completedCycles,
-  );
+  const cyclesDone = completedCycles;
+
 
   const initialTotalSeconds = accumulatedFocusSeconds;
 

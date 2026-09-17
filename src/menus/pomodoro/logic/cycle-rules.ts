@@ -35,21 +35,8 @@ export const determinePreferredBreak = (
 ): "shortBreak" | "longBreak" =>
   currentCycle % targetCycles === 0 ? "longBreak" : "shortBreak";
 
-export function calculateCyclesDone(
-  mode: TimerMode,
-  isCycleActive: boolean,
-  currentCycle: number,
-  completedCycles: number,
-): number {
-  return Math.max(
-    1,
-    isCycleActive && mode === "focus"
-      ? Math.max(completedCycles, currentCycle)
-      : completedCycles,
-  );
-}
-
-export const calculateSprintsDone = calculateCyclesDone;
+export const clampTargetCycles = (count: number): number =>
+  Math.max(MIN_TARGET_CYCLES, Math.min(MAX_TARGET_CYCLES, count));
 
 export function calculateCycleProgressPercent(
   mode: TimerMode,
@@ -81,15 +68,6 @@ export function calculateCycleProgressPercent(
     Math.max(0, ((baseDuration - Math.max(0, timeLeft)) / baseDuration) * 100),
   );
 }
-
-export const clampTargetCycles = (count: number): number =>
-  Math.max(MIN_TARGET_CYCLES, Math.min(MAX_TARGET_CYCLES, count));
-
-export const countCompletedCycles = (
-  cycleStates: Record<number, { isCompleted: boolean }>,
-): number =>
-  Object.values(cycleStates).filter((cycleState) => cycleState.isCompleted)
-    .length;
 
 export function calculateSavedCycleProgressPercent(
   cycleState:
@@ -123,6 +101,120 @@ export function calculateSavedCycleProgressPercent(
     ),
   );
 }
+
+export function isCycleFullyCompleted(
+  cycleState:
+    | {
+        timeLeft: number;
+        isCompleted: boolean;
+        initialDuration?: number;
+        focusElapsed?: number;
+      }
+    | undefined,
+  fallbackDuration = 0,
+): boolean {
+  if (!cycleState) return false;
+  if (cycleState.isCompleted) return true;
+
+  const percent = calculateSavedCycleProgressPercent(
+    cycleState,
+    fallbackDuration,
+  );
+
+  return percent >= 100;
+}
+
+export function countCompletedCycles(
+  cycleStates: Record<
+    number,
+    {
+      timeLeft: number;
+      isCompleted: boolean;
+      initialDuration?: number;
+      focusElapsed?: number;
+    }
+  >,
+  currentCycle?: number,
+  mode?: TimerMode,
+  timeLeft?: number,
+  focusDuration = 0,
+): number {
+  let count = 0;
+  const entries = Object.entries(cycleStates);
+
+  for (const [key, state] of entries) {
+    const cycleNum = Number(key);
+    const isCurrent = cycleNum === currentCycle && mode === "focus";
+
+    if (isCurrent && typeof timeLeft === "number") {
+      const activePercent = calculateCycleProgressPercent(
+        mode,
+        timeLeft,
+        focusDuration,
+        state,
+      );
+
+      if (activePercent >= 100) {
+        count++;
+      }
+    } else if (isCycleFullyCompleted(state, focusDuration)) {
+      count++;
+    }
+  }
+
+  // If current active cycle reached 100% but was not yet saved into cycleStates
+  if (
+    currentCycle &&
+    mode === "focus" &&
+    !cycleStates[currentCycle] &&
+    typeof timeLeft === "number"
+  ) {
+    const activePercent = calculateCycleProgressPercent(
+      mode,
+      timeLeft,
+      focusDuration,
+      undefined,
+    );
+
+    if (activePercent >= 100) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+export function calculateCyclesDone(
+  mode: TimerMode,
+  _isCycleActive: boolean,
+  currentCycle: number,
+  completedCycles: number,
+  cycleStates?: Record<
+    number,
+    {
+      timeLeft: number;
+      isCompleted: boolean;
+      initialDuration?: number;
+      focusElapsed?: number;
+    }
+  >,
+  timeLeft?: number,
+  focusDuration?: number,
+): number {
+  if (cycleStates) {
+    return countCompletedCycles(
+      cycleStates,
+      currentCycle,
+      mode,
+      timeLeft,
+      focusDuration,
+    );
+  }
+
+  return completedCycles;
+}
+
+export const calculateSprintsDone = calculateCyclesDone;
 
 export function getNextFocusCycleAfterBreak(
   currentCycle: number,
