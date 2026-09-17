@@ -14,6 +14,13 @@ type TimerStatusParams = {
   completedCycles: number;
   accumulatedFocusSeconds: number;
   accumulatedOvertimeSeconds: number;
+  currentCycleState?: {
+    timeLeft?: number;
+    initialDuration?: number;
+    focusElapsed?: number;
+    overtimeElapsed?: number;
+    isCompleted?: boolean;
+  };
 };
 
 type DerivedTimerStatus = {
@@ -32,22 +39,35 @@ export function deriveTimerStatus(
   params: TimerStatusParams,
 ): DerivedTimerStatus {
   const isOvertime = params.timeLeft < 0;
-  const isIdle =
-    !params.isRunning && params.timeLeft === params.duration && !isOvertime;
-  const isPaused = !params.isRunning && !isIdle;
-  const isBreak = params.mode !== "focus";
-  const isCycleActive = params.isRunning || isPaused || isOvertime || isBreak;
+  const isFocus = params.mode === "focus";
+  const cycleState = params.currentCycleState;
+  const focusElapsed = cycleState?.focusElapsed ?? 0;
+  const isCompleted = !!cycleState?.isCompleted;
+
+  // A focus cycle is idle if not running, not completed, zero overtime, and zero elapsed focus time
+  const isIdle = isFocus
+    ? !params.isRunning && focusElapsed === 0 && !isOvertime && !isCompleted
+    : !params.isRunning && params.timeLeft === params.duration && !isOvertime;
+
+  const isPaused = !params.isRunning && !isIdle && !isCompleted;
+  const isBreak = !isFocus;
+  const isCycleActive = params.isRunning || isPaused || isOvertime;
+
   const reachedCycles = isBreak
     ? Math.max(params.completedCycles, params.currentCycle - 1)
     : isCycleActive
       ? Math.max(params.completedCycles, params.currentCycle)
       : params.completedCycles;
+
   const hasActiveSession =
-    isCycleActive ||
     params.accumulatedFocusSeconds > 0 ||
+    params.accumulatedOvertimeSeconds > 0 ||
     params.completedCycles > 0 ||
     params.currentCycle > 1 ||
-    isBreak;
+    params.isRunning ||
+    focusElapsed > 0 ||
+    isOvertime ||
+    (isBreak && params.timeLeft < params.duration);
 
   return {
     isOvertime,
@@ -94,6 +114,7 @@ export function calculateTotalFocusSeconds(
   mode: TimerMode,
   currentRemainingTime: number,
   defaultFocusDuration: number,
+  isRunning = false,
 ): number {
   let total = 0;
 
@@ -107,28 +128,37 @@ export function calculateTotalFocusSeconds(
 
     if (typeof state.focusElapsed === "number") {
       total += state.focusElapsed;
-    } else {
-      const initial = state.initialDuration || defaultFocusDuration;
-      const effectiveTimeLeft = Math.max(0, state.timeLeft);
-
-      total += Math.min(initial, Math.max(0, initial - effectiveTimeLeft));
+    } else if (state.isCompleted) {
+      total += state.initialDuration || defaultFocusDuration;
     }
   }
 
-  // 2. Add current active focus cycle (capped at initial so overtime is excluded)
+  // 2. Add current active focus cycle
   if (mode === "focus") {
     const currentState = cycleStates[currentCycle];
-    const initial = currentState?.initialDuration || defaultFocusDuration;
-    const effectiveTimeLeft = Math.max(0, currentRemainingTime);
 
-    const activeFocus =
+    if (
       currentState?.isCompleted &&
-      typeof currentState?.focusElapsed === "number" &&
-      currentRemainingTime <= 0
-        ? currentState.focusElapsed
-        : Math.min(initial, Math.max(0, initial - effectiveTimeLeft));
+      typeof currentState.focusElapsed === "number"
+    ) {
+      total += currentState.focusElapsed;
+    } else if (currentState) {
+      const initial = currentState.initialDuration || defaultFocusDuration;
+      const effectiveTimeLeft = Math.max(0, currentRemainingTime);
 
-    total += activeFocus;
+      if (isRunning) {
+        // While running, elapsed is the difference between initialDuration and remaining
+        const liveElapsed = Math.min(
+          initial,
+          Math.max(0, initial - effectiveTimeLeft),
+        );
+
+        total += liveElapsed;
+      } else {
+        // When paused or idle, use recorded focusElapsed
+        total += currentState.focusElapsed ?? 0;
+      }
+    }
   }
 
   return Math.max(0, Math.round(total));
@@ -203,15 +233,23 @@ export function calculateCycleElapsed(
   defaultDuration: number,
 ): CycleElapsedMetrics {
   const initialDuration = cycleState?.initialDuration || defaultDuration;
-  const focusElapsed =
+
+  if (
     cycleState?.isCompleted &&
     typeof cycleState?.focusElapsed === "number" &&
     currentRemaining <= 0
-      ? cycleState.focusElapsed
-      : Math.min(
-          initialDuration,
-          Math.max(0, initialDuration - Math.max(0, currentRemaining)),
-        );
+  ) {
+    return {
+      initialDuration,
+      focusElapsed: cycleState.focusElapsed,
+      overtimeElapsed: cycleState.overtimeElapsed ?? 0,
+    };
+  }
+
+  const focusElapsed = Math.min(
+    initialDuration,
+    Math.max(0, initialDuration - Math.max(0, currentRemaining)),
+  );
   const overtimeElapsed =
     currentRemaining < 0
       ? Math.abs(currentRemaining)

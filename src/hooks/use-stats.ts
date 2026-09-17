@@ -57,6 +57,7 @@ export function useStats() {
 
     // Self-healing check: if rollups are empty or session count diverges, rebuild immediately
     const summary = StatsRollupEngine.getAllTimeSummary();
+
     if (
       (db.dailyRollups.getAll().length === 0 && s.length > 0) ||
       (s.length > 0 && summary.totalSessions !== s.length)
@@ -70,6 +71,7 @@ export function useStats() {
   // Initial migration / rebuild check on mount
   useEffect(() => {
     const summary = StatsRollupEngine.getAllTimeSummary();
+
     if (
       (db.dailyRollups.getAll().length === 0 && sessions.length > 0) ||
       (sessions.length > 0 && summary.totalSessions !== sessions.length)

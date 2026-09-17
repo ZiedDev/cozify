@@ -106,11 +106,7 @@ function fastBoxBlur(
       let alphaSum = 0;
       const rowOffset = pixelY * canvasWidth * 4;
 
-      for (
-        let offsetX = -blurRadius;
-        offsetX < blurRadius;
-        offsetX++
-      ) {
+      for (let offsetX = -blurRadius; offsetX < blurRadius; offsetX++) {
         const clampedX = Math.min(canvasWidth - 1, Math.max(0, offsetX));
         const pixelIndex = rowOffset + clampedX * 4;
 
@@ -153,11 +149,7 @@ function fastBoxBlur(
       let blueSum = 0;
       let alphaSum = 0;
 
-      for (
-        let offsetY = -blurRadius;
-        offsetY < blurRadius;
-        offsetY++
-      ) {
+      for (let offsetY = -blurRadius; offsetY < blurRadius; offsetY++) {
         const clampedY = Math.min(canvasHeight - 1, Math.max(0, offsetY));
         const pixelIndex = (clampedY * canvasWidth + pixelX) * 4;
 

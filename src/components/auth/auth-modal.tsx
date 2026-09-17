@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Modal, Button, Typography, toast, Spinner } from "@heroui/react";
+import { Modal, Drawer, Button, Typography, toast, Spinner } from "@heroui/react";
 import { Cloud, HardDrive, Zap } from "lucide-react";
 
 import { useAuth } from "@/services/supabase/auth-context";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ function DiscordIcon({ className = "w-5 h-5" }: { className?: string }) {
 }
 
 export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
+  const isMobile = useIsMobile();
   const { isConfigured, signInWithOAuth } = useAuth();
   const [loadingProvider, setLoadingProvider] = useState<
     "google" | "discord" | null
@@ -62,6 +64,109 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
       setLoadingProvider(null);
     }
   };
+
+  const bodyContent = (
+    <>
+      {/* OAuth Login Buttons */}
+      <div className="space-y-3 mb-5 relative z-10">
+        {/* Google */}
+        <Button
+          className="w-full h-12 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10 text-white font-medium flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99]"
+          isDisabled={loadingProvider !== null || !isConfigured}
+          size="lg"
+          variant="outline"
+          onClick={() => handleOAuth("google")}
+        >
+          {loadingProvider === "google" ? (
+            <Spinner color="current" size="sm" />
+          ) : (
+            <GoogleIcon className="w-5 h-5 shrink-0" />
+          )}
+          <span>Continue with Google</span>
+        </Button>
+
+        {/* Discord */}
+        <Button
+          className="w-full h-12 rounded-2xl border-[#5865F2]/40 bg-[#5865F2]/20 hover:bg-[#5865F2]/30 font-medium flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99] text-[#7983F5] hover:text-white"
+          isDisabled={loadingProvider !== null || !isConfigured}
+          size="lg"
+          variant="outline"
+          onClick={() => handleOAuth("discord")}
+        >
+          {loadingProvider === "discord" ? (
+            <Spinner color="current" size="sm" />
+          ) : (
+            <DiscordIcon className="w-5 h-5 shrink-0 fill-[#5865F2]" />
+          )}
+          <span className="text-white">Continue with Discord</span>
+        </Button>
+      </div>
+
+      {/* Offline / Cloud Merge Feature Callout */}
+      <div className="rounded-2xl bg-white/3 border border-white/5 p-4 text-xs space-y-2.5 relative z-10">
+        <div className="flex items-center gap-2 text-neutral-300 font-medium">
+          <Zap className="w-3.5 h-3.5 text-primary-400 shrink-0" />
+          <span>Instant 1-Click Sync</span>
+        </div>
+        <div className="text-neutral-400 space-y-1.5 leading-relaxed pl-5.5">
+          <p className="flex items-start gap-2">
+            <HardDrive className="w-3.5 h-3.5 text-neutral-500 shrink-0 mt-0.5" />
+            <span>
+              <strong>Offline Workspace:</strong> Tasks & sessions created
+              without logging in stay securely saved on this device.
+            </span>
+          </p>
+          <p className="flex items-start gap-2">
+            <Cloud className="w-3.5 h-3.5 text-neutral-500 shrink-0 mt-0.5" />
+            <span>
+              <strong>Automatic Merge:</strong> When you connect with
+              Google or Discord, all your offline work is automatically
+              uploaded and merged into your cloud account.
+            </span>
+          </p>
+        </div>
+      </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer.Backdrop
+        className="bg-black/70 backdrop-blur-md"
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+      >
+        <Drawer.Content placement="bottom">
+          <Drawer.Dialog className="max-h-[85dvh] flex flex-col p-5 shadow-2xl rounded-t-3xl rounded-b-none border-t border-white/10 bg-neutral-900/98 backdrop-blur-xl text-white relative overflow-hidden">
+            <Drawer.Handle />
+            <Drawer.Header className="items-center gap-2 pb-2 text-center shrink-0">
+              <Typography className="text-xl font-bold tracking-tight text-white">
+                Sign In to Cozify
+              </Typography>
+              <Typography className="text-xs text-neutral-400 max-w-xs leading-relaxed text-center">
+                Connect your account to sync sessions, tasks, and custom themes across devices.
+              </Typography>
+            </Drawer.Header>
+
+            <Drawer.Body className="p-0 overflow-y-auto mt-2">
+              {bodyContent}
+            </Drawer.Body>
+
+            <Drawer.Footer className="pt-3">
+              <Button
+                className="w-full text-neutral-400 hover:text-white rounded-xl text-xs"
+                size="sm"
+                variant="ghost"
+                onClick={() => onOpenChange(false)}
+              >
+                Continue as Guest
+              </Button>
+            </Drawer.Footer>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
+    );
+  }
 
   return (
     <Modal.Backdrop
@@ -87,65 +192,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
           </Modal.Header>
 
           <Modal.Body>
-            {/* OAuth Login Buttons */}
-            <div className="space-y-3 mb-6 relative z-10">
-              {/* Google */}
-              <Button
-                className="w-full h-12 rounded-2xl border-white/15 bg-white/5 hover:bg-white/10 text-white font-medium flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99]"
-                isDisabled={loadingProvider !== null || !isConfigured}
-                size="lg"
-                variant="outline"
-                onClick={() => handleOAuth("google")}
-              >
-                {loadingProvider === "google" ? (
-                  <Spinner color="current" size="sm" />
-                ) : (
-                  <GoogleIcon className="w-5 h-5 shrink-0" />
-                )}
-                <span>Continue with Google</span>
-              </Button>
-
-              {/* Discord */}
-              <Button
-                className="w-full h-12 rounded-2xl border-[#5865F2]/40 bg-[#5865F2]/20 hover:bg-[#5865F2]/30 font-medium flex items-center justify-center gap-3 transition-all hover:scale-[1.01] active:scale-[0.99] text-[#7983F5] hover:text-white"
-                isDisabled={loadingProvider !== null || !isConfigured}
-                size="lg"
-                variant="outline"
-                onClick={() => handleOAuth("discord")}
-              >
-                {loadingProvider === "discord" ? (
-                  <Spinner color="current" size="sm" />
-                ) : (
-                  <DiscordIcon className="w-5 h-5 shrink-0 fill-[#5865F2]" />
-                )}
-                <span className="text-white">Continue with Discord</span>
-              </Button>
-            </div>
-
-            {/* Offline / Cloud Merge Feature Callout */}
-            <div className="rounded-2xl bg-white/3 border border-white/5 p-4 text-xs space-y-2.5 relative z-10">
-              <div className="flex items-center gap-2 text-neutral-300 font-medium">
-                <Zap className="w-3.5 h-3.5 text-primary-400 shrink-0" />
-                <span>Instant 1-Click Sync</span>
-              </div>
-              <div className="text-neutral-400 space-y-1.5 leading-relaxed pl-5.5">
-                <p className="flex items-start gap-2">
-                  <HardDrive className="w-3.5 h-3.5 text-neutral-500 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Offline Workspace:</strong> Tasks & sessions created
-                    without logging in stay securely saved on this device.
-                  </span>
-                </p>
-                <p className="flex items-start gap-2">
-                  <Cloud className="w-3.5 h-3.5 text-neutral-500 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Automatic Merge:</strong> When you connect with
-                    Google or Discord, all your offline work is automatically
-                    uploaded and merged into your cloud account.
-                  </span>
-                </p>
-              </div>
-            </div>
+            {bodyContent}
           </Modal.Body>
 
           {/* Footer Close */}
@@ -164,3 +211,4 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
     </Modal.Backdrop>
   );
 }
+

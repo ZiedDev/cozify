@@ -34,6 +34,7 @@ export function PipTimerCard() {
     mode,
     timeLeft,
     durations.focus,
+    cycleStates[currentCycle],
   );
 
   const getPipBarWidthClass = (count: number) => {

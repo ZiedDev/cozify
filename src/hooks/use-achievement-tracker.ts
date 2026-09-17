@@ -36,13 +36,17 @@ export function useAchievementTracker() {
         [],
       );
       const todos = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
-      const currentMilestones = StatsRollupEngine.calculateMilestones(sessions, todos);
+      const currentMilestones = StatsRollupEngine.calculateMilestones(
+        sessions,
+        todos,
+      );
 
       const knownRaw = localStorage.getItem(KNOWN_UNLOCKED_KEY);
       let knownSet: Set<string>;
 
       try {
         const parsed = knownRaw ? JSON.parse(knownRaw) : [];
+
         knownSet = new Set(Array.isArray(parsed) ? parsed : []);
       } catch {
         knownSet = new Set();
@@ -53,8 +57,10 @@ export function useAchievementTracker() {
         const storedAchievementsRaw = localStorage.getItem(
           STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS,
         );
+
         if (storedAchievementsRaw) {
           const parsedStored = JSON.parse(storedAchievementsRaw);
+
           if (parsedStored && typeof parsedStored === "object") {
             Object.keys(parsedStored).forEach((id) => knownSet.add(id));
           }

@@ -13,7 +13,7 @@ export default function DefaultLayout({ children }: { children: ReactNode }) {
     <div className="relative h-dvh max-h-dvh w-full overflow-hidden bg-background select-none">
       <BackgroundView />
 
-      <div className="relative z-10 flex flex-col h-full w-full overflow-hidden pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
+      <div className="relative z-10 flex flex-col h-full w-full overflow-hidden pt-[env(safe-area-inset-top,0px)] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
         <Toast.Provider className="z-9999" placement="bottom end" />
         <AchievementToastProvider />
         <Navbar />

@@ -283,7 +283,9 @@ function FocusChartComponent({
                       );
                       const dayNumber = parsedDate.getDate();
 
-                      return isNaN(dayNumber) ? selectedDay.dayLabel : dayNumber;
+                      return isNaN(dayNumber)
+                        ? selectedDay.dayLabel
+                        : dayNumber;
                     })()}
               </span>
             </div>

@@ -102,12 +102,12 @@ function getInitialTodos(): TodoItem[] {
 
   try {
     const raw = localStorage.getItem("todos");
+
     if (raw) {
       const parsed = JSON.parse(raw);
+
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.filter(
-          (item: any) => !item.archived && !item.isDeleted,
-        );
+        return parsed.filter((item: any) => !item.archived && !item.isDeleted);
       }
     }
   } catch {}
@@ -129,9 +129,11 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   const { playSound } = useSound();
   const { user, isLoading: isAuthLoading } = useAuth();
   const [todos, setTodos] = useState<TodoItem[]>(() => getInitialTodos());
-  const [isInitialSyncPending, setIsInitialSyncPending] = useState<boolean>(() => {
-    return !syncEngine.getHasCompletedInitialSync();
-  });
+  const [isInitialSyncPending, setIsInitialSyncPending] = useState<boolean>(
+    () => {
+      return !syncEngine.getHasCompletedInitialSync();
+    },
+  );
 
   const [viewMode, setViewModeState] = useState<TodoViewMode>(() => {
     const settings = storageAdapter.getItem<AppSettings>(
@@ -159,7 +161,11 @@ export function TodoProvider({ children }: { children: ReactNode }) {
   // Listen to remote sync and data reset events to update local React state
   useEffect(() => {
     const handleSyncOrReset = () => {
-      const current = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
+      const current = storageAdapter.getItem<TodoItem[]>(
+        STORAGE_KEYS.TODOS,
+        [],
+      );
+
       setTodos(current);
       setIsInitialSyncPending(false);
     };

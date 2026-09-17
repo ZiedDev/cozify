@@ -287,11 +287,7 @@ export function PomodoroView({
           durations={durations}
           isOpen={isBreakModalOpen}
           timeLeft={timeLeft}
-          timeUsed={Math.max(
-            0,
-            (cycleStates[currentCycle]?.initialDuration || durations.focus) -
-              timeLeft,
-          )}
+          timeUsed={cycleStates[currentCycle]?.focusElapsed ?? 0}
           onOpenChange={setIsBreakModalOpen}
           onSelectBreak={finishCycleAndTakeBreak}
           onSkipBreak={finishCycleAndSkipToNext}

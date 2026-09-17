@@ -24,21 +24,26 @@ export function getStoredUnlockedAchievements(): StoredAchievementsMap {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS);
+
     if (!raw) return {};
     const parsed = JSON.parse(raw);
+
     if (!parsed || typeof parsed !== "object") return {};
 
     if (Array.isArray(parsed)) {
       const map: StoredAchievementsMap = {};
+
       parsed.forEach((id) => {
         if (typeof id === "string") {
           map[id] = { unlockedAt: new Date().toISOString() };
         }
       });
+
       return map;
     }
 
     const result: StoredAchievementsMap = {};
+
     for (const [id, val] of Object.entries(parsed)) {
       if (typeof val === "string") {
         result[id] = { unlockedAt: val };
@@ -49,6 +54,7 @@ export function getStoredUnlockedAchievements(): StoredAchievementsMap {
         };
       }
     }
+
     return result;
   } catch {
     return {};
@@ -223,7 +229,8 @@ export function filterTodosByRange(
 ): TodoItem[] {
   if (range === "all") return todos;
 
-  const getTodoTimestamp = (todo: TodoItem) => todo.completedAt || todo.createdAt;
+  const getTodoTimestamp = (todo: TodoItem) =>
+    todo.completedAt || todo.createdAt;
 
   if (range === "custom" && customRange?.start && customRange?.end) {
     const startTs = new Date(`${customRange.start}T00:00:00`).getTime();
@@ -392,8 +399,10 @@ export function calculateOverallStats(
     const totalMins = focusMins + otMins;
 
     totalFocusMinutes += focusMins;
-    totalCycles += Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
-    targetCyclesTotal += Number(session.targetCycles ?? session.targetSprints) || 0;
+    totalCycles +=
+      Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
+    targetCyclesTotal +=
+      Number(session.targetCycles ?? session.targetSprints) || 0;
     totalOvertimeMinutes += otMins;
 
     if (totalMins > longestSessionMinutes) {
@@ -464,7 +473,11 @@ export function calculateOverallStats(
     { label: "Night (12:00 AM - 6:00 AM)", mins: timeBuckets.night },
   ];
 
-  for (let periodIndex = 0; periodIndex < periodCandidates.length; periodIndex++) {
+  for (
+    let periodIndex = 0;
+    periodIndex < periodCandidates.length;
+    periodIndex++
+  ) {
     if (periodCandidates[periodIndex].mins > maxPeriodMins) {
       maxPeriodMins = periodCandidates[periodIndex].mins;
       peakProductivePeriod = periodCandidates[periodIndex].label;
@@ -550,7 +563,8 @@ export function calculateFocusTrendChartData(
 
         curr.focusMinutes += Number(session.focusMinutes) || 0;
         curr.overtimeMinutes += Number(session.overtimeMinutes) || 0;
-        curr.cycles += Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
+        curr.cycles +=
+          Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
         curr.count += 1;
       }
     }
@@ -578,7 +592,8 @@ export function calculateFocusTrendChartData(
       const shortLabel = `${displayHour} ${ampm}`;
       const fullLabel = `${displayHour}:00 ${ampm} - ${displayHour}:59 ${ampm}`;
 
-      const totalPeriodMinutes = sessionData.focusMinutes + sessionData.overtimeMinutes;
+      const totalPeriodMinutes =
+        sessionData.focusMinutes + sessionData.overtimeMinutes;
       const intensity =
         totalPeriodMinutes >= 45
           ? 4
@@ -633,7 +648,8 @@ export function calculateFocusTrendChartData(
 
     curr.focusMinutes += Number(session.focusMinutes) || 0;
     curr.overtimeMinutes += Number(session.overtimeMinutes) || 0;
-    curr.cycles += Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
+    curr.cycles +=
+      Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
     curr.count += 1;
     sessionMap.set(dateStr, curr);
   }
@@ -659,7 +675,10 @@ export function calculateFocusTrendChartData(
     let earliestTs = now.getTime() - 29 * 86400000;
 
     for (let sessionIndex = 0; sessionIndex < sessions.length; sessionIndex++) {
-      if (sessions[sessionIndex].createdAt && sessions[sessionIndex].createdAt < earliestTs) {
+      if (
+        sessions[sessionIndex].createdAt &&
+        sessions[sessionIndex].createdAt < earliestTs
+      ) {
         earliestTs = sessions[sessionIndex].createdAt;
       }
     }
@@ -718,7 +737,8 @@ export function calculateFocusTrendChartData(
         cycles: 0,
         count: 0,
       };
-      const totalPeriodMinutes = sessionData.focusMinutes + sessionData.overtimeMinutes;
+      const totalPeriodMinutes =
+        sessionData.focusMinutes + sessionData.overtimeMinutes;
       const taskCount = todoMap.get(dateStr) || 0;
       const intensity =
         totalPeriodMinutes >= 120
@@ -980,7 +1000,8 @@ export function calculateHeatmapData(
     const session = sessions[sessionIndex];
     const focusMins = Number(session.focusMinutes) || 0;
     const otMins = Number(session.overtimeMinutes) || 0;
-    const cycles = Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
+    const cycles =
+      Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
     const sessionDate = new Date(session.createdAt);
     const dateStr = `${sessionDate.getFullYear()}-${String(sessionDate.getMonth() + 1).padStart(2, "0")}-${String(sessionDate.getDate()).padStart(2, "0")}`;
     const curr = sessionMap.get(dateStr) || {
@@ -1069,7 +1090,8 @@ export function calculateHeatmapData(
           count: 0,
         };
         const taskCount = todoMap.get(dateStr) || 0;
-        const totalProductiveMins = sessionData.focusMinutes + sessionData.overtimeMinutes;
+        const totalProductiveMins =
+          sessionData.focusMinutes + sessionData.overtimeMinutes;
 
         let intensityLevel: 0 | 1 | 2 | 3 | 4 = 0;
 
@@ -1133,7 +1155,8 @@ export function calculateTimeOfDayStats(
     const date = new Date(session.createdAt);
     const hour = date.getHours();
     const mins =
-      (Number(session.focusMinutes) || 0) + (Number(session.overtimeMinutes) || 0);
+      (Number(session.focusMinutes) || 0) +
+      (Number(session.overtimeMinutes) || 0);
 
     totalMinutes += mins;
 
@@ -1346,7 +1369,8 @@ export function calculateTagStats(
     .filter(
       (tagStat) =>
         tagStat.focusMinutes > 0 ||
-        (tagStat.overtimeMinutes !== undefined && tagStat.overtimeMinutes > 0) ||
+        (tagStat.overtimeMinutes !== undefined &&
+          tagStat.overtimeMinutes > 0) ||
         tagStat.taskCount > 0,
     );
 }
@@ -1409,7 +1433,9 @@ export function calculateMilestones(
 ): Milestone[] {
   // 1. Sort sessions chronologically (oldest to newest) to detect exact unlock time
   const sortedSessions = [...sessions].sort(
-    (sessionA, sessionB) => new Date(sessionA.createdAt).getTime() - new Date(sessionB.createdAt).getTime(),
+    (sessionA, sessionB) =>
+      new Date(sessionA.createdAt).getTime() -
+      new Date(sessionB.createdAt).getTime(),
   );
 
   // 2. Sort completed todos chronologically
@@ -1444,7 +1470,11 @@ export function calculateMilestones(
   let hadSunday = false;
   const dayCounts = new Map<string, number>();
 
-  for (let sessionIndex = 0; sessionIndex < sortedSessions.length; sessionIndex++) {
+  for (
+    let sessionIndex = 0;
+    sessionIndex < sortedSessions.length;
+    sessionIndex++
+  ) {
     const session = sortedSessions[sessionIndex];
     const sessionIso = new Date(session.createdAt).toISOString();
     const sessionDate = new Date(session.createdAt);
@@ -1452,9 +1482,11 @@ export function calculateMilestones(
     const dayOfWeek = sessionDate.getDay();
     const dateStr = `${sessionDate.getFullYear()}-${String(sessionDate.getMonth() + 1).padStart(2, "0")}-${String(sessionDate.getDate()).padStart(2, "0")}`;
 
-    if (sessionIndex === 0 && !unlockTimes.first_focus) unlockTimes.first_focus = sessionIso;
+    if (sessionIndex === 0 && !unlockTimes.first_focus)
+      unlockTimes.first_focus = sessionIso;
 
-    const cycles = Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
+    const cycles =
+      Number(session.cyclesCompleted ?? session.sprintsCompleted) || 0;
 
     cumulativeCycles += cycles;
     if (cumulativeCycles >= 3 && !unlockTimes.focus_novice)
@@ -1498,7 +1530,8 @@ export function calculateMilestones(
     }
     if (hour >= 12 && hour < 17) {
       hasAfternoonSession = true;
-      if (!unlockTimes.afternoon_surge) unlockTimes.afternoon_surge = sessionIso;
+      if (!unlockTimes.afternoon_surge)
+        unlockTimes.afternoon_surge = sessionIso;
     }
     if (hour >= 22 || hour < 4) {
       hasLateNightSession = true;
@@ -1515,7 +1548,8 @@ export function calculateMilestones(
 
     if (cycles >= target && target > 0) {
       hasPerfectSession = true;
-      if (!unlockTimes.flawless_target) unlockTimes.flawless_target = sessionIso;
+      if (!unlockTimes.flawless_target)
+        unlockTimes.flawless_target = sessionIso;
     }
 
     const overtime = Number(session.overtimeMinutes) || 0;
@@ -1572,14 +1606,19 @@ export function calculateMilestones(
   let completedWithNotes = 0;
   const completedTags = new Set<string>();
 
-  for (let todoIndex = 0; todoIndex < sortedCompletedTodos.length; todoIndex++) {
+  for (
+    let todoIndex = 0;
+    todoIndex < sortedCompletedTodos.length;
+    todoIndex++
+  ) {
     const todo = sortedCompletedTodos[todoIndex];
     const rawTime = todo.completedAt || todo.createdAt;
     const taskTime = rawTime
       ? new Date(rawTime).toISOString()
       : new Date().toISOString();
 
-    if (todoIndex === 0 && !unlockTimes.first_todo) unlockTimes.first_todo = taskTime;
+    if (todoIndex === 0 && !unlockTimes.first_todo)
+      unlockTimes.first_todo = taskTime;
     if (todoIndex + 1 >= 5 && !unlockTimes.task_starter_5)
       unlockTimes.task_starter_5 = taskTime;
     if (todoIndex + 1 >= 10 && !unlockTimes.task_crusher_10)

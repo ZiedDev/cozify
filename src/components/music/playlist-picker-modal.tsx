@@ -1,6 +1,7 @@
 import { useState, useMemo, memo, SubmitEvent } from "react";
 import {
   Modal,
+  Drawer,
   AlertDialog,
   Button,
   TextField,
@@ -23,6 +24,8 @@ import {
   Radio,
 } from "lucide-react";
 import { useSortable } from "@dnd-kit/react/sortable";
+
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 import { useMusic } from "@/context/music-context";
 import { Playlist, PRESET_PLAYLISTS } from "@/config/playlists";
@@ -373,6 +376,7 @@ function VinylPlaylistItemComponent({
 const VinylPlaylistItem = memo(VinylPlaylistItemComponent);
 
 export function PlaylistPickerModal() {
+  const isMobile = useIsMobile();
   const {
     isPickerOpen,
     setIsPickerOpen,
@@ -437,118 +441,162 @@ export function PlaylistPickerModal() {
 
   if (!isPickerOpen) return null;
 
+  const urlInputBar = (
+    <div>
+      {/* Direct URL Input Bar */}
+      <Form
+        className="flex items-center gap-2"
+        // @ts-expect-error Type mismatch between SubmitEvent and React FormEvent
+        onSubmit={handleAddPlaylist}
+      >
+        <TextField fullWidth aria-label="Audio stream link">
+          <InputGroup
+            fullWidth
+            className="bg-surface-secondary/70 border border-separator/50 rounded-full h-8.5 text-xs"
+          >
+            <InputGroup.Prefix className="text-muted pl-2.5">
+              <Link2 className="size-3.5" />
+            </InputGroup.Prefix>
+            <InputGroup.Input
+              className="text-xs"
+              disabled={isAdding || !isOnline}
+              placeholder={
+                !isOnline
+                  ? "Offline - Reconnect to add new streams..."
+                  : "Paste Spotify or YouTube link (details auto-fetched)..."
+              }
+              type="url"
+              value={newUrl}
+              onChange={(event) => setNewUrl(event.target.value)}
+            />
+          </InputGroup>
+        </TextField>
+
+        <Button
+          className="h-8.5 px-4 rounded-full text-xs font-semibold shrink-0 cursor-pointer shadow-xs"
+          isDisabled={!newUrl.trim() || isAdding || !isOnline}
+          size="sm"
+          type="submit"
+          variant="primary"
+        >
+          {isAdding ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin mr-1" />
+              Fetching...
+            </>
+          ) : (
+            <>
+              <Plus className="size-3.5 mr-1" />
+              Add Record
+            </>
+          )}
+        </Button>
+      </Form>
+    </div>
+  );
+
+  const playlistGrid = (
+    <ScrollShadow
+      className="flex-1 min-h-0 h-full overflow-y-auto no-scrollbar"
+      orientation="vertical"
+      size={20}
+    >
+      <SortableList onReorder={handleReorder}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1">
+          {allPlaylists.map((item, index) => {
+            const isActive = activePlaylistId === item.id;
+
+            return (
+              <VinylPlaylistItem
+                key={item.id}
+                editTitleText={editTitleText}
+                editingId={editingId}
+                handleSaveRename={handleSaveRename}
+                index={index}
+                isActive={isActive}
+                isBuffering={isBuffering}
+                isPlaying={isPlaying}
+                item={item}
+                playPlaylist={playPlaylist}
+                setEditTitleText={setEditTitleText}
+                setEditingId={setEditingId}
+                onDelete={setDeletingPlaylist}
+              />
+            );
+          })}
+        </div>
+      </SortableList>
+    </ScrollShadow>
+  );
+
   return (
     <>
-      <Modal.Backdrop
-        isOpen={isPickerOpen}
-        onOpenChange={(open) => !open && handleClose()}
-      >
-        <Modal.Container>
-          <Modal.Dialog
-            aria-label="Audio Stream Library"
-            className="sm:max-w-3xl w-full h-[85vh] sm:h-140 max-h-[85vh] space-y-5"
-          >
-            <Modal.Header className="flex-row items-center gap-3">
-              <Modal.Icon>
-                <ListMusic className="size-4" />
-              </Modal.Icon>
-              <div>
-                <Modal.Heading>Audio Stream Library</Modal.Heading>
-                <Typography color="muted" type="body-xs">
-                  {!isOnline
-                    ? "You are currently offline. You can select a playlist and it will play when reconnected."
-                    : "Select a curated background stream or paste your own YouTube / Spotify link below."}
-                </Typography>
-              </div>
-            </Modal.Header>
-            <Modal.CloseTrigger />
-            <div>
-              {/* Direct URL Input Bar */}
-              <Form
-                className="flex items-center gap-2"
-                // @ts-expect-error Type mismatch between SubmitEvent and React FormEvent
-                onSubmit={handleAddPlaylist}
-              >
-                <TextField fullWidth aria-label="Audio stream link">
-                  <InputGroup
-                    fullWidth
-                    className="bg-surface-secondary/70 border border-separator/50 rounded-full h-8.5 text-xs"
-                  >
-                    <InputGroup.Prefix className="text-muted pl-2.5">
-                      <Link2 className="size-3.5" />
-                    </InputGroup.Prefix>
-                    <InputGroup.Input
-                      className="text-xs"
-                      disabled={isAdding || !isOnline}
-                      placeholder={
-                        !isOnline
-                          ? "Offline - Reconnect to add new streams..."
-                          : "Paste Spotify or YouTube link (details auto-fetched)..."
-                      }
-                      type="url"
-                      value={newUrl}
-                      onChange={(event) => setNewUrl(event.target.value)}
-                    />
-                  </InputGroup>
-                </TextField>
-
-                <Button
-                  className="h-8.5 px-4 rounded-full text-xs font-semibold shrink-0 cursor-pointer shadow-xs"
-                  isDisabled={!newUrl.trim() || isAdding || !isOnline}
-                  size="sm"
-                  type="submit"
-                  variant="primary"
-                >
-                  {isAdding ? (
-                    <>
-                      <Loader2 className="size-3.5 animate-spin mr-1" />
-                      Fetching...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="size-3.5 mr-1" />
-                      Add Record
-                    </>
-                  )}
-                </Button>
-              </Form>
-            </div>
-
-            {/* Modal Body: Tactile Vinyl Record Sleeves Grid */}
-            <ScrollShadow
-              className="flex-1 min-h-0 h-full overflow-y-auto no-scrollbar"
-              orientation="vertical"
-              size={20}
+      {isMobile ? (
+        <Drawer.Backdrop
+          isOpen={isPickerOpen}
+          onOpenChange={(open) => !open && handleClose()}
+        >
+          <Drawer.Content placement="bottom">
+            <Drawer.Dialog
+              aria-label="Audio Stream Library"
+              className="h-[85dvh] max-h-[90dvh] flex flex-col p-4 shadow-2xl rounded-t-3xl rounded-b-none border-t border-separator/40 bg-surface/98 backdrop-blur-xl space-y-4"
             >
-              <SortableList onReorder={handleReorder}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1">
-                  {allPlaylists.map((item, index) => {
-                    const isActive = activePlaylistId === item.id;
-
-                    return (
-                      <VinylPlaylistItem
-                        key={item.id}
-                        editTitleText={editTitleText}
-                        editingId={editingId}
-                        handleSaveRename={handleSaveRename}
-                        index={index}
-                        isActive={isActive}
-                        isBuffering={isBuffering}
-                        isPlaying={isPlaying}
-                        item={item}
-                        onDelete={setDeletingPlaylist}
-                        playPlaylist={playPlaylist}
-                        setEditTitleText={setEditTitleText}
-                        setEditingId={setEditingId}
-                      />
-                    );
-                  })}
+              <Drawer.Handle />
+              <Drawer.Header className="flex-row items-center justify-between pb-1 shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center size-10 rounded-2xl bg-accent/15 text-accent shrink-0">
+                    <ListMusic className="size-5" />
+                  </div>
+                  <div>
+                    <Drawer.Heading className="text-base font-semibold text-foreground">
+                      Audio Stream Library
+                    </Drawer.Heading>
+                    <Typography color="muted" type="body-xs">
+                      Curated streams & custom links
+                    </Typography>
+                  </div>
                 </div>
-              </SortableList>
-            </ScrollShadow>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+                <Drawer.CloseTrigger />
+              </Drawer.Header>
+
+              {urlInputBar}
+
+              <Drawer.Body className="flex-1 min-h-0 p-0 overflow-hidden flex flex-col">
+                {playlistGrid}
+              </Drawer.Body>
+            </Drawer.Dialog>
+          </Drawer.Content>
+        </Drawer.Backdrop>
+      ) : (
+        <Modal.Backdrop
+          isOpen={isPickerOpen}
+          onOpenChange={(open) => !open && handleClose()}
+        >
+          <Modal.Container>
+            <Modal.Dialog
+              aria-label="Audio Stream Library"
+              className="sm:max-w-3xl w-full h-[85vh] sm:h-140 max-h-[85vh] space-y-5"
+            >
+              <Modal.Header className="flex-row items-center gap-3">
+                <Modal.Icon>
+                  <ListMusic className="size-4" />
+                </Modal.Icon>
+                <div>
+                  <Modal.Heading>Audio Stream Library</Modal.Heading>
+                  <Typography color="muted" type="body-xs">
+                    {!isOnline
+                      ? "You are currently offline. You can select a playlist and it will play when reconnected."
+                      : "Select a curated background stream or paste your own YouTube / Spotify link below."}
+                  </Typography>
+                </div>
+              </Modal.Header>
+              <Modal.CloseTrigger />
+              {urlInputBar}
+              {playlistGrid}
+            </Modal.Dialog>
+          </Modal.Container>
+        </Modal.Backdrop>
+      )}
 
       {/* Remove Playlist Confirmation Dialog */}
       {deletingPlaylist && (

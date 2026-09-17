@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Modal,
+  Drawer,
   Button,
   TextField,
   Input,
@@ -24,6 +25,8 @@ import {
   Plus,
   Check,
 } from "lucide-react";
+
+import { useIsMobile } from "@/hooks/use-is-mobile";
 
 import {
   TodoItem,
@@ -204,30 +207,17 @@ export function TodoEditModal({
     onClose();
   };
 
+  const isMobile = useIsMobile();
+
   if (!isOpen || !todo) return null;
 
-  return (
-    <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <Modal.Container size="lg">
-        <Modal.Dialog className="sm:max-w-120 space-y-5">
-          <Modal.Header className="flex-row items-center gap-3">
-            <Modal.Icon>
-              <Edit3 className="text-accent" />
-            </Modal.Icon>
-            <div>
-              <Modal.Heading>Edit Task</Modal.Heading>
-              <Typography color="muted" type="body-xs">
-                Customize task details, notes, priority, tag, and due date.
-              </Typography>
-            </div>
-          </Modal.Header>
-          <Modal.CloseTrigger />
-          <Modal.Body className="space-y-4">
-            {/* Task Title */}
-            <TextField fullWidth name="title" value={title} onChange={setTitle}>
-              <Label>Task Title</Label>
-              <Input placeholder="What needs to be done?" variant="secondary" />
-            </TextField>
+  const formBody = (
+    <div className="space-y-4">
+      {/* Task Title */}
+      <TextField fullWidth name="title" value={title} onChange={setTitle}>
+        <Label>Task Title</Label>
+        <Input placeholder="What needs to be done?" variant="secondary" />
+      </TextField>
 
             {/* Notes */}
             <TextField fullWidth name="notes" value={notes} onChange={setNotes}>
@@ -674,21 +664,83 @@ export function TodoEditModal({
                 </Popover>
               </div>
             </div>
+    </div>
+  );
+
+  const footerActions = (
+    <>
+      <Button slot="close" variant="secondary" onPress={onClose}>
+        Cancel
+      </Button>
+      <Button
+        isDisabled={!title.trim()}
+        variant="primary"
+        onPress={handleSave}
+      >
+        Save Changes
+      </Button>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <Drawer.Content placement="bottom">
+          <Drawer.Dialog className="max-h-[88dvh] flex flex-col p-4 shadow-2xl rounded-t-3xl rounded-b-none border-t border-separator/40 bg-surface/98 backdrop-blur-xl space-y-3">
+            <Drawer.Handle />
+            <Drawer.Header className="flex-row items-center justify-between pb-1 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center size-10 rounded-2xl bg-accent/15 text-accent shrink-0">
+                  <Edit3 className="size-5" />
+                </div>
+                <div>
+                  <Drawer.Heading className="text-base font-semibold text-foreground">
+                    Edit Task
+                  </Drawer.Heading>
+                  <Typography color="muted" type="body-xs">
+                    Customize task details, notes, & tags
+                  </Typography>
+                </div>
+              </div>
+              <Drawer.CloseTrigger />
+            </Drawer.Header>
+            <Drawer.Body className="p-0 overflow-y-auto mt-2">
+              {formBody}
+            </Drawer.Body>
+            <Drawer.Footer className="flex items-center justify-end gap-2 pt-3">
+              {footerActions}
+            </Drawer.Footer>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
+    );
+  }
+
+  return (
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <Modal.Container size="lg">
+        <Modal.Dialog className="sm:max-w-120 space-y-5">
+          <Modal.Header className="flex-row items-center gap-3">
+            <Modal.Icon>
+              <Edit3 className="text-accent" />
+            </Modal.Icon>
+            <div>
+              <Modal.Heading>Edit Task</Modal.Heading>
+              <Typography color="muted" type="body-xs">
+                Customize task details, notes, priority, tag, and due date.
+              </Typography>
+            </div>
+          </Modal.Header>
+          <Modal.CloseTrigger />
+          <Modal.Body className="space-y-4">
+            {formBody}
           </Modal.Body>
           <Modal.Footer className="flex items-center justify-end gap-2">
-            <Button slot="close" variant="secondary" onPress={onClose}>
-              Cancel
-            </Button>
-            <Button
-              isDisabled={!title.trim()}
-              variant="primary"
-              onPress={handleSave}
-            >
-              Save Changes
-            </Button>
+            {footerActions}
           </Modal.Footer>
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>
   );
 }
+

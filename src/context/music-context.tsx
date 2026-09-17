@@ -189,6 +189,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const isOnlineRef = useRef<boolean>(
     typeof navigator !== "undefined" ? navigator.onLine : true,
   );
+
   isOnlineRef.current = isOnline;
 
   const [customPlaylists, setCustomPlaylists] = useState<Playlist[]>(() => {
@@ -1367,7 +1368,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
           setCurrentVideoId(initialVid);
           currentVideoIdRef.current = initialVid;
-          setPosterUrl(`https://img.youtube.com/vi/${initialVid}/hqdefault.jpg`);
+          setPosterUrl(
+            `https://img.youtube.com/vi/${initialVid}/hqdefault.jpg`,
+          );
         } else {
           mediaTypeRef.current = "video";
           targetFirstVideoIdRef.current = "";
@@ -1686,7 +1689,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     if (!trimmed) return;
     setCustomPlaylists((prev) =>
-      prev.map((playlist) => (playlist.id === id ? { ...playlist, title: trimmed } : playlist)),
+      prev.map((playlist) =>
+        playlist.id === id ? { ...playlist, title: trimmed } : playlist,
+      ),
     );
     toast("Playlist Renamed", {
       variant: "default",

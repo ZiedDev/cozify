@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, MouseEvent } from "react";
 import {
   Modal,
+  Drawer,
   TextField,
   InputGroup,
   ScrollShadow,
@@ -23,6 +24,8 @@ import {
   X,
 } from "lucide-react";
 
+import { useIsMobile } from "@/hooks/use-is-mobile";
+
 import {
   storageAdapter,
   STORAGE_KEYS,
@@ -42,6 +45,7 @@ export function SessionsLogModal({
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<
     "all" | "cycles" | "overtime" | "notes"
@@ -143,9 +147,13 @@ export function SessionsLogModal({
         Number(session.cyclesCompleted ?? (session.sprintsCompleted || 0)) <= 1
       )
         return false;
-      if (filterMode === "overtime" && Number(session.overtimeMinutes || 0) <= 0)
+      if (
+        filterMode === "overtime" &&
+        Number(session.overtimeMinutes || 0) <= 0
+      )
         return false;
-      if (filterMode === "notes" && !(session.notes && session.notes.trim())) return false;
+      if (filterMode === "notes" && !(session.notes && session.notes.trim()))
+        return false;
 
       // 2. Search query
       if (query) {
@@ -170,18 +178,25 @@ export function SessionsLogModal({
   const multiCycleCount = useMemo(
     () =>
       sessions.filter(
-        (session) => Number(session.cyclesCompleted ?? (session.sprintsCompleted || 0)) > 1,
+        (session) =>
+          Number(session.cyclesCompleted ?? (session.sprintsCompleted || 0)) >
+          1,
       ).length,
     [sessions],
   );
 
   const overtimeCount = useMemo(
-    () => sessions.filter((session) => Number(session.overtimeMinutes || 0) > 0).length,
+    () =>
+      sessions.filter((session) => Number(session.overtimeMinutes || 0) > 0)
+        .length,
     [sessions],
   );
 
   const notesCount = useMemo(
-    () => sessions.filter((session) => Boolean(session.notes && session.notes.trim())).length,
+    () =>
+      sessions.filter((session) =>
+        Boolean(session.notes && session.notes.trim()),
+      ).length,
     [sessions],
   );
 
@@ -207,28 +222,10 @@ export function SessionsLogModal({
 
   if (!isOpen) return null;
 
-  return (
-    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Modal.Container size="lg">
-        <Modal.Dialog className="sm:max-w-195 md:max-w-210 w-full h-[85vh] sm:h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-separator/50 bg-surface shadow-2xl">
-          <Modal.CloseTrigger />
-
-          {/* Modal Header */}
-          <Modal.Header className="px-5 sm:px-6 py-3.5 sm:py-4 gap-2.5">
-            <Modal.Icon>
-              <History className="size-5 text-accent" />
-            </Modal.Icon>
-            <Modal.Heading className="text-base font-semibold">
-              Focus Sessions Log
-            </Modal.Heading>
-          </Modal.Header>
-
-          <Separator />
-
-          {/* Modal Body: Responsive 2-Column Split Structure */}
-          <Modal.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
-            {/* Left Sidebar: Search & Summary Stats */}
-            <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-separator/40 p-3 sm:p-4 bg-surface-secondary/40 shrink-0 flex flex-col gap-3">
+  const bodyContent = (
+    <div className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
+      {/* Left Sidebar: Search & Summary Stats */}
+      <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-separator/40 p-3 sm:p-4 bg-surface-secondary/40 shrink-0 flex flex-col gap-3">
               <div className="flex flex-col gap-3">
                 {/* Search Bar InputGroup */}
                 <div className="flex flex-col gap-1.5 w-full">
@@ -457,11 +454,14 @@ export function SessionsLogModal({
               ) : (
                 <div className="space-y-3">
                   {visibleSessions.map((session) => {
-                    const { date, time } = formatSessionDateTime(session.createdAt);
+                    const { date, time } = formatSessionDateTime(
+                      session.createdAt,
+                    );
                     const totalMins =
                       (Number(session.focusMinutes) || 0) +
                       (Number(session.overtimeMinutes) || 0);
-                    const cycleCount = session.cyclesCompleted ?? session.sprintsCompleted;
+                    const cycleCount =
+                      session.cyclesCompleted ?? session.sprintsCompleted;
                     const isEditing = editingSessionId === session.id;
 
                     if (isEditing) {
@@ -493,7 +493,9 @@ export function SessionsLogModal({
                                 className="w-full h-8 px-2.5 rounded-xl bg-surface-secondary border border-separator/40 text-xs text-foreground outline-none focus:border-accent"
                                 id={`session-edit-title-${session.id}`}
                                 value={editTitle}
-                                onChange={(event) => setEditTitle(event.target.value)}
+                                onChange={(event) =>
+                                  setEditTitle(event.target.value)
+                                }
                               />
                             </div>
 
@@ -513,7 +515,10 @@ export function SessionsLogModal({
                                 value={editFocusMinutes}
                                 onChange={(event) =>
                                   setEditFocusMinutes(
-                                    Math.max(1, Number(event.target.value) || 1),
+                                    Math.max(
+                                      1,
+                                      Number(event.target.value) || 1,
+                                    ),
                                   )
                                 }
                               />
@@ -535,7 +540,10 @@ export function SessionsLogModal({
                                 value={editOvertimeMinutes}
                                 onChange={(event) =>
                                   setEditOvertimeMinutes(
-                                    Math.max(0, Number(event.target.value) || 0),
+                                    Math.max(
+                                      0,
+                                      Number(event.target.value) || 0,
+                                    ),
                                   )
                                 }
                               />
@@ -595,7 +603,9 @@ export function SessionsLogModal({
                               placeholder="Session notes or reflections..."
                               rows={2}
                               value={editNotes}
-                              onChange={(event) => setEditNotes(event.target.value)}
+                              onChange={(event) =>
+                                setEditNotes(event.target.value)
+                              }
                             />
                           </div>
 
@@ -676,7 +686,9 @@ export function SessionsLogModal({
                               }`}
                               size="sm"
                               variant="ghost"
-                              onClick={(event) => triggerDelete(session.id, event)}
+                              onClick={(event) =>
+                                triggerDelete(session.id, event)
+                              }
                             >
                               <Trash2 className="size-3.5" />
                             </Button>
@@ -727,7 +739,10 @@ export function SessionsLogModal({
                               <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
                                 <Zap className="size-3" />
                                 <span>
-                                  +{formatMinutesDisplay(session.overtimeMinutes)}{" "}
+                                  +
+                                  {formatMinutesDisplay(
+                                    session.overtimeMinutes,
+                                  )}{" "}
                                   overtime
                                 </span>
                               </span>
@@ -737,7 +752,9 @@ export function SessionsLogModal({
                             <span
                               className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${
                                 PRESET_TAGS.find(
-                                  (presetTag) => presetTag.id === session.tag || presetTag.label === session.tag,
+                                  (presetTag) =>
+                                    presetTag.id === session.tag ||
+                                    presetTag.label === session.tag,
                                 )?.color ||
                                 "text-muted bg-surface-secondary border-separator/40"
                               }`}
@@ -782,9 +799,55 @@ export function SessionsLogModal({
                 </div>
               )}
             </ScrollShadow>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+        <Drawer.Content placement="bottom">
+          <Drawer.Dialog className="h-[88dvh] max-h-[92dvh] flex flex-col overflow-hidden p-0 rounded-t-3xl rounded-b-none border-t border-separator/40 bg-surface/98 backdrop-blur-xl shadow-2xl">
+            <Drawer.Handle />
+            <Drawer.Header className="px-5 py-3.5 flex-row items-center justify-between border-b border-separator/40 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center size-9 rounded-2xl bg-accent/15 text-accent shrink-0">
+                  <History className="size-4.5" />
+                </div>
+                <Drawer.Heading className="text-base font-semibold text-foreground">
+                  Focus Sessions Log
+                </Drawer.Heading>
+              </div>
+              <Drawer.CloseTrigger />
+            </Drawer.Header>
+            <Drawer.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+              {bodyContent}
+            </Drawer.Body>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
+    );
+  }
+
+  return (
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Modal.Container size="lg">
+        <Modal.Dialog className="sm:max-w-195 md:max-w-210 w-full h-[85vh] sm:h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-separator/50 bg-surface shadow-2xl">
+          <Modal.CloseTrigger />
+          <Modal.Header className="px-5 sm:px-6 py-3.5 sm:py-4 gap-2.5">
+            <Modal.Icon>
+              <History className="size-5 text-accent" />
+            </Modal.Icon>
+            <Modal.Heading className="text-base font-semibold">
+              Focus Sessions Log
+            </Modal.Heading>
+          </Modal.Header>
+          <Separator />
+          <Modal.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
+            {bodyContent}
           </Modal.Body>
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>
   );
 }
+

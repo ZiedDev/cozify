@@ -55,39 +55,42 @@ export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   // 1. Custom Wallpapers list (Persistent in IDB / syncable)
-  const [customBackgrounds, setCustomBackgrounds] = useState<
-    ThemeBackground[]
-  >(() => {
-    const saved = storageAdapter.getItem<{ customBackgrounds?: ThemeBackground[] } | null>(
-      STORAGE_KEYS.THEME_CONFIG,
-      null,
-    );
+  const [customBackgrounds, setCustomBackgrounds] = useState<ThemeBackground[]>(
+    () => {
+      const saved = storageAdapter.getItem<{
+        customBackgrounds?: ThemeBackground[];
+      } | null>(STORAGE_KEYS.THEME_CONFIG, null);
 
-    if (saved && Array.isArray(saved.customBackgrounds)) {
-      return saved.customBackgrounds.map((bg) => ({
-        ...bg,
-        url: normalizeImageUrl(bg.url),
-        isCustom: true,
-      }));
-    }
+      if (saved && Array.isArray(saved.customBackgrounds)) {
+        return saved.customBackgrounds.map((bg) => ({
+          ...bg,
+          url: normalizeImageUrl(bg.url),
+          isCustom: true,
+        }));
+      }
 
-    return [];
-  });
+      return [];
+    },
+  );
 
   // 2. Active Background ID (Device-local in localStorage)
-  const [activeBackgroundId, setActiveBackgroundId] = useState<string | null>(() => {
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem(LOCAL_STORAGE_ACTIVE_BG_KEY);
-      if (saved !== null) {
-        try {
-          return JSON.parse(saved);
-        } catch {
-          return saved;
+  const [activeBackgroundId, setActiveBackgroundId] = useState<string | null>(
+    () => {
+      if (typeof localStorage !== "undefined") {
+        const saved = localStorage.getItem(LOCAL_STORAGE_ACTIVE_BG_KEY);
+
+        if (saved !== null) {
+          try {
+            return JSON.parse(saved);
+          } catch {
+            return saved;
+          }
         }
       }
-    }
-    return null;
-  });
+
+      return null;
+    },
+  );
 
   // 3. Per-Wallpaper Fine-Tuning & Hue Map (Device-local in localStorage)
   const [wallpaperTunings, setWallpaperTunings] = useState<
@@ -95,12 +98,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   >(() => {
     if (typeof localStorage !== "undefined") {
       const saved = localStorage.getItem(LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY);
+
       if (saved) {
         try {
           return JSON.parse(saved) || {};
         } catch {}
       }
     }
+
     return {};
   });
 
@@ -273,6 +278,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
               "Please enter a valid web image URL starting with http:// or https://",
             variant: "danger",
           });
+
           return;
         }
       }
@@ -285,6 +291,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setCustomBackgrounds((prev) =>
         prev.map((bg) => {
           if (bg.id !== id) return bg;
+
           return {
             ...bg,
             name:
@@ -308,25 +315,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const removeCustomBackground = useCallback(
-    (id: string) => {
-      setCustomBackgrounds((prev) => prev.filter((bg) => bg.id !== id));
-      setActiveBackgroundId((prev) => (prev === id ? null : prev));
+  const removeCustomBackground = useCallback((id: string) => {
+    setCustomBackgrounds((prev) => prev.filter((bg) => bg.id !== id));
+    setActiveBackgroundId((prev) => (prev === id ? null : prev));
 
-      setWallpaperTunings((prev) => {
-        if (!prev[id]) return prev;
-        const next = { ...prev };
-        delete next[id];
-        return next;
-      });
+    setWallpaperTunings((prev) => {
+      if (!prev[id]) return prev;
+      const next = { ...prev };
 
-      toast("Wallpaper Removed", {
-        variant: "default",
-        timeout: 2000,
-      });
-    },
-    [],
-  );
+      delete next[id];
+
+      return next;
+    });
+
+    toast("Wallpaper Removed", {
+      variant: "default",
+      timeout: 2000,
+    });
+  }, []);
 
   const moveCustomBackground = useCallback(
     (id: string, direction: "left" | "right") => {
@@ -361,6 +367,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
         const next = [...prev];
         const [moved] = next.splice(oldIndex, 1);
+
         next.splice(newIndex, 0, moved);
 
         return next;
@@ -371,7 +378,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setOverlayOpacity = useCallback(
     (opacity: number) => {
-      updateActiveTuning({ overlayOpacity: Math.max(0, Math.min(100, opacity)) });
+      updateActiveTuning({
+        overlayOpacity: Math.max(0, Math.min(100, opacity)),
+      });
     },
     [updateActiveTuning],
   );

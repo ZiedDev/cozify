@@ -17,7 +17,8 @@ export function shouldPromptForTargetReduction(
   return (
     Object.entries(cycleStates).some(
       ([cycleKey, cycleState]) =>
-        Number(cycleKey) > newTarget && (cycleState.isCompleted || cycleState.timeLeft < focusDuration),
+        Number(cycleKey) > newTarget &&
+        (cycleState.isCompleted || cycleState.timeLeft < focusDuration),
     ) ||
     (currentCycle > newTarget && isCurrentCycleActive)
   );
@@ -54,12 +55,30 @@ export function calculateCycleProgressPercent(
   mode: TimerMode,
   timeLeft: number,
   focusDuration: number,
+  cycleState?: {
+    timeLeft?: number;
+    initialDuration?: number;
+    focusElapsed?: number;
+    isCompleted?: boolean;
+  },
 ): number {
-  if (mode !== "focus" || focusDuration <= 0) return 0;
+  if (mode !== "focus") return 0;
+  if (cycleState?.isCompleted) return 100;
+
+  const baseDuration = cycleState?.initialDuration || focusDuration;
+
+  if (baseDuration <= 0) return 0;
+
+  if (typeof cycleState?.focusElapsed === "number") {
+    return Math.min(
+      100,
+      Math.max(0, (cycleState.focusElapsed / baseDuration) * 100),
+    );
+  }
 
   return Math.min(
     100,
-    Math.max(0, ((focusDuration - timeLeft) / focusDuration) * 100),
+    Math.max(0, ((baseDuration - Math.max(0, timeLeft)) / baseDuration) * 100),
   );
 }
 
@@ -68,7 +87,9 @@ export const clampTargetCycles = (count: number): number =>
 
 export const countCompletedCycles = (
   cycleStates: Record<number, { isCompleted: boolean }>,
-): number => Object.values(cycleStates).filter((cycleState) => cycleState.isCompleted).length;
+): number =>
+  Object.values(cycleStates).filter((cycleState) => cycleState.isCompleted)
+    .length;
 
 export function calculateSavedCycleProgressPercent(
   cycleState:

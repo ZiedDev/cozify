@@ -252,7 +252,7 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
 
               {/* Browse Playlists Modal Trigger with 'Playlists' text */}
               <Button
-                className="h-6 px-2.5 rounded-full text-[11px] font-medium flex items-center gap-1 text-muted hover:text-foreground border border-separator/40 hover:border-separator/80 bg-surface/60 cursor-pointer transition-colors duration-150"
+                className="h-6 px-2.5 rounded-full text-[11px] font-medium flex items-center gap-1 transition-colors duration-150"
                 size="sm"
                 variant="secondary"
                 onClick={togglePicker}

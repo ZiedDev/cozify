@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, MouseEvent } from "react";
 import {
   Modal,
+  Drawer,
   TextField,
   InputGroup,
   ScrollShadow,
@@ -24,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import {
   TodoItem,
   TodoPriority,
@@ -41,6 +43,7 @@ export function TasksLogModal({
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterMode, setFilterMode] = useState<
     "all" | "completed" | "archived" | "active"
@@ -193,28 +196,10 @@ export function TasksLogModal({
 
   if (!isOpen) return null;
 
-  return (
-    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
-      <Modal.Container size="lg">
-        <Modal.Dialog className="sm:max-w-195 md:max-w-210 w-full h-[85vh] sm:h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-separator/50 bg-surface shadow-2xl">
-          <Modal.CloseTrigger />
-
-          {/* Modal Header */}
-          <Modal.Header className="px-5 sm:px-6 py-3.5 sm:py-4 gap-2.5">
-            <Modal.Icon>
-              <CheckSquare className="size-5 text-accent" />
-            </Modal.Icon>
-            <Modal.Heading className="text-base font-semibold">
-              Tasks & Archive Log
-            </Modal.Heading>
-          </Modal.Header>
-
-          <Separator />
-
-          {/* Modal Body: 2-Column Split Structure */}
-          <Modal.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
-            {/* Left Sidebar: Search & Summary Stats */}
-            <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-separator/40 p-3 sm:p-4 bg-surface-secondary/40 shrink-0 flex flex-col gap-3">
+  const bodyContent = (
+    <div className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
+      {/* Left Sidebar: Search & Summary Stats */}
+      <div className="w-full sm:w-56 border-b sm:border-b-0 sm:border-r border-separator/40 p-3 sm:p-4 bg-surface-secondary/40 shrink-0 flex flex-col gap-3">
               <div className="flex flex-col gap-3">
                 {/* Search Bar */}
                 <div className="flex flex-col gap-1.5 w-full">
@@ -491,7 +476,7 @@ export function TasksLogModal({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               <div className="flex flex-col gap-1">
                                 <span className="text-[10px] uppercase r text-muted font-medium">
-                                   Priority
+                                  Priority
                                 </span>
                                 <div className="flex items-center gap-1">
                                   {(
@@ -732,7 +717,9 @@ export function TasksLogModal({
                                 className="h-6 px-2.5 text-[11px] font-semibold rounded-lg bg-danger text-danger-foreground hover:bg-danger/90 cursor-pointer"
                                 size="sm"
                                 variant="primary"
-                                onPress={() => handlePermanentDelete(todoItem.id)}
+                                onPress={() =>
+                                  handlePermanentDelete(todoItem.id)
+                                }
                               >
                                 Delete
                               </Button>
@@ -750,20 +737,23 @@ export function TasksLogModal({
 
                         {/* Metadata row: Priority & Tag */}
                         <div className="flex items-center gap-2 flex-wrap text-[11px] pt-0.5">
-                          {todoItem.priority && todoItem.priority !== "none" && (
-                            <span
-                              className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${
-                                todoItem.priority === "high"
-                                  ? "text-rose-400 bg-rose-500/10 border-rose-500/30"
-                                  : todoItem.priority === "medium"
-                                    ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
-                                    : "text-blue-400 bg-blue-500/10 border-blue-500/30"
-                              }`}
-                            >
-                              <Flag className="size-2.5" />
-                              <span className="capitalize">{todoItem.priority}</span>
-                            </span>
-                          )}
+                          {todoItem.priority &&
+                            todoItem.priority !== "none" && (
+                              <span
+                                className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-medium ${
+                                  todoItem.priority === "high"
+                                    ? "text-rose-400 bg-rose-500/10 border-rose-500/30"
+                                    : todoItem.priority === "medium"
+                                      ? "text-amber-400 bg-amber-500/10 border-amber-500/30"
+                                      : "text-blue-400 bg-blue-500/10 border-blue-500/30"
+                                }`}
+                              >
+                                <Flag className="size-2.5" />
+                                <span className="capitalize">
+                                  {todoItem.priority}
+                                </span>
+                              </span>
+                            )}
 
                           {todoItem.tag && (
                             <span
@@ -809,9 +799,55 @@ export function TasksLogModal({
                 </div>
               )}
             </ScrollShadow>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+        <Drawer.Content placement="bottom">
+          <Drawer.Dialog className="h-[88dvh] max-h-[92dvh] flex flex-col overflow-hidden p-0 rounded-t-3xl rounded-b-none border-t border-separator/40 bg-surface/98 backdrop-blur-xl shadow-2xl">
+            <Drawer.Handle />
+            <Drawer.Header className="px-5 py-3.5 flex-row items-center justify-between border-b border-separator/40 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="flex items-center justify-center size-9 rounded-2xl bg-accent/15 text-accent shrink-0">
+                  <CheckSquare className="size-4.5" />
+                </div>
+                <Drawer.Heading className="text-base font-semibold text-foreground">
+                  Tasks & Archive Log
+                </Drawer.Heading>
+              </div>
+              <Drawer.CloseTrigger />
+            </Drawer.Header>
+            <Drawer.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col">
+              {bodyContent}
+            </Drawer.Body>
+          </Drawer.Dialog>
+        </Drawer.Content>
+      </Drawer.Backdrop>
+    );
+  }
+
+  return (
+    <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
+      <Modal.Container size="lg">
+        <Modal.Dialog className="sm:max-w-195 md:max-w-210 w-full h-[85vh] sm:h-140 max-h-[88vh] flex flex-col overflow-hidden p-0 rounded-2xl sm:rounded-3xl border border-separator/50 bg-surface shadow-2xl">
+          <Modal.CloseTrigger />
+          <Modal.Header className="px-5 sm:px-6 py-3.5 sm:py-4 gap-2.5">
+            <Modal.Icon>
+              <CheckSquare className="size-5 text-accent" />
+            </Modal.Icon>
+            <Modal.Heading className="text-base font-semibold">
+              Tasks & Archive Log
+            </Modal.Heading>
+          </Modal.Header>
+          <Separator />
+          <Modal.Body className="p-0 overflow-hidden flex-1 min-h-0 flex flex-col sm:flex-row gap-0">
+            {bodyContent}
           </Modal.Body>
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>
   );
 }
+

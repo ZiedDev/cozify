@@ -80,8 +80,9 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       mode,
       timeLeft,
       durations.focus,
+      isRunning,
     );
-  }, [cycleStates, currentCycle, mode, timeLeft, durations.focus]);
+  }, [cycleStates, currentCycle, mode, timeLeft, durations.focus, isRunning]);
 
   const accumulatedOvertimeSeconds = useMemo(() => {
     return calculateTotalOvertimeSeconds(
@@ -146,6 +147,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     completedCycles,
     accumulatedFocusSeconds,
     accumulatedOvertimeSeconds,
+    currentCycleState: cycleStates[currentCycle],
   });
 
   // 2. Persist state changes minimally
@@ -256,7 +258,25 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
     remainingOnPauseRef.current = remaining;
     targetEndTimeRef.current = Date.now() + remaining * 1000;
-  }, [timeLeft, playSound]);
+
+    if (mode === "focus") {
+      setCycleStates((prev) => {
+        const current = prev[currentCycle];
+        const initialDuration = current?.initialDuration || remaining;
+
+        return {
+          ...prev,
+          [currentCycle]: {
+            timeLeft: remaining,
+            isCompleted: !!current?.isCompleted,
+            initialDuration,
+            focusElapsed: current?.focusElapsed ?? 0,
+            overtimeElapsed: current?.overtimeElapsed ?? 0,
+          },
+        };
+      });
+    }
+  }, [timeLeft, playSound, mode, currentCycle]);
 
   // Clean Toggle between Start/Resume and Pause
   const toggle = useCallback(() => {
@@ -282,8 +302,12 @@ export function TimerProvider({ children }: { children: ReactNode }) {
             ? Math.ceil((targetEndTimeRef.current - Date.now()) / 1000)
             : timeLeft;
 
+        const current = cycleStates[currentCycle];
         const isFinished = currentRemaining <= 0;
-        const hasProgress = isRunning || currentRemaining < durations.focus;
+        const hasProgress =
+          isRunning ||
+          (current?.focusElapsed ?? 0) > 0 ||
+          currentRemaining < (current?.initialDuration || durations.focus);
 
         if (hasProgress || isFinished) {
           const { initialDuration, focusElapsed, overtimeElapsed } =
@@ -694,34 +718,56 @@ export function TimerProvider({ children }: { children: ReactNode }) {
 
       if (mode === "focus") {
         setCycleStates((cyclePrev) => {
-          const currentInitial = Math.max(
-            updated,
-            cyclePrev[currentCycle]?.initialDuration || durations.focus,
-          );
-          const currentFocusElapsed =
+          const current = cyclePrev[currentCycle];
+          const isCycleUnstarted =
+            !current ||
+            (!isRunning &&
+              (current.focusElapsed ?? 0) === 0 &&
+              !current.isCompleted);
+
+          if (isCycleUnstarted) {
+            // Before starting, adjusting +/- simply adjusts this cycle's duration!
+            return {
+              ...cyclePrev,
+              [currentCycle]: {
+                timeLeft: updated,
+                isCompleted: false,
+                initialDuration: updated,
+                focusElapsed: 0,
+                overtimeElapsed: 0,
+              },
+            };
+          }
+
+          // In-progress or paused cycle: preserve exact actual focusElapsed!
+          const existingFocusElapsed = current.focusElapsed ?? 0;
+          const newInitialDuration =
             updated >= 0
-              ? Math.max(0, Math.min(currentInitial, currentInitial - updated))
-              : currentInitial;
-          const currentOvertimeElapsed =
-            updated < 0
-              ? Math.abs(updated)
-              : (cyclePrev[currentCycle]?.overtimeElapsed ?? 0);
+              ? existingFocusElapsed + updated
+              : existingFocusElapsed;
+          const newOvertimeElapsed = updated < 0 ? Math.abs(updated) : 0;
 
           return {
             ...cyclePrev,
             [currentCycle]: {
               timeLeft: updated,
-              isCompleted:
-                updated <= 0 || !!cyclePrev[currentCycle]?.isCompleted,
-              initialDuration: currentInitial,
-              focusElapsed: currentFocusElapsed,
-              overtimeElapsed: currentOvertimeElapsed,
+              isCompleted: updated <= 0 || !!current.isCompleted,
+              initialDuration: newInitialDuration,
+              focusElapsed: existingFocusElapsed,
+              overtimeElapsed: newOvertimeElapsed,
             },
           };
         });
+      } else {
+        if (!isRunning && currentRemaining === durations[mode]) {
+          setDurations((prev) => ({
+            ...prev,
+            [mode]: updated,
+          }));
+        }
       }
     },
-    [isRunning, timeLeft, mode, currentCycle, durations.focus],
+    [isRunning, timeLeft, mode, currentCycle, durations],
   );
 
   const setTargetCycles = useCallback(
@@ -775,25 +821,34 @@ export function TimerProvider({ children }: { children: ReactNode }) {
             ? Math.ceil((targetEndTimeRef.current - Date.now()) / 1000)
             : timeLeft;
 
-        const { initialDuration, focusElapsed, overtimeElapsed } =
-          calculateCycleElapsed(
-            cycleStates[currentCycle],
-            currentRemaining,
-            durations.focus,
-          );
+        const current = cycleStates[currentCycle];
+        const isCurrentUnstarted =
+          !isRunning &&
+          (current?.focusElapsed ?? 0) === 0 &&
+          !current?.isCompleted;
 
-        latestCycleStates = {
-          ...cycleStates,
-          [currentCycle]: {
-            timeLeft: currentRemaining,
-            isCompleted:
-              currentRemaining <= 0 || !!cycleStates[currentCycle]?.isCompleted,
-            initialDuration,
-            focusElapsed,
-            overtimeElapsed,
-          },
-        };
-        setCycleStates(latestCycleStates);
+        if (!isCurrentUnstarted) {
+          const { initialDuration, focusElapsed, overtimeElapsed } =
+            calculateCycleElapsed(
+              cycleStates[currentCycle],
+              currentRemaining,
+              durations.focus,
+            );
+
+          latestCycleStates = {
+            ...cycleStates,
+            [currentCycle]: {
+              timeLeft: currentRemaining,
+              isCompleted:
+                currentRemaining <= 0 ||
+                !!cycleStates[currentCycle]?.isCompleted,
+              initialDuration,
+              focusElapsed,
+              overtimeElapsed,
+            },
+          };
+          setCycleStates(latestCycleStates);
+        }
       }
 
       // 2. Load target cycle's saved state (or focus duration if unstarted)
@@ -809,7 +864,15 @@ export function TimerProvider({ children }: { children: ReactNode }) {
       setTimeLeft(targetTime);
       remainingOnPauseRef.current = targetTime;
     },
-    [targetCycles, mode, currentCycle, timeLeft, cycleStates, durations.focus],
+    [
+      targetCycles,
+      mode,
+      currentCycle,
+      timeLeft,
+      cycleStates,
+      durations.focus,
+      isRunning,
+    ],
   );
 
   const setCustomDurations = useCallback(
@@ -823,7 +886,8 @@ export function TimerProvider({ children }: { children: ReactNode }) {
         const isCurrentFocusUntouched =
           !currentSavedState ||
           (!currentSavedState.isCompleted &&
-            currentSavedState.timeLeft === prev.focus);
+            (currentSavedState.focusElapsed ?? 0) === 0 &&
+            !isRunning);
 
         setTimeLeft((currentTime) => {
           if (!isRunning) {

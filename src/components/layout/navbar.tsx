@@ -97,7 +97,7 @@ export function Navbar() {
       {/* Mobile Glance Drawer */}
       <Drawer.Backdrop isOpen={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
         <Drawer.Content placement="right">
-          <Drawer.Dialog className="h-full max-h-dvh flex flex-col justify-between p-4 sm:p-5 pt-[calc(1rem+env(safe-area-inset-top,0px))] pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] max-w-xs sm:max-w-sm w-full bg-surface/98 backdrop-blur-xl border-l border-separator shadow-2xl overflow-hidden">
+          <Drawer.Dialog className="h-full max-h-dvh flex flex-col justify-between p-4 sm:p-5 pt-[calc(1rem+env(safe-area-inset-top,0px))] pr-[calc(1rem+env(safe-area-inset-right,0px))] max-w-xs sm:max-w-sm w-full bg-surface/98 backdrop-blur-xl border-l border-separator shadow-2xl overflow-hidden">
             <Drawer.Header className="shrink-0 flex items-center justify-between pb-2 border-b border-separator/30">
               <Drawer.Heading className="text-base font-semibold flex items-center gap-2 text-foreground">
                 <LayoutGrid className="size-4 text-accent" />

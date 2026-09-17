@@ -59,6 +59,7 @@ export function CycleTracker({
     mode,
     timeLeft,
     durations.focus,
+    cycleStates[currentCycle],
   );
 
   const getBarWidthClass = () => {
