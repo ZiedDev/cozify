@@ -68,17 +68,12 @@ export function useStats() {
     setRevision((prevRevision) => prevRevision + 1);
   }, []);
 
-  // Initial migration / rebuild check on mount
+  // Initial one-time check for fresh boot rollups
   useEffect(() => {
-    const summary = StatsRollupEngine.getAllTimeSummary();
-
-    if (
-      (db.dailyRollups.getAll().length === 0 && sessions.length > 0) ||
-      (sessions.length > 0 && summary.totalSessions !== sessions.length)
-    ) {
+    if (db.dailyRollups.getAll().length === 0 && sessions.length > 0) {
       StatsRollupEngine.rebuildAll(sessions, todos);
     }
-  }, [sessions, todos]);
+  }, []); // Run once on mount
 
   // Listen to window focus, storage updates, & stats rollup updates
   useEffect(() => {

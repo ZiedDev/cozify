@@ -25,11 +25,7 @@ export type AchievementMetrics = {
 };
 
 export type AchievementTier =
-  | "bronze"
-  | "silver"
-  | "gold"
-  | "platinum"
-  | "diamond";
+  "bronze" | "silver" | "gold" | "platinum" | "diamond";
 
 export type TierStyleConfig = {
   label: string;

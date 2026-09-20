@@ -88,6 +88,38 @@ const DEFAULT_INITIAL_TODOS: TodoItem[] = [
   },
 ];
 
+function applyTodoOrdering(todos: TodoItem[]): TodoItem[] {
+  if (!Array.isArray(todos) || todos.length <= 1) return todos;
+
+  try {
+    const rawOrder = localStorage.getItem("cozify_todo_order_ids");
+
+    if (!rawOrder) return todos;
+    const orderIds = JSON.parse(rawOrder);
+
+    if (!Array.isArray(orderIds) || orderIds.length === 0) return todos;
+
+    const orderMap = new Map<string, number>();
+
+    orderIds.forEach((id: string, index: number) => {
+      orderMap.set(id, index);
+    });
+
+    return [...todos].sort((a, b) => {
+      const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 999999;
+      const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 999999;
+
+      if (indexA !== indexB) {
+        return indexA - indexB;
+      }
+
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+  } catch {
+    return todos;
+  }
+}
+
 function getInitialTodos(): TodoItem[] {
   if (typeof window === "undefined") return [];
 
@@ -97,7 +129,11 @@ function getInitialTodos(): TodoItem[] {
   );
 
   if (saved !== null && Array.isArray(saved) && saved.length > 0) {
-    return saved.filter((item) => !item.archived && !(item as any).isDeleted);
+    const valid = saved.filter(
+      (item) => !item.archived && !(item as any).isDeleted,
+    );
+
+    return applyTodoOrdering(valid);
   }
 
   try {
@@ -107,7 +143,11 @@ function getInitialTodos(): TodoItem[] {
       const parsed = JSON.parse(raw);
 
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.filter((item: any) => !item.archived && !item.isDeleted);
+        const valid = parsed.filter(
+          (item: any) => !item.archived && !item.isDeleted,
+        );
+
+        return applyTodoOrdering(valid);
       }
     }
   } catch {}
@@ -166,7 +206,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         [],
       );
 
-      setTodos(current);
+      setTodos(applyTodoOrdering(current));
       setIsInitialSyncPending(false);
     };
 
@@ -194,9 +234,8 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     todos.length === 0 &&
     (isAuthLoading || (Boolean(user) && isInitialSyncPending));
 
-  // Sync todos to localStorage & update stats rollups
+  // Debounced stats rollup updates on todo changes without blocking the UI thread
   useEffect(() => {
-    storageAdapter.setItem(STORAGE_KEYS.TODOS, todos);
     StatsRollupEngine.recordTodoChange(todos);
   }, [todos]);
 
@@ -239,7 +278,18 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       };
 
       db.todos.save(newTodo);
-      setTodos((prev) => [newTodo, ...prev]);
+      setTodos((prev) => {
+        const updated = [newTodo, ...prev];
+
+        try {
+          localStorage.setItem(
+            "cozify_todo_order_ids",
+            JSON.stringify(updated.map((t) => t.id)),
+          );
+        } catch {}
+
+        return updated;
+      });
 
       return newTodo;
     },
@@ -374,6 +424,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
         }
 
         updated.splice(Math.max(0, insertIndex), 0, moved);
+        db.todos.saveAll(updated);
 
         return updated;
       });
@@ -389,11 +440,29 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
       if (oldIndex === -1 || newIndex === -1) return prevTodos;
 
-      return arrayMove(prevTodos, oldIndex, newIndex);
+      const reordered = arrayMove(prevTodos, oldIndex, newIndex);
+      const orderIds = reordered.map((t) => t.id);
+
+      try {
+        localStorage.setItem("cozify_todo_order_ids", JSON.stringify(orderIds));
+      } catch {}
+
+      db.todos.saveAll(reordered);
+      storageAdapter.setItem(STORAGE_KEYS.TODOS, reordered);
+
+      return reordered;
     });
   }, []);
 
   const reorderList = useCallback((reordered: TodoItem[]) => {
+    const orderIds = reordered.map((t) => t.id);
+
+    try {
+      localStorage.setItem("cozify_todo_order_ids", JSON.stringify(orderIds));
+    } catch {}
+
+    db.todos.saveAll(reordered);
+    storageAdapter.setItem(STORAGE_KEYS.TODOS, reordered);
     setTodos(reordered);
   }, []);
 

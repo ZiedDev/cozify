@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
@@ -13,57 +13,20 @@ import { MusicWidget, PlaylistPickerModal } from "@/components/music";
 import { TodoView } from "@/menus/todo";
 import { StatsView } from "@/menus/stats";
 import { AppMode } from "@/config/modes";
+import { storageAdapter } from "@/services/storage";
+
+const LAST_TAB_STORAGE_KEY = "cozify_last_active_tab";
 
 export function IndexPage() {
-  const [activeMode, setActiveMode] = useState<AppMode>("home");
-  const [dockMode, setDockMode] = useState<AppMode>("home");
+  const [activeMode, setActiveMode] = useState<AppMode>(() => {
+    return storageAdapter.getItem<AppMode>(LAST_TAB_STORAGE_KEY, "home");
+  });
   const containerRef = useRef<HTMLDivElement>(null);
-  const targetModeRef = useRef<AppMode>("home");
-  const isTransitioningRef = useRef<boolean>(false);
 
-  const handleSelectMode = (newMode: AppMode) => {
-    if (newMode === targetModeRef.current && newMode === activeMode) return;
-
-    targetModeRef.current = newMode;
-    setDockMode(newMode);
-
-    if (isTransitioningRef.current) return;
-
-    if (!containerRef.current) {
-      setActiveMode(newMode);
-
-      return;
-    }
-
-    isTransitioningRef.current = true;
-    gsap.to(containerRef.current, {
-      opacity: 0,
-      y: -8,
-      scale: 0.992,
-      duration: 0.18,
-      ease: "power2.in",
-      onComplete: () => {
-        isTransitioningRef.current = false;
-        const destination = targetModeRef.current;
-
-        setDockMode(destination);
-
-        if (destination === activeMode) {
-          if (containerRef.current) {
-            gsap.to(containerRef.current, {
-              opacity: 1,
-              y: 0,
-              scale: 1,
-              duration: 0.35,
-              ease: "power3.out",
-            });
-          }
-        } else {
-          setActiveMode(destination);
-        }
-      },
-    });
-  };
+  const handleSelectMode = useCallback((newMode: AppMode) => {
+    setActiveMode(newMode);
+    storageAdapter.setItem(LAST_TAB_STORAGE_KEY, newMode);
+  }, []);
 
   useGSAP(
     () => {
@@ -71,13 +34,13 @@ export function IndexPage() {
 
       gsap.fromTo(
         containerRef.current,
-        { opacity: 0, y: 10, scale: 0.99 },
+        { opacity: 0, y: 8, scale: 0.995 },
         {
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.35,
-          ease: "power3.out",
+          duration: 0.22,
+          ease: "power2.out",
         },
       );
     },
@@ -89,7 +52,7 @@ export function IndexPage() {
       <SidebarLeft activeMode={activeMode} />
       <Sidebar activeMode={activeMode} />
 
-      <Dock activeMode={dockMode} onSelectMode={handleSelectMode} />
+      <Dock activeMode={activeMode} onSelectMode={handleSelectMode} />
 
       <MusicWidget activeMode={activeMode} />
       <PlaylistPickerModal />
@@ -101,16 +64,7 @@ export function IndexPage() {
         {activeMode === "home" && <HomeView />}
         {activeMode === "pomodoro" && <PomodoroView />}
         {activeMode === "todo" && <TodoView />}
-        <div
-          aria-hidden={activeMode !== "music"}
-          className={`w-full h-full ${
-            activeMode === "music"
-              ? ""
-              : "absolute inset-0 pointer-events-none opacity-0 -z-50"
-          }`}
-        >
-          <MusicView isActive={activeMode === "music"} />
-        </div>
+        {activeMode === "music" && <MusicView />}
         {activeMode === "stats" && <StatsView />}
       </section>
     </DefaultLayout>

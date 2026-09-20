@@ -1450,7 +1450,7 @@ export function calculateMilestones(
 
   const isKonamiUnlocked = Boolean(
     typeof window !== "undefined" &&
-      localStorage.getItem("cozify_konami_code") === "true",
+    localStorage.getItem("cozify_konami_code") === "true",
   );
 
   const unlockTimes: Record<string, string> = {};

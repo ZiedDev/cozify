@@ -243,28 +243,32 @@ export function SettingsModal({
       )}
 
       {/* Focus Sessions Log Inspection Modal (Chained Modal) */}
-      <SessionsLogModal
-        isOpen={isLogModalOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCloseSessionsLog();
-          } else {
-            setIsLogModalOpen(true);
-          }
-        }}
-      />
+      {isLogModalOpen && (
+        <SessionsLogModal
+          isOpen={isLogModalOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCloseSessionsLog();
+            } else {
+              setIsLogModalOpen(true);
+            }
+          }}
+        />
+      )}
 
       {/* Tasks Log Inspection Modal (Chained Modal) */}
-      <TasksLogModal
-        isOpen={isTasksLogModalOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            handleCloseTasksLog();
-          } else {
-            setIsTasksLogModalOpen(true);
-          }
-        }}
-      />
+      {isTasksLogModalOpen && (
+        <TasksLogModal
+          isOpen={isTasksLogModalOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCloseTasksLog();
+            } else {
+              setIsTasksLogModalOpen(true);
+            }
+          }}
+        />
+      )}
     </>
   );
 }

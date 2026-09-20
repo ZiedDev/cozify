@@ -5,7 +5,7 @@ import {
   Typography,
   Button,
   Card,
-  Skeleton,
+  Spinner,
 } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -25,7 +25,6 @@ const PAGE_SIZE = 20;
 export function TodoList() {
   const {
     filteredTodos,
-    isLoading,
     viewMode,
     filter,
     searchQuery,
@@ -36,11 +35,26 @@ export function TodoList() {
   const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
   const [deletingTodo, setDeletingTodo] = useState<TodoItem | null>(null);
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
+  const [isMounting, setIsMounting] = useState(true);
 
-  // Reset pagination when filter, search, or tag changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounting(false);
+    }, 120);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const listRef = useRef<HTMLDivElement>(null);
+  const prevFilterRef = useRef(filter);
+  const prevViewModeRef = useRef(viewMode);
+  const prevVisibleCountRef = useRef(visibleCount);
+  const hasMountedRef = useRef(false);
+
+  // Reset pagination when filter, search, tag, or viewMode changes
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [filter, searchQuery, selectedTag]);
+  }, [filter, searchQuery, selectedTag, viewMode]);
 
   const visibleTodos = useMemo(
     () => filteredTodos.slice(0, visibleCount),
@@ -49,106 +63,80 @@ export function TodoList() {
   const hasMore = visibleCount < filteredTodos.length;
   const remainingCount = filteredTodos.length - visibleCount;
 
-  const listRef = useRef<HTMLDivElement>(null);
-  const prevIdsRef = useRef<string[]>([]);
-  const isInitialMountRef = useRef<boolean>(true);
-
-  // Animate newly added items with zero mount lag
+  // Staggered entrance animation:
+  // 1. Plays on initial mount or when user changes filter/viewMode
+  // 2. Plays ONLY for newly appended items when clicking "Load more"
+  // 3. Never flashes or re-animates on background data sync, edits, or toggles
   useGSAP(
     () => {
-      const containerElement = listRef.current;
+      if (!listRef.current || isMounting) return;
+      const allRows =
+        listRef.current.querySelectorAll<HTMLElement>(".todo-item-row");
 
-      if (!containerElement) return;
+      if (allRows.length === 0) return;
 
-      const currentIds = visibleTodos.map((todo) => todo.id);
+      const isFilterOrModeChange =
+        prevFilterRef.current !== filter ||
+        prevViewModeRef.current !== viewMode;
+      const isPaginationExpand =
+        visibleCount > prevVisibleCountRef.current && !isFilterOrModeChange;
 
-      if (isInitialMountRef.current) {
-        isInitialMountRef.current = false;
-        prevIdsRef.current = currentIds;
+      if (!hasMountedRef.current || isFilterOrModeChange) {
+        // Initial mount or filter/mode switch: stagger visible rows
+        gsap.fromTo(
+          allRows,
+          { opacity: 0, y: 8, scale: 0.99 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.3,
+            stagger: 0.03,
+            ease: "power2.out",
+            overwrite: "auto",
+          },
+        );
+        hasMountedRef.current = true;
+      } else if (isPaginationExpand) {
+        // "Load more" pagination: animate ONLY newly appended items
+        const prevCount = prevVisibleCountRef.current;
+        const newRows = Array.from(allRows).slice(prevCount);
 
-        const rows = containerElement.querySelectorAll(".todo-item-row");
-
-        if (rows.length > 0) {
+        if (newRows.length > 0) {
           gsap.fromTo(
-            rows,
-            { opacity: 0, y: 10, scale: 0.98 },
+            newRows,
+            { opacity: 0, y: 8, scale: 0.99 },
             {
               opacity: 1,
               y: 0,
               scale: 1,
-              duration: 0.35,
-              stagger: 0.04,
+              duration: 0.3,
+              stagger: 0.03,
               ease: "power2.out",
               overwrite: "auto",
             },
           );
         }
-
-        return;
       }
 
-      const newIds = currentIds.filter(
-        (id) => !prevIdsRef.current.includes(id),
-      );
-
-      prevIdsRef.current = currentIds;
-
-      if (newIds.length > 0) {
-        newIds.forEach((id) => {
-          const todoElement = containerElement.querySelector(
-            `[data-todo-id="${id}"]`,
-          );
-
-          if (todoElement) {
-            gsap.fromTo(
-              todoElement,
-              { opacity: 0, y: -12, scale: 0.96 },
-              {
-                opacity: 1,
-                y: 0,
-                scale: 1,
-                duration: 0.25,
-                ease: "power2.out",
-                overwrite: "auto",
-              },
-            );
-          }
-        });
-      }
+      prevFilterRef.current = filter;
+      prevViewModeRef.current = viewMode;
+      prevVisibleCountRef.current = visibleCount;
     },
-    { dependencies: [visibleTodos], scope: listRef },
+    {
+      dependencies: [isMounting, viewMode, filter, visibleCount],
+      scope: listRef,
+    },
   );
 
   return (
     <div className="flex flex-col w-full h-full min-h-0 overflow-hidden">
-      {isLoading ? (
-        <div
-          className={`flex flex-col w-full py-2 px-4 ${
-            viewMode === "minimal" ? "gap-1.5" : "gap-2.5"
-          } animate-in fade-in duration-200`}
-        >
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className={`w-full flex items-center justify-between px-2 py-4 rounded-2xl bg-surface/70 border border-separator/30 ${
-                viewMode === "minimal" ? "h-13" : "h-16"
-              }`}
-            >
-              <div className="flex items-center gap-3 flex-1">
-                <Skeleton className="size-4.5 md:size-5 rounded-full shrink-0" />
-                <div className="flex flex-col gap-1.5 flex-1 max-w-sm">
-                  <Skeleton
-                    className={`h-3.5 rounded-md ${
-                      index % 2 === 0 ? "w-3/4" : "w-1/2"
-                    }`}
-                  />
-                  {viewMode === "detailed" && (
-                    <Skeleton className="h-2.5 w-1/3 rounded-md opacity-60" />
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+      {isMounting ? (
+        <div className="flex-1 min-h-[220px] h-full flex flex-col items-center justify-center gap-3 animate-in fade-in duration-150">
+          <Spinner color="accent" size="md" />
+          <Typography color="muted" type="body-xs">
+            Loading tasks...
+          </Typography>
         </div>
       ) : filteredTodos.length === 0 ? (
         <Card className="items-center py-8 px-4 gap-3" variant="transparent">
@@ -195,7 +183,7 @@ export function TodoList() {
           orientation="vertical"
           size={32}
         >
-          <SortableList onReorder={reorderTodos}>
+          <SortableList items={visibleTodos} onReorder={reorderTodos}>
             <div
               className={`flex flex-col w-full ${
                 viewMode === "minimal" ? "gap-1.5" : "gap-2.5"

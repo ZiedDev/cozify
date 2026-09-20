@@ -3,8 +3,18 @@ import ReactDOM from "react-dom/client";
 import gsap from "gsap";
 import { registerSW } from "virtual:pwa-register";
 
-// Register Service Worker immediately for offline capability
-registerSW({ immediate: true });
+// Register Service Worker on idle to avoid competing with initial main thread render
+if (typeof window !== "undefined") {
+  const win = window as Window & {
+    requestIdleCallback?: (cb: () => void) => void;
+  };
+
+  if (typeof win.requestIdleCallback === "function") {
+    win.requestIdleCallback(() => registerSW());
+  } else {
+    window.addEventListener("load", () => registerSW());
+  }
+}
 
 // Prevent animation teleporting/skipping when DevTools or console causes browser RAF throttling
 gsap.ticker.lagSmoothing(1000, 16);

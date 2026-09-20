@@ -158,7 +158,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     currentCycleState: cycleStates[currentCycle],
   });
 
-  // 2. Persist state changes minimally
+  // 2. Persist state changes with running countdown throttling
   useEffect(() => {
     if (!isHydrated) return;
 
@@ -168,6 +168,11 @@ export function TimerProvider({ children }: { children: ReactNode }) {
     if (!status.hasActiveSession && !isCustom && !hasAnyCycleProgress) {
       storageAdapter.removeItem(STORAGE_KEYS.TIMER_STATE);
 
+      return;
+    }
+
+    // When running, only save periodically (every 10s) to avoid 1Hz disk serialization
+    if (isRunning && Math.abs(timeLeft) % 10 !== 0) {
       return;
     }
 
@@ -666,7 +671,7 @@ export function TimerProvider({ children }: { children: ReactNode }) {
           });
         }
       }
-    }, 200);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [

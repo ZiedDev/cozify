@@ -54,9 +54,22 @@ type ThemeContextValue = {
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // 1. Custom Wallpapers list (Persistent in IDB / syncable)
+  // 1. Custom Wallpapers list (Persistent in storage)
   const [customBackgrounds, setCustomBackgrounds] = useState<ThemeBackground[]>(
     () => {
+      const direct = storageAdapter.getItem<ThemeBackground[] | null>(
+        "cozify_custom_wallpapers",
+        null,
+      );
+
+      if (direct && Array.isArray(direct) && direct.length > 0) {
+        return direct.map((bg) => ({
+          ...bg,
+          url: normalizeImageUrl(bg.url),
+          isCustom: true,
+        }));
+      }
+
       const saved = storageAdapter.getItem<{
         customBackgrounds?: ThemeBackground[];
       } | null>(STORAGE_KEYS.THEME_CONFIG, null);
@@ -73,44 +86,34 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     },
   );
 
-  // 2. Active Background ID (Device-local in localStorage)
+  // 2. Active Background ID
   const [activeBackgroundId, setActiveBackgroundId] = useState<string | null>(
     () => {
-      if (typeof localStorage !== "undefined") {
-        const saved = localStorage.getItem(LOCAL_STORAGE_ACTIVE_BG_KEY);
-
-        if (saved !== null) {
-          try {
-            return JSON.parse(saved);
-          } catch {
-            return saved;
-          }
-        }
-      }
-
-      return null;
+      return storageAdapter.getItem<string | null>(
+        LOCAL_STORAGE_ACTIVE_BG_KEY,
+        null,
+      );
     },
   );
 
-  // 3. Per-Wallpaper Fine-Tuning & Hue Map (Device-local in localStorage)
+  // 3. Global App Theme Hue
+  const [globalHue, setGlobalHue] = useState<number>(() => {
+    return storageAdapter.getItem<number>("cozify_theme_hue", DEFAULT_HUE);
+  });
+
+  // 4. Per-Wallpaper Fine-Tuning Map
   const [wallpaperTunings, setWallpaperTunings] = useState<
     Record<string, Partial<WallpaperTuning>>
   >(() => {
-    if (typeof localStorage !== "undefined") {
-      const saved = localStorage.getItem(LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY);
-
-      if (saved) {
-        try {
-          return JSON.parse(saved) || {};
-        } catch {}
-      }
-    }
-
-    return {};
+    return storageAdapter.getItem<Record<string, Partial<WallpaperTuning>>>(
+      LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY,
+      {},
+    );
   });
 
-  // Sync customBackgrounds to IndexedDB (syncable store)
+  // Sync customBackgrounds to storage
   useEffect(() => {
+    storageAdapter.setItem("cozify_custom_wallpapers", customBackgrounds);
     if (customBackgrounds.length > 0) {
       storageAdapter.setItem(STORAGE_KEYS.THEME_CONFIG, {
         customBackgrounds: customBackgrounds.map((bg) => ({
@@ -125,24 +128,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [customBackgrounds]);
 
-  // Sync activeBackgroundId to device localStorage
+  // Sync activeBackgroundId to storage
   useEffect(() => {
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(
-        LOCAL_STORAGE_ACTIVE_BG_KEY,
-        JSON.stringify(activeBackgroundId),
-      );
-    }
+    storageAdapter.setItem(LOCAL_STORAGE_ACTIVE_BG_KEY, activeBackgroundId);
   }, [activeBackgroundId]);
 
-  // Sync wallpaperTunings map to device localStorage
+  // Sync wallpaperTunings map to storage
   useEffect(() => {
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(
-        LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY,
-        JSON.stringify(wallpaperTunings),
-      );
-    }
+    storageAdapter.setItem(
+      LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY,
+      wallpaperTunings,
+    );
   }, [wallpaperTunings]);
 
   // Active Key for current tuning lookup
@@ -159,21 +155,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       positionX: saved.positionX ?? DEFAULT_WALLPAPER_TUNING.positionX,
       positionY: saved.positionY ?? DEFAULT_WALLPAPER_TUNING.positionY,
       zoom: saved.zoom ?? DEFAULT_WALLPAPER_TUNING.zoom,
-      hue: saved.hue ?? DEFAULT_WALLPAPER_TUNING.hue,
+      hue: globalHue,
     };
-  }, [wallpaperTunings, activeKey]);
+  }, [wallpaperTunings, activeKey, globalHue]);
 
-  // Apply OKLCH palette changes across the entire app
+  // Apply OKLCH palette changes across the entire app and persist
   useEffect(() => {
     const root = document.documentElement;
-    const activeHue = currentTuning.hue ?? DEFAULT_HUE;
 
-    if (activeHue === DEFAULT_HUE) {
+    if (globalHue === DEFAULT_HUE) {
       root.style.removeProperty("--theme-hue");
     } else {
-      root.style.setProperty("--theme-hue", String(activeHue));
+      root.style.setProperty("--theme-hue", String(globalHue));
     }
-  }, [currentTuning.hue]);
+    storageAdapter.setItem("cozify_theme_hue", globalHue);
+  }, [globalHue]);
 
   const allBackgrounds = useMemo(() => {
     return [...PRESET_BACKGROUNDS, ...customBackgrounds];
@@ -370,6 +366,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
         next.splice(newIndex, 0, moved);
 
+        storageAdapter.setItem("cozify_custom_wallpapers", next);
+        storageAdapter.setItem(STORAGE_KEYS.THEME_CONFIG, {
+          customBackgrounds: next.map((bg) => ({
+            id: bg.id,
+            name: bg.name,
+            url: bg.url,
+            isCustom: true,
+          })),
+        });
+
         return next;
       });
     },
@@ -413,16 +419,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [updateActiveTuning],
   );
 
-  const setAppThemeColor = useCallback(
-    (hue: number) => {
-      updateActiveTuning({
-        hue: Math.max(0, Math.min(360, Math.round(hue))),
-      });
-    },
-    [updateActiveTuning],
-  );
+  const setAppThemeColor = useCallback((hueVal: number) => {
+    const clamped = Math.max(0, Math.min(360, Math.round(hueVal)));
+
+    setGlobalHue(clamped);
+  }, []);
 
   const resetTheme = useCallback(() => {
+    setGlobalHue(DEFAULT_HUE);
     setWallpaperTunings((prev) => ({
       ...prev,
       [activeKey]: DEFAULT_WALLPAPER_TUNING,

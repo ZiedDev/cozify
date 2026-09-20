@@ -226,7 +226,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
       ? isVideoPipSupported()
       : Boolean(
           "documentPictureInPicture" in window &&
-            window.documentPictureInPicture,
+          window.documentPictureInPicture,
         ));
 
   const closePip = useCallback(() => {

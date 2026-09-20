@@ -85,10 +85,7 @@ export type StoreName = keyof DBStoreMap;
  * Syncable entity store names that participate in cloud replication
  */
 export type SyncableStoreName =
-  | "sessions"
-  | "todos"
-  | "customBackgrounds"
-  | "customPlaylists";
+  "sessions" | "todos" | "customBackgrounds" | "customPlaylists";
 
 /**
  * Single mutation entry in the append-only local outbox queue

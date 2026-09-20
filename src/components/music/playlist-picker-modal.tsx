@@ -1,4 +1,4 @@
-import { useState, useMemo, memo, SubmitEvent } from "react";
+import { useState, memo, SubmitEvent } from "react";
 import {
   Modal,
   Drawer,
@@ -23,14 +23,16 @@ import {
   Loader2,
   Radio,
 } from "lucide-react";
-import { useSortable } from "@dnd-kit/react/sortable";
 
 import { useIsMobile } from "@/hooks/use-is-mobile";
-
 import { useMusic } from "@/context/music-context";
-import { Playlist, PRESET_PLAYLISTS } from "@/config/playlists";
+import { Playlist } from "@/config/playlists";
 import { Marquee } from "@/components/ui/marquee";
-import { SortableList } from "@/components/ui/sortable-list";
+import {
+  SortableList,
+  SortableItem,
+  rectSortingStrategy,
+} from "@/components/ui/sortable-list";
 
 interface VinylPlaylistItemProps {
   item: Playlist;
@@ -49,7 +51,6 @@ interface VinylPlaylistItemProps {
 
 function VinylPlaylistItemComponent({
   item,
-  index,
   isActive,
   isPlaying,
   isBuffering,
@@ -61,21 +62,16 @@ function VinylPlaylistItemComponent({
   playPlaylist,
   onDelete,
 }: VinylPlaylistItemProps) {
-  const { ref, isDragging } = useSortable({ id: item.id, index });
   const [isHovered, setIsHovered] = useState(false);
   const isEditing = editingId === item.id;
 
   return (
     <div
-      ref={ref}
       className={`group relative flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 ease-out select-none hover:shadow-md ${
-        isDragging
-          ? "scale-[1.02] shadow-xl border-accent z-30 bg-surface ring-2 ring-accent/30 opacity-95"
-          : isActive
-            ? "bg-accent/10 border-accent text-accent shadow-xs"
-            : "bg-surface-secondary/30 hover:bg-surface-secondary/70 border-separator/40 hover:border-separator/70 text-foreground"
+        isActive
+          ? "bg-accent/10 border-accent text-accent shadow-xs"
+          : "bg-surface-secondary/30 hover:bg-surface-secondary/70 border-separator/40 hover:border-separator/70 text-foreground"
       }`}
-      data-dragging={isDragging || undefined}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -83,7 +79,7 @@ function VinylPlaylistItemComponent({
       {isEditing ? (
         <div
           className="flex items-center gap-6 min-w-0 flex-1 text-left"
-          onClick={(e) => e.stopPropagation()}
+          role="presentation"
         >
           {/* Vinyl Sleeve + Disc Combo */}
           <div className="relative size-13 shrink-0 flex items-center">
@@ -153,7 +149,6 @@ function VinylPlaylistItemComponent({
               }}
             >
               <Input
-                autoFocus
                 aria-label="Edit playlist title"
                 className="w-full h-6 px-2 rounded-full bg-surface border border-accent text-xs text-foreground outline-none"
                 value={editTitleText}
@@ -268,7 +263,7 @@ function VinylPlaylistItemComponent({
                 className={`text-xs font-semibold leading-tight ${
                   isActive ? "text-accent font-bold" : "text-foreground"
                 }`}
-                isHovered={isHovered && !isDragging}
+                isHovered={isHovered}
                 isPlaying={isActive && isPlaying}
                 text={item.title}
               />
@@ -384,12 +379,12 @@ export function PlaylistPickerModal() {
     isPlaying,
     isBuffering,
     isOnline,
-    customPlaylists,
+    playlists,
     playPlaylist,
     addCustomPlaylist,
     removeCustomPlaylist,
     renameCustomPlaylist,
-    reorderCustomPlaylists,
+    reorderPlaylists,
   } = useMusic();
 
   const [newUrl, setNewUrl] = useState("");
@@ -399,10 +394,6 @@ export function PlaylistPickerModal() {
   const [deletingPlaylist, setDeletingPlaylist] = useState<Playlist | null>(
     null,
   );
-
-  const allPlaylists = useMemo(() => {
-    return [...customPlaylists, ...PRESET_PLAYLISTS];
-  }, [customPlaylists]);
 
   const handleAddPlaylist = async (event?: SubmitEvent) => {
     if (event) event.preventDefault();
@@ -436,7 +427,7 @@ export function PlaylistPickerModal() {
 
   const handleReorder = (activeId: string, overId: string) => {
     if (activeId === overId) return;
-    reorderCustomPlaylists(activeId, overId);
+    reorderPlaylists(activeId, overId);
   };
 
   if (!isPickerOpen) return null;
@@ -501,27 +492,32 @@ export function PlaylistPickerModal() {
       orientation="vertical"
       size={20}
     >
-      <SortableList onReorder={handleReorder}>
+      <SortableList
+        items={playlists}
+        strategy={rectSortingStrategy}
+        onReorder={handleReorder}
+      >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1">
-          {allPlaylists.map((item, index) => {
+          {playlists.map((item, index) => {
             const isActive = activePlaylistId === item.id;
 
             return (
-              <VinylPlaylistItem
-                key={item.id}
-                editTitleText={editTitleText}
-                editingId={editingId}
-                handleSaveRename={handleSaveRename}
-                index={index}
-                isActive={isActive}
-                isBuffering={isBuffering}
-                isPlaying={isPlaying}
-                item={item}
-                playPlaylist={playPlaylist}
-                setEditTitleText={setEditTitleText}
-                setEditingId={setEditingId}
-                onDelete={setDeletingPlaylist}
-              />
+              <SortableItem key={item.id} id={item.id} index={index}>
+                <VinylPlaylistItem
+                  editTitleText={editTitleText}
+                  editingId={editingId}
+                  handleSaveRename={handleSaveRename}
+                  index={index}
+                  isActive={isActive}
+                  isBuffering={isBuffering}
+                  isPlaying={isPlaying}
+                  item={item}
+                  playPlaylist={playPlaylist}
+                  setEditTitleText={setEditTitleText}
+                  setEditingId={setEditingId}
+                  onDelete={setDeletingPlaylist}
+                />
+              </SortableItem>
             );
           })}
         </div>

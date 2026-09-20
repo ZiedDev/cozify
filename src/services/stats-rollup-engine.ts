@@ -248,68 +248,84 @@ class StatsRollupEngineService {
     }
   }
 
-  /**
-   * Syncs completed todo metadata into daily rollups & summary
-   */
-  public recordTodoChange(todos: TodoItem[]): void {
-    const rollupsMap = this.getRollupsMap();
-    let totalCompleted = 0;
-    const activeTodos = todos.filter((t) => !t.archived);
+  private todoDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // Reset task fields on rollups and re-apply from active todos
-    for (const [dateKey, rollup] of rollupsMap.entries()) {
-      rollupsMap.set(dateKey, {
-        ...rollup,
-        tasksCompletedCount: 0,
-        taskTagsCompleted: {},
-        taskPriorityCompleted: {},
-      });
+  /**
+   * Syncs completed todo metadata into daily rollups & summary (debounced to avoid UI thread lag)
+   */
+  public recordTodoChange(todos: TodoItem[], immediate = false): void {
+    if (this.todoDebounceTimer) {
+      clearTimeout(this.todoDebounceTimer);
+      this.todoDebounceTimer = null;
     }
 
-    for (const todo of activeTodos) {
-      if (todo.completed && todo.completedAt) {
-        totalCompleted += 1;
-        const dateStr = toDateString(todo.completedAt);
-        const rollup =
-          rollupsMap.get(dateStr) || createEmptyDailyRollup(dateStr);
+    const processChange = () => {
+      const rollupsMap = this.getRollupsMap();
+      let totalCompleted = 0;
+      const activeTodos = todos.filter((t) => !t.archived);
 
-        const nextTags = { ...rollup.taskTagsCompleted };
-
-        if (todo.tag) {
-          const t = todo.tag.toLowerCase();
-
-          nextTags[t] = (nextTags[t] || 0) + 1;
-        }
-
-        const nextPriority = { ...rollup.taskPriorityCompleted };
-
-        if (todo.priority && todo.priority !== "none") {
-          nextPriority[todo.priority] = (nextPriority[todo.priority] || 0) + 1;
-        }
-
-        rollupsMap.set(dateStr, {
+      // Reset task fields on rollups and re-apply from active todos
+      for (const [dateKey, rollup] of rollupsMap.entries()) {
+        rollupsMap.set(dateKey, {
           ...rollup,
-          tasksCompletedCount: rollup.tasksCompletedCount + 1,
-          taskTagsCompleted: nextTags,
-          taskPriorityCompleted: nextPriority,
-          updatedAt: Date.now(),
+          tasksCompletedCount: 0,
+          taskTagsCompleted: {},
+          taskPriorityCompleted: {},
         });
       }
-    }
 
-    db.dailyRollups.saveAll(Array.from(rollupsMap.values()));
+      for (const todo of activeTodos) {
+        if (todo.completed && todo.completedAt) {
+          totalCompleted += 1;
+          const dateStr = toDateString(todo.completedAt);
+          const rollup =
+            rollupsMap.get(dateStr) || createEmptyDailyRollup(dateStr);
 
-    const summary = this.getAllTimeSummary();
+          const nextTags = { ...rollup.taskTagsCompleted };
 
-    db.statsSummary.save({
-      ...summary,
-      tasksTotal: activeTodos.length,
-      tasksCompleted: totalCompleted,
-      updatedAt: Date.now(),
-    });
+          if (todo.tag) {
+            const t = todo.tag.toLowerCase();
 
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("cozify_stats_updated"));
+            nextTags[t] = (nextTags[t] || 0) + 1;
+          }
+
+          const nextPriority = { ...rollup.taskPriorityCompleted };
+
+          if (todo.priority && todo.priority !== "none") {
+            nextPriority[todo.priority] =
+              (nextPriority[todo.priority] || 0) + 1;
+          }
+
+          rollupsMap.set(dateStr, {
+            ...rollup,
+            tasksCompletedCount: rollup.tasksCompletedCount + 1,
+            taskTagsCompleted: nextTags,
+            taskPriorityCompleted: nextPriority,
+            updatedAt: Date.now(),
+          });
+        }
+      }
+
+      db.dailyRollups.saveAll(Array.from(rollupsMap.values()));
+
+      const summary = this.getAllTimeSummary();
+
+      db.statsSummary.save({
+        ...summary,
+        tasksTotal: activeTodos.length,
+        tasksCompleted: totalCompleted,
+        updatedAt: Date.now(),
+      });
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("cozify_stats_updated"));
+      }
+    };
+
+    if (immediate) {
+      processChange();
+    } else {
+      this.todoDebounceTimer = setTimeout(processChange, 250);
     }
   }
 

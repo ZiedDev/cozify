@@ -146,17 +146,13 @@ function RollingChar({
       style={{
         perspective: "600px",
         transformStyle: "preserve-3d",
-        maskImage:
-          "linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%)",
-        WebkitMaskImage:
-          "linear-gradient(to bottom, transparent 0%, black 14%, black 86%, transparent 100%)",
       }}
     >
       {prevVal !== null && (
         <span
           ref={outgoingRef}
           aria-hidden="true"
-          className="absolute inset-0 flex items-center justify-center will-change-transform"
+          className="absolute inset-0 flex items-center justify-center"
           style={{
             transformOrigin: "50% 50% -0.42em",
             backfaceVisibility: "hidden",
@@ -167,7 +163,7 @@ function RollingChar({
       )}
       <span
         ref={incomingRef}
-        className="flex items-center justify-center will-change-transform"
+        className="flex items-center justify-center"
         style={{
           transformOrigin: "50% 50% -0.42em",
           backfaceVisibility: "hidden",

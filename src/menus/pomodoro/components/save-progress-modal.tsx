@@ -59,7 +59,6 @@ export function SaveProgressModal({
 
   const cyclesDone = completedCycles;
 
-
   const initialTotalSeconds = accumulatedFocusSeconds;
 
   const [title, setTitle] = useState("Deep Focus Session");
@@ -257,10 +256,7 @@ export function SaveProgressModal({
           <Tag className="size-3.5" />
           <span>Category Tag</span>
         </Label>
-        <Popover
-          isOpen={isTagPopoverOpen}
-          onOpenChange={setIsTagPopoverOpen}
-        >
+        <Popover isOpen={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
           <Popover.Trigger>
             <button
               className={cn(
@@ -315,9 +311,7 @@ export function SaveProgressModal({
                   className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted/60 focus:outline-none font-sans"
                   placeholder="Search or create custom tag..."
                   value={customTagInput}
-                  onChange={(event) =>
-                    setCustomTagInput(event.target.value)
-                  }
+                  onChange={(event) => setCustomTagInput(event.target.value)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
@@ -566,6 +560,7 @@ export function SaveProgressModal({
       </Drawer.Backdrop>
     );
   }
+
   return (
     <Modal.Backdrop isOpen={isOpen} onOpenChange={onOpenChange}>
       <Modal.Container>
@@ -587,9 +582,7 @@ export function SaveProgressModal({
             </div>
           </Modal.Header>
 
-          <Modal.Body className="space-y-3.5">
-            {formBody}
-          </Modal.Body>
+          <Modal.Body className="space-y-3.5">{formBody}</Modal.Body>
 
           <Modal.Footer className="flex items-center justify-between pt-2">
             {footerActions}
@@ -599,4 +592,3 @@ export function SaveProgressModal({
     </Modal.Backdrop>
   );
 }
-

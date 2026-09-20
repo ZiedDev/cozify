@@ -16,7 +16,7 @@ function reconcileEntityList<
     createdAt?: number;
     isDeleted?: boolean;
   },
->(localList: T[], remoteList: T[]): T[] {
+>(localList: T[], remoteList: T[], storeName?: StoreName): T[] {
   const map = new Map<string, T>();
 
   const hasRemoteItems = remoteList.some((r) => !r.isDeleted);
@@ -54,7 +54,36 @@ function reconcileEntityList<
     }
   }
 
-  return Array.from(map.values()).filter((item) => !item.isDeleted);
+  const result = Array.from(map.values()).filter((item) => !item.isDeleted);
+
+  if (storeName === "todos" && typeof localStorage !== "undefined") {
+    try {
+      const rawOrder = localStorage.getItem("cozify_todo_order_ids");
+
+      if (rawOrder) {
+        const orderIds = JSON.parse(rawOrder);
+
+        if (Array.isArray(orderIds) && orderIds.length > 0) {
+          const orderMap = new Map<string, number>();
+
+          orderIds.forEach((id: string, idx: number) => orderMap.set(id, idx));
+
+          result.sort((a, b) => {
+            const indexA = orderMap.has(a.id) ? orderMap.get(a.id)! : 999999;
+            const indexB = orderMap.has(b.id) ? orderMap.get(b.id)! : 999999;
+
+            if (indexA !== indexB) {
+              return indexA - indexB;
+            }
+
+            return (b.createdAt || 0) - (a.createdAt || 0);
+          });
+        }
+      }
+    } catch {}
+  }
+
+  return result;
 }
 
 class RemoteSyncEngine {
@@ -201,7 +230,11 @@ class RemoteSyncEngine {
 
         if (remoteData.todos !== undefined) {
           const local = cacheManager.getMemoryStore("todos");
-          const reconciled = reconcileEntityList(local, remoteData.todos);
+          const reconciled = reconcileEntityList(
+            local,
+            remoteData.todos,
+            "todos",
+          );
 
           cacheManager.setMemoryStore("todos", reconciled, true);
         }

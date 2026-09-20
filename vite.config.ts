@@ -114,12 +114,21 @@ export default defineConfig({
     }),
   ],
   build: {
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
+            if (
+              id.includes("recharts") ||
+              id.includes("d3-") ||
+              id.includes("victory-vendor")
+            ) {
+              return "charts";
+            }
             if (id.includes("@heroui")) return "heroui";
+            if (id.includes("@dnd-kit")) return "dnd";
+            if (id.includes("@supabase")) return "supabase";
             if (id.includes("gsap") || id.includes("@gsap")) return "gsap";
             if (id.includes("lucide-react")) return "lucide";
 

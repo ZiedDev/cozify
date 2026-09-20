@@ -23,6 +23,7 @@ import { storageAdapter } from "@/services/storage";
 
 const MUSIC_STORAGE_KEY = "cozify_music_state";
 const CUSTOM_PLAYLISTS_STORAGE_KEY = "cozify_custom_playlists";
+const PLAYLISTS_STORAGE_KEY = "cozify_ordered_playlists";
 
 /**
  * Maps a linear UI slider value (0..100) to actual player volume (0..100)
@@ -66,6 +67,7 @@ type MusicContextValue = {
   activePlaylistId: string | null;
   tracklist: MusicTrack[];
   currentTrackIndex: number;
+  playlists: Playlist[];
   customPlaylists: Playlist[];
   isDeckOpen: boolean;
   isPickerOpen: boolean;
@@ -106,6 +108,7 @@ type MusicContextValue = {
   removeCustomPlaylist: (id: string) => void;
   renameCustomPlaylist: (id: string, newTitle: string) => void;
   moveCustomPlaylist: (id: string, direction: "up" | "down") => void;
+  reorderPlaylists: (activeId: string, overId: string) => void;
   reorderCustomPlaylists: (activeId: string, overId: string) => void;
 
   bindYTPlayerElement: (el: HTMLDivElement | null) => void;
@@ -192,9 +195,37 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   isOnlineRef.current = isOnline;
 
-  const [customPlaylists, setCustomPlaylists] = useState<Playlist[]>(() => {
-    return storageAdapter.getItem<Playlist[]>(CUSTOM_PLAYLISTS_STORAGE_KEY, []);
+  const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+    const saved = storageAdapter.getItem<Playlist[] | null>(
+      PLAYLISTS_STORAGE_KEY,
+      null,
+    );
+
+    if (saved && Array.isArray(saved) && saved.length > 0) {
+      const savedIds = new Set(saved.map((p) => p.id));
+      const missingPresets = PRESET_PLAYLISTS.filter(
+        (p) => !savedIds.has(p.id),
+      );
+
+      return [...saved, ...missingPresets];
+    }
+
+    const legacyCustom = storageAdapter.getItem<Playlist[]>(
+      CUSTOM_PLAYLISTS_STORAGE_KEY,
+      [],
+    );
+
+    if (Array.isArray(legacyCustom) && legacyCustom.length > 0) {
+      return [...legacyCustom, ...PRESET_PLAYLISTS];
+    }
+
+    return PRESET_PLAYLISTS;
   });
+
+  const customPlaylists = useMemo(
+    () => playlists.filter((p) => p.isCustom),
+    [playlists],
+  );
 
   const [isDeckOpen, setIsDeckOpen] = useState<boolean>(false);
   const [isPickerOpen, setIsPickerOpen] = useState<boolean>(false);
@@ -266,10 +297,14 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Sync custom playlists to storage
+  // Sync playlists to storage
   useEffect(() => {
-    storageAdapter.setItem(CUSTOM_PLAYLISTS_STORAGE_KEY, customPlaylists);
-  }, [customPlaylists]);
+    storageAdapter.setItem(PLAYLISTS_STORAGE_KEY, playlists);
+    storageAdapter.setItem(
+      CUSTOM_PLAYLISTS_STORAGE_KEY,
+      playlists.filter((p) => p.isCustom),
+    );
+  }, [playlists]);
 
   // Sync active audio state to storage
   useEffect(() => {
@@ -337,8 +372,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       } catch {}
 
       toast("Offline Mode", {
-        description:
-          "You are currently offline. Music player is paused and disabled.",
+        description: "You are currently offline. Music and cloud are paused.",
         variant: "danger",
         timeout: 3500,
       });
@@ -349,7 +383,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       isOnlineRef.current = true;
 
       toast("Back Online 🌐", {
-        description: "Reconnected. Re-adding and refreshing music player...",
+        description: "Connection restored. Music and Cloud are back.  ",
         variant: "accent",
         timeout: 3000,
       });
@@ -431,8 +465,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
       return Boolean(
         iframe &&
-          iframe.isConnected &&
-          document.documentElement.contains(iframe),
+        iframe.isConnected &&
+        document.documentElement.contains(iframe),
       );
     } catch {
       return false;
@@ -1663,7 +1697,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         coverUrl: details?.coverUrl,
       };
 
-      setCustomPlaylists((prev) => [newPlaylist, ...prev]);
+      setPlaylists((prev) => [newPlaylist, ...prev]);
 
       toast("Added to Collection ✨", {
         description: `"${newPlaylist.title}" added to your collection.`,
@@ -1677,7 +1711,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   );
 
   const removeCustomPlaylist = useCallback((id: string) => {
-    setCustomPlaylists((prev) => prev.filter((playlist) => playlist.id !== id));
+    setPlaylists((prev) => prev.filter((playlist) => playlist.id !== id));
     toast("Playlist Removed", {
       variant: "default",
       timeout: 2000,
@@ -1688,7 +1722,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     const trimmed = newTitle.trim();
 
     if (!trimmed) return;
-    setCustomPlaylists((prev) =>
+    setPlaylists((prev) =>
       prev.map((playlist) =>
         playlist.id === id ? { ...playlist, title: trimmed } : playlist,
       ),
@@ -1701,7 +1735,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const moveCustomPlaylist = useCallback(
     (id: string, direction: "up" | "down") => {
-      setCustomPlaylists((prev) => {
+      setPlaylists((prev) => {
         const index = prev.findIndex((playlist) => playlist.id === id);
 
         if (index === -1) return prev;
@@ -1720,25 +1754,30 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const reorderCustomPlaylists = useCallback(
-    (activeId: string, overId: string) => {
-      if (activeId === overId) return;
-      setCustomPlaylists((prev) => {
-        const oldIndex = prev.findIndex((playlist) => playlist.id === activeId);
-        const newIndex = prev.findIndex((playlist) => playlist.id === overId);
+  const reorderPlaylists = useCallback((activeId: string, overId: string) => {
+    if (activeId === overId) return;
+    setPlaylists((prev) => {
+      const oldIndex = prev.findIndex((playlist) => playlist.id === activeId);
+      const newIndex = prev.findIndex((playlist) => playlist.id === overId);
 
-        if (oldIndex === -1 || newIndex === -1) return prev;
+      if (oldIndex === -1 || newIndex === -1) return prev;
 
-        const next = [...prev];
-        const [moved] = next.splice(oldIndex, 1);
+      const next = [...prev];
+      const [moved] = next.splice(oldIndex, 1);
 
-        next.splice(newIndex, 0, moved);
+      next.splice(newIndex, 0, moved);
 
-        return next;
-      });
-    },
-    [],
-  );
+      storageAdapter.setItem(PLAYLISTS_STORAGE_KEY, next);
+      storageAdapter.setItem(
+        CUSTOM_PLAYLISTS_STORAGE_KEY,
+        next.filter((p) => p.isCustom),
+      );
+
+      return next;
+    });
+  }, []);
+
+  const reorderCustomPlaylists = reorderPlaylists;
 
   const toggleDeck = useCallback(() => setIsDeckOpen((prev) => !prev), []);
   const togglePicker = useCallback(() => setIsPickerOpen((prev) => !prev), []);
@@ -1764,6 +1803,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       activePlaylistId,
       tracklist,
       currentTrackIndex,
+      playlists,
       customPlaylists,
       isDeckOpen,
       isPickerOpen,
@@ -1793,6 +1833,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       removeCustomPlaylist,
       renameCustomPlaylist,
       moveCustomPlaylist,
+      reorderPlaylists,
       reorderCustomPlaylists,
       bindYTPlayerElement,
     }),
@@ -1812,6 +1853,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       activePlaylistId,
       tracklist,
       currentTrackIndex,
+      playlists,
       customPlaylists,
       isDeckOpen,
       isPickerOpen,
@@ -1841,6 +1883,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       removeCustomPlaylist,
       renameCustomPlaylist,
       moveCustomPlaylist,
+      reorderPlaylists,
       reorderCustomPlaylists,
       bindYTPlayerElement,
     ],

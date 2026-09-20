@@ -7,10 +7,10 @@ const supabaseKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ||
 export const isSupabaseConfigured = (): boolean => {
   return Boolean(
     supabaseUrl &&
-      supabaseKey &&
-      supabaseUrl !== "https://your-project.supabase.co" &&
-      supabaseKey !== "your-anon-public-key" &&
-      supabaseUrl.startsWith("http"),
+    supabaseKey &&
+    supabaseUrl !== "https://your-project.supabase.co" &&
+    supabaseKey !== "your-anon-public-key" &&
+    supabaseUrl.startsWith("http"),
   );
 };
 

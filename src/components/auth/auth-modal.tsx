@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { Modal, Drawer, Button, Typography, toast, Spinner } from "@heroui/react";
+import {
+  Modal,
+  Drawer,
+  Button,
+  Typography,
+  toast,
+  Spinner,
+} from "@heroui/react";
 import { Cloud, HardDrive, Zap } from "lucide-react";
 
 import { useAuth } from "@/services/supabase/auth-context";
@@ -119,9 +126,9 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
           <p className="flex items-start gap-2">
             <Cloud className="w-3.5 h-3.5 text-neutral-500 shrink-0 mt-0.5" />
             <span>
-              <strong>Automatic Merge:</strong> When you connect with
-              Google or Discord, all your offline work is automatically
-              uploaded and merged into your cloud account.
+              <strong>Automatic Merge:</strong> When you connect with Google or
+              Discord, all your offline work is automatically uploaded and
+              merged into your cloud account.
             </span>
           </p>
         </div>
@@ -144,7 +151,8 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
                 Sign In to Cozify
               </Typography>
               <Typography className="text-xs text-neutral-400 max-w-xs leading-relaxed text-center">
-                Connect your account to sync sessions, tasks, and custom themes across devices.
+                Connect your account to sync sessions, tasks, and custom themes
+                across devices.
               </Typography>
             </Drawer.Header>
 
@@ -191,9 +199,7 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
             </Typography>
           </Modal.Header>
 
-          <Modal.Body>
-            {bodyContent}
-          </Modal.Body>
+          <Modal.Body>{bodyContent}</Modal.Body>
 
           {/* Footer Close */}
           <Modal.Footer>
@@ -211,4 +217,3 @@ export function AuthModal({ isOpen, onOpenChange }: AuthModalProps) {
     </Modal.Backdrop>
   );
 }
-

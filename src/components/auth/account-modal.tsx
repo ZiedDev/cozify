@@ -24,6 +24,7 @@ import {
 
 import { useAuth } from "@/services/supabase/auth-context";
 import { useIsMobile } from "@/hooks/use-is-mobile";
+import { useIsOnline } from "@/hooks/use-is-online";
 import { db } from "@/services/db";
 
 interface AccountModalProps {
@@ -33,6 +34,7 @@ interface AccountModalProps {
 
 export function AccountModal({ isOpen, onOpenChange }: AccountModalProps) {
   const isMobile = useIsMobile();
+  const isOnline = useIsOnline();
   const { user, profile, signOut, updateProfile, syncNow } = useAuth();
 
   const [isSyncing, setIsSyncing] = useState(false);
@@ -42,7 +44,12 @@ export function AccountModal({ isOpen, onOpenChange }: AccountModalProps) {
   if (!isOpen || !user) return null;
 
   const handleManualSync = async () => {
+    if (!isOnline) return;
     setIsSyncing(true);
+    toast("Syncing Workspace...", {
+      description: "Connecting to remote database and synchronizing changes.",
+      timeout: 2500,
+    });
     try {
       const success = await syncNow();
 
@@ -52,8 +59,9 @@ export function AccountModal({ isOpen, onOpenChange }: AccountModalProps) {
           variant: "accent",
         });
       } else {
-        toast("Sync Pending", {
-          description: "Data will be automatically synced when connected.",
+        toast("Sync Failed", {
+          description: "Could not reach remote cloud database.",
+          variant: "danger",
         });
       }
     } catch {
@@ -193,18 +201,20 @@ export function AccountModal({ isOpen, onOpenChange }: AccountModalProps) {
           </div>
           <div>
             <Typography className="font-semibold text-xs sm:text-sm">
-              Cloud Synchronization Active
+              {isOnline ? "Cloud Sync Active" : "Cloud Sync Paused"}
             </Typography>
             <Typography color="muted" type="body-xs">
-              Automatic sync across devices
+              {isOnline
+                ? "Automatic sync across devices"
+                : "Offline — changes will sync once reconnected"}
             </Typography>
           </div>
         </div>
         <Button
           isIconOnly
-          aria-label="Sync Now"
+          aria-label={!isOnline ? "Offline - cannot sync" : "Sync Now"}
           className="size-8 rounded-xl shrink-0"
-          isDisabled={isSyncing}
+          isDisabled={isSyncing || !isOnline}
           size="sm"
           variant="secondary"
           onPress={handleManualSync}
@@ -333,12 +343,9 @@ export function AccountModal({ isOpen, onOpenChange }: AccountModalProps) {
           </Modal.Header>
           <Modal.CloseTrigger />
 
-          <Modal.Body className="p-0">
-            {bodyContent}
-          </Modal.Body>
+          <Modal.Body className="p-0">{bodyContent}</Modal.Body>
         </Modal.Dialog>
       </Modal.Container>
     </Modal.Backdrop>
   );
 }
-

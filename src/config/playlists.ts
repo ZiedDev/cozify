@@ -92,10 +92,7 @@ export function extractSpotifyData(url: string): ParsedMedia | null {
 
     if (typeIndex !== -1 && parts[typeIndex + 1]) {
       const type = parts[typeIndex] as
-        | "track"
-        | "playlist"
-        | "album"
-        | "episode";
+        "track" | "playlist" | "album" | "episode";
       const id = parts[typeIndex + 1].split("?")[0];
 
       return {

@@ -20,6 +20,7 @@ import {
 import { Milestone } from "../types";
 import { ACHIEVEMENT_CATEGORY_TABS, getRankFromXp } from "../achievements";
 import { TIER_CONFIG } from "../achievements/types";
+
 import { useIsMobile } from "@/hooks/use-is-mobile";
 
 const FILTER_TABS = [
@@ -106,7 +107,10 @@ export function AchievementsModal({
 
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <Typography className="text-base sm:text-xl font-serif font-semibold tracking-tight text-foreground" type="h2">
+                  <Typography
+                    className="text-base sm:text-xl font-serif font-semibold tracking-tight text-foreground"
+                    type="h2"
+                  >
                     Achievements & Trophies
                   </Typography>
                 </div>
@@ -173,9 +177,7 @@ export function AchievementsModal({
                   id={tab.id}
                 >
                   <Icon className="size-3 sm:size-3.5 shrink-0" />
-                  <span
-                    className={isSelected ? "inline" : "hidden sm:inline"}
-                  >
+                  <span className={isSelected ? "inline" : "hidden sm:inline"}>
                     {tab.label}
                   </span>
                   <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
@@ -207,9 +209,7 @@ export function AchievementsModal({
                   id={tab.id}
                 >
                   <Icon className="size-3 sm:size-3.5 shrink-0" />
-                  <span
-                    className={isSelected ? "inline" : "hidden sm:inline"}
-                  >
+                  <span className={isSelected ? "inline" : "hidden sm:inline"}>
                     {tab.label}
                   </span>
                   <Tabs.Indicator className="rounded-full bg-accent text-accent-foreground" />
@@ -259,8 +259,7 @@ export function AchievementsModal({
                     ? Math.min(
                         100,
                         Math.round(
-                          (milestone.progress / milestone.maxProgress) *
-                            100,
+                          (milestone.progress / milestone.maxProgress) * 100,
                         ),
                       )
                     : 0;
@@ -331,9 +330,7 @@ export function AchievementsModal({
                         ) : (
                           <span className="flex items-center gap-1 text-[10px] text-muted/70">
                             <Lock className="size-3" />
-                            <span>
-                              {isSecretLocked ? "Hidden" : "Locked"}
-                            </span>
+                            <span>{isSecretLocked ? "Hidden" : "Locked"}</span>
                           </span>
                         )}
                       </div>
@@ -398,7 +395,10 @@ export function AchievementsModal({
   );
 
   return isMobile ? (
-    <Drawer.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Drawer.Backdrop
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+    >
       <Drawer.Content placement="bottom">
         <Drawer.Dialog
           aria-label="Achievements & Trophies"

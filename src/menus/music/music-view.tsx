@@ -7,14 +7,13 @@ import { CozyMusicCard } from "./components/cozy-music-player";
 
 export function MusicView({
   className,
-  isActive = true,
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & { isActive?: boolean }) {
+}: React.HTMLAttributes<HTMLDivElement>) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
-      if (!containerRef.current || !isActive) return;
+      if (!containerRef.current) return;
       const card = containerRef.current.querySelector(".cozy-music-wrapper");
       const elements = card ? card.children : containerRef.current.children;
 
@@ -25,13 +24,13 @@ export function MusicView({
           opacity: 1,
           y: 0,
           scale: 1,
-          duration: 0.5,
-          stagger: 0.07,
+          duration: 0.45,
+          stagger: 0.06,
           ease: "power3.out",
         },
       );
     },
-    { dependencies: [isActive], scope: containerRef },
+    { scope: containerRef },
   );
 
   return (

@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { cn, ScrollShadow, Skeleton } from "@heroui/react";
+import { useRef, useState, useEffect } from "react";
+import { cn, ScrollShadow, Spinner, Typography } from "@heroui/react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
@@ -12,13 +12,23 @@ import { TagsAnalytics } from "./components/tags-analytics";
 import { AchievementsModal } from "./components/achievements-modal";
 
 import { useStats } from "@/hooks/use-stats";
-import { useAuth } from "@/services/supabase/auth-context";
 
 export function StatsView({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { isLoading } = useAuth();
+  const [isMounting, setIsMounting] = useState(true);
+  const prevRangeRef = useRef<string | null>(null);
+  const hasMountedRef = useRef(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounting(false);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   const {
     sessions,
     todos,
@@ -41,26 +51,35 @@ export function StatsView({
 
   useGSAP(
     () => {
-      if (!containerRef.current) return;
+      if (!containerRef.current || isMounting) return;
 
-      const elements = containerRef.current.querySelectorAll(
-        ".stats-header-wrapper, .stats-animated-card",
-      );
+      const isRangeChange =
+        prevRangeRef.current !== null && prevRangeRef.current !== range;
 
-      gsap.fromTo(
-        elements,
-        { opacity: 0, y: 14, scale: 0.985 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.5,
-          stagger: 0.07,
-          ease: "power3.out",
-        },
-      );
+      if (!hasMountedRef.current || isRangeChange) {
+        const elements = containerRef.current.querySelectorAll(
+          ".stats-header-wrapper, .stats-animated-card",
+        );
+
+        gsap.fromTo(
+          elements,
+          { opacity: 0, y: 14, scale: 0.985 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.45,
+            stagger: 0.06,
+            ease: "power3.out",
+            overwrite: "auto",
+          },
+        );
+        hasMountedRef.current = true;
+      }
+
+      prevRangeRef.current = range;
     },
-    { scope: containerRef },
+    { dependencies: [isMounting, range], scope: containerRef },
   );
 
   return (
@@ -87,41 +106,12 @@ export function StatsView({
       </div>
 
       {/* Main Unified Scrollable Content Area */}
-      {isLoading && !hasData ? (
-        <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col my-1 space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
-          {/* Hero Banner Skeleton */}
-          <div className="w-full h-32 sm:h-36 rounded-2xl bg-surface/70 border border-separator/30 p-4 flex flex-col justify-between shrink-0">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-4 w-32 rounded-md" />
-              <Skeleton className="h-4 w-20 rounded-md opacity-60" />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <Skeleton className="h-12 rounded-xl" />
-              <Skeleton className="h-12 rounded-xl" />
-              <Skeleton className="h-12 rounded-xl" />
-            </div>
-          </div>
-          {/* Chart Card Skeleton */}
-          <div className="w-full h-44 sm:h-52 rounded-2xl bg-surface/70 border border-separator/30 p-4 flex flex-col justify-between shrink-0">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-4 w-28 rounded-md" />
-              <Skeleton className="h-4 w-16 rounded-md opacity-60" />
-            </div>
-            <div className="flex items-end gap-2 h-28 pt-4">
-              {Array.from({ length: 7 }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="flex-1 rounded-t-lg"
-                  style={{ height: `${30 + (i % 4) * 20}%` }}
-                />
-              ))}
-            </div>
-          </div>
-          {/* Heatmap Grid Skeleton */}
-          <div className="w-full h-36 rounded-2xl bg-surface/70 border border-separator/30 p-4 flex flex-col gap-3 shrink-0">
-            <Skeleton className="h-4 w-36 rounded-md" />
-            <Skeleton className="h-20 w-full rounded-xl opacity-80" />
-          </div>
+      {isMounting ? (
+        <div className="flex-1 min-h-75 h-full flex flex-col items-center justify-center gap-3 animate-in fade-in duration-150">
+          <Spinner color="accent" size="md" />
+          <Typography color="muted" type="body-xs">
+            Loading analytics...
+          </Typography>
         </div>
       ) : (
         <div className="flex-1 min-h-0 w-full overflow-hidden flex flex-col my-1">

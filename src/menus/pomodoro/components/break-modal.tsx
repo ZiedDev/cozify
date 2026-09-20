@@ -44,10 +44,7 @@ export function BreakModal({
           </Typography>
         </div>
         <div className="text-right space-y-0.5">
-          <Typography
-            className="text-accent font-mono text-sm"
-            weight="bold"
-          >
+          <Typography className="text-accent font-mono text-sm" weight="bold">
             {formatTimerDisplay(timeUsed)}
           </Typography>
         </div>
@@ -238,9 +235,7 @@ export function BreakModal({
             </div>
           </Modal.Header>
 
-          <Modal.Body className="space-y-3">
-            {content}
-          </Modal.Body>
+          <Modal.Body className="space-y-3">{content}</Modal.Body>
 
           <Modal.Footer>
             <Button
@@ -256,4 +251,3 @@ export function BreakModal({
     </Modal.Backdrop>
   );
 }
-

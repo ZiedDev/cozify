@@ -26,8 +26,6 @@ import {
   Check,
 } from "lucide-react";
 
-import { useIsMobile } from "@/hooks/use-is-mobile";
-
 import {
   TodoItem,
   TodoPriority,
@@ -38,6 +36,7 @@ import {
 } from "../types";
 import { formatFriendlyDate } from "../logic/date-parser";
 
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { useTodos } from "@/hooks/use-todos";
 import {
   storageAdapter,
@@ -219,451 +218,433 @@ export function TodoEditModal({
         <Input placeholder="What needs to be done?" variant="secondary" />
       </TextField>
 
-            {/* Notes */}
-            <TextField fullWidth name="notes" value={notes} onChange={setNotes}>
-              <Label>Notes & Subtasks (Optional)</Label>
-              <TextArea
-                className="resize-none"
-                placeholder="Add additional context or steps..."
-                rows={3}
+      {/* Notes */}
+      <TextField fullWidth name="notes" value={notes} onChange={setNotes}>
+        <Label>Notes & Subtasks (Optional)</Label>
+        <TextArea
+          className="resize-none"
+          placeholder="Add additional context or steps..."
+          rows={3}
+          variant="secondary"
+        />
+      </TextField>
+
+      {/* 3-Column Compact & Colored Attribute Selectors */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+        {/* 1. Priority Attribute */}
+        <div className="flex flex-col gap-1.5">
+          <Label className="flex items-center gap-1.5 text-xs text-muted font-medium">
+            <Flag className="size-3.5" />
+            <span>Priority</span>
+          </Label>
+          <Popover
+            isOpen={isPriorityPopoverOpen}
+            onOpenChange={setIsPriorityPopoverOpen}
+          >
+            <Popover.Trigger>
+              <Button
+                className={cn(
+                  "w-full h-9 justify-between px-3 font-medium text-xs border transition-colors",
+                  priority === "high" &&
+                    "bg-rose-500/15 border-rose-500/30 text-rose-400 hover:bg-rose-500/25",
+                  priority === "medium" &&
+                    "bg-amber-500/15 border-amber-500/30 text-amber-400 hover:bg-amber-500/25",
+                  priority === "low" &&
+                    "bg-blue-500/15 border-blue-500/30 text-blue-400 hover:bg-blue-500/25",
+                  priority === "none" &&
+                    "bg-surface-secondary/50 border-separator/40 text-muted hover:bg-surface-secondary",
+                )}
                 variant="secondary"
-              />
-            </TextField>
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
+                    className={cn(
+                      "size-2 rounded-full shrink-0",
+                      PRIORITY_CONFIG[priority].dotColor,
+                    )}
+                  />
+                  <span className="truncate">
+                    {PRIORITY_CONFIG[priority].label}
+                  </span>
+                </div>
+                <ChevronDown className="size-3.5 opacity-60 shrink-0" />
+              </Button>
+            </Popover.Trigger>
+            <Popover.Content placement="bottom start">
+              <Popover.Dialog className="flex flex-col gap-1 w-44 z-50 p-1">
+                {(["high", "medium", "low", "none"] as TodoPriority[]).map(
+                  (priorityOption) => {
+                    const isSelected = priority === priorityOption;
+                    const config = PRIORITY_CONFIG[priorityOption];
 
-            {/* 3-Column Compact & Colored Attribute Selectors */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-              {/* 1. Priority Attribute */}
-              <div className="flex flex-col gap-1.5">
-                <Label className="flex items-center gap-1.5 text-xs text-muted font-medium">
-                  <Flag className="size-3.5" />
-                  <span>Priority</span>
-                </Label>
-                <Popover
-                  isOpen={isPriorityPopoverOpen}
-                  onOpenChange={setIsPriorityPopoverOpen}
-                >
-                  <Popover.Trigger>
-                    <Button
-                      className={cn(
-                        "w-full h-9 justify-between px-3 font-medium text-xs border transition-colors",
-                        priority === "high" &&
-                          "bg-rose-500/15 border-rose-500/30 text-rose-400 hover:bg-rose-500/25",
-                        priority === "medium" &&
-                          "bg-amber-500/15 border-amber-500/30 text-amber-400 hover:bg-amber-500/25",
-                        priority === "low" &&
-                          "bg-blue-500/15 border-blue-500/30 text-blue-400 hover:bg-blue-500/25",
-                        priority === "none" &&
-                          "bg-surface-secondary/50 border-separator/40 text-muted hover:bg-surface-secondary",
-                      )}
-                      variant="secondary"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className={cn(
-                            "size-2 rounded-full shrink-0",
-                            PRIORITY_CONFIG[priority].dotColor,
-                          )}
-                        />
-                        <span className="truncate">
-                          {PRIORITY_CONFIG[priority].label}
-                        </span>
-                      </div>
-                      <ChevronDown className="size-3.5 opacity-60 shrink-0" />
-                    </Button>
-                  </Popover.Trigger>
-                  <Popover.Content placement="bottom start">
-                    <Popover.Dialog className="flex flex-col gap-1 w-44 z-50 p-1">
-                      {(
-                        ["high", "medium", "low", "none"] as TodoPriority[]
-                      ).map((priorityOption) => {
-                        const isSelected = priority === priorityOption;
-                        const config = PRIORITY_CONFIG[priorityOption];
-
-                        return (
-                          <Button
-                            key={priorityOption}
-                            className={cn(
-                              "w-full justify-between text-xs shrink-0 h-8",
-                              isSelected
-                                ? "bg-accent-soft font-semibold text-accent"
-                                : "text-muted hover:text-foreground",
-                            )}
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => {
-                              setPriority(priorityOption);
-                              setIsPriorityPopoverOpen(false);
-                            }}
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span
-                                className={cn(
-                                  "size-2 rounded-full shrink-0",
-                                  config.dotColor,
-                                )}
-                              />
-                              <span
-                                className={cn(isSelected ? "" : config.color)}
-                              >
-                                {config.label}
-                              </span>
-                            </div>
-                            {isSelected && (
-                              <Check className="size-3 text-accent" />
-                            )}
-                          </Button>
-                        );
-                      })}
-                    </Popover.Dialog>
-                  </Popover.Content>
-                </Popover>
-              </div>
-
-              {/* 2. Category Tag Attribute */}
-              <div className="flex flex-col gap-1.5">
-                <Label className="flex items-center gap-1.5 text-xs text-muted font-medium">
-                  <Tag className="size-3.5" />
-                  <span>Category</span>
-                </Label>
-                <Popover
-                  isOpen={isTagPopoverOpen}
-                  onOpenChange={setIsTagPopoverOpen}
-                >
-                  <Popover.Trigger>
-                    <Button
-                      className={cn(
-                        "w-full h-9 justify-between px-3 font-medium text-xs border transition-colors",
-                        tag && activeTagMeta
-                          ? cn(
-                              activeTagMeta.bgClass,
-                              activeTagMeta.borderClass,
-                              activeTagMeta.textClass,
-                              "hover:opacity-90",
-                            )
-                          : "bg-surface-secondary/50 border-separator/40 text-muted hover:bg-surface-secondary",
-                      )}
-                      variant="secondary"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <ActiveTagIcon
-                          className={cn(
-                            "size-3.5 shrink-0",
-                            tag
-                              ? activeTagMeta?.textClass || "text-accent"
-                              : "text-muted",
-                          )}
-                        />
-                        <span className="truncate">
-                          {tag ? activeTagMeta?.label || tag : "No Tag"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {tag ? (
-                          <span
-                            aria-label="Clear tag"
-                            className="p-0.5 rounded hover:bg-foreground/10 text-muted hover:text-foreground transition-colors cursor-pointer"
-                            role="button"
-                            tabIndex={0}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setTag(undefined);
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.stopPropagation();
-                                setTag(undefined);
-                              }
-                            }}
-                          >
-                            <X className="size-3.5" />
-                          </span>
-                        ) : (
-                          <ChevronDown className="size-3.5 opacity-60" />
+                    return (
+                      <Button
+                        key={priorityOption}
+                        className={cn(
+                          "w-full justify-between text-xs shrink-0 h-8",
+                          isSelected
+                            ? "bg-accent-soft font-semibold text-accent"
+                            : "text-muted hover:text-foreground",
                         )}
-                      </div>
-                    </Button>
-                  </Popover.Trigger>
-                  <Popover.Content placement="bottom start">
-                    <Popover.Dialog className="flex flex-col gap-2 w-72 max-w-[90vw] z-50 p-2">
-                      {/* Custom Tag Input & Search */}
-                      <InputGroup variant="secondary">
-                        <InputGroup.Prefix>
-                          <Tag className="size-3.5 text-muted" />
-                        </InputGroup.Prefix>
-                        <InputGroup.Input
-                          placeholder="Search or create tag..."
-                          value={customTagInput}
-                          onChange={(event) =>
-                            setCustomTagInput(event.target.value)
-                          }
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                              event.preventDefault();
-                              if (showCreateOption) {
-                                handleCreateCustomTag();
-                              } else if (filteredTags.length > 0) {
-                                handleSelectTag(filteredTags[0].id);
-                              }
-                            }
-                          }}
-                        />
-                      </InputGroup>
-
-                      {/* Scrollable list */}
-                      <ScrollShadow
-                        className="max-h-48 overflow-y-auto flex flex-col gap-1 pr-0.5"
-                        orientation="vertical"
-                        size={20}
-                      >
-                        {/* Create Custom Tag Row */}
-                        {showCreateOption && (
-                          <Button
-                            className="w-full justify-start shrink-0 text-xs h-8"
-                            variant="primary"
-                            onClick={handleCreateCustomTag}
-                          >
-                            <Plus className="size-3.5" />
-                            <span>
-                              Create &quot;
-                              {customTagInput.trim().replace(/^#/, "")}&quot;
-                            </span>
-                          </Button>
-                        )}
-
-                        {/* No Tag Option */}
-                        <Button
-                          className={cn(
-                            "w-full justify-between shrink-0 text-xs h-8",
-                            !tag
-                              ? "bg-accent-soft text-accent font-semibold"
-                              : "text-muted hover:text-foreground",
-                          )}
-                          variant="secondary"
-                          onClick={() => handleSelectTag(undefined)}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Tag className="size-3.5" />
-                            <span>No Tag</span>
-                          </div>
-                          {!tag && <Check className="size-3 text-accent" />}
-                        </Button>
-
-                        {filteredTags.map((item) => {
-                          const ItemIcon = item.icon;
-                          const isSelected =
-                            tag?.toLowerCase() === item.id.toLowerCase();
-
-                          return (
-                            <Button
-                              key={item.id}
-                              className={cn(
-                                "w-full justify-between shrink-0 text-xs h-8",
-                                isSelected
-                                  ? "bg-accent-soft text-accent font-semibold"
-                                  : "text-muted hover:text-foreground",
-                              )}
-                              variant="secondary"
-                              onClick={() => handleSelectTag(item.id)}
-                            >
-                              <div className="flex items-center gap-2 min-w-0">
-                                <ItemIcon
-                                  className={cn(
-                                    "size-3.5 shrink-0",
-                                    item.textClass,
-                                  )}
-                                />
-                                <span className="truncate">{item.label}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                {!item.isPreset && (
-                                  <span className="text-[10px] text-muted/50 font-mono">
-                                    #{item.id}
-                                  </span>
-                                )}
-                                {isSelected && (
-                                  <Check className="size-3 text-accent" />
-                                )}
-                              </div>
-                            </Button>
-                          );
-                        })}
-
-                        {filteredTags.length === 0 && !showCreateOption && (
-                          <div className="py-3 text-center text-xs text-muted">
-                            No matching tags found.
-                          </div>
-                        )}
-                      </ScrollShadow>
-                    </Popover.Dialog>
-                  </Popover.Content>
-                </Popover>
-              </div>
-
-              {/* 3. Due Date Attribute */}
-              <div className="flex flex-col gap-1.5">
-                <Label className="flex items-center gap-1.5 text-xs text-muted font-medium">
-                  <CalendarIcon className="size-3.5" />
-                  <span>Due Date</span>
-                </Label>
-                <Popover
-                  isOpen={isDatePopoverOpen}
-                  onOpenChange={setIsDatePopoverOpen}
-                >
-                  <Popover.Trigger>
-                    <Button
-                      className={cn(
-                        "w-full h-9 justify-between px-3 font-medium text-xs border transition-colors",
-                        dueDate
-                          ? dueDate === todayStr
-                            ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25"
-                            : dueDate === tomorrowStr
-                              ? "bg-accent/15 border-accent/30 text-accent hover:bg-accent/25"
-                              : dueDate < todayStr
-                                ? "bg-rose-500/15 border-rose-500/30 text-rose-400 hover:bg-rose-500/25"
-                                : "bg-accent/15 border-accent/30 text-accent hover:bg-accent/25"
-                          : "bg-surface-secondary/50 border-separator/40 text-muted hover:bg-surface-secondary",
-                      )}
-                      variant="secondary"
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <CalendarIcon
-                          className={cn(
-                            "size-3.5 shrink-0",
-                            dueDate ? "text-current" : "text-muted",
-                          )}
-                        />
-                        <span className="truncate">
-                          {dueDate ? formatFriendlyDate(dueDate) : "No Date"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {dueDate ? (
-                          <span
-                            aria-label="Clear date"
-                            className="p-0.5 rounded hover:bg-foreground/10 text-muted hover:text-foreground transition-colors cursor-pointer"
-                            role="button"
-                            tabIndex={0}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              setDueDate("");
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.stopPropagation();
-                                setDueDate("");
-                              }
-                            }}
-                          >
-                            <X className="size-3.5" />
-                          </span>
-                        ) : (
-                          <ChevronDown className="size-3.5 opacity-60" />
-                        )}
-                      </div>
-                    </Button>
-                  </Popover.Trigger>
-                  <Popover.Content placement="bottom start">
-                    <Popover.Dialog className="flex flex-col gap-2.5 w-72 max-w-[90vw] z-50 p-2.5">
-                      {/* Quick Date Shortcuts */}
-                      <div className="flex items-center gap-1.5 pb-2 border-b border-separator/30">
-                        <Button
-                          className={cn(
-                            "flex-1 text-xs h-7.5",
-                            dueDate === todayStr
-                              ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-semibold"
-                              : "text-muted",
-                          )}
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => {
-                            setDueDate(todayStr);
-                            setIsDatePopoverOpen(false);
-                          }}
-                        >
-                          Today
-                        </Button>
-                        <Button
-                          className={cn(
-                            "flex-1 text-xs h-7.5",
-                            dueDate === tomorrowStr
-                              ? "bg-accent/15 border border-accent/30 text-accent font-semibold"
-                              : "text-muted",
-                          )}
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => {
-                            setDueDate(tomorrowStr);
-                            setIsDatePopoverOpen(false);
-                          }}
-                        >
-                          Tomorrow
-                        </Button>
-                        {dueDate && (
-                          <Button
-                            className="text-danger text-xs h-7.5 px-2"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setDueDate("");
-                              setIsDatePopoverOpen(false);
-                            }}
-                          >
-                            Clear
-                          </Button>
-                        )}
-                      </div>
-
-                      {/* Calendar Picker */}
-                      <Calendar
-                        aria-label="Pick due date"
-                        className="p-0 bg-transparent w-full"
-                        value={
-                          dueDate
-                            ? parseDate(dueDate.slice(0, 10))
-                            : today(getLocalTimeZone())
-                        }
-                        onChange={(selectedDate) => {
-                          setDueDate(
-                            selectedDate ? selectedDate.toString() : "",
-                          );
-                          setIsDatePopoverOpen(false);
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setPriority(priorityOption);
+                          setIsPriorityPopoverOpen(false);
                         }}
                       >
-                        <Calendar.Header>
-                          <Calendar.YearPickerTrigger>
-                            <Calendar.YearPickerTriggerHeading />
-                            <Calendar.YearPickerTriggerIndicator />
-                          </Calendar.YearPickerTrigger>
-                          <Calendar.NavButton slot="previous" />
-                          <Calendar.NavButton slot="next" />
-                        </Calendar.Header>
-                        <Calendar.Grid>
-                          <Calendar.GridHeader>
-                            {(dayName) => (
-                              <Calendar.HeaderCell>
-                                {dayName}
-                              </Calendar.HeaderCell>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className={cn(
+                              "size-2 rounded-full shrink-0",
+                              config.dotColor,
                             )}
-                          </Calendar.GridHeader>
-                          <Calendar.GridBody>
-                            {(calendarDate) => (
-                              <Calendar.Cell date={calendarDate} />
-                            )}
-                          </Calendar.GridBody>
-                        </Calendar.Grid>
-                        <Calendar.YearPickerGrid>
-                          <Calendar.YearPickerGridBody>
-                            {({ year: calendarYear }) => (
-                              <Calendar.YearPickerCell year={calendarYear} />
-                            )}
-                          </Calendar.YearPickerGridBody>
-                        </Calendar.YearPickerGrid>
-                      </Calendar>
-                    </Popover.Dialog>
-                  </Popover.Content>
-                </Popover>
-              </div>
-            </div>
+                          />
+                          <span className={cn(isSelected ? "" : config.color)}>
+                            {config.label}
+                          </span>
+                        </div>
+                        {isSelected && <Check className="size-3 text-accent" />}
+                      </Button>
+                    );
+                  },
+                )}
+              </Popover.Dialog>
+            </Popover.Content>
+          </Popover>
+        </div>
+
+        {/* 2. Category Tag Attribute */}
+        <div className="flex flex-col gap-1.5">
+          <Label className="flex items-center gap-1.5 text-xs text-muted font-medium">
+            <Tag className="size-3.5" />
+            <span>Category</span>
+          </Label>
+          <Popover isOpen={isTagPopoverOpen} onOpenChange={setIsTagPopoverOpen}>
+            <Popover.Trigger>
+              <Button
+                className={cn(
+                  "w-full h-9 justify-between px-3 font-medium text-xs border transition-colors",
+                  tag && activeTagMeta
+                    ? cn(
+                        activeTagMeta.bgClass,
+                        activeTagMeta.borderClass,
+                        activeTagMeta.textClass,
+                        "hover:opacity-90",
+                      )
+                    : "bg-surface-secondary/50 border-separator/40 text-muted hover:bg-surface-secondary",
+                )}
+                variant="secondary"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <ActiveTagIcon
+                    className={cn(
+                      "size-3.5 shrink-0",
+                      tag
+                        ? activeTagMeta?.textClass || "text-accent"
+                        : "text-muted",
+                    )}
+                  />
+                  <span className="truncate">
+                    {tag ? activeTagMeta?.label || tag : "No Tag"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {tag ? (
+                    <span
+                      aria-label="Clear tag"
+                      className="p-0.5 rounded hover:bg-foreground/10 text-muted hover:text-foreground transition-colors cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setTag(undefined);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.stopPropagation();
+                          setTag(undefined);
+                        }
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </span>
+                  ) : (
+                    <ChevronDown className="size-3.5 opacity-60" />
+                  )}
+                </div>
+              </Button>
+            </Popover.Trigger>
+            <Popover.Content placement="bottom start">
+              <Popover.Dialog className="flex flex-col gap-2 w-72 max-w-[90vw] z-50 p-2">
+                {/* Custom Tag Input & Search */}
+                <InputGroup variant="secondary">
+                  <InputGroup.Prefix>
+                    <Tag className="size-3.5 text-muted" />
+                  </InputGroup.Prefix>
+                  <InputGroup.Input
+                    placeholder="Search or create tag..."
+                    value={customTagInput}
+                    onChange={(event) => setCustomTagInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        if (showCreateOption) {
+                          handleCreateCustomTag();
+                        } else if (filteredTags.length > 0) {
+                          handleSelectTag(filteredTags[0].id);
+                        }
+                      }
+                    }}
+                  />
+                </InputGroup>
+
+                {/* Scrollable list */}
+                <ScrollShadow
+                  className="max-h-48 overflow-y-auto flex flex-col gap-1 pr-0.5"
+                  orientation="vertical"
+                  size={20}
+                >
+                  {/* Create Custom Tag Row */}
+                  {showCreateOption && (
+                    <Button
+                      className="w-full justify-start shrink-0 text-xs h-8"
+                      variant="primary"
+                      onClick={handleCreateCustomTag}
+                    >
+                      <Plus className="size-3.5" />
+                      <span>
+                        Create &quot;
+                        {customTagInput.trim().replace(/^#/, "")}&quot;
+                      </span>
+                    </Button>
+                  )}
+
+                  {/* No Tag Option */}
+                  <Button
+                    className={cn(
+                      "w-full justify-between shrink-0 text-xs h-8",
+                      !tag
+                        ? "bg-accent-soft text-accent font-semibold"
+                        : "text-muted hover:text-foreground",
+                    )}
+                    variant="secondary"
+                    onClick={() => handleSelectTag(undefined)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Tag className="size-3.5" />
+                      <span>No Tag</span>
+                    </div>
+                    {!tag && <Check className="size-3 text-accent" />}
+                  </Button>
+
+                  {filteredTags.map((item) => {
+                    const ItemIcon = item.icon;
+                    const isSelected =
+                      tag?.toLowerCase() === item.id.toLowerCase();
+
+                    return (
+                      <Button
+                        key={item.id}
+                        className={cn(
+                          "w-full justify-between shrink-0 text-xs h-8",
+                          isSelected
+                            ? "bg-accent-soft text-accent font-semibold"
+                            : "text-muted hover:text-foreground",
+                        )}
+                        variant="secondary"
+                        onClick={() => handleSelectTag(item.id)}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <ItemIcon
+                            className={cn("size-3.5 shrink-0", item.textClass)}
+                          />
+                          <span className="truncate">{item.label}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          {!item.isPreset && (
+                            <span className="text-[10px] text-muted/50 font-mono">
+                              #{item.id}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <Check className="size-3 text-accent" />
+                          )}
+                        </div>
+                      </Button>
+                    );
+                  })}
+
+                  {filteredTags.length === 0 && !showCreateOption && (
+                    <div className="py-3 text-center text-xs text-muted">
+                      No matching tags found.
+                    </div>
+                  )}
+                </ScrollShadow>
+              </Popover.Dialog>
+            </Popover.Content>
+          </Popover>
+        </div>
+
+        {/* 3. Due Date Attribute */}
+        <div className="flex flex-col gap-1.5">
+          <Label className="flex items-center gap-1.5 text-xs text-muted font-medium">
+            <CalendarIcon className="size-3.5" />
+            <span>Due Date</span>
+          </Label>
+          <Popover
+            isOpen={isDatePopoverOpen}
+            onOpenChange={setIsDatePopoverOpen}
+          >
+            <Popover.Trigger>
+              <Button
+                className={cn(
+                  "w-full h-9 justify-between px-3 font-medium text-xs border transition-colors",
+                  dueDate
+                    ? dueDate === todayStr
+                      ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25"
+                      : dueDate === tomorrowStr
+                        ? "bg-accent/15 border-accent/30 text-accent hover:bg-accent/25"
+                        : dueDate < todayStr
+                          ? "bg-rose-500/15 border-rose-500/30 text-rose-400 hover:bg-rose-500/25"
+                          : "bg-accent/15 border-accent/30 text-accent hover:bg-accent/25"
+                    : "bg-surface-secondary/50 border-separator/40 text-muted hover:bg-surface-secondary",
+                )}
+                variant="secondary"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <CalendarIcon
+                    className={cn(
+                      "size-3.5 shrink-0",
+                      dueDate ? "text-current" : "text-muted",
+                    )}
+                  />
+                  <span className="truncate">
+                    {dueDate ? formatFriendlyDate(dueDate) : "No Date"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  {dueDate ? (
+                    <span
+                      aria-label="Clear date"
+                      className="p-0.5 rounded hover:bg-foreground/10 text-muted hover:text-foreground transition-colors cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setDueDate("");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.stopPropagation();
+                          setDueDate("");
+                        }
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </span>
+                  ) : (
+                    <ChevronDown className="size-3.5 opacity-60" />
+                  )}
+                </div>
+              </Button>
+            </Popover.Trigger>
+            <Popover.Content placement="bottom start">
+              <Popover.Dialog className="flex flex-col gap-2.5 w-72 max-w-[90vw] z-50 p-2.5">
+                {/* Quick Date Shortcuts */}
+                <div className="flex items-center gap-1.5 pb-2 border-b border-separator/30">
+                  <Button
+                    className={cn(
+                      "flex-1 text-xs h-7.5",
+                      dueDate === todayStr
+                        ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-semibold"
+                        : "text-muted",
+                    )}
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setDueDate(todayStr);
+                      setIsDatePopoverOpen(false);
+                    }}
+                  >
+                    Today
+                  </Button>
+                  <Button
+                    className={cn(
+                      "flex-1 text-xs h-7.5",
+                      dueDate === tomorrowStr
+                        ? "bg-accent/15 border border-accent/30 text-accent font-semibold"
+                        : "text-muted",
+                    )}
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setDueDate(tomorrowStr);
+                      setIsDatePopoverOpen(false);
+                    }}
+                  >
+                    Tomorrow
+                  </Button>
+                  {dueDate && (
+                    <Button
+                      className="text-danger text-xs h-7.5 px-2"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setDueDate("");
+                        setIsDatePopoverOpen(false);
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+
+                {/* Calendar Picker */}
+                <Calendar
+                  aria-label="Pick due date"
+                  className="p-0 bg-transparent w-full"
+                  value={
+                    dueDate
+                      ? parseDate(dueDate.slice(0, 10))
+                      : today(getLocalTimeZone())
+                  }
+                  onChange={(selectedDate) => {
+                    setDueDate(selectedDate ? selectedDate.toString() : "");
+                    setIsDatePopoverOpen(false);
+                  }}
+                >
+                  <Calendar.Header>
+                    <Calendar.YearPickerTrigger>
+                      <Calendar.YearPickerTriggerHeading />
+                      <Calendar.YearPickerTriggerIndicator />
+                    </Calendar.YearPickerTrigger>
+                    <Calendar.NavButton slot="previous" />
+                    <Calendar.NavButton slot="next" />
+                  </Calendar.Header>
+                  <Calendar.Grid>
+                    <Calendar.GridHeader>
+                      {(dayName) => (
+                        <Calendar.HeaderCell>{dayName}</Calendar.HeaderCell>
+                      )}
+                    </Calendar.GridHeader>
+                    <Calendar.GridBody>
+                      {(calendarDate) => <Calendar.Cell date={calendarDate} />}
+                    </Calendar.GridBody>
+                  </Calendar.Grid>
+                  <Calendar.YearPickerGrid>
+                    <Calendar.YearPickerGridBody>
+                      {({ year: calendarYear }) => (
+                        <Calendar.YearPickerCell year={calendarYear} />
+                      )}
+                    </Calendar.YearPickerGridBody>
+                  </Calendar.YearPickerGrid>
+                </Calendar>
+              </Popover.Dialog>
+            </Popover.Content>
+          </Popover>
+        </div>
+      </div>
     </div>
   );
 
@@ -672,11 +653,7 @@ export function TodoEditModal({
       <Button slot="close" variant="secondary" onPress={onClose}>
         Cancel
       </Button>
-      <Button
-        isDisabled={!title.trim()}
-        variant="primary"
-        onPress={handleSave}
-      >
+      <Button isDisabled={!title.trim()} variant="primary" onPress={handleSave}>
         Save Changes
       </Button>
     </>
@@ -684,7 +661,10 @@ export function TodoEditModal({
 
   if (isMobile) {
     return (
-      <Drawer.Backdrop isOpen={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <Drawer.Backdrop
+        isOpen={isOpen}
+        onOpenChange={(open) => !open && onClose()}
+      >
         <Drawer.Content placement="bottom">
           <Drawer.Dialog className="max-h-[88dvh] flex flex-col p-4 shadow-2xl rounded-t-3xl rounded-b-none border-t border-separator/40 bg-surface/98 backdrop-blur-xl space-y-3">
             <Drawer.Handle />
@@ -732,9 +712,7 @@ export function TodoEditModal({
             </div>
           </Modal.Header>
           <Modal.CloseTrigger />
-          <Modal.Body className="space-y-4">
-            {formBody}
-          </Modal.Body>
+          <Modal.Body className="space-y-4">{formBody}</Modal.Body>
           <Modal.Footer className="flex items-center justify-end gap-2">
             {footerActions}
           </Modal.Footer>
@@ -743,4 +721,3 @@ export function TodoEditModal({
     </Modal.Backdrop>
   );
 }
-

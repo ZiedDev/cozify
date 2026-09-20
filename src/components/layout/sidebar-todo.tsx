@@ -617,7 +617,7 @@ export function SidebarTodoWidget({
             orientation="vertical"
             size={32}
           >
-            <SortableList onReorder={reorderTodos}>
+            <SortableList items={displayedTodos} onReorder={reorderTodos}>
               <div className="flex flex-col gap-1.5 w-full">
                 {displayedTodos.map((todo, index) => (
                   <SortableItem key={todo.id} id={todo.id} index={index}>

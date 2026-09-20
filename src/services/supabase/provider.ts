@@ -158,7 +158,8 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
   public async pushBatch(
     items: SyncQueueItem[],
   ): Promise<{ success: boolean; syncedIds: string[] }> {
-    if (!supabase) return { success: false, syncedIds: [] };
+    if (!supabase || items.length === 0)
+      return { success: false, syncedIds: [] };
 
     const {
       data: { session },
@@ -170,105 +171,137 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
     }
 
     const syncedIds: string[] = [];
-    let hadError = false;
+    const now = Date.now();
+
+    // Group items by store for bulk upserts
+    const sessionRows: any[] = [];
+    const sessionItemIds: string[] = [];
+
+    const todoRows: any[] = [];
+    const todoItemIds: string[] = [];
+
+    const bgRows: any[] = [];
+    const bgItemIds: string[] = [];
+
+    const playlistRows: any[] = [];
+    const playlistItemIds: string[] = [];
 
     for (const item of items) {
-      try {
-        const now = Date.now();
-
+      if (item.store === "sessions") {
+        sessionItemIds.push(item.id);
         if (item.action === "delete") {
-          // Send Tombstone update (is_deleted = true)
-          let error = null;
-
-          if (item.store === "sessions") {
-            const res = await supabase.from("sessions").upsert({
-              id: item.entityId,
-              title: "Deleted Session",
-              focus_minutes: 0,
-              created_at: now,
-              is_deleted: true,
-              updated_at: now,
-            });
-
-            error = res.error;
-          } else if (item.store === "todos") {
-            const res = await supabase.from("todos").upsert({
-              id: item.entityId,
-              title: "Deleted Task",
-              created_at: now,
-              is_deleted: true,
-              updated_at: now,
-            });
-
-            error = res.error;
-          } else if (item.store === "customBackgrounds") {
-            const res = await supabase.from("custom_backgrounds").upsert({
-              id: item.entityId,
-              name: "Deleted Background",
-              url: "",
-              is_deleted: true,
-              updated_at: now,
-            });
-
-            error = res.error;
-          } else if (item.store === "customPlaylists") {
-            const res = await supabase.from("custom_playlists").upsert({
-              id: item.entityId,
-              title: "Deleted Playlist",
-              platform: "youtube",
-              url: "",
-              is_deleted: true,
-              updated_at: now,
-            });
-
-            error = res.error;
-          }
-
-          if (error) {
-            // eslint-disable-next-line no-console
-            console.error(`Supabase tombstone error on ${item.store}:`, error);
-            hadError = true;
-          } else {
-            syncedIds.push(item.id);
-          }
-        } else {
-          // Create or Update (Upsert full entity)
-          let error = null;
-
-          if (item.store === "sessions" && item.payload) {
-            const row = sessionToRow(item.payload as SessionRecord);
-            const res = await supabase.from("sessions").upsert(row);
-
-            error = res.error;
-          } else if (item.store === "todos" && item.payload) {
-            const row = todoToRow(item.payload as TodoItem);
-            const res = await supabase.from("todos").upsert(row);
-
-            error = res.error;
-          } else if (item.store === "customBackgrounds" && item.payload) {
-            const row = backgroundToRow(item.payload as ThemeBackground);
-            const res = await supabase.from("custom_backgrounds").upsert(row);
-
-            error = res.error;
-          } else if (item.store === "customPlaylists" && item.payload) {
-            const row = playlistToRow(item.payload as Playlist);
-            const res = await supabase.from("custom_playlists").upsert(row);
-
-            error = res.error;
-          }
-
-          if (error) {
-            // eslint-disable-next-line no-console
-            console.error(`Supabase upsert error on ${item.store}:`, error);
-            hadError = true;
-          } else {
-            syncedIds.push(item.id);
-          }
+          sessionRows.push({
+            id: item.entityId,
+            title: "Deleted Session",
+            focus_minutes: 0,
+            created_at: now,
+            is_deleted: true,
+            updated_at: now,
+          });
+        } else if (item.payload) {
+          sessionRows.push(sessionToRow(item.payload as SessionRecord));
         }
-      } catch (err) {
+      } else if (item.store === "todos") {
+        todoItemIds.push(item.id);
+        if (item.action === "delete") {
+          todoRows.push({
+            id: item.entityId,
+            title: "Deleted Task",
+            created_at: now,
+            is_deleted: true,
+            updated_at: now,
+          });
+        } else if (item.payload) {
+          todoRows.push(todoToRow(item.payload as TodoItem));
+        }
+      } else if (item.store === "customBackgrounds") {
+        bgItemIds.push(item.id);
+        if (item.action === "delete") {
+          bgRows.push({
+            id: item.entityId,
+            name: "Deleted Background",
+            url: "",
+            is_deleted: true,
+            updated_at: now,
+          });
+        } else if (item.payload) {
+          bgRows.push(backgroundToRow(item.payload as ThemeBackground));
+        }
+      } else if (item.store === "customPlaylists") {
+        playlistItemIds.push(item.id);
+        if (item.action === "delete") {
+          playlistRows.push({
+            id: item.entityId,
+            title: "Deleted Playlist",
+            platform: "youtube",
+            url: "",
+            is_deleted: true,
+            updated_at: now,
+          });
+        } else if (item.payload) {
+          playlistRows.push(playlistToRow(item.payload as Playlist));
+        }
+      }
+    }
+
+    let hadError = false;
+
+    // 1. Bulk Upsert Sessions
+    if (sessionRows.length > 0) {
+      const { error } = await supabase.from("sessions").upsert(sessionRows);
+
+      if (error) {
         // eslint-disable-next-line no-console
-        console.error(`Supabase sync network exception on ${item.store}:`, err);
+        console.error("Supabase bulk upsert error on sessions:", error);
         hadError = true;
+      } else {
+        syncedIds.push(...sessionItemIds);
+      }
+    }
+
+    // 2. Bulk Upsert Todos
+    if (todoRows.length > 0) {
+      const { error } = await supabase.from("todos").upsert(todoRows);
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Supabase bulk upsert error on todos:", error);
+        hadError = true;
+      } else {
+        syncedIds.push(...todoItemIds);
+      }
+    }
+
+    // 3. Bulk Upsert Backgrounds
+    if (bgRows.length > 0) {
+      const { error } = await supabase
+        .from("custom_backgrounds")
+        .upsert(bgRows);
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error(
+          "Supabase bulk upsert error on custom_backgrounds:",
+          error,
+        );
+        hadError = true;
+      } else {
+        syncedIds.push(...bgItemIds);
+      }
+    }
+
+    // 4. Bulk Upsert Playlists
+    if (playlistRows.length > 0) {
+      const { error } = await supabase
+        .from("custom_playlists")
+        .upsert(playlistRows);
+
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("Supabase bulk upsert error on custom_playlists:", error);
+        hadError = true;
+      } else {
+        syncedIds.push(...playlistItemIds);
       }
     }
 

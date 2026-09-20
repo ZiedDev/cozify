@@ -102,8 +102,12 @@ export function useAchievementTracker() {
       }
     };
 
-    // Check on mount
-    checkAndNotifyAchievements();
+    // Defer initial check on mount so it doesn't block First Contentful Paint
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      window.requestIdleCallback(() => checkAndNotifyAchievements());
+    } else {
+      setTimeout(checkAndNotifyAchievements, 120);
+    }
 
     // Global Konami Code sequence listener: ↑ ↑ ↓ ↓ ← → ← → B A
     const konamiBuffer: string[] = [];

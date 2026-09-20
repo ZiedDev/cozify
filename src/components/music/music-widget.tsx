@@ -276,7 +276,7 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
           </div>
 
           {/* Spotify Embed Player View with clean fixed height and no overflow */}
-          {activePlatform === "spotify" && spotifyEmbedUrl && (
+          {activePlatform === "spotify" && spotifyEmbedUrl && isDeckOpen && (
             <div className="w-full h-38 rounded-2xl overflow-hidden border border-separator/40 bg-surface-secondary/60 shrink-0">
               <iframe
                 key={`widget-spotify-${playerKey}`}

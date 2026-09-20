@@ -183,8 +183,11 @@ class DatabaseCacheManager {
 
     storeMap.set(key, value);
 
-    // Synchronously mirror single-item stores to localStorage for instant reload availability
-    this.mirrorToLocalStorage(storeName, value);
+    if (storeName === "statsSummary") {
+      this.mirrorToLocalStorage(storeName, value);
+    } else {
+      this.mirrorToLocalStorage(storeName, Array.from(storeMap.values()));
+    }
 
     // Queue for write-behind to IndexedDB
     if (!this.pendingWrites.has(storeName)) {
@@ -215,6 +218,8 @@ class DatabaseCacheManager {
       storeMap.set(key, item);
     }
 
+    this.mirrorToLocalStorage(storeName, items);
+
     // Queue entire store replacement
     if (!this.pendingWrites.has(storeName)) {
       this.pendingWrites.set(storeName, new Map());
@@ -225,9 +230,6 @@ class DatabaseCacheManager {
     for (const [entryKey, entryValue] of storeMap.entries()) {
       pending.set(entryKey, entryValue);
     }
-
-    // Mirror to legacy localStorage for instant cross-tab compatibility
-    this.mirrorToLocalStorage(storeName, items);
 
     if (immediate) {
       this.flushPending();

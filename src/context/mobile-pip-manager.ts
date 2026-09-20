@@ -28,9 +28,9 @@ export function isVideoPipSupported(): boolean {
 
   return Boolean(
     document.pictureInPictureEnabled ||
-      (HTMLVideoElement.prototype as any).webkitSupportsPresentationMode ||
-      (HTMLVideoElement.prototype as any).webkitSetPresentationMode ||
-      "pictureInPictureEnabled" in document,
+    (HTMLVideoElement.prototype as any).webkitSupportsPresentationMode ||
+    (HTMLVideoElement.prototype as any).webkitSetPresentationMode ||
+    "pictureInPictureEnabled" in document,
   );
 }
 

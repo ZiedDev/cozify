@@ -1,78 +1,104 @@
 import { ReactNode } from "react";
-import { DragDropProvider, PointerSensor } from "@dnd-kit/react";
-import { useSortable } from "@dnd-kit/react/sortable";
-import { PointerActivationConstraints } from "@dnd-kit/dom";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
-interface SortableListProps<T extends { id: any }> {
+export { rectSortingStrategy, verticalListSortingStrategy };
+
+interface SortableListProps<T extends { id: any } | string = any> {
   items?: T[];
   onReorder: (activeId: string, overId: string) => void;
+  strategy?: typeof verticalListSortingStrategy | typeof rectSortingStrategy;
   children: ReactNode;
 }
 
-const customSensors = [
-  PointerSensor.configure({
-    activationConstraints: (event) => {
-      if (event.pointerType === "touch") {
-        return [
-          new PointerActivationConstraints.Delay({ value: 250, tolerance: 5 }),
-        ];
-      }
-
-      return [new PointerActivationConstraints.Distance({ value: 8 })];
-    },
-    preventActivation: (event) => {
-      const target = event.target as HTMLElement | null;
-
-      if (!target) return false;
-
-      return Boolean(
-        target.closest("input, textarea, select, [contenteditable='true']"),
-      );
-    },
-  }),
-];
-
-export function SortableList<T extends { id: any }>({
+export function SortableList<T extends { id: any } | string>({
+  items,
   onReorder,
+  strategy = verticalListSortingStrategy,
   children,
 }: SortableListProps<T>) {
-  return (
-    <DragDropProvider
-      sensors={customSensors}
-      onDragEnd={(event) => {
-        const { source, target, canceled } = event.operation;
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 4,
+      },
+    }),
+  );
 
-        if (canceled || !source || !target || source.id === target.id) return;
-        onReorder(String(source.id), String(target.id));
-      }}
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!active || !over || active.id === over.id) return;
+
+    onReorder(String(active.id), String(over.id));
+  };
+
+  const itemIds = items
+    ? items.map((item) =>
+        typeof item === "object" && item !== null && "id" in item
+          ? String(item.id)
+          : String(item),
+      )
+    : [];
+
+  return (
+    <DndContext
+      collisionDetection={closestCenter}
+      sensors={sensors}
+      onDragEnd={handleDragEnd}
     >
-      {children}
-    </DragDropProvider>
+      <SortableContext items={itemIds} strategy={strategy}>
+        {children}
+      </SortableContext>
+    </DndContext>
   );
 }
 
 interface SortableItemProps {
   id: string | number;
-  index: number;
+  index?: number;
   className?: string;
   children: ReactNode;
 }
 
-export function SortableItem({
-  id,
-  index,
-  className,
-  children,
-}: SortableItemProps) {
-  const { ref, isDragging } = useSortable({ id, index });
+export function SortableItem({ id, className, children }: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: String(id) });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
 
   return (
     <div
-      ref={ref}
-      className={`transition-scale duration-150 ${
-        isDragging ? "scale-[1.03] shadow-lg z-30 rounded-xl" : ""
+      ref={setNodeRef}
+      className={`touch-none ${
+        isDragging ? "opacity-75 z-50 shadow-xl scale-[1.02]" : ""
       } ${className || ""}`}
       data-dragging={isDragging || undefined}
+      style={style}
+      {...attributes}
+      {...listeners}
     >
       {children}
     </div>

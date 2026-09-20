@@ -1,14 +1,22 @@
-import { useState } from "react";
-import { Typography, Button, Drawer, Avatar } from "@heroui/react";
+import { useState, lazy, Suspense } from "react";
+import { Typography, Button, Drawer, Avatar, Spinner } from "@heroui/react";
 import { Settings, LayoutGrid, User } from "lucide-react";
 
 import { useAuth } from "@/services/supabase/auth-context";
-import { SettingsModal } from "@/components/settings";
-import { AuthModal, AccountModal } from "@/components/auth";
 import { SidebarTodoWidget } from "@/components/layout/sidebar-todo";
 import { SidebarClock, SidebarTimer } from "@/components/layout/sidebar";
 import { ThemePopover } from "@/components/theme/theme-popover";
 import { DrawerMusicPlayer } from "@/components/music";
+
+const SettingsModal = lazy(() =>
+  import("@/components/settings").then((m) => ({ default: m.SettingsModal })),
+);
+const AuthModal = lazy(() =>
+  import("@/components/auth").then((m) => ({ default: m.AuthModal })),
+);
+const AccountModal = lazy(() =>
+  import("@/components/auth").then((m) => ({ default: m.AccountModal })),
+);
 
 export function Navbar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -85,14 +93,35 @@ export function Navbar() {
       </div>
 
       {/* Auth Modal for Guests / Account Modal for Logged in Users */}
-      {user ? (
-        <AccountModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
-      ) : (
-        <AuthModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
-      )}
+      <Suspense
+        fallback={
+          isSettingsOpen || isAuthOpen ? (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-150">
+              <div className="p-6 rounded-3xl bg-surface/90 border border-separator/40 shadow-2xl flex flex-col items-center gap-3">
+                <Spinner color="accent" size="md" />
+                <Typography color="muted" type="body-xs">
+                  Loading...
+                </Typography>
+              </div>
+            </div>
+          ) : null
+        }
+      >
+        {isAuthOpen &&
+          (user ? (
+            <AccountModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
+          ) : (
+            <AuthModal isOpen={isAuthOpen} onOpenChange={setIsAuthOpen} />
+          ))}
 
-      {/* Settings Modal */}
-      <SettingsModal isOpen={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+        {/* Settings Modal */}
+        {isSettingsOpen && (
+          <SettingsModal
+            isOpen={isSettingsOpen}
+            onOpenChange={setIsSettingsOpen}
+          />
+        )}
+      </Suspense>
 
       {/* Mobile Glance Drawer */}
       <Drawer.Backdrop isOpen={isDrawerOpen} onOpenChange={setIsDrawerOpen}>

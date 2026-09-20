@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/services/supabase/auth-context";
+import { useIsOnline } from "@/hooks/use-is-online";
 import { AuthModal, AccountModal } from "@/components/auth";
 import {
   getStorageOverview,
@@ -45,6 +46,7 @@ export function DataTab({
   onOpenTasksLog?: () => void;
 }) {
   const { user, syncNow } = useAuth();
+  const isOnline = useIsOnline();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [stats, setStats] = useState<StorageOverview>(() =>
@@ -165,14 +167,30 @@ export function DataTab({
             <>
               <Button
                 className="max-md:flex-1"
-                isDisabled={isSyncing}
+                isDisabled={isSyncing || !isOnline}
                 size="sm"
                 variant="secondary"
                 onPress={async () => {
+                  if (!isOnline) return;
                   setIsSyncing(true);
+                  toast("Syncing Workspace...", {
+                    description: "Synchronizing data with cloud database.",
+                    timeout: 2500,
+                  });
                   try {
-                    await syncNow();
-                    toast.success("Synced successfully!");
+                    const success = await syncNow();
+
+                    if (success) {
+                      toast("Synced successfully!", { variant: "accent" });
+                    } else {
+                      toast("Could not sync with cloud database", {
+                        variant: "danger",
+                      });
+                    }
+                  } catch {
+                    toast("Could not sync with cloud database", {
+                      variant: "danger",
+                    });
                   } finally {
                     setIsSyncing(false);
                   }
@@ -181,7 +199,7 @@ export function DataTab({
                 <RefreshCw
                   className={`size-3.5 ${isSyncing ? "animate-spin text-accent" : ""}`}
                 />
-                <span>Sync Now</span>
+                <span>{isOnline ? "Sync Now" : "Offline"}</span>
               </Button>
             </>
           ) : (
