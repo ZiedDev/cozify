@@ -132,7 +132,7 @@ export function TodoList() {
   return (
     <div className="flex flex-col w-full h-full min-h-0 overflow-hidden">
       {isMounting ? (
-        <div className="flex-1 min-h-[220px] h-full flex flex-col items-center justify-center gap-3 animate-in fade-in duration-150">
+        <div className="flex-1 min-h-55 h-full flex flex-col items-center justify-center gap-3 animate-in fade-in duration-150">
           <Spinner color="accent" size="md" />
           <Typography color="muted" type="body-xs">
             Loading tasks...

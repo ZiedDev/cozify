@@ -119,35 +119,37 @@ export function CozyMusicCard() {
       : 0;
 
   // Physics-based Vinyl turntable animation via GSAP ticker with GPU force3D
+  useGSAP(() => {
+    const tickerCallback = (_time: number, deltaTime: number) => {
+      if (!discRef.current) return;
+      // Clamp dt to avoid frame drop glitches on tab switch or momentary lag
+      const dt = Math.min(deltaTime / 1000, 0.05);
+
+      if (velocityRef.current.speed > 0.0001) {
+        rotationRef.current -= velocityRef.current.speed * 45 * dt;
+        if (rotationRef.current < 0) {
+          rotationRef.current = (rotationRef.current % 360) + 360;
+        }
+        gsap.set(discRef.current, {
+          rotation: rotationRef.current,
+          force3D: true,
+        });
+      }
+    };
+
+    gsap.ticker.add(tickerCallback);
+
+    return () => {
+      gsap.ticker.remove(tickerCallback);
+    };
+  });
+
+  // Smooth spin up / spin down physics
   useGSAP(
     () => {
-      let isAttached = false;
-      const tickerCallback = (_time: number, deltaTime: number) => {
-        if (!discRef.current) return;
-        const dt = Math.min(deltaTime / 1000, 0.05);
-
-        if (velocityRef.current.speed > 0.0001) {
-          rotationRef.current -= velocityRef.current.speed * 45 * dt;
-          if (rotationRef.current < 0) {
-            rotationRef.current = (rotationRef.current % 360) + 360;
-          }
-          gsap.set(discRef.current, {
-            rotation: rotationRef.current,
-            force3D: true,
-          });
-        } else if (!isPlaying && isAttached) {
-          gsap.ticker.remove(tickerCallback);
-          isAttached = false;
-        }
-      };
-
       if (speedTweenRef.current) speedTweenRef.current.kill();
 
       if (isPlaying && !isBuffering) {
-        if (!isAttached) {
-          gsap.ticker.add(tickerCallback);
-          isAttached = true;
-        }
         speedTweenRef.current = gsap.to(velocityRef.current, {
           speed: 1,
           duration: 1.8,
@@ -158,20 +160,8 @@ export function CozyMusicCard() {
           speed: 0,
           duration: 2.4,
           ease: "power3.out",
-          onComplete: () => {
-            if (isAttached) {
-              gsap.ticker.remove(tickerCallback);
-              isAttached = false;
-            }
-          },
         });
       }
-
-      return () => {
-        if (isAttached) {
-          gsap.ticker.remove(tickerCallback);
-        }
-      };
     },
     { dependencies: [isPlaying, isBuffering] },
   );
@@ -357,11 +347,21 @@ export function CozyMusicCard() {
                 {/* Embedded Full Poster Artwork filling the disc grooves */}
                 <img
                   alt={title || "Now Playing"}
-                  className="w-full h-full object-cover select-none pointer-events-none brightness-95 contrast-105"
+                  className="w-full h-full object-cover select-none pointer-events-none brightness-95 contrast-105 scale-[1.35]"
                   src={
                     posterUrl ||
-                    "https://img.youtube.com/vi/jfKfPfyJRdk/hqdefault.jpg"
+                    "https://img.youtube.com/vi/jfKfPfyJRdk/maxresdefault.jpg"
                   }
+                  onError={(e) => {
+                    const target = e.currentTarget;
+
+                    if (target.src.includes("maxresdefault.jpg")) {
+                      target.src = target.src.replace(
+                        "maxresdefault.jpg",
+                        "hqdefault.jpg",
+                      );
+                    }
+                  }}
                   onLoad={handlePosterLoad}
                 />
 

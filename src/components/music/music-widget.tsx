@@ -298,11 +298,20 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
             <div className="w-32 h-32 rounded-xl overflow-hidden shrink-0 bg-black relative shadow-md">
               <img
                 alt={title}
-                className="w-full h-full object-cover pointer-events-none"
+                className="w-full h-full object-cover pointer-events-none scale-[1.35]"
                 src={
                   posterUrl ||
-                  "https://img.youtube.com/vi/jfKfPfyJRdk/hqdefault.jpg"
+                  "https://img.youtube.com/vi/jfKfPfyJRdk/maxresdefault.jpg"
                 }
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src.includes("maxresdefault.jpg")) {
+                    target.src = target.src.replace(
+                      "maxresdefault.jpg",
+                      "hqdefault.jpg",
+                    );
+                  }
+                }}
               />
               {/* Glass Inset Border */}
               <div className="absolute inset-0 rounded-xl pointer-events-none ring-1 ring-inset ring-white/10" />

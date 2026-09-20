@@ -175,7 +175,7 @@ export async function fetchMediaDetails(url: string): Promise<{
       const isMix = parsed.id.startsWith("RD") || parsed.id.startsWith("UL");
 
       if (parsed.videoId) {
-        fallbackCover = `https://img.youtube.com/vi/${parsed.videoId}/hqdefault.jpg`;
+        fallbackCover = `https://img.youtube.com/vi/${parsed.videoId}/maxresdefault.jpg`;
       }
 
       if (isMix && parsed.videoId) {
@@ -186,7 +186,7 @@ export async function fetchMediaDetails(url: string): Promise<{
     } else {
       const vidId = parsed.id;
 
-      fallbackCover = `https://img.youtube.com/vi/${vidId}/hqdefault.jpg`;
+      fallbackCover = `https://img.youtube.com/vi/${vidId}/maxresdefault.jpg`;
       targetOEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${vidId}&format=json`;
     }
 
@@ -255,7 +255,7 @@ export const PRESET_PLAYLISTS: Playlist[] = [
     author: "Lofi Girl",
     platform: "youtube",
     url: "https://www.youtube.com/watch?v=rFZHOHl-L8A&list=PL6NdkXsPL07Il2hEQGcLI4dg_LTg7xA2L",
-    coverUrl: "https://img.youtube.com/vi/rFZHOHl-L8A/hqdefault.jpg",
+    coverUrl: "https://img.youtube.com/vi/rFZHOHl-L8A/maxresdefault.jpg",
     category: "lofi",
   },
   {
@@ -264,7 +264,7 @@ export const PRESET_PLAYLISTS: Playlist[] = [
     author: "Lofi Girl",
     platform: "youtube",
     url: "https://www.youtube.com/watch?v=lTRiuFIWV54&list=PL6NdkXsPL07LBOz-XhgCJJGlI4jarMKzp",
-    coverUrl: "https://img.youtube.com/vi/lTRiuFIWV54/hqdefault.jpg",
+    coverUrl: "https://img.youtube.com/vi/lTRiuFIWV54/maxresdefault.jpg",
     category: "lofi",
   },
   {
@@ -273,7 +273,7 @@ export const PRESET_PLAYLISTS: Playlist[] = [
     author: "Lofi Girl",
     platform: "youtube",
     url: "https://www.youtube.com/watch?v=ZwJ0pY6sXoY&list=PL6NdkXsPL07Jn_YpyMkADfZ49MHPZoqEQ",
-    coverUrl: "https://img.youtube.com/vi/ZwJ0pY6sXoY/hqdefault.jpg",
+    coverUrl: "https://img.youtube.com/vi/ZwJ0pY6sXoY/maxresdefault.jpg",
     category: "ambient",
   },
 ];

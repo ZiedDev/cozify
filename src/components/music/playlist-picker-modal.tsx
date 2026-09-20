@@ -67,11 +67,10 @@ function VinylPlaylistItemComponent({
 
   return (
     <div
-      className={`group relative flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 ease-out select-none hover:shadow-md ${
-        isActive
+      className={`group relative flex items-center justify-between p-3 rounded-2xl border transition-all duration-300 ease-out select-none hover:shadow-md ${isActive
           ? "bg-accent/10 border-accent text-accent shadow-xs"
           : "bg-surface-secondary/30 hover:bg-surface-secondary/70 border-separator/40 hover:border-separator/70 text-foreground"
-      }`}
+        }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -85,11 +84,10 @@ function VinylPlaylistItemComponent({
           <div className="relative size-13 shrink-0 flex items-center">
             {/* Vinyl Disc peaking out */}
             <div
-              className={`absolute left-3 size-12 rounded-full bg-[#111] border border-white/20 shadow-md flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${
-                isActive && (isPlaying || isBuffering)
+              className={`absolute left-3 size-12 rounded-full bg-[#111] border border-white/20 shadow-md flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${isActive && (isPlaying || isBuffering)
                   ? "translate-x-3.5 ring-2 ring-accent/60"
                   : "translate-x-0.5 group-hover:translate-x-3 group-hover:rotate-12"
-              }`}
+                }`}
               style={{
                 WebkitMaskImage:
                   "radial-gradient(circle at center, transparent 4px, black 5px)",
@@ -105,9 +103,8 @@ function VinylPlaylistItemComponent({
                 {item.coverUrl ? (
                   <img
                     alt=""
-                    className={`w-full h-full object-cover ${
-                      isActive && isPlaying ? "animate-spin" : ""
-                    }`}
+                    className={`w-full h-full object-cover ${isActive && isPlaying ? "animate-spin" : ""
+                      }`}
                     src={item.coverUrl}
                     style={{
                       animationDuration: "3s",
@@ -180,11 +177,10 @@ function VinylPlaylistItemComponent({
               </Typography>
               <span className="text-xs text-muted/60">•</span>
               <span
-                className={`text-xs font-semibold uppercase ${
-                  item.platform === "spotify"
+                className={`text-xs font-semibold uppercase ${item.platform === "spotify"
                     ? "text-[#1db954]"
                     : "text-[#ff4e4e]"
-                }`}
+                  }`}
               >
                 {item.platform}
               </span>
@@ -201,11 +197,10 @@ function VinylPlaylistItemComponent({
           <div className="relative size-13 shrink-0 flex items-center">
             {/* Vinyl Disc peaking out */}
             <div
-              className={`absolute left-3 size-12 rounded-full bg-[#111] border border-white/20 shadow-md flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${
-                isActive && (isPlaying || isBuffering)
+              className={`absolute left-3 size-12 rounded-full bg-[#111] border border-white/20 shadow-md flex items-center justify-center transition-all duration-300 ease-out overflow-hidden ${isActive && (isPlaying || isBuffering)
                   ? "translate-x-3.5 ring-2 ring-accent/60"
                   : "translate-x-0.5 group-hover:translate-x-3 group-hover:rotate-12"
-              }`}
+                }`}
               style={{
                 WebkitMaskImage:
                   "radial-gradient(circle at center, transparent 4px, black 5px)",
@@ -221,9 +216,8 @@ function VinylPlaylistItemComponent({
                 {item.coverUrl ? (
                   <img
                     alt=""
-                    className={`w-full h-full object-cover ${
-                      isActive && isPlaying ? "animate-spin" : ""
-                    }`}
+                    className={`w-full h-full object-cover ${isActive && isPlaying ? "animate-spin" : ""
+                      }`}
                     src={item.coverUrl}
                     style={{
                       animationDuration: "3s",
@@ -260,9 +254,8 @@ function VinylPlaylistItemComponent({
               <Marquee
                 playOnHover
                 align="start"
-                className={`text-xs font-semibold leading-tight ${
-                  isActive ? "text-accent font-bold" : "text-foreground"
-                }`}
+                className={`text-xs font-semibold leading-tight ${isActive ? "text-accent font-bold" : "text-foreground"
+                  }`}
                 isHovered={isHovered}
                 isPlaying={isActive && isPlaying}
                 text={item.title}
@@ -279,11 +272,10 @@ function VinylPlaylistItemComponent({
               </Typography>
               <span className="text-xs text-muted/60">•</span>
               <span
-                className={`text-xs font-semibold uppercase ${
-                  item.platform === "spotify"
+                className={`text-xs font-semibold uppercase ${item.platform === "spotify"
                     ? "text-[#1db954]"
                     : "text-[#ff4e4e]"
-                }`}
+                  }`}
               >
                 {item.platform}
               </span>
@@ -351,11 +343,10 @@ function VinylPlaylistItemComponent({
           <Button
             isIconOnly
             aria-label={`Play ${item.title}`}
-            className={`size-7 rounded-full transition-transform duration-150 ${
-              isActive
+            className={`size-7 rounded-full transition-transform duration-150 ${isActive
                 ? "bg-accent/20 text-accent ring-1 ring-accent cursor-pointer"
                 : "bg-surface text-muted hover:text-foreground hover:scale-105 cursor-pointer"
-            }`}
+              }`}
             size="sm"
             variant="ghost"
             onClick={() => playPlaylist(item)}
@@ -497,7 +488,7 @@ export function PlaylistPickerModal() {
         strategy={rectSortingStrategy}
         onReorder={handleReorder}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1 max-w-full">
           {playlists.map((item, index) => {
             const isActive = activePlaylistId === item.id;
 

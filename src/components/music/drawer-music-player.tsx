@@ -149,11 +149,20 @@ export function DrawerMusicPlayer({ onCloseDrawer }: DrawerMusicPlayerProps) {
             <div className="size-12 rounded-xl overflow-hidden bg-black relative shrink-0 shadow-sm ring-1 ring-inset ring-white/10">
               <img
                 alt={title}
-                className="w-full h-full object-cover pointer-events-none"
+                className="w-full h-full object-cover pointer-events-none scale-[1.35]"
                 src={
                   posterUrl ||
-                  "https://img.youtube.com/vi/jfKfPfyJRdk/hqdefault.jpg"
+                  "https://img.youtube.com/vi/jfKfPfyJRdk/maxresdefault.jpg"
                 }
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src.includes("maxresdefault.jpg")) {
+                    target.src = target.src.replace(
+                      "maxresdefault.jpg",
+                      "hqdefault.jpg",
+                    );
+                  }
+                }}
               />
             </div>
 

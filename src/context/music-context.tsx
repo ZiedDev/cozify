@@ -478,7 +478,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (!videoId) return;
     lastKnownVideoIdRef.current = videoId;
     setCurrentVideoId(videoId);
-    setPosterUrl(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+    setPosterUrl(`https://img.youtube.com/vi/${videoId}/sddefault.jpg`);
 
     try {
       const res = await fetch(
@@ -665,7 +665,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           playerRef.current.seekTo(0, true);
         } catch {}
         setPosterUrl(
-          `https://img.youtube.com/vi/${currentVidId}/hqdefault.jpg`,
+          `https://img.youtube.com/vi/${currentVidId}/sddefault.jpg`,
         );
         if (data.title) setTitle(data.title);
         if (
@@ -1403,7 +1403,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           setCurrentVideoId(initialVid);
           currentVideoIdRef.current = initialVid;
           setPosterUrl(
-            `https://img.youtube.com/vi/${initialVid}/hqdefault.jpg`,
+            `https://img.youtube.com/vi/${initialVid}/sddefault.jpg`,
           );
         } else {
           mediaTypeRef.current = "video";
@@ -1411,7 +1411,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
           currentVideoIdsRef.current = [];
           setCurrentVideoId(parsed.id);
           currentVideoIdRef.current = parsed.id;
-          setPosterUrl(`https://img.youtube.com/vi/${parsed.id}/hqdefault.jpg`);
+          setPosterUrl(`https://img.youtube.com/vi/${parsed.id}/sddefault.jpg`);
         }
       } else {
         mediaTypeRef.current = "spotify";
@@ -1470,7 +1470,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
               setCurrentVideoId(parsed.videoId);
               currentVideoIdRef.current = parsed.videoId;
               setPosterUrl(
-                `https://img.youtube.com/vi/${parsed.videoId}/hqdefault.jpg`,
+                `https://img.youtube.com/vi/${parsed.videoId}/sddefault.jpg`,
               );
               fetchMetadata(parsed.videoId);
             }

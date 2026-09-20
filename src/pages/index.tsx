@@ -31,18 +31,24 @@ export function IndexPage() {
   useGSAP(
     () => {
       if (!containerRef.current) return;
-
-      gsap.fromTo(
-        containerRef.current,
-        { opacity: 0, y: 8, scale: 0.995 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 0.22,
-          ease: "power2.out",
-        },
+      const activeEl = containerRef.current.querySelector(
+        `[data-mode-view="${activeMode}"]`,
       );
+
+      if (activeEl) {
+        gsap.fromTo(
+          activeEl,
+          { opacity: 0, y: 8, scale: 0.995 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.22,
+            ease: "power2.out",
+            overwrite: "auto",
+          },
+        );
+      }
     },
     { dependencies: [activeMode], scope: containerRef },
   );
@@ -61,11 +67,50 @@ export function IndexPage() {
         ref={containerRef}
         className="w-full h-full overflow-hidden relative"
       >
-        {activeMode === "home" && <HomeView />}
-        {activeMode === "pomodoro" && <PomodoroView />}
-        {activeMode === "todo" && <TodoView />}
-        {activeMode === "music" && <MusicView />}
-        {activeMode === "stats" && <StatsView />}
+        <div
+          className={`w-full h-full flex items-center justify-center ${
+            activeMode === "home" ? "" : "hidden"
+          }`}
+          data-mode-view="home"
+        >
+          <HomeView />
+        </div>
+
+        <div
+          className={`w-full h-full flex items-center justify-center ${
+            activeMode === "pomodoro" ? "" : "hidden"
+          }`}
+          data-mode-view="pomodoro"
+        >
+          <PomodoroView />
+        </div>
+
+        <div
+          className={`w-full h-full flex flex-col items-center justify-between overflow-hidden ${
+            activeMode === "todo" ? "" : "hidden"
+          }`}
+          data-mode-view="todo"
+        >
+          <TodoView />
+        </div>
+
+        <div
+          className={`w-full h-full flex flex-col items-center justify-between overflow-hidden ${
+            activeMode === "stats" ? "" : "hidden"
+          }`}
+          data-mode-view="stats"
+        >
+          <StatsView />
+        </div>
+
+        <div
+          className={`w-full h-full flex flex-col items-center justify-center overflow-hidden ${
+            activeMode === "music" ? "" : "hidden"
+          }`}
+          data-mode-view="music"
+        >
+          <MusicView />
+        </div>
       </section>
     </DefaultLayout>
   );
