@@ -34,7 +34,7 @@ interface AuthContextType {
   updateProfile: (
     updates: Partial<UserProfile>,
   ) => Promise<{ error: Error | null }>;
-  syncNow: () => Promise<boolean>;
+  syncNow: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -243,8 +243,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const syncNow = async () => {
-    return await syncEngine.syncWithRemote();
+  const syncNow = async (): Promise<{ success: boolean; error?: string }> => {
+    if (configured && supabaseProvider) {
+      syncEngine.registerProvider(supabaseProvider);
+    }
+    const success = await syncEngine.syncWithRemote();
+    const error = syncEngine.getLastError();
+
+    return { success, error: error || undefined };
   };
 
   return (

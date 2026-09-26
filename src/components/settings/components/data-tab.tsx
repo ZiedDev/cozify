@@ -178,17 +178,17 @@ export function DataTab({
                     timeout: 2500,
                   });
                   try {
-                    const success = await syncNow();
+                    const result = await syncNow();
 
-                    if (success) {
+                    if (result.success) {
                       toast("Synced successfully!", { variant: "accent" });
                     } else {
-                      toast("Could not sync with cloud database", {
+                      toast(result.error || "Could not sync with cloud database", {
                         variant: "danger",
                       });
                     }
-                  } catch {
-                    toast("Could not sync with cloud database", {
+                  } catch (err: any) {
+                    toast(err?.message || "Could not sync with cloud database", {
                       variant: "danger",
                     });
                   } finally {

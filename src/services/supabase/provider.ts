@@ -11,11 +11,12 @@ import { ThemeBackground } from "@/config/themes";
 import { Playlist } from "@/config/playlists";
 
 // Transform helpers between camelCase app types and snake_case Postgres columns
-function sessionToRow(session: SessionRecord) {
+function sessionToRow(session: SessionRecord, userId?: string) {
   const now = Date.now();
 
   return {
     id: session.id,
+    ...(userId ? { user_id: userId } : {}),
     title: session.title,
     tag: session.tag || null,
     cycles_completed: session.cyclesCompleted ?? session.sprintsCompleted ?? 0,
@@ -49,11 +50,12 @@ function rowToSession(row: any): SessionRecord {
   };
 }
 
-function todoToRow(todo: TodoItem) {
+function todoToRow(todo: TodoItem, userId?: string) {
   const now = Date.now();
 
   return {
     id: todo.id,
+    ...(userId ? { user_id: userId } : {}),
     title: todo.title,
     completed: Boolean(todo.completed),
     tag: todo.tag || "general",
@@ -61,6 +63,7 @@ function todoToRow(todo: TodoItem) {
     due_date: todo.dueDate || null,
     notes: todo.notes || null,
     archived: Boolean(todo.archived),
+    archived_at: todo.archivedAt ? Number(todo.archivedAt) : null,
     is_deleted: Boolean(todo.isDeleted),
     version: todo.version || 1,
     created_at: Number(todo.createdAt || now),
@@ -88,11 +91,12 @@ function rowToTodo(row: any): TodoItem {
   };
 }
 
-function backgroundToRow(bg: ThemeBackground) {
+function backgroundToRow(bg: ThemeBackground, userId?: string) {
   const now = Date.now();
 
   return {
     id: bg.id,
+    ...(userId ? { user_id: userId } : {}),
     name: bg.name,
     url: bg.url,
     thumbnail: bg.thumbnail || null,
@@ -116,11 +120,12 @@ function rowToBackground(row: any): ThemeBackground {
   };
 }
 
-function playlistToRow(pl: Playlist) {
+function playlistToRow(pl: Playlist, userId?: string) {
   const now = Date.now();
 
   return {
     id: pl.id,
+    ...(userId ? { user_id: userId } : {}),
     title: pl.title,
     author: pl.author || "Custom Creator",
     platform: pl.platform,
@@ -152,12 +157,95 @@ function rowToPlaylist(row: any): Playlist {
   };
 }
 
+async function safeUpsert(
+  table: string,
+  rows: any[],
+): Promise<{ error: any }> {
+  if (rows.length === 0) return { error: null };
+  const { error } = await supabase!.from(table).upsert(rows);
+
+  if (!error) return { error: null };
+
+  // If error is about a missing column (e.g. user_id or archived_at), try stripping them and retrying
+  const errMsg = (error.message || "").toLowerCase();
+
+  if (
+    errMsg.includes("column") ||
+    errMsg.includes("schema cache") ||
+    error.code === "PGRST204" ||
+    error.code === "42703"
+  ) {
+    const cleanedRows = rows.map((row) => {
+      const copy = { ...row };
+
+      delete copy.user_id;
+      delete copy.archived_at;
+
+      return copy;
+    });
+    const retryRes = await supabase!.from(table).upsert(cleanedRows);
+
+    if (!retryRes.error) {
+      return { error: null };
+    }
+
+    return { error: retryRes.error };
+  }
+
+  return { error };
+}
+
+async function safePull(
+  table: string,
+  userId: string,
+  sinceTimestamp: number,
+): Promise<{ data: any[] | null; error: any }> {
+  // First try with user_id filter if userId is present
+  let query = supabase!.from(table).select("*");
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+  if (sinceTimestamp > 0) {
+    query = query.gt("updated_at", sinceTimestamp);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    const errMsg = (error.message || "").toLowerCase();
+
+    // If user_id column doesn't exist, retry without user_id filter (RLS or global)
+    if (
+      errMsg.includes("column") ||
+      errMsg.includes("schema cache") ||
+      error.code === "PGRST204" ||
+      error.code === "42703"
+    ) {
+      let fallbackQuery = supabase!.from(table).select("*");
+
+      if (sinceTimestamp > 0) {
+        fallbackQuery = fallbackQuery.gt("updated_at", sinceTimestamp);
+      }
+      const fallbackRes = await fallbackQuery;
+
+      if (!fallbackRes.error) {
+        return { data: fallbackRes.data, error: null };
+      }
+
+      return { data: null, error: fallbackRes.error };
+    }
+  }
+
+  return { data, error };
+}
+
 export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
   public name = "supabase";
 
   public async pushBatch(
     items: SyncQueueItem[],
-  ): Promise<{ success: boolean; syncedIds: string[] }> {
+  ): Promise<{ success: boolean; syncedIds: string[]; error?: string }> {
     if (!supabase || items.length === 0)
       return { success: false, syncedIds: [] };
 
@@ -167,9 +255,10 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
 
     if (!session?.user) {
       // User is offline or not logged in; keep items queued
-      return { success: false, syncedIds: [] };
+      return { success: false, syncedIds: [], error: "No authenticated session" };
     }
 
+    const userId = session.user.id;
     const syncedIds: string[] = [];
     const now = Date.now();
 
@@ -192,6 +281,7 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
         if (item.action === "delete") {
           sessionRows.push({
             id: item.entityId,
+            user_id: userId,
             title: "Deleted Session",
             focus_minutes: 0,
             created_at: now,
@@ -199,39 +289,46 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
             updated_at: now,
           });
         } else if (item.payload) {
-          sessionRows.push(sessionToRow(item.payload as SessionRecord));
+          sessionRows.push(
+            sessionToRow(item.payload as SessionRecord, userId),
+          );
         }
       } else if (item.store === "todos") {
         todoItemIds.push(item.id);
         if (item.action === "delete") {
           todoRows.push({
             id: item.entityId,
+            user_id: userId,
             title: "Deleted Task",
             created_at: now,
             is_deleted: true,
             updated_at: now,
           });
         } else if (item.payload) {
-          todoRows.push(todoToRow(item.payload as TodoItem));
+          todoRows.push(todoToRow(item.payload as TodoItem, userId));
         }
       } else if (item.store === "customBackgrounds") {
         bgItemIds.push(item.id);
         if (item.action === "delete") {
           bgRows.push({
             id: item.entityId,
+            user_id: userId,
             name: "Deleted Background",
             url: "",
             is_deleted: true,
             updated_at: now,
           });
         } else if (item.payload) {
-          bgRows.push(backgroundToRow(item.payload as ThemeBackground));
+          bgRows.push(
+            backgroundToRow(item.payload as ThemeBackground, userId),
+          );
         }
       } else if (item.store === "customPlaylists") {
         playlistItemIds.push(item.id);
         if (item.action === "delete") {
           playlistRows.push({
             id: item.entityId,
+            user_id: userId,
             title: "Deleted Playlist",
             platform: "youtube",
             url: "",
@@ -239,21 +336,26 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
             updated_at: now,
           });
         } else if (item.payload) {
-          playlistRows.push(playlistToRow(item.payload as Playlist));
+          playlistRows.push(playlistToRow(item.payload as Playlist, userId));
         }
+      } else {
+        // Unknown or legacy store: mark as synced to prevent blocking the outbox
+        syncedIds.push(item.id);
       }
     }
 
     let hadError = false;
+    let lastErrMsg = "";
 
     // 1. Bulk Upsert Sessions
     if (sessionRows.length > 0) {
-      const { error } = await supabase.from("sessions").upsert(sessionRows);
+      const { error } = await safeUpsert("sessions", sessionRows);
 
       if (error) {
         // eslint-disable-next-line no-console
         console.error("Supabase bulk upsert error on sessions:", error);
         hadError = true;
+        lastErrMsg = error.message || "Failed to sync sessions";
       } else {
         syncedIds.push(...sessionItemIds);
       }
@@ -261,12 +363,13 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
 
     // 2. Bulk Upsert Todos
     if (todoRows.length > 0) {
-      const { error } = await supabase.from("todos").upsert(todoRows);
+      const { error } = await safeUpsert("todos", todoRows);
 
       if (error) {
         // eslint-disable-next-line no-console
         console.error("Supabase bulk upsert error on todos:", error);
         hadError = true;
+        lastErrMsg = error.message || "Failed to sync tasks";
       } else {
         syncedIds.push(...todoItemIds);
       }
@@ -274,9 +377,7 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
 
     // 3. Bulk Upsert Backgrounds
     if (bgRows.length > 0) {
-      const { error } = await supabase
-        .from("custom_backgrounds")
-        .upsert(bgRows);
+      const { error } = await safeUpsert("custom_backgrounds", bgRows);
 
       if (error) {
         // eslint-disable-next-line no-console
@@ -285,6 +386,7 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
           error,
         );
         hadError = true;
+        lastErrMsg = error.message || "Failed to sync custom wallpapers";
       } else {
         syncedIds.push(...bgItemIds);
       }
@@ -292,14 +394,13 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
 
     // 4. Bulk Upsert Playlists
     if (playlistRows.length > 0) {
-      const { error } = await supabase
-        .from("custom_playlists")
-        .upsert(playlistRows);
+      const { error } = await safeUpsert("custom_playlists", playlistRows);
 
       if (error) {
         // eslint-disable-next-line no-console
         console.error("Supabase bulk upsert error on custom_playlists:", error);
         hadError = true;
+        lastErrMsg = error.message || "Failed to sync custom playlists";
       } else {
         syncedIds.push(...playlistItemIds);
       }
@@ -308,6 +409,7 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
     return {
       success: !hadError && syncedIds.length === items.length,
       syncedIds,
+      error: hadError ? lastErrMsg : undefined,
     };
   }
 
@@ -317,6 +419,7 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
     customBackgrounds?: ThemeBackground[];
     customPlaylists?: Playlist[];
     timestamp: number;
+    error?: string;
   }> {
     if (!supabase) return { timestamp: Date.now() };
 
@@ -326,52 +429,33 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
 
     if (!session?.user) return { timestamp: Date.now() };
 
+    const userId = session.user.id;
+
     try {
       const now = Date.now();
 
-      // Pull sessions (including tombstones)
-      let sessionsQuery = supabase.from("sessions").select("*");
-
-      if (sinceTimestamp > 0) {
-        sessionsQuery = sessionsQuery.gt("updated_at", sinceTimestamp);
-      }
-      const { data: sessionRows, error: sessionErr } = await sessionsQuery;
+      const [
+        { data: sessionRows, error: sessionErr },
+        { data: todoRows, error: todoErr },
+        { data: bgRows, error: bgErr },
+        { data: plRows, error: plErr },
+      ] = await Promise.all([
+        safePull("sessions", userId, sinceTimestamp),
+        safePull("todos", userId, sinceTimestamp),
+        safePull("custom_backgrounds", userId, sinceTimestamp),
+        safePull("custom_playlists", userId, sinceTimestamp),
+      ]);
 
       // eslint-disable-next-line no-console
       if (sessionErr) console.error("Pull sessions error:", sessionErr);
-
-      // Pull todos (including tombstones)
-      let todosQuery = supabase.from("todos").select("*");
-
-      if (sinceTimestamp > 0) {
-        todosQuery = todosQuery.gt("updated_at", sinceTimestamp);
-      }
-      const { data: todoRows, error: todoErr } = await todosQuery;
-
       // eslint-disable-next-line no-console
       if (todoErr) console.error("Pull todos error:", todoErr);
-
-      // Pull customBackgrounds
-      let bgQuery = supabase.from("custom_backgrounds").select("*");
-
-      if (sinceTimestamp > 0) {
-        bgQuery = bgQuery.gt("updated_at", sinceTimestamp);
-      }
-      const { data: bgRows, error: bgErr } = await bgQuery;
-
       // eslint-disable-next-line no-console
       if (bgErr) console.error("Pull backgrounds error:", bgErr);
-
-      // Pull customPlaylists
-      let plQuery = supabase.from("custom_playlists").select("*");
-
-      if (sinceTimestamp > 0) {
-        plQuery = plQuery.gt("updated_at", sinceTimestamp);
-      }
-      const { data: plRows, error: plErr } = await plQuery;
-
       // eslint-disable-next-line no-console
       if (plErr) console.error("Pull playlists error:", plErr);
+
+      const pullError = sessionErr || todoErr || bgErr || plErr;
 
       return {
         sessions: sessionRows ? sessionRows.map(rowToSession) : undefined,
@@ -379,12 +463,13 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
         customBackgrounds: bgRows ? bgRows.map(rowToBackground) : undefined,
         customPlaylists: plRows ? plRows.map(rowToPlaylist) : undefined,
         timestamp: now,
+        error: pullError?.message,
       };
-    } catch (err) {
+    } catch (err: any) {
       // eslint-disable-next-line no-console
       console.error("Supabase pullChanges exception:", err);
 
-      return { timestamp: Date.now() };
+      return { timestamp: Date.now(), error: err?.message };
     }
   }
 }

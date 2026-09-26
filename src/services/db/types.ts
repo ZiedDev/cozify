@@ -92,7 +92,7 @@ export type SyncableStoreName =
  */
 export type SyncQueueItem = {
   id: string;
-  store: StoreName;
+  store: SyncableStoreName;
   action: "create" | "update" | "delete";
   entityId: string;
   payload?: unknown;
@@ -116,13 +116,14 @@ export type RemoteDatabaseProvider = {
   name: string;
   pushBatch(
     items: SyncQueueItem[],
-  ): Promise<{ success: boolean; syncedIds: string[] }>;
+  ): Promise<{ success: boolean; syncedIds: string[]; error?: string }>;
   pullChanges(sinceTimestamp: number): Promise<{
     sessions?: SessionRecord[];
     todos?: TodoItem[];
     customBackgrounds?: ThemeBackground[];
     customPlaylists?: Playlist[];
     timestamp: number;
+    error?: string;
   }>;
 };
 

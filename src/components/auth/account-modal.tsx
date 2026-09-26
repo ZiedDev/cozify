@@ -51,22 +51,22 @@ export function AccountModal({ isOpen, onOpenChange }: AccountModalProps) {
       timeout: 2500,
     });
     try {
-      const success = await syncNow();
+      const result = await syncNow();
 
-      if (success) {
+      if (result.success) {
         toast("Sync Complete", {
           description: "All your devices are up to date.",
           variant: "accent",
         });
       } else {
         toast("Sync Failed", {
-          description: "Could not reach remote cloud database.",
+          description: result.error || "Could not reach remote cloud database.",
           variant: "danger",
         });
       }
-    } catch {
+    } catch (err: any) {
       toast("Sync Failed", {
-        description: "Could not reach remote cloud database.",
+        description: err?.message || "Could not reach remote cloud database.",
         variant: "danger",
       });
     } finally {

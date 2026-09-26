@@ -97,6 +97,13 @@ class DatabaseCacheManager {
   }
 
   /**
+   * Ensures all IndexedDB tables have completed initialization into in-memory cache
+   */
+  public async ensureAllInitialized(): Promise<void> {
+    await Promise.all(STORES.map((s) => this.initStore(s)));
+  }
+
+  /**
    * One-time transparent migration from legacy localStorage keys to IDB
    */
   public migrateFromLocalStorage<K extends StoreName>(storeName: K) {
@@ -117,7 +124,10 @@ class DatabaseCacheManager {
     if (!localKey) return;
 
     try {
-      const raw = localStorage.getItem(localKey);
+      let raw = localStorage.getItem(localKey);
+      if (!raw && storeName === "customBackgrounds") {
+        raw = localStorage.getItem("cozify_custom_wallpapers");
+      }
 
       if (!raw) return;
 

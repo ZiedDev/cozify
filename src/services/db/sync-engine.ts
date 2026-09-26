@@ -2,7 +2,7 @@ import {
   RemoteDatabaseProvider,
   SyncQueueItem,
   SyncStats,
-  StoreName,
+  SyncableStoreName,
 } from "./types";
 import { cacheManager } from "./cache-layer";
 
@@ -16,7 +16,7 @@ function reconcileEntityList<
     createdAt?: number;
     isDeleted?: boolean;
   },
->(localList: T[], remoteList: T[], storeName?: StoreName): T[] {
+>(localList: T[], remoteList: T[], storeName?: SyncableStoreName): T[] {
   const map = new Map<string, T>();
 
   const hasRemoteItems = remoteList.some((r) => !r.isDeleted);
@@ -91,6 +91,7 @@ class RemoteSyncEngine {
   private isSyncing = false;
   private hasCompletedInitialSync = false;
   private lastSyncedAt: number | null = null;
+  private lastError: string | null = null;
   private syncIntervalTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
@@ -102,6 +103,10 @@ class RemoteSyncEngine {
    */
   public registerProvider(provider: RemoteDatabaseProvider) {
     this.provider = provider;
+  }
+
+  public getLastError(): string | null {
+    return this.lastError;
   }
 
   public getHasCompletedInitialSync(): boolean {
@@ -123,11 +128,22 @@ class RemoteSyncEngine {
    * Enqueue a mutation into the append-only outbox
    */
   public queueChange<T>(
-    store: StoreName,
+    store: SyncableStoreName,
     action: "create" | "update" | "delete",
     entityId: string,
     payload?: T,
   ) {
+    const validStores: SyncableStoreName[] = [
+      "sessions",
+      "todos",
+      "customBackgrounds",
+      "customPlaylists",
+    ];
+
+    if (!validStores.includes(store)) {
+      return;
+    }
+
     // If deleting, purge earlier pending creations/updates for the same entity
     if (action === "delete") {
       const existingQueue = cacheManager.getMemoryStore("syncQueue");
@@ -203,10 +219,22 @@ class RemoteSyncEngine {
    * 4-Phase Pull-Before-Push Sync Protocol
    */
   public async syncWithRemote(): Promise<boolean> {
-    if (!this.provider || this.isSyncing) return false;
+    this.lastError = null;
+
+    if (!this.provider) {
+      this.lastError = "Cloud database provider is not connected";
+
+      return false;
+    }
+
+    if (this.isSyncing) {
+      return false;
+    }
 
     // Check network connectivity
     if (typeof navigator !== "undefined" && !navigator.onLine) {
+      this.lastError = "You are currently offline";
+
       return false;
     }
 
@@ -216,11 +244,17 @@ class RemoteSyncEngine {
     }
 
     try {
+      await cacheManager.ensureAllInitialized();
+
       // 1. PHASE 1 & 2: INBOUND DELTA PULL & RECONCILIATION
       const pullTimestamp = this.lastSyncedAt || 0;
       const remoteData = await this.provider.pullChanges(pullTimestamp);
 
       if (remoteData) {
+        if (remoteData.error) {
+          this.lastError = remoteData.error;
+        }
+
         if (remoteData.sessions !== undefined) {
           const local = cacheManager.getMemoryStore("sessions");
           const reconciled = reconcileEntityList(local, remoteData.sessions);
@@ -266,13 +300,32 @@ class RemoteSyncEngine {
       this.promoteLocalDataToSyncQueue();
       await cacheManager.flushPending();
 
-      // 3. PHASE 3 & 4: OUTBOUND MUTATION PUSH & EVICTION
+      // 3. Clean up any invalid or legacy items from outbox queue
+      const existingQueue = cacheManager.getMemoryStore("syncQueue");
+      const validStores = new Set<SyncableStoreName>([
+        "sessions",
+        "todos",
+        "customBackgrounds",
+        "customPlaylists",
+      ]);
+
+      for (const item of existingQueue) {
+        if (!item || !validStores.has(item.store)) {
+          cacheManager.deleteMemoryItem("syncQueue", item.id, false);
+        }
+      }
+
+      // 4. PHASE 3 & 4: OUTBOUND MUTATION PUSH & EVICTION
       let queue = cacheManager.getMemoryStore("syncQueue");
       let pushSuccess = true;
 
       while (queue.length > 0) {
         const batch = queue.slice(0, 50);
         const result = await this.provider.pushBatch(batch);
+
+        if (result.error) {
+          this.lastError = result.error;
+        }
 
         if (result.success && result.syncedIds.length > 0) {
           for (const syncedId of result.syncedIds) {
@@ -285,14 +338,17 @@ class RemoteSyncEngine {
         }
       }
 
-      // 4. Notify UI components
+      // 5. Notify UI components
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("cozify_remote_synced"));
+        window.dispatchEvent(new CustomEvent("cozify_stats_updated"));
         window.dispatchEvent(new Event("storage"));
       }
 
       return pushSuccess && queue.length === 0;
-    } catch (err) {
+    } catch (err: any) {
+      this.lastError =
+        err?.message || "Sync protocol encountered an unexpected error";
       // eslint-disable-next-line no-console
       console.error("Sync protocol error:", err);
 
@@ -309,6 +365,7 @@ class RemoteSyncEngine {
   public resetEngine() {
     this.provider = null;
     this.lastSyncedAt = 0;
+    this.lastError = null;
     this.isSyncing = false;
     this.hasCompletedInitialSync = false;
   }

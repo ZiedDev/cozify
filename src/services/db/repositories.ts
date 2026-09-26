@@ -175,19 +175,12 @@ export const dailyRollupsRepository = {
       withTimestamp,
       true,
     );
-    syncEngine.queueChange(
-      "dailyRollups",
-      "update",
-      record.date,
-      withTimestamp,
-    );
   },
   saveAll(records: DailyRollupRecord[]): void {
     cacheManager.setMemoryStore("dailyRollups", records, true);
   },
   delete(date: string): void {
     cacheManager.deleteMemoryItem("dailyRollups", date, true);
-    syncEngine.queueChange("dailyRollups", "delete", date);
   },
   clear(): void {
     cacheManager.clearMemoryStore("dailyRollups");
@@ -205,7 +198,6 @@ export const statsSummaryRepository = {
     const withKey = { ...stats, key: "summary", updatedAt: Date.now() };
 
     cacheManager.setMemoryItem("statsSummary", "summary", withKey, true);
-    syncEngine.queueChange("statsSummary", "update", "summary", withKey);
   },
   clear(): void {
     cacheManager.clearMemoryStore("statsSummary");
