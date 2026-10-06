@@ -20,6 +20,8 @@ const DB_GETTERS: Record<string, () => any> = {
   [STORAGE_KEYS.TODOS]: () => db.todos.getAll(),
   [STORAGE_KEYS.DAILY_ROLLUPS]: () => db.dailyRollups.getAll(),
   [STORAGE_KEYS.STATS_SUMMARY]: () => db.statsSummary.get(),
+  cozify_custom_wallpapers: () => db.customBackgrounds.getAll(),
+  cozify_custom_playlists: () => db.customPlaylists.getAll(),
 };
 
 const DB_SETTERS: Record<string, (val: any) => void> = {
@@ -31,6 +33,10 @@ const DB_SETTERS: Record<string, (val: any) => void> = {
     Array.isArray(value) && db.dailyRollups.saveAll(value),
   [STORAGE_KEYS.STATS_SUMMARY]: (value) =>
     typeof value === "object" && value !== null && db.statsSummary.save(value),
+  cozify_custom_wallpapers: (value) =>
+    Array.isArray(value) && db.customBackgrounds.saveAll(value),
+  cozify_custom_playlists: (value) =>
+    Array.isArray(value) && db.customPlaylists.saveAll(value),
 };
 
 const DB_CLEARERS: Record<string, () => void> = {
@@ -38,6 +44,8 @@ const DB_CLEARERS: Record<string, () => void> = {
   [STORAGE_KEYS.TODOS]: () => db.todos.clear(),
   [STORAGE_KEYS.DAILY_ROLLUPS]: () => db.dailyRollups.clear(),
   [STORAGE_KEYS.STATS_SUMMARY]: () => db.statsSummary.clear(),
+  cozify_custom_wallpapers: () => db.customBackgrounds.clear(),
+  cozify_custom_playlists: () => db.customPlaylists.clear(),
 };
 
 /**

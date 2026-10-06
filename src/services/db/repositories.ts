@@ -77,20 +77,25 @@ function createEntityRepository<K extends SyncableStoreName>(
         id,
       ) as unknown as T | null;
 
-      if (existing) {
-        const tombstone = {
-          ...existing,
-          isDeleted: true,
-          updatedAt: Date.now(),
-        } as T;
+      const now = Date.now();
+      const tombstone = existing
+        ? ({
+            ...existing,
+            isDeleted: true,
+            updatedAt: now,
+          } as T)
+        : ({
+            id,
+            isDeleted: true,
+            updatedAt: now,
+          } as unknown as T);
 
-        cacheManager.setMemoryItem(
-          storeName,
-          id,
-          tombstone,
-          mirrorToLocalStorage,
-        );
-      }
+      cacheManager.setMemoryItem(
+        storeName,
+        id,
+        tombstone,
+        mirrorToLocalStorage,
+      );
 
       if (!id.startsWith("cozify-welcome-task-")) {
         syncEngine.queueChange(storeName, "delete", id);

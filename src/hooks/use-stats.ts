@@ -174,10 +174,10 @@ export function useStats() {
   // CRUD actions for sessions
   const deleteSession = useCallback(
     (id: string) => {
+      db.sessions.delete(id);
       const nextSessions = sessions.filter((session) => session.id !== id);
 
       setSessions(nextSessions);
-      storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, nextSessions);
       StatsRollupEngine.rebuildAll(nextSessions, todos);
       toast("Session deleted");
     },
@@ -186,12 +186,19 @@ export function useStats() {
 
   const updateSession = useCallback(
     (id: string, updates: Partial<SessionRecord>) => {
-      const nextSessions = sessions.map((session) =>
-        session.id === id ? { ...session, ...updates } : session,
-      );
+      let updatedRecord: SessionRecord | null = null;
+      const nextSessions = sessions.map((session) => {
+        if (session.id !== id) return session;
+        updatedRecord = { ...session, ...updates, updatedAt: Date.now() };
+
+        return updatedRecord;
+      });
+
+      if (updatedRecord) {
+        db.sessions.save(updatedRecord);
+      }
 
       setSessions(nextSessions);
-      storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, nextSessions);
       StatsRollupEngine.rebuildAll(nextSessions, todos);
       toast("Session updated");
     },
@@ -199,8 +206,8 @@ export function useStats() {
   );
 
   const clearAllSessions = useCallback(() => {
+    db.sessions.clear();
     setSessions([]);
-    storageAdapter.removeItem(STORAGE_KEYS.SESSIONS_HISTORY);
     StatsRollupEngine.rebuildAll([], todos);
     toast("All session history cleared");
   }, [todos]);

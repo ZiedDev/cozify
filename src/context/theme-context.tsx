@@ -18,6 +18,7 @@ import {
   normalizeImageUrl,
 } from "@/config/themes";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
+import { db } from "@/services/db";
 
 const LOCAL_STORAGE_ACTIVE_BG_KEY = "cozify_active_wallpaper_id";
 const LOCAL_STORAGE_WALLPAPER_TUNINGS_KEY = "cozify_wallpaper_tunings";
@@ -54,9 +55,19 @@ type ThemeContextValue = {
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // 1. Custom Wallpapers list (Persistent in storage)
+  // 1. Custom Wallpapers list (Persistent in storage & DB)
   const [customBackgrounds, setCustomBackgrounds] = useState<ThemeBackground[]>(
     () => {
+      const fromDb = db.customBackgrounds.getAll();
+
+      if (fromDb && Array.isArray(fromDb) && fromDb.length > 0) {
+        return fromDb.map((bg) => ({
+          ...bg,
+          url: normalizeImageUrl(bg.url),
+          isCustom: true,
+        }));
+      }
+
       const direct = storageAdapter.getItem<ThemeBackground[] | null>(
         "cozify_custom_wallpapers",
         null,
@@ -85,6 +96,29 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       return [];
     },
   );
+
+  // Listen for remote sync and data reset events to refresh custom wallpapers
+  useEffect(() => {
+    const refreshWallpapers = () => {
+      const bgs = db.customBackgrounds.getAll();
+
+      setCustomBackgrounds(
+        bgs.map((bg) => ({
+          ...bg,
+          url: normalizeImageUrl(bg.url),
+          isCustom: true,
+        })),
+      );
+    };
+
+    window.addEventListener("cozify_remote_synced", refreshWallpapers);
+    window.addEventListener("cozify_data_reset", refreshWallpapers);
+
+    return () => {
+      window.removeEventListener("cozify_remote_synced", refreshWallpapers);
+      window.removeEventListener("cozify_data_reset", refreshWallpapers);
+    };
+  }, []);
 
   // 2. Active Background ID
   const [activeBackgroundId, setActiveBackgroundId] = useState<string | null>(
@@ -229,6 +263,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         isCustom: true,
       };
 
+      db.customBackgrounds.save(newBg);
       setCustomBackgrounds((prev) => [newBg, ...prev]);
       setActiveBackgroundId(newBg.id);
 
@@ -249,7 +284,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     if (!trimmed) return;
 
     setCustomBackgrounds((prev) =>
-      prev.map((bg) => (bg.id === id ? { ...bg, name: trimmed } : bg)),
+      prev.map((bg) => {
+        if (bg.id === id) {
+          const updated = { ...bg, name: trimmed };
+
+          db.customBackgrounds.save(updated);
+
+          return updated;
+        }
+
+        return bg;
+      }),
     );
 
     toast("Wallpaper Renamed", {
@@ -288,7 +333,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         prev.map((bg) => {
           if (bg.id !== id) return bg;
 
-          return {
+          const updated = {
             ...bg,
             name:
               trimmedName !== undefined && trimmedName !== ""
@@ -299,6 +344,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
                 ? normalizedUrl
                 : bg.url,
           };
+
+          db.customBackgrounds.save(updated);
+
+          return updated;
         }),
       );
 
@@ -312,6 +361,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 
   const removeCustomBackground = useCallback((id: string) => {
+    db.customBackgrounds.delete(id);
     setCustomBackgrounds((prev) => prev.filter((bg) => bg.id !== id));
     setActiveBackgroundId((prev) => (prev === id ? null : prev));
 

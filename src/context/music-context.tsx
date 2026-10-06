@@ -20,6 +20,7 @@ import {
   fetchMediaDetails,
 } from "@/config/playlists";
 import { storageAdapter } from "@/services/storage";
+import { db } from "@/services/db";
 
 const MUSIC_STORAGE_KEY = "cozify_music_state";
 const CUSTOM_PLAYLISTS_STORAGE_KEY = "cozify_custom_playlists";
@@ -196,6 +197,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   isOnlineRef.current = isOnline;
 
   const [playlists, setPlaylists] = useState<Playlist[]>(() => {
+    const customFromDb = db.customPlaylists.getAll();
     const saved = storageAdapter.getItem<Playlist[] | null>(
       PLAYLISTS_STORAGE_KEY,
       null,
@@ -206,8 +208,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       const missingPresets = PRESET_PLAYLISTS.filter(
         (p) => !savedIds.has(p.id),
       );
+      const mergedCustom = customFromDb.filter((p) => !savedIds.has(p.id));
 
-      return [...saved, ...missingPresets];
+      return [...saved, ...mergedCustom, ...missingPresets];
+    }
+
+    if (customFromDb.length > 0) {
+      return [...customFromDb, ...PRESET_PLAYLISTS];
     }
 
     const legacyCustom = storageAdapter.getItem<Playlist[]>(
@@ -221,6 +228,34 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     return PRESET_PLAYLISTS;
   });
+
+  // Listen for remote sync and data reset events to refresh custom playlists
+  useEffect(() => {
+    const refreshCustomPlaylists = () => {
+      const dbCustom = db.customPlaylists.getAll();
+
+      setPlaylists((prev) => {
+        const nonCustom = prev.filter((p) => !p.isCustom);
+        const existingCustomIds = new Set(dbCustom.map((c) => c.id));
+        const activeNonPresetCustom = prev.filter(
+          (p) => p.isCustom && !existingCustomIds.has(p.id),
+        );
+
+        return [...dbCustom, ...activeNonPresetCustom, ...nonCustom];
+      });
+    };
+
+    window.addEventListener("cozify_remote_synced", refreshCustomPlaylists);
+    window.addEventListener("cozify_data_reset", refreshCustomPlaylists);
+
+    return () => {
+      window.removeEventListener(
+        "cozify_remote_synced",
+        refreshCustomPlaylists,
+      );
+      window.removeEventListener("cozify_data_reset", refreshCustomPlaylists);
+    };
+  }, []);
 
   const customPlaylists = useMemo(
     () => playlists.filter((p) => p.isCustom),
@@ -1697,6 +1732,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         coverUrl: details?.coverUrl,
       };
 
+      db.customPlaylists.save(newPlaylist);
       setPlaylists((prev) => [newPlaylist, ...prev]);
 
       toast("Added to Collection ✨", {
@@ -1711,6 +1747,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   );
 
   const removeCustomPlaylist = useCallback((id: string) => {
+    db.customPlaylists.delete(id);
     setPlaylists((prev) => prev.filter((playlist) => playlist.id !== id));
     toast("Playlist Removed", {
       variant: "default",
@@ -1723,9 +1760,19 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     if (!trimmed) return;
     setPlaylists((prev) =>
-      prev.map((playlist) =>
-        playlist.id === id ? { ...playlist, title: trimmed } : playlist,
-      ),
+      prev.map((playlist) => {
+        if (playlist.id === id) {
+          const updated = { ...playlist, title: trimmed };
+
+          if (playlist.isCustom) {
+            db.customPlaylists.save(updated);
+          }
+
+          return updated;
+        }
+
+        return playlist;
+      }),
     );
     toast("Playlist Renamed", {
       variant: "default",

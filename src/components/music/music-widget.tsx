@@ -305,6 +305,7 @@ export function MusicWidget({ activeMode }: { activeMode?: AppMode }) {
                 }
                 onError={(e) => {
                   const target = e.currentTarget;
+
                   if (target.src.includes("maxresdefault.jpg")) {
                     target.src = target.src.replace(
                       "maxresdefault.jpg",

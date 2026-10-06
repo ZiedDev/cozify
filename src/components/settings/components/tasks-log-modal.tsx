@@ -33,6 +33,7 @@ import {
   getTagIcon,
 } from "@/menus/todo/types";
 import { storageAdapter, STORAGE_KEYS } from "@/services/storage";
+import { db } from "@/services/db";
 
 const PAGE_SIZE = 20;
 
@@ -75,10 +76,10 @@ export function TasksLogModal({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handlePermanentDelete = (id: string) => {
+    db.todos.delete(id);
     const next = todos.filter((todo) => todo.id !== id);
 
     setTodos(next);
-    storageAdapter.setItem(STORAGE_KEYS.TODOS, next);
     setConfirmDeleteId(null);
     if (editingTodoId === id) setEditingTodoId(null);
     window.dispatchEvent(new Event("storage"));
@@ -95,14 +96,24 @@ export function TasksLogModal({
   };
 
   const handleRestoreTodo = (id: string) => {
-    const next = todos.map((todo) =>
-      todo.id === id
-        ? { ...todo, archived: false, archivedAt: undefined }
-        : todo,
-    );
+    let restoredTodo: TodoItem | null = null;
+    const next = todos.map((todo) => {
+      if (todo.id !== id) return todo;
+      restoredTodo = {
+        ...todo,
+        archived: false,
+        archivedAt: undefined,
+        updatedAt: Date.now(),
+      };
+
+      return restoredTodo;
+    });
+
+    if (restoredTodo) {
+      db.todos.save(restoredTodo);
+    }
 
     setTodos(next);
-    storageAdapter.setItem(STORAGE_KEYS.TODOS, next);
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
   };
@@ -118,21 +129,28 @@ export function TasksLogModal({
   };
 
   const handleSaveEdit = (id: string) => {
+    let updatedTodo: TodoItem | null = null;
     const next = todos.map((todo) => {
       if (todo.id !== id) return todo;
 
-      return {
+      updatedTodo = {
         ...todo,
         title: editTitle.trim() || "Untitled Task",
         notes: editNotes.trim() || undefined,
         priority: editPriority,
         tag: editTag || undefined,
         dueDate: editDueDate || undefined,
+        updatedAt: Date.now(),
       };
+
+      return updatedTodo;
     });
 
+    if (updatedTodo) {
+      db.todos.save(updatedTodo);
+    }
+
     setTodos(next);
-    storageAdapter.setItem(STORAGE_KEYS.TODOS, next);
     setEditingTodoId(null);
     window.dispatchEvent(new Event("storage"));
     window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));

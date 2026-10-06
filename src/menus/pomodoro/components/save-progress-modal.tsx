@@ -38,6 +38,7 @@ import {
   STORAGE_KEYS,
   SessionRecord,
 } from "@/services/storage";
+import { db } from "@/services/db";
 import { StatsRollupEngine } from "@/services/stats-rollup-engine";
 
 export function SaveProgressModal({
@@ -192,9 +193,11 @@ export function SaveProgressModal({
     const focusMinutes = Math.max(1, Math.round(totalSecs / 60));
     const overtimeMinutes = Math.round(overtimeSecs / 60);
 
+    const now = Date.now();
     const record: SessionRecord = {
       id: crypto.randomUUID(),
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
       title: title.trim() || "Focus Session",
       tag,
       cyclesCompleted: cyclesDone,
@@ -205,16 +208,7 @@ export function SaveProgressModal({
       notes: notes.trim() || undefined,
     };
 
-    const existingHistory = await storageAdapter.getItem<SessionRecord[]>(
-      STORAGE_KEYS.SESSIONS_HISTORY,
-      [],
-    );
-
-    await storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, [
-      record,
-      ...existingHistory,
-    ]);
-
+    db.sessions.save(record);
     StatsRollupEngine.recordSession(record);
 
     window.dispatchEvent(new Event("storage"));

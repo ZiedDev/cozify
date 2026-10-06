@@ -102,45 +102,51 @@ class DatabaseCacheManager {
   public migrateFromLocalStorage<K extends StoreName>(storeName: K) {
     if (typeof localStorage === "undefined") return;
 
-    const legacyKeyMap: Partial<Record<StoreName, string>> = {
-      sessions: "history",
-      todos: "todos",
-      customBackgrounds: "cozify_custom_backgrounds",
-      customPlaylists: "cozify_custom_playlists",
-      dailyRollups: "cozify_daily_rollups",
-      statsSummary: "cozify_stats_summary",
-      syncQueue: "cozify_sync_queue",
+    const legacyKeyMap: Record<StoreName, string[]> = {
+      sessions: ["history"],
+      todos: ["todos"],
+      customBackgrounds: [
+        "cozify_custom_wallpapers",
+        "cozify_custom_backgrounds",
+      ],
+      customPlaylists: ["cozify_custom_playlists"],
+      dailyRollups: ["cozify_daily_rollups"],
+      statsSummary: ["cozify_stats_summary"],
+      syncQueue: ["cozify_sync_queue"],
     };
 
-    const localKey = legacyKeyMap[storeName];
+    const localKeys = legacyKeyMap[storeName] || [];
 
-    if (!localKey) return;
+    for (const localKey of localKeys) {
+      try {
+        const raw = localStorage.getItem(localKey);
 
-    try {
-      const raw = localStorage.getItem(localKey);
+        if (!raw) continue;
 
-      if (!raw) return;
+        const parsed = JSON.parse(raw);
+        const storeMap = this.getStoreMap(storeName);
 
-      const parsed = JSON.parse(raw);
-      const storeMap = this.getStoreMap(storeName);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          for (const item of parsed) {
+            const key = getItemKey(storeName, item);
 
-      if (Array.isArray(parsed)) {
-        storeMap.clear();
-        for (const item of parsed) {
-          const key = getItemKey(storeName, item);
+            if (!storeMap.has(key)) {
+              storeMap.set(key, item);
+            }
+          }
+          idb.putBatch(storeName, parsed);
+        } else if (parsed && typeof parsed === "object") {
+          const key = getItemKey(storeName, parsed);
+          const itemWithKey = { ...parsed, key };
 
-          storeMap.set(key, item);
+          if (!storeMap.has(key)) {
+            storeMap.set(key, itemWithKey as DBStoreMap[K]);
+          }
+          idb.put(storeName, itemWithKey as DBStoreMap[K]);
         }
-        idb.putBatch(storeName, parsed);
-      } else if (parsed && typeof parsed === "object") {
-        const key = getItemKey(storeName, parsed);
-        const itemWithKey = { ...parsed, key };
-
-        storeMap.set(key, itemWithKey as DBStoreMap[K]);
-        idb.put(storeName, itemWithKey as DBStoreMap[K]);
+      } catch {
+        // Ignore parse failure
       }
-    } catch {
-      // Ignore parse failure
     }
   }
 
@@ -344,7 +350,7 @@ class DatabaseCacheManager {
     const legacyKeyMap: Record<StoreName, string> = {
       sessions: "history",
       todos: "todos",
-      customBackgrounds: "cozify_custom_backgrounds",
+      customBackgrounds: "cozify_custom_wallpapers",
       customPlaylists: "cozify_custom_playlists",
       dailyRollups: "cozify_daily_rollups",
       statsSummary: "cozify_stats_summary",
@@ -404,10 +410,19 @@ class DatabaseCacheManager {
         "history",
         "todos",
         "cozify_custom_backgrounds",
+        "cozify_custom_wallpapers",
+        "cozify_wallpaper_tunings",
+        "cozify_active_wallpaper_id",
         "cozify_custom_playlists",
+        "cozify_ordered_playlists",
+        "cozify_music_state",
         "cozify_daily_rollups",
         "cozify_stats_summary",
         "cozify_sync_queue",
+        "cozify_todo_order_ids",
+        "cozify_todo_filter",
+        "cozify_stats_range",
+        "cozify_has_initialized_todos",
       ];
 
       for (const key of legacyKeys) {

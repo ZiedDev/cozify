@@ -30,6 +30,7 @@ import {
   STORAGE_KEYS,
   SessionRecord,
 } from "@/services/storage";
+import { db } from "@/services/db";
 import { StatsRollupEngine } from "@/services/stats-rollup-engine";
 import { PRESET_TAGS, TodoItem } from "@/menus/todo/types";
 import { getTagIcon } from "@/config/tags";
@@ -81,11 +82,11 @@ export function SessionsLogModal({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleDeleteSession = (sessionId: string) => {
+    db.sessions.delete(sessionId);
     const next = sessions.filter((session) => session.id !== sessionId);
     const todos = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
 
     setSessions(next);
-    storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
     StatsRollupEngine.rebuildAll(next, todos);
     setConfirmDeleteId(null);
     if (editingSessionId === sessionId) setEditingSessionId(null);
@@ -113,23 +114,30 @@ export function SessionsLogModal({
   };
 
   const handleSaveEdit = (sessionId: string) => {
+    let updatedRecord: SessionRecord | null = null;
     const next = sessions.map((session) => {
       if (session.id !== sessionId) return session;
 
-      return {
+      updatedRecord = {
         ...session,
         title: editTitle.trim() || "Focus Session",
         focusMinutes: Math.max(1, editFocusMinutes),
         overtimeMinutes: Math.max(0, editOvertimeMinutes),
         tag: editTag || undefined,
         notes: editNotes.trim() || undefined,
+        updatedAt: Date.now(),
       };
+
+      return updatedRecord;
     });
+
+    if (updatedRecord) {
+      db.sessions.save(updatedRecord);
+    }
 
     const todos = storageAdapter.getItem<TodoItem[]>(STORAGE_KEYS.TODOS, []);
 
     setSessions(next);
-    storageAdapter.setItem(STORAGE_KEYS.SESSIONS_HISTORY, next);
     StatsRollupEngine.rebuildAll(next, todos);
     setEditingSessionId(null);
     window.dispatchEvent(new Event("storage"));

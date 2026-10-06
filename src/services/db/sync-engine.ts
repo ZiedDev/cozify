@@ -1,10 +1,15 @@
+import { StatsRollupEngine } from "../stats-rollup-engine";
+
 import {
   RemoteDatabaseProvider,
   SyncQueueItem,
   SyncStats,
   StoreName,
+  SessionRecord,
 } from "./types";
 import { cacheManager } from "./cache-layer";
+
+import { TodoItem } from "@/menus/todo/types";
 
 /**
  * Reconciles incoming remote deltas with local records using Last-Write-Wins (LWW) & Tombstone preservation
@@ -40,8 +45,10 @@ function reconcileEntityList<
         map.set(remoteItem.id, remoteItem);
       }
     } else {
-      const remoteTime = remoteItem.updatedAt || remoteItem.createdAt || 0;
-      const localTime = localItem.updatedAt || localItem.createdAt || 0;
+      const remoteTime = Number(
+        remoteItem.updatedAt || remoteItem.createdAt || 0,
+      );
+      const localTime = Number(localItem.updatedAt || localItem.createdAt || 0);
 
       // Remote wins if newer or if deleted remotely
       if (remoteItem.isDeleted) {
@@ -128,12 +135,23 @@ class RemoteSyncEngine {
     entityId: string,
     payload?: T,
   ) {
+    const existingQueue = cacheManager.getMemoryStore("syncQueue");
+
     // If deleting, purge earlier pending creations/updates for the same entity
     if (action === "delete") {
-      const existingQueue = cacheManager.getMemoryStore("syncQueue");
-
       for (const qItem of existingQueue) {
         if (qItem.store === store && qItem.entityId === entityId) {
+          cacheManager.deleteMemoryItem("syncQueue", qItem.id, false);
+        }
+      }
+    } else if (action === "update") {
+      // If updating, replace earlier pending updates for the same entity
+      for (const qItem of existingQueue) {
+        if (
+          qItem.store === store &&
+          qItem.entityId === entityId &&
+          qItem.action === "update"
+        ) {
           cacheManager.deleteMemoryItem("syncQueue", qItem.id, false);
         }
       }
@@ -216,19 +234,28 @@ class RemoteSyncEngine {
     }
 
     try {
-      // 1. PHASE 1 & 2: INBOUND DELTA PULL & RECONCILIATION
+      // 1. Promote any unqueued local offline items to outbox FIRST & flush to IDB
+      this.promoteLocalDataToSyncQueue();
+      await cacheManager.flushPending();
+
+      // 2. PHASE 1 & 2: INBOUND DELTA PULL & RECONCILIATION
       const pullTimestamp = this.lastSyncedAt || 0;
       const remoteData = await this.provider.pullChanges(pullTimestamp);
+      let hasNewDeltas = false;
 
       if (remoteData) {
-        if (remoteData.sessions !== undefined) {
+        if (
+          remoteData.sessions !== undefined &&
+          remoteData.sessions.length > 0
+        ) {
           const local = cacheManager.getMemoryStore("sessions");
           const reconciled = reconcileEntityList(local, remoteData.sessions);
 
           cacheManager.setMemoryStore("sessions", reconciled, true);
+          hasNewDeltas = true;
         }
 
-        if (remoteData.todos !== undefined) {
+        if (remoteData.todos !== undefined && remoteData.todos.length > 0) {
           const local = cacheManager.getMemoryStore("todos");
           const reconciled = reconcileEntityList(
             local,
@@ -237,9 +264,13 @@ class RemoteSyncEngine {
           );
 
           cacheManager.setMemoryStore("todos", reconciled, true);
+          hasNewDeltas = true;
         }
 
-        if (remoteData.customBackgrounds !== undefined) {
+        if (
+          remoteData.customBackgrounds !== undefined &&
+          remoteData.customBackgrounds.length > 0
+        ) {
           const local = cacheManager.getMemoryStore("customBackgrounds");
           const reconciled = reconcileEntityList(
             local,
@@ -249,7 +280,10 @@ class RemoteSyncEngine {
           cacheManager.setMemoryStore("customBackgrounds", reconciled, true);
         }
 
-        if (remoteData.customPlaylists !== undefined) {
+        if (
+          remoteData.customPlaylists !== undefined &&
+          remoteData.customPlaylists.length > 0
+        ) {
           const local = cacheManager.getMemoryStore("customPlaylists");
           const reconciled = reconcileEntityList(
             local,
@@ -260,11 +294,19 @@ class RemoteSyncEngine {
         }
 
         this.lastSyncedAt = remoteData.timestamp || Date.now();
-      }
 
-      // 2. Promote any remaining local offline items to outbox & flush to IDB
-      this.promoteLocalDataToSyncQueue();
-      await cacheManager.flushPending();
+        // If sessions or tasks were updated from remote, rebuild stats rollups immediately
+        if (hasNewDeltas) {
+          const allSessions = cacheManager
+            .getMemoryStore("sessions")
+            .filter((s: SessionRecord) => !s.isDeleted);
+          const allTodos = cacheManager
+            .getMemoryStore("todos")
+            .filter((t: TodoItem) => !t.isDeleted);
+
+          StatsRollupEngine.rebuildAll(allSessions, allTodos);
+        }
+      }
 
       // 3. PHASE 3 & 4: OUTBOUND MUTATION PUSH & EVICTION
       let queue = cacheManager.getMemoryStore("syncQueue");
@@ -274,20 +316,23 @@ class RemoteSyncEngine {
         const batch = queue.slice(0, 50);
         const result = await this.provider.pushBatch(batch);
 
-        if (result.success && result.syncedIds.length > 0) {
+        if (result.syncedIds.length > 0) {
           for (const syncedId of result.syncedIds) {
             cacheManager.deleteMemoryItem("syncQueue", syncedId, true);
           }
           queue = cacheManager.getMemoryStore("syncQueue");
-        } else {
+        }
+
+        if (!result.success) {
           pushSuccess = false;
           break;
         }
       }
 
-      // 4. Notify UI components
+      // 4. Notify all UI stores and components
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("cozify_remote_synced"));
+        window.dispatchEvent(new CustomEvent("cozify_stats_updated"));
         window.dispatchEvent(new Event("storage"));
       }
 
