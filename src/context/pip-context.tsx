@@ -14,6 +14,7 @@ import {
   mobilePipManager,
   isVideoPipSupported,
   isMobileDevice,
+  isIOSStandalone,
 } from "./mobile-pip-manager";
 
 import { PipTimerCard } from "@/components/pomodoro";
@@ -340,6 +341,18 @@ export function PipProvider({ children }: { children: ReactNode }) {
     }
 
     // 3. Mobile only: Video Picture-in-Picture fallback (iOS Safari, Android Chrome, etc.)
+    if (isIOSStandalone()) {
+      toast(
+        "Picture-in-Picture on iOS is restricted by Apple in Home Screen (PWA) mode. Open Cozify in Safari to use floating PiP.",
+        {
+          variant: "warning",
+          timeout: 6000,
+        },
+      );
+
+      return;
+    }
+
     if (isVideoPipSupported()) {
       try {
         await mobilePipManager.openPip({
@@ -431,15 +444,15 @@ export function PipProvider({ children }: { children: ReactNode }) {
     >
       {children}
 
-      {/* Mobile Video PiP Bridge (centered in screen behind background so iOS PiP pops up smoothly from center, completely disabled on desktop) */}
+      {/* Mobile Video PiP Bridge */}
       {isMobile && (
         <div
           aria-hidden="true"
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none -z-50 w-[480px] h-[270px] max-w-[85vw] max-h-[85vh] aspect-video overflow-hidden"
+          className="fixed left-0 top-0 pointer-events-none opacity-[0.001] w-2 h-2 overflow-hidden z-0"
         >
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 block w-full h-full"
+            className="block w-[480px] h-[270px]"
             height={270}
             width={480}
           />
@@ -448,7 +461,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
             autoPlay
             muted
             playsInline
-            className="absolute inset-0 block w-full h-full aspect-video object-cover"
+            className="block w-[480px] h-[270px]"
             height={270}
             width={480}
           />

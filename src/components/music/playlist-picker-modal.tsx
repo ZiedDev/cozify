@@ -488,16 +488,16 @@ export function PlaylistPickerModal() {
 
   const playlistGrid = (
     <ScrollShadow
-      className="flex-1 min-h-0 h-full overflow-y-auto no-scrollbar"
+      className="flex-1 min-h-0 h-full overflow-y-auto overflow-x-hidden max-w-full no-scrollbar"
       orientation="vertical"
-      size={20}
+      size={14}
     >
       <SortableList
         items={playlists}
         strategy={rectSortingStrategy}
         onReorder={handleReorder}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1 max-w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-1 max-w-full overflow-x-hidden">
           {playlists.map((item, index) => {
             const isActive = activePlaylistId === item.id;
 

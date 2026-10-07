@@ -87,3 +87,25 @@ textarea,
   padding-right: max(1rem, env(safe-area-inset-right, 0px)) !important;
   box-sizing: border-box !important;
 }
+
+/* ==========================================================================
+   Toast Overlay Stacking
+   Ensure notifications always sit above drawers, modals, and popovers
+   ========================================================================== */
+.toast-region {
+  z-index: 999999 !important;
+}
+
+.toast-region--top {
+  top: max(1rem, calc(env(safe-area-inset-top, 0px) + 0.5rem)) !important;
+}
+
+/* ==========================================================================
+   ScrollShadow Tuning
+   Tone down heavy gradient masking to a subtle 14px edge hint
+   ========================================================================== */
+.scroll-shadow {
+  --scroll-shadow-size: 14px !important;
+}
+
+

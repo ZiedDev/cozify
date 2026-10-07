@@ -179,13 +179,13 @@ export function TodoList() {
       ) : (
         <ScrollShadow
           ref={listRef}
-          className="w-full h-full pr-1.5 scroll-smooth py-2 px-4 overflow-x-hidden"
+          className="w-full h-full pr-1.5 scroll-smooth py-2 px-4 overflow-x-hidden max-w-full"
           orientation="vertical"
-          size={32}
+          size={14}
         >
           <SortableList items={visibleTodos} onReorder={reorderTodos}>
             <div
-              className={`flex flex-col w-full ${
+              className={`flex flex-col w-full max-w-full overflow-x-hidden ${
                 viewMode === "minimal" ? "gap-1.5" : "gap-2.5"
               }`}
             >

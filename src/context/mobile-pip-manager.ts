@@ -17,6 +17,23 @@ export function isMobileDevice(): boolean {
   return isMobileUa || isIPad;
 }
 
+export function isIOSStandalone(): boolean {
+  if (typeof window === "undefined" || typeof navigator === "undefined")
+    return false;
+
+  const ua = navigator.userAgent || "";
+  const isIOS =
+    /iPhone|iPad|iPod/i.test(ua) ||
+    (/Macintosh/i.test(ua) && (navigator.maxTouchPoints ?? 0) > 1);
+
+  const isStandalone =
+    Boolean((navigator as any).standalone) ||
+    (typeof window.matchMedia === "function" &&
+      window.matchMedia("(display-mode: standalone)").matches);
+
+  return isIOS && isStandalone;
+}
+
 export function isVideoPipSupported(): boolean {
   if (typeof window === "undefined" || typeof document === "undefined")
     return false;
@@ -39,6 +56,7 @@ export class MobilePipManager {
   private canvasEl: HTMLCanvasElement | null = null;
   private stream: MediaStream | null = null;
   private isPipActive = false;
+  private isEnteringPip = false;
   private currentState: CanvasTimerState | null = null;
   private animFrameId: number | null = null;
   private timerIntervalId: ReturnType<typeof setInterval> | null = null;
@@ -94,14 +112,14 @@ export class MobilePipManager {
 
     // Hook native video events triggered by floating PiP window Play / Pause buttons
     video.addEventListener("pause", () => {
-      if (this.isSyncingPlayback) return;
+      if (this.isSyncingPlayback || this.isEnteringPip) return;
       if (this.isPipActive && this.onPauseCallback) {
         this.onPauseCallback();
       }
     });
 
     video.addEventListener("play", () => {
-      if (this.isSyncingPlayback) return;
+      if (this.isSyncingPlayback || this.isEnteringPip) return;
       if (this.isPipActive && this.onPlayCallback) {
         this.onPlayCallback();
       }
@@ -312,6 +330,7 @@ export class MobilePipManager {
     this.onPauseCallback = options.onPause;
     this.onCloseCallback = options.onClose;
     this.currentState = options.state;
+    this.isEnteringPip = true;
 
     // 1. Initial draw on canvas with solid background before stream capture
     drawTimerToCanvas(this.canvasEl, options.state);
@@ -421,6 +440,17 @@ export class MobilePipManager {
     this.isPipActive = true;
     this.startRenderLoop();
     this.updateState(options.state);
+
+    setTimeout(() => {
+      this.isEnteringPip = false;
+      if (!options.state.isRunning && this.videoEl && !this.videoEl.paused) {
+        this.isSyncingPlayback = true;
+        this.videoEl.pause();
+        queueMicrotask(() => {
+          this.isSyncingPlayback = false;
+        });
+      }
+    }, 600);
 
     return true;
   }

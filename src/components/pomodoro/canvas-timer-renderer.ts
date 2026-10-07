@@ -90,103 +90,107 @@ function fastBoxBlur(
   canvasHeight: number,
   radius: number,
 ) {
-  const blurRadius = Math.min(25, Math.max(1, Math.round(radius)));
-  const imgData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
-  const pixels = imgData.data;
-  const temp = new Uint8ClampedArray(pixels.length);
-  const windowSize = 2 * blurRadius + 1;
+  try {
+    const blurRadius = Math.min(25, Math.max(1, Math.round(radius)));
+    const imgData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+    const pixels = imgData.data;
+    const temp = new Uint8ClampedArray(pixels.length);
+    const windowSize = 2 * blurRadius + 1;
 
-  // 2 passes of box blur = smooth Gaussian approximation
-  for (let pass = 0; pass < 2; pass++) {
-    // Horizontal pass: pixels -> temp
-    for (let pixelY = 0; pixelY < canvasHeight; pixelY++) {
-      let redSum = 0;
-      let greenSum = 0;
-      let blueSum = 0;
-      let alphaSum = 0;
-      const rowOffset = pixelY * canvasWidth * 4;
-
-      for (let offsetX = -blurRadius; offsetX < blurRadius; offsetX++) {
-        const clampedX = Math.min(canvasWidth - 1, Math.max(0, offsetX));
-        const pixelIndex = rowOffset + clampedX * 4;
-
-        redSum += pixels[pixelIndex];
-        greenSum += pixels[pixelIndex + 1];
-        blueSum += pixels[pixelIndex + 2];
-        alphaSum += pixels[pixelIndex + 3];
-      }
-
-      for (let pixelX = 0; pixelX < canvasWidth; pixelX++) {
-        const inX = Math.min(canvasWidth - 1, pixelX + blurRadius);
-        const inIndex = rowOffset + inX * 4;
-
-        redSum += pixels[inIndex];
-        greenSum += pixels[inIndex + 1];
-        blueSum += pixels[inIndex + 2];
-        alphaSum += pixels[inIndex + 3];
-
-        const targetIndex = rowOffset + pixelX * 4;
-
-        temp[targetIndex] = (redSum / windowSize) | 0;
-        temp[targetIndex + 1] = (greenSum / windowSize) | 0;
-        temp[targetIndex + 2] = (blueSum / windowSize) | 0;
-        temp[targetIndex + 3] = (alphaSum / windowSize) | 0;
-
-        const outX = Math.max(0, pixelX - blurRadius);
-        const outIndex = rowOffset + outX * 4;
-
-        redSum -= pixels[outIndex];
-        greenSum -= pixels[outIndex + 1];
-        blueSum -= pixels[outIndex + 2];
-        alphaSum -= pixels[outIndex + 3];
-      }
-    }
-
-    // Vertical pass: temp -> pixels
-    for (let pixelX = 0; pixelX < canvasWidth; pixelX++) {
-      let redSum = 0;
-      let greenSum = 0;
-      let blueSum = 0;
-      let alphaSum = 0;
-
-      for (let offsetY = -blurRadius; offsetY < blurRadius; offsetY++) {
-        const clampedY = Math.min(canvasHeight - 1, Math.max(0, offsetY));
-        const pixelIndex = (clampedY * canvasWidth + pixelX) * 4;
-
-        redSum += temp[pixelIndex];
-        greenSum += temp[pixelIndex + 1];
-        blueSum += temp[pixelIndex + 2];
-        alphaSum += temp[pixelIndex + 3];
-      }
-
+    // 2 passes of box blur = smooth Gaussian approximation
+    for (let pass = 0; pass < 2; pass++) {
+      // Horizontal pass: pixels -> temp
       for (let pixelY = 0; pixelY < canvasHeight; pixelY++) {
-        const inY = Math.min(canvasHeight - 1, pixelY + blurRadius);
-        const inIndex = (inY * canvasWidth + pixelX) * 4;
+        let redSum = 0;
+        let greenSum = 0;
+        let blueSum = 0;
+        let alphaSum = 0;
+        const rowOffset = pixelY * canvasWidth * 4;
 
-        redSum += temp[inIndex];
-        greenSum += temp[inIndex + 1];
-        blueSum += temp[inIndex + 2];
-        alphaSum += temp[inIndex + 3];
+        for (let offsetX = -blurRadius; offsetX < blurRadius; offsetX++) {
+          const clampedX = Math.min(canvasWidth - 1, Math.max(0, offsetX));
+          const pixelIndex = rowOffset + clampedX * 4;
 
-        const targetIndex = (pixelY * canvasWidth + pixelX) * 4;
+          redSum += pixels[pixelIndex];
+          greenSum += pixels[pixelIndex + 1];
+          blueSum += pixels[pixelIndex + 2];
+          alphaSum += pixels[pixelIndex + 3];
+        }
 
-        pixels[targetIndex] = (redSum / windowSize) | 0;
-        pixels[targetIndex + 1] = (greenSum / windowSize) | 0;
-        pixels[targetIndex + 2] = (blueSum / windowSize) | 0;
-        pixels[targetIndex + 3] = (alphaSum / windowSize) | 0;
+        for (let pixelX = 0; pixelX < canvasWidth; pixelX++) {
+          const inX = Math.min(canvasWidth - 1, pixelX + blurRadius);
+          const inIndex = rowOffset + inX * 4;
 
-        const outY = Math.max(0, pixelY - blurRadius);
-        const outIndex = (outY * canvasWidth + pixelX) * 4;
+          redSum += pixels[inIndex];
+          greenSum += pixels[inIndex + 1];
+          blueSum += pixels[inIndex + 2];
+          alphaSum += pixels[inIndex + 3];
 
-        redSum -= temp[outIndex];
-        greenSum -= temp[outIndex + 1];
-        blueSum -= temp[outIndex + 2];
-        alphaSum -= temp[outIndex + 3];
+          const targetIndex = rowOffset + pixelX * 4;
+
+          temp[targetIndex] = (redSum / windowSize) | 0;
+          temp[targetIndex + 1] = (greenSum / windowSize) | 0;
+          temp[targetIndex + 2] = (blueSum / windowSize) | 0;
+          temp[targetIndex + 3] = (alphaSum / windowSize) | 0;
+
+          const outX = Math.max(0, pixelX - blurRadius);
+          const outIndex = rowOffset + outX * 4;
+
+          redSum -= pixels[outIndex];
+          greenSum -= pixels[outIndex + 1];
+          blueSum -= pixels[outIndex + 2];
+          alphaSum -= pixels[outIndex + 3];
+        }
+      }
+
+      // Vertical pass: temp -> pixels
+      for (let pixelX = 0; pixelX < canvasWidth; pixelX++) {
+        let redSum = 0;
+        let greenSum = 0;
+        let blueSum = 0;
+        let alphaSum = 0;
+
+        for (let offsetY = -blurRadius; offsetY < blurRadius; offsetY++) {
+          const clampedY = Math.min(canvasHeight - 1, Math.max(0, offsetY));
+          const pixelIndex = (clampedY * canvasWidth + pixelX) * 4;
+
+          redSum += temp[pixelIndex];
+          greenSum += temp[pixelIndex + 1];
+          blueSum += temp[pixelIndex + 2];
+          alphaSum += temp[pixelIndex + 3];
+        }
+
+        for (let pixelY = 0; pixelY < canvasHeight; pixelY++) {
+          const inY = Math.min(canvasHeight - 1, pixelY + blurRadius);
+          const inIndex = (inY * canvasWidth + pixelX) * 4;
+
+          redSum += temp[inIndex];
+          greenSum += temp[inIndex + 1];
+          blueSum += temp[inIndex + 2];
+          alphaSum += temp[inIndex + 3];
+
+          const targetIndex = (pixelY * canvasWidth + pixelX) * 4;
+
+          pixels[targetIndex] = (redSum / windowSize) | 0;
+          pixels[targetIndex + 1] = (greenSum / windowSize) | 0;
+          pixels[targetIndex + 2] = (blueSum / windowSize) | 0;
+          pixels[targetIndex + 3] = (alphaSum / windowSize) | 0;
+
+          const outY = Math.max(0, pixelY - blurRadius);
+          const outIndex = (outY * canvasWidth + pixelX) * 4;
+
+          redSum -= temp[outIndex];
+          greenSum -= temp[outIndex + 1];
+          blueSum -= temp[outIndex + 2];
+          alphaSum -= temp[outIndex + 3];
+        }
       }
     }
-  }
 
-  ctx.putImageData(imgData, 0, 0);
+    ctx.putImageData(imgData, 0, 0);
+  } catch {
+    // If canvas is tainted or getImageData fails, silently abort blur
+  }
 }
 
 function getBlurredBg(
@@ -318,10 +322,14 @@ export function drawTimerToCanvas(
     });
 
     if (bgImg && bgImg.complete && bgImg.naturalWidth > 0) {
-      const blurPx = Math.max(0, Math.min(25, theme?.blur ?? 0));
-      const sourceToDraw = getBlurredBg(bgImg, blurPx, width, height);
+      try {
+        const blurPx = Math.max(0, Math.min(25, theme?.blur ?? 0));
+        const sourceToDraw = getBlurredBg(bgImg, blurPx, width, height);
 
-      ctx.drawImage(sourceToDraw, 0, 0, width, height);
+        ctx.drawImage(sourceToDraw, 0, 0, width, height);
+      } catch {
+        // Fallback to clean solid background if image fails CORS or is tainted
+      }
 
       // Contrast Dimming Overlay matching user's overlayOpacity and theme background
       const overlayAlpha =
