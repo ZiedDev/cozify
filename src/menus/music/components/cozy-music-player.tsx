@@ -30,7 +30,7 @@ import {
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 
-import { MarqueeTitle } from "@/components/music";
+import { MarqueeTitle } from "@/components/music/marquee-title";
 import { useMusic } from "@/context/music-context";
 import { formatTime } from "@/config/playlists";
 

@@ -6,7 +6,7 @@ import { useAuth } from "@/services/supabase/auth-context";
 import { SidebarTodoWidget } from "@/components/layout/sidebar-todo";
 import { SidebarClock, SidebarTimer } from "@/components/layout/sidebar";
 import { ThemePopover } from "@/components/theme/theme-popover";
-import { DrawerMusicPlayer } from "@/components/music";
+import { DrawerMusicPlayer } from "@/components/music/drawer-music-player";
 
 const SettingsModal = lazy(() =>
   import("@/components/settings").then((m) => ({ default: m.SettingsModal })),

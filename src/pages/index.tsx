@@ -9,6 +9,7 @@ import { SidebarLeft } from "@/components/layout/sidebar-left";
 import { Dock } from "@/components/layout/dock";
 import { HomeView } from "@/menus/home";
 import { PomodoroView } from "@/menus/pomodoro";
+import { MusicView } from "@/menus/music";
 import { MusicWidget } from "@/components/music/music-widget";
 import { TodoView } from "@/menus/todo";
 import { AppMode } from "@/config/modes";
@@ -16,9 +17,6 @@ import { storageAdapter } from "@/services/storage";
 
 const StatsView = lazy(() =>
   import("@/menus/stats").then((m) => ({ default: m.StatsView })),
-);
-const MusicView = lazy(() =>
-  import("@/menus/music").then((m) => ({ default: m.MusicView })),
 );
 const PlaylistPickerModal = lazy(() =>
   import("@/components/music/playlist-picker-modal").then((m) => ({
@@ -144,23 +142,25 @@ export function IndexPage() {
           )}
         </div>
 
+        {/*
+          CRITICAL ARCHITECTURAL WORKAROUND:
+          MusicView MUST remain permanently mounted in the DOM at all times (toggled only via CSS 'hidden').
+          The active audio/video playback engine (YouTube iframe via bindYTPlayerElement and Spotify embed)
+          is physically hosted inside CozyMusicCard within MusicView.
+          If MusicView is lazy-loaded or conditionally mounted based on active tab visits,
+          the player container is absent on initial boot. This completely breaks music playback
+          when users attempt to play audio from the MusicWidget, floating dock, or shortcuts
+          while on Home, Pomodoro, or Todo tabs. Furthermore, unmounting MusicView calls
+          playerRef.current.destroy(), which kills running audio whenever the user leaves the Music tab.
+          DO NOT lazy load or conditionally unmount MusicView!
+        */}
         <div
           className={`w-full h-full flex flex-col items-center justify-center overflow-hidden ${
             activeMode === "music" ? "" : "hidden"
           }`}
           data-mode-view="music"
         >
-          {visitedModes.has("music") && (
-            <Suspense
-              fallback={
-                <div className="w-full h-full flex items-center justify-center">
-                  <Spinner size="lg" />
-                </div>
-              }
-            >
-              <MusicView />
-            </Suspense>
-          )}
+          <MusicView />
         </div>
       </section>
     </DefaultLayout>
