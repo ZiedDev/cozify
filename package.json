@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
     "lint": "eslint --fix",
     "preview": "vite preview",
     "deploy": "bun run build && gh-pages -d dist"
@@ -38,6 +40,8 @@
     "@eslint/js": "^9.39.5",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/vite": "^4.3.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^22.20.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
@@ -56,12 +60,14 @@
     "eslint-plugin-unused-imports": "^4.4.1",
     "gh-pages": "^6.3.0",
     "globals": "16.0.0",
+    "happy-dom": "^20.14.5",
     "postcss": "^8.5.28",
     "prettier": "^3.9.7",
     "tailwind-variants": "^3.3.1",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
     "vite": "^8.3.0",
-    "vite-plugin-pwa": "^1.3.0"
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^5.0.3"
   }
 }

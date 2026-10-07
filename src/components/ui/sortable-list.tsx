@@ -2,7 +2,9 @@ import { ReactNode } from "react";
 import {
   DndContext,
   closestCenter,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
   DragEndEvent,
@@ -31,11 +33,18 @@ export function SortableList<T extends { id: any } | string>({
   children,
 }: SortableListProps<T>) {
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 4,
+        distance: 8,
       },
     }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 6,
+      },
+    }),
+    useSensor(KeyboardSensor),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -92,8 +101,10 @@ export function SortableItem({ id, className, children }: SortableItemProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`touch-none ${
-        isDragging ? "opacity-75 z-50 shadow-xl scale-[1.02]" : ""
+      className={`${
+        isDragging
+          ? "touch-none opacity-75 z-50 shadow-xl scale-[1.02]"
+          : "touch-pan-y"
       } ${className || ""}`}
       data-dragging={isDragging || undefined}
       style={style}

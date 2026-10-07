@@ -327,12 +327,14 @@ class RemoteSyncEngine {
           this.lastError = result.error;
         }
 
-        if (result.success && result.syncedIds.length > 0) {
+        if (result.syncedIds && result.syncedIds.length > 0) {
           for (const syncedId of result.syncedIds) {
             cacheManager.deleteMemoryItem("syncQueue", syncedId, true);
           }
           queue = cacheManager.getMemoryStore("syncQueue");
-        } else {
+        }
+
+        if (!result.success) {
           pushSuccess = false;
           break;
         }
@@ -377,11 +379,15 @@ class RemoteSyncEngine {
     if (typeof window === "undefined") return;
 
     window.addEventListener("online", () => {
-      this.syncWithRemote();
+      if (this.provider) {
+        this.syncWithRemote();
+      }
     });
 
     this.syncIntervalTimer = setInterval(() => {
-      this.syncWithRemote();
+      if (this.provider) {
+        this.syncWithRemote();
+      }
     }, 60 * 1000);
   }
 

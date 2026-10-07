@@ -18,7 +18,10 @@ import {
   TodoViewMode,
 } from "@/menus/todo/types";
 import { storageAdapter, STORAGE_KEYS, AppSettings } from "@/services/storage";
-import { StatsRollupEngine } from "@/services/stats-rollup-engine";
+import {
+  StatsRollupEngine,
+  toDateString,
+} from "@/services/stats-rollup-engine";
 import { syncEngine } from "@/services/db/sync-engine";
 import { db } from "@/services/db";
 
@@ -466,7 +469,19 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     setTodos(reordered);
   }, []);
 
-  const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const [currentDateStr, setCurrentDateStr] = useState<string>(() =>
+    toDateString(new Date()),
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const fresh = toDateString(new Date());
+
+      setCurrentDateStr((prev) => (prev !== fresh ? fresh : prev));
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Active unarchived todos list
   const activeTodos = useMemo(() => {
@@ -510,7 +525,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       if (filter === "active") return !todo.completed;
       if (filter === "completed") return todo.completed;
       if (filter === "today") {
-        return todo.dueDate === todayStr;
+        return todo.dueDate === currentDateStr;
       }
 
       return true;
@@ -521,7 +536,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     selectedTag,
     selectedPriority,
     searchQuery,
-    todayStr,
+    currentDateStr,
   ]);
 
   // Statistics on active unarchived todos

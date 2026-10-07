@@ -315,6 +315,14 @@ export function importBackupFromJson(jsonString: string): ImportResult {
       Array.isArray(finalTodos) ? finalTodos : [],
     );
 
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cozify_data_reset"));
+      window.dispatchEvent(new CustomEvent("cozify_remote_synced"));
+      window.dispatchEvent(new CustomEvent("cozify_stats_updated"));
+      window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
+      window.dispatchEvent(new Event("storage"));
+    }
+
     return {
       success: true,
       message: "Data imported successfully!",
@@ -347,6 +355,12 @@ export function resetAllCozifyData(): void {
       localStorage.removeItem(STORAGE_KEYS.UNLOCKED_ACHIEVEMENTS);
       localStorage.removeItem("cozify_known_unlocked_achievements");
       localStorage.removeItem("cozify_konami_code");
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("cozify_data_reset"));
+      window.dispatchEvent(new CustomEvent("cozify_stats_updated"));
+      window.dispatchEvent(new CustomEvent("cozify_achievements_changed"));
+      window.dispatchEvent(new Event("storage"));
     }
   } catch {
     // Storage access issue fallback

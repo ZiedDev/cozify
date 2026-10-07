@@ -125,6 +125,7 @@ class DatabaseCacheManager {
 
     try {
       let raw = localStorage.getItem(localKey);
+
       if (!raw && storeName === "customBackgrounds") {
         raw = localStorage.getItem("cozify_custom_wallpapers");
       }

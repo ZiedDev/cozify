@@ -20,8 +20,10 @@ export function toActualVolume(sliderVal: number): number {
   return Math.pow(sliderVal / 100, 2);
 }
 
+const audioCache = new Map<SoundEffect, HTMLAudioElement>();
+
 /**
- * Play a local sound effect. Fails silently if the file hasn't been added yet.
+ * Play a local sound effect using cached audio elements. Fails silently if the file hasn't been added yet.
  */
 export function playAudio(sound: SoundEffect, volumePercent: number) {
   if (volumePercent <= 0 || typeof window === "undefined") return;
@@ -30,8 +32,24 @@ export function playAudio(sound: SoundEffect, volumePercent: number) {
 
   if (!src) return;
 
-  const audio = new Audio(src);
+  try {
+    let audio = audioCache.get(sound);
 
-  audio.volume = Math.max(0, Math.min(1, toActualVolume(volumePercent)));
-  audio.play().catch(() => {});
+    if (!audio) {
+      audio = new Audio(src);
+      audioCache.set(sound, audio);
+    }
+
+    audio.volume = Math.max(0, Math.min(1, toActualVolume(volumePercent)));
+
+    if (!audio.paused) {
+      audio.currentTime = 0;
+    }
+
+    const playPromise = audio.play();
+
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {});
+    }
+  } catch {}
 }

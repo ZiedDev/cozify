@@ -91,7 +91,6 @@ export default defineConfig([
       },
     },
 
-
     files: ["**/*.ts", "**/*.tsx"],
 
     rules: {
@@ -102,7 +101,12 @@ export default defineConfig([
       "react-hooks/exhaustive-deps": "off",
       "jsx-a11y/click-events-have-key-events": "warn",
       "jsx-a11y/interactive-supports-focus": "warn",
-      "prettier/prettier": "warn",
+      "prettier/prettier": [
+        "error",
+        {
+          endOfLine: "auto",
+        },
+      ],
       "no-unused-vars": "off",
       "unused-imports/no-unused-vars": "off",
       "unused-imports/no-unused-imports": "warn",

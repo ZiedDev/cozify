@@ -4,6 +4,7 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useMemo,
   ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -164,9 +165,9 @@ export function PipProvider({ children }: { children: ReactNode }) {
     }
   }, [isMobile]);
 
-  const { activeBackground, overlayOpacity, blur } = useTheme();
+  const { activeBackground, overlayOpacity, blur, hue } = useTheme();
 
-  const getPipTheme = useCallback(() => {
+  const pipTheme = useMemo(() => {
     let accentColor = "#f59e0b";
     let backgroundColor = "#0c0d14";
 
@@ -190,7 +191,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
       accentColor,
       backgroundColor,
     };
-  }, [activeBackground?.url, overlayOpacity, blur]);
+  }, [activeBackground?.url, overlayOpacity, blur, hue]);
 
   // Synchronize clock ticks and timer state to the mobile PiP canvas and MediaSession
   useEffect(() => {
@@ -204,7 +205,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
         progressPercent,
         isRunning,
         isOvertime,
-        theme: getPipTheme(),
+        theme: pipTheme,
       });
     }
   }, [
@@ -217,7 +218,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
     progressPercent,
     isRunning,
     isOvertime,
-    getPipTheme,
+    pipTheme,
   ]);
 
   const isSupported =
@@ -350,7 +351,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
             progressPercent,
             isRunning,
             isOvertime,
-            theme: getPipTheme(),
+            theme: pipTheme,
           },
           onPlay: () => startRef.current(),
           onPause: () => pauseRef.current(),
@@ -380,7 +381,7 @@ export function PipProvider({ children }: { children: ReactNode }) {
     progressPercent,
     isRunning,
     isOvertime,
-    getPipTheme,
+    pipTheme,
   ]);
 
   const togglePip = useCallback(() => {

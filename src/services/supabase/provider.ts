@@ -58,8 +58,8 @@ function todoToRow(todo: TodoItem, userId?: string) {
     ...(userId ? { user_id: userId } : {}),
     title: todo.title,
     completed: Boolean(todo.completed),
-    tag: todo.tag || "general",
-    priority: todo.priority || "medium",
+    tag: todo.tag || null,
+    priority: todo.priority || "none",
     due_date: todo.dueDate || null,
     notes: todo.notes || null,
     archived: Boolean(todo.archived),
@@ -77,8 +77,8 @@ function rowToTodo(row: any): TodoItem {
     id: row.id,
     title: row.title,
     completed: Boolean(row.completed),
-    tag: row.tag || "general",
-    priority: row.priority || "medium",
+    tag: row.tag && row.tag !== "general" ? row.tag : undefined,
+    priority: row.priority || "none",
     dueDate: row.due_date ? String(row.due_date) : undefined,
     notes: row.notes || undefined,
     archived: Boolean(row.archived),
@@ -157,10 +157,7 @@ function rowToPlaylist(row: any): Playlist {
   };
 }
 
-async function safeUpsert(
-  table: string,
-  rows: any[],
-): Promise<{ error: any }> {
+async function safeUpsert(table: string, rows: any[]): Promise<{ error: any }> {
   if (rows.length === 0) return { error: null };
   const { error } = await supabase!.from(table).upsert(rows);
 
@@ -255,7 +252,11 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
 
     if (!session?.user) {
       // User is offline or not logged in; keep items queued
-      return { success: false, syncedIds: [], error: "No authenticated session" };
+      return {
+        success: false,
+        syncedIds: [],
+        error: "No authenticated session",
+      };
     }
 
     const userId = session.user.id;
@@ -277,8 +278,8 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
 
     for (const item of items) {
       if (item.store === "sessions") {
-        sessionItemIds.push(item.id);
         if (item.action === "delete") {
+          sessionItemIds.push(item.id);
           sessionRows.push({
             id: item.entityId,
             user_id: userId,
@@ -289,13 +290,14 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
             updated_at: now,
           });
         } else if (item.payload) {
-          sessionRows.push(
-            sessionToRow(item.payload as SessionRecord, userId),
-          );
+          sessionItemIds.push(item.id);
+          sessionRows.push(sessionToRow(item.payload as SessionRecord, userId));
+        } else {
+          syncedIds.push(item.id);
         }
       } else if (item.store === "todos") {
-        todoItemIds.push(item.id);
         if (item.action === "delete") {
+          todoItemIds.push(item.id);
           todoRows.push({
             id: item.entityId,
             user_id: userId,
@@ -305,11 +307,14 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
             updated_at: now,
           });
         } else if (item.payload) {
+          todoItemIds.push(item.id);
           todoRows.push(todoToRow(item.payload as TodoItem, userId));
+        } else {
+          syncedIds.push(item.id);
         }
       } else if (item.store === "customBackgrounds") {
-        bgItemIds.push(item.id);
         if (item.action === "delete") {
+          bgItemIds.push(item.id);
           bgRows.push({
             id: item.entityId,
             user_id: userId,
@@ -319,13 +324,14 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
             updated_at: now,
           });
         } else if (item.payload) {
-          bgRows.push(
-            backgroundToRow(item.payload as ThemeBackground, userId),
-          );
+          bgItemIds.push(item.id);
+          bgRows.push(backgroundToRow(item.payload as ThemeBackground, userId));
+        } else {
+          syncedIds.push(item.id);
         }
       } else if (item.store === "customPlaylists") {
-        playlistItemIds.push(item.id);
         if (item.action === "delete") {
+          playlistItemIds.push(item.id);
           playlistRows.push({
             id: item.entityId,
             user_id: userId,
@@ -336,7 +342,10 @@ export class SupabaseRemoteProvider implements RemoteDatabaseProvider {
             updated_at: now,
           });
         } else if (item.payload) {
+          playlistItemIds.push(item.id);
           playlistRows.push(playlistToRow(item.payload as Playlist, userId));
+        } else {
+          syncedIds.push(item.id);
         }
       } else {
         // Unknown or legacy store: mark as synced to prevent blocking the outbox

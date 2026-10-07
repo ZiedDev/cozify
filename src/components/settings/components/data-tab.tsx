@@ -183,14 +183,20 @@ export function DataTab({
                     if (result.success) {
                       toast("Synced successfully!", { variant: "accent" });
                     } else {
-                      toast(result.error || "Could not sync with cloud database", {
-                        variant: "danger",
-                      });
+                      toast(
+                        result.error || "Could not sync with cloud database",
+                        {
+                          variant: "danger",
+                        },
+                      );
                     }
                   } catch (err: any) {
-                    toast(err?.message || "Could not sync with cloud database", {
-                      variant: "danger",
-                    });
+                    toast(
+                      err?.message || "Could not sync with cloud database",
+                      {
+                        variant: "danger",
+                      },
+                    );
                   } finally {
                     setIsSyncing(false);
                   }

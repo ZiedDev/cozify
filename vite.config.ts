@@ -72,15 +72,40 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: [
-          "**/*.{js,css,html,ico,png,jpg,svg,mp3,ogg,wav,woff,woff2}",
-        ],
-        globIgnores: ["**/wallpapers/full/**"],
+        globPatterns: ["**/*.{js,css,html,ico,svg,woff,woff2}"],
         navigateFallback: "index.html",
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
         runtimeCaching: [
+          {
+            urlPattern: /\.(?:mp3|ogg|wav)$/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "audio-assets-cache",
+              expiration: {
+                maxEntries: 40,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|webp)$/i,
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "image-assets-cache",
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",

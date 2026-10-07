@@ -19,6 +19,7 @@ import {
 import {
   TodoPriority,
   PRIORITY_CONFIG,
+  PRIORITY_THEMES,
   PRESET_TAGS,
   getTagIcon,
   getTagInfo,
@@ -884,55 +885,73 @@ export function TodoInputBar() {
           <Popover>
             <Popover.Trigger>
               <Button
-                className={cn(
-                  "h-7 text-xs font-medium shrink-0",
+                aria-label={
                   priority !== "none"
-                    ? "bg-accent-soft font-semibold"
-                    : "text-muted",
-                )}
+                    ? `Priority: ${PRIORITY_THEMES[priority]?.label || priority}`
+                    : "Set priority"
+                }
+                className={`h-7 px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer border ${
+                  priority !== "none"
+                    ? `${PRIORITY_THEMES[priority]?.badgeClass || "bg-accent/15 text-accent border-accent/40"} shadow-2xs`
+                    : "bg-surface-secondary/60 hover:bg-surface border-separator/40 text-muted hover:text-foreground"
+                }`}
                 size="sm"
-                variant="secondary"
+                variant="ghost"
               >
                 <Flag
-                  className={cn(
-                    "size-3",
-                    priority !== "none"
-                      ? PRIORITY_CONFIG[priority].color
-                      : "text-muted",
-                  )}
+                  className={`size-3 shrink-0 ${
+                    priority === "high"
+                      ? "text-rose-400 fill-rose-400/30"
+                      : priority === "medium"
+                        ? "text-amber-400 fill-amber-400/30"
+                        : priority === "low"
+                          ? "text-blue-400 fill-blue-400/30"
+                          : "opacity-80"
+                  }`}
                 />
-                <span
-                  className={cn(
-                    priority !== "none" && PRIORITY_CONFIG[priority].color,
-                  )}
-                >
+                <span>
                   {priority === "none"
                     ? "Priority"
                     : PRIORITY_CONFIG[priority].label}
                 </span>
               </Button>
             </Popover.Trigger>
-            <Popover.Content>
-              <Popover.Dialog className="flex flex-col gap-1 min-w-32 z-50 p-2">
-                {(["high", "medium", "low"] as TodoPriority[]).map(
-                  (priorityOption) => (
-                    <Button
-                      key={priorityOption}
-                      className={cn(
-                        "w-full justify-start text-xs h-7 px-2 shrink-0",
-                        PRIORITY_CONFIG[priorityOption].color,
-                        priority === priorityOption &&
-                          "bg-accent-soft font-semibold",
-                      )}
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => selectPriority(priorityOption)}
+            <Popover.Content placement="bottom start">
+              <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-0.5 min-w-36 z-50">
+                <button
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                    priority === "none"
+                      ? "bg-accent/15 text-accent font-semibold"
+                      : "hover:bg-surface-secondary/60 text-foreground"
+                  }`}
+                  type="button"
+                  onClick={() => selectPriority("none")}
+                >
+                  <Flag className="size-3.5 opacity-60 shrink-0 text-muted" />
+                  <span>No Priority</span>
+                </button>
+                {(["high", "medium", "low"] as TodoPriority[]).map((pOpt) => {
+                  const isSelected = priority === pOpt;
+                  const cfg = PRIORITY_CONFIG[pOpt];
+
+                  return (
+                    <button
+                      key={pOpt}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-accent/15 text-accent font-semibold"
+                          : "hover:bg-surface-secondary/60 text-foreground"
+                      }`}
+                      type="button"
+                      onClick={() => selectPriority(pOpt)}
                     >
-                      <Flag className="size-3 shrink-0" />
-                      <span>{PRIORITY_CONFIG[priorityOption].label}</span>
-                    </Button>
-                  ),
-                )}
+                      <span
+                        className={`size-2 rounded-full shrink-0 ${cfg.dotColor}`}
+                      />
+                      <span className={cfg.color}>{cfg.label}</span>
+                    </button>
+                  );
+                })}
               </Popover.Dialog>
             </Popover.Content>
           </Popover>
@@ -941,68 +960,59 @@ export function TodoInputBar() {
           <Popover>
             <Popover.Trigger>
               <Button
-                className={cn(
-                  "h-7 text-xs font-medium shrink-0",
+                aria-label={
+                  tag ? `Tag: ${activeTagMeta?.label || tag}` : "Set tag"
+                }
+                className={`h-7 px-2.5 rounded-lg flex items-center gap-1.5 text-xs font-medium transition-colors cursor-pointer border ${
                   tag
-                    ? "bg-accent-soft text-accent font-semibold"
-                    : "text-muted",
-                )}
+                    ? `${activeTagMeta?.color || "bg-accent/15 text-accent border-accent/40"} shadow-2xs`
+                    : "bg-surface-secondary/60 hover:bg-surface border-separator/40 text-muted hover:text-foreground"
+                }`}
                 size="sm"
-                variant="secondary"
+                variant="ghost"
               >
-                <ActiveTagIcon
-                  className={cn(
-                    "size-3",
-                    tag
-                      ? activeTagMeta?.textClass || "text-accent"
-                      : "text-muted",
-                  )}
-                />
+                <ActiveTagIcon className="size-3 shrink-0 opacity-90" />
                 <span>{tag ? activeTagMeta?.label || tag : "Tag"}</span>
               </Button>
             </Popover.Trigger>
-            <Popover.Content>
-              <Popover.Dialog className="flex flex-col gap-1 min-w-32 z-50 p-2">
+            <Popover.Content placement="bottom start">
+              <Popover.Dialog className="p-1.5 rounded-xl bg-surface border border-separator shadow-lg flex flex-col gap-0.5 min-w-36 z-50">
                 <ScrollShadow
-                  className="max-h-44 overflow-y-auto flex flex-col gap-1 no-scrollbar p-0.5"
+                  className="max-h-44 overflow-y-auto flex flex-col gap-0.5 no-scrollbar p-0.5"
                   orientation="vertical"
                   size={16}
                 >
-                  <Button
-                    className={cn(
-                      "w-full justify-start text-muted shrink-0 text-xs h-7 px-2",
-                      !tag && "bg-accent-soft text-accent font-semibold",
-                    )}
-                    size="sm"
-                    variant="secondary"
+                  <button
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                      !tag
+                        ? "bg-accent/15 text-accent font-semibold"
+                        : "hover:bg-surface-secondary/60 text-foreground"
+                    }`}
+                    type="button"
                     onClick={() => selectTag(undefined)}
                   >
-                    <TagIcon className="size-3" />
+                    <TagIcon className="size-3.5 opacity-60 shrink-0 text-muted" />
                     <span>No Tag</span>
-                  </Button>
+                  </button>
                   {allTagOptions.map((tagOption) => {
                     const TagIconComp = tagOption.icon;
                     const isSelected =
                       tag?.toLowerCase() === tagOption.id.toLowerCase();
-                    const info = getTagInfo(tagOption.id);
 
                     return (
-                      <Button
+                      <button
                         key={tagOption.id}
-                        className={cn(
-                          "w-full justify-between text-muted shrink-0 text-xs h-7 px-2",
-                          info?.textClass || "text-accent",
-                          isSelected && "bg-accent-soft font-semibold",
-                        )}
-                        size="sm"
-                        variant="secondary"
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium text-left cursor-pointer transition-colors ${
+                          isSelected
+                            ? "bg-accent/15 text-accent font-semibold"
+                            : "hover:bg-surface-secondary/60 text-foreground"
+                        }`}
+                        type="button"
                         onClick={() => selectTag(tagOption.id)}
                       >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <TagIconComp className="size-3 shrink-0" />
-                          <span className="truncate">{tagOption.label}</span>
-                        </div>
-                      </Button>
+                        <TagIconComp className="size-3.5 opacity-80 shrink-0" />
+                        <span>{tagOption.label}</span>
+                      </button>
                     );
                   })}
                 </ScrollShadow>
